@@ -1,6 +1,7 @@
 # @path: ~/projects/nix-config/home-manager/home.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @diractory: https://nix-community.github.io/home-manager/options.xhtml
 
 
 # This is your home-manager configuration file
@@ -62,7 +63,7 @@
   programs.home-manager.enable = true;
   programs.git = {
     enable = true;
-    config = {
+    settings = {
       init = {
         defaultBranch = "main";
       };
@@ -70,6 +71,9 @@
         name = "redskaber";
         email = "redskaber@foxmail.com";
       };
+      core.editor = "nvim";
+      pull.rebase = true;   # git pull -> git pull --rebase
+      # push.autoSetupRemote = true; # remote -> local checkout 
     };
   };
 
