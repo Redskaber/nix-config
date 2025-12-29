@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/flake.nix
+# @path: ~/projects/nix-config/home-manager/home.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 
@@ -72,7 +72,7 @@
   systemd.user.startServices = "sd-switch";
 
   # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
-  # home.stateVersion = "23.05";
+  home.stateVersion = "25.11";
 }
 
  
