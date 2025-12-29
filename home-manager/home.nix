@@ -63,9 +63,13 @@
   programs.git = {
     enable = true;
     config = {
-      init.defaultBranch = "main";
-      user.name = "redskaber";
-      user.email = "redskaber@foxmail.com";
+      init = {
+        defaultBranch = "main";
+      };
+      user = {
+        name = "redskaber";
+        email = "redskaber@foxmail.com";
+      };
     };
   };
 
