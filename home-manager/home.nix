@@ -54,7 +54,8 @@
   };
  
   # Add stuff for your user as you see fit:
-  home.packages = with pkgs; [ 
+  home.packages = with pkgs; [
+    tree
     git
     neovim
     htop
