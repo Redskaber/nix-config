@@ -60,9 +60,18 @@
     gdb valgrind strace ltrace
     neovim
     zsh fzf ripgrep fd
+    # fonts
+    nerd-fonts.jetbrains-mono
+    noto-fonts-emoji
   ];
   # home-manager:
   programs.home-manager.enable = true;
+  # fonts:
+  # enable -> ~/.local/share/fonts/*
+  fonts.fontconfig.enable = true;
+  fonts.fontconfig.defaultFonts.monospace = [ "JetBrainsMono Nerd Font" ];
+  fonts.fontconfig.defaultFonts.emoji = [ "Noto Color Emoji" ];
+  
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
