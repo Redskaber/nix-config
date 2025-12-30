@@ -59,7 +59,7 @@
     htop tmux bat eza tree
     gdb valgrind strace ltrace
     neovim
-    zsh fzf ripgrep fd
+    zsh fzf ripgrep fd yazi
     # fonts
     nerd-fonts.jetbrains-mono
     noto-fonts-color-emoji
