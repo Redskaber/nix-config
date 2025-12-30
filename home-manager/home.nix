@@ -55,7 +55,7 @@
  
   # Add stuff for your user as you see fit:
   home.packages = with pkgs; [
-    curl wget gunpg git
+    curl wget gnupg git
     tree eza bat htop tmux
     gdb valgrind strace ltrace
     clang llvm clang-tools
