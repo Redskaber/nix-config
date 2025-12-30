@@ -56,12 +56,10 @@
   # Add stuff for your user as you see fit:
   home.packages = with pkgs; [
     curl wget gnupg git
-    tree eza bat htop tmux
+    htop tmux bat eza tree
     gdb valgrind strace ltrace
-    clang llvm clang-tools
-    cmake ninja pkg-config
-    gcc gnumake binutils
     neovim
+    zsh fzf ripgrep fd
   ];
   # home-manager:
   programs.home-manager.enable = true;
