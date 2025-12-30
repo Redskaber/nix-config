@@ -62,7 +62,7 @@
     zsh fzf ripgrep fd
     # fonts
     nerd-fonts.jetbrains-mono
-    noto-fonts-emoji
+    noto-fonts-color-emoji
   ];
   # home-manager:
   programs.home-manager.enable = true;
