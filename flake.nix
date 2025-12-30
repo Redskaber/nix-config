@@ -16,9 +16,6 @@
     # Home Manager
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    
-    # Nix-Color
-    nix-colors.url = "github:Misterio77/nix-colors";
   };
 
   outputs = {
