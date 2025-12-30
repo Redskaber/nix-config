@@ -16,12 +16,14 @@
   # You can import other home-manager modules here
   imports = [
     # If you import other home-manager modules from other flakes (such as nix-colors):
-    # inputs.nix-colors.homeManagerModule
+    inputs.nix-colors.homeManagerModules.default
 
     # You can also split up your configuration and import pieces of it here:
     # ./nvim.nix
   ];
-
+	
+	colorScheme = nix-colors.colorSchemes.dracula;
+	
   nixpkgs = {
     # You can add overlays here
     overlays = [
