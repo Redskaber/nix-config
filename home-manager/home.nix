@@ -50,23 +50,24 @@
   home = {
     username = "kilig";
     homeDirectory = "/home/kilig";
+    stateVersion = "25.11";
   };
  
   # Add stuff for your user as you see fit:
   home.packages = with pkgs; [
-    tree
-    git
+    curl wget gunpg git
+    tree eza bat htop tmux
+    gdb valgrind strace ltrace
+    clang llvm clang-tools
+    cmake ninja pkg-config
+    gcc gnumake binutils
     neovim
-    htop
   ];
   # home-manager:
   programs.home-manager.enable = true;
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
-
-  # https://nixos.wiki/wiki/FAQ/When_do_I_update_stateVersion
-  home.stateVersion = "25.11";
 }
 
  
