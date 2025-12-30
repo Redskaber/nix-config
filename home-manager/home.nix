@@ -18,6 +18,7 @@
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
     # ./nvim.nix
+    ./app/git.nix
   ];
 	
   nixpkgs = {
@@ -58,23 +59,8 @@
     neovim
     htop
   ];
-  
+  # home-manager:
   programs.home-manager.enable = true;
-  programs.git = {
-    enable = true;
-    settings = {
-      init = {
-        defaultBranch = "main";
-      };
-      user = {
-        name = "redskaber";
-        email = "redskaber@foxmail.com";
-      };
-      core.editor = "nvim";
-      pull.rebase = true;   # git pull -> git pull --rebase
-      # push.autoSetupRemote = true; # remote -> local checkout 
-    };
-  };
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
