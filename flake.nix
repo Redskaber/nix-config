@@ -16,6 +16,9 @@
     # Home Manager
     home-manager.url = "github:nix-community/home-manager/release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+    
+    # Neovim Config
+    nvim-config.url = "github:Redskaber/nvim-config";
   };
 
   outputs = {

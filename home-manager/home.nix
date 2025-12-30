@@ -17,8 +17,8 @@
   imports = [
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
-    # ./nvim.nix
     ./app/git.nix
+    ./app/nvim.nix
   ];
 	
   nixpkgs = {
