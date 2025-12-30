@@ -64,8 +64,10 @@
     nerd-fonts.jetbrains-mono
     noto-fonts-color-emoji
   ];
+  
   # home-manager:
   programs.home-manager.enable = true;
+
   # fonts:
   # enable -> ~/.local/share/fonts/*
   fonts.fontconfig.enable = true;
