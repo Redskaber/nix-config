@@ -17,7 +17,7 @@
   imports = [
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
-    ./app/git.nix
+    ./system/git.nix
     ./app/nvim.nix
   ];
 	
@@ -55,10 +55,11 @@
  
   # Add stuff for your user as you see fit:
   home.packages = with pkgs; [
+    # network and utils
     curl wget gnupg git
     htop tmux bat eza tree
     gdb valgrind strace ltrace
-    neovim
+    # shell
     zsh fzf ripgrep fd yazi
     # fonts
     nerd-fonts.jetbrains-mono

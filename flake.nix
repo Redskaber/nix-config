@@ -18,7 +18,10 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
     
     # Neovim Config
-    nvim-config.url = "github:Redskaber/nvim-config";
+    nvim-config = {
+      url = "github:Redskaber/nvim-config";
+      flake = false;
+    };
   };
 
   outputs = {

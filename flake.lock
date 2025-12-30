@@ -53,11 +53,28 @@
         "type": "github"
       }
     },
+    "nvim-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1766593373,
+        "narHash": "sha256-GuxQNtIZE1DiJBQLhjkce7GgnddIUducqjWPvcKEZRU=",
+        "owner": "Redskaber",
+        "repo": "nvim-config",
+        "rev": "345602bcac1b742d9c7e4844173d8038508a3569",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "nvim-config",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-unstable": "nixpkgs-unstable"
+        "nixpkgs-unstable": "nixpkgs-unstable",
+        "nvim-config": "nvim-config"
       }
     }
   },
