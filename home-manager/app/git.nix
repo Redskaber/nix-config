@@ -23,8 +23,13 @@
       };
       core.editor = "nvim";
       pull.rebase = true;
-      push.autoSetupTemote = true;
+      push.autoSetupRemote = true;
     };
+    ignores = [
+      ".DS_Store"
+      "*.swp"
+      "*~"
+    ];
   };
 }
 
