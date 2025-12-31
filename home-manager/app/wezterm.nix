@@ -46,22 +46,6 @@
         done
       '';
     };
-
-    extraConfig = ''
-      return {
-        font = wezterm.font("JetBrainsMono Nerd Font"),
-        font_size = 11.0,
-        color_scheme = "Catppuccin-Mocha",
-        hide_tab_bar_if_only_one_tab = true,
-        enable_tab_bar = false,
-        window_padding = { left = 0, right = 0, top = 0, bottom = 0 },
-        keys = {
-          { key = "Enter", mods = "ALT", action = wezterm.action.ToggleFullScreen },
-        },
-        -- 可选：启动即进 tmux（推荐）
-        -- default_prog = { "zsh", "-l", "-c", "exec tmux new-session -A -s main" },
-      }
-    '';
   };
 }
 
