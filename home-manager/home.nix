@@ -17,11 +17,16 @@
   imports = [
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
+    ./system/direnv.nix
+    ./system/fonts.nix
     ./system/git.nix
+    ./system/starship.nix
     ./system/zsh.nix
     ./system/zoxide.nix
 
     ./app/nvim.nix
+    ./app/tmux.nix
+    ./app/wezterm.nix
   ];
 
   nixpkgs = {
@@ -63,7 +68,8 @@
     htop tree
     gdb valgrind strace ltrace
     # Terminal prompt shell
-    wezterm starship zsh
+    # wezterm (wrapper)
+    starship zsh
     # find and tools
     fzf ripgrep fd bat eza delta yazi zoxide
     # session
@@ -77,13 +83,6 @@
 
   # home-manager:
   programs.home-manager.enable = true;
-
-  # fonts:
-  # enable -> ~/.local/share/fonts/*
-  fonts.fontconfig.enable = true;
-  fonts.fontconfig.defaultFonts.monospace = [ "JetBrainsMono Nerd Font" ];
-  fonts.fontconfig.defaultFonts.emoji = [ "Noto Color Emoji" ];
-
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";

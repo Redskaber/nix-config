@@ -26,8 +26,6 @@ in {
       la = "eza -la --icons=always";
       lt = "eza --tree --icons=always";
       j  = "z";
-      zq = "zoxide query";
-      zl = "zoxide query -l";
       # grep = "rg";  # ripgrep
       # cat = "bat";  # bat
       # top = "btm";  # bottom
@@ -56,17 +54,6 @@ in {
     # syntax-highlight
     syntaxHighlighting.enable = true;
     syntaxHighlighting.highlighters = [ "main" "brackets" "pattern" "cursor" ];
-    syntaxHighlighting.patterns = {
-      "rm -rf *" = "fg=white,bold,bg=red";
-      "dd if=/dev/zero*" = "fg=black,bold,bg=yellow";
-    };
-    syntaxHighlighting.styles = {
-      comment = "fg=8";        # 灰色注释
-      builtin = "fg=4,bold";   # 蓝色内置命令
-      command = "fg=2";        # 绿色可执行命令
-      path    = "fg=6";        # 青色路径
-      unknown-token = "fg=1";  # 红色未知命令
-    };
 
     # default keymap (emacs)
     defaultKeymap = "emacs";
