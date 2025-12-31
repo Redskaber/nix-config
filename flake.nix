@@ -28,6 +28,12 @@
       url = "github:/Redskaber/starship-config";
       flake = false;
     };
+
+    # Wezterm Config
+    wezterm-config = {
+      url = "github:/Redskaber/wezterm-config";
+      flake = false;
+    };
   };
 
   outputs = {

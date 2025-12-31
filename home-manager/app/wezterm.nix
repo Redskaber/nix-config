@@ -47,6 +47,13 @@
       '';
     };
   };
+
+  # Used user config:
+  xdg.configFile."wezterm" = {
+    source = inputs.wezterm-config;   # abs path
+    recursive = true;                 # rec-link
+    force = true;
+  };
 }
 
 
