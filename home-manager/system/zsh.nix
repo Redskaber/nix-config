@@ -29,6 +29,8 @@ in {
       zi = "zoxide init";
       za = "zoxide add";
       zq = "zoxide query";
+      zj = "zoxide query -i";
+      zl = "zoxide query -l";
       # grep = "rg";  # ripgrep
       # cat = "bat";  # bat
       # top = "btm";  # bottom
