@@ -32,7 +32,7 @@
       # ];
       format = ''
         $username$hostname$directory$git_branch$git_status$nix_shell$rust$python$nodejs$c$lua$package$golang$java
-      ''
+      '';
       # right part
       right_format = "$time$cmd_duration";
 
