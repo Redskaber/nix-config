@@ -18,9 +18,10 @@
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
     ./system/git.nix
+    ./system/zsh.nix
     ./app/nvim.nix
   ];
-	
+
   nixpkgs = {
     # You can add overlays here
     overlays = [
@@ -45,27 +46,33 @@
       allowUnfree = true;
     };
   };
-  
+
   # TODO: Set your username
   home = {
     username = "kilig";
     homeDirectory = "/home/kilig";
     stateVersion = "25.11";
   };
- 
+
   # Add stuff for your user as you see fit:
   home.packages = with pkgs; [
-    # network and utils
+    # network utils
     curl wget gnupg git
-    htop tmux bat eza tree
+    htop tree
     gdb valgrind strace ltrace
-    # shell
-    zsh fzf ripgrep fd yazi
+    # Terminal prompt shell
+    wezterm starship zsh
+    # find and tools
+    fzf ripgrep fd bat eza delta yazi zoxide
+    # session
+    tmux
+    # env auto-switching
+    direnv nix-direnv
     # fonts
     nerd-fonts.jetbrains-mono
     noto-fonts-color-emoji
   ];
-  
+
   # home-manager:
   programs.home-manager.enable = true;
 
@@ -74,10 +81,10 @@
   fonts.fontconfig.enable = true;
   fonts.fontconfig.defaultFonts.monospace = [ "JetBrainsMono Nerd Font" ];
   fonts.fontconfig.defaultFonts.emoji = [ "Noto Color Emoji" ];
-  
+
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
 }
 
- 
+
