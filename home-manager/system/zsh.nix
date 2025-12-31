@@ -25,11 +25,8 @@ in {
       ll = "eza -l --icons=always";
       la = "eza -la --icons=always";
       lt = "eza --tree --icons=always";
-      j  = "zoxide";
-      zi = "zoxide init";
-      za = "zoxide add";
+      j  = "z";
       zq = "zoxide query";
-      zj = "zoxide query -i";
       zl = "zoxide query -l";
       # grep = "rg";  # ripgrep
       # cat = "bat";  # bat
