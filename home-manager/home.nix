@@ -19,6 +19,8 @@
     # You can also split up your configuration and import pieces of it here:
     ./system/git.nix
     ./system/zsh.nix
+    ./system/zoxide.nix
+
     ./app/nvim.nix
   ];
 

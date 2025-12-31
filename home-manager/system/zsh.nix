@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml#opt-programs.zsh.enable
-
+# @depends: eza, zoxide
 
 {
   inputs,
@@ -25,6 +25,10 @@ in {
       ll = "eza -l --icons=always";
       la = "eza -la --icons=always";
       lt = "eza --tree --icons=always";
+      j  = "z";
+      ji = "zoxide init";
+      ja = "zoxide add";
+      jq = "zoxide query";
       # grep = "rg";  # ripgrep
       # cat = "bat";  # bat
       # top = "btm";  # bottom
@@ -64,11 +68,6 @@ in {
       path    = "fg=6";        # 青色路径
       unknown-token = "fg=1";  # 红色未知命令
     };
-
-    # zoxide (智能cd)
-    initContent = ''
-      eval "$(zoxide init zsh)"
-    '';
 
     # default keymap (emacs)
     defaultKeymap = "emacs";
