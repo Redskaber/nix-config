@@ -23,19 +23,25 @@
       add_newline = false;
       command_timeout = 1000;
       scan_timeout = 10;
+
       # main proptm
-      format = lib.concatStrings [
-        "$all"         # auto include shadow used module
-        "$line_break"  # line break
-        "$character"   # input character
-      ];
+      # format = lib.concatStrings [
+      #   "$all"         # auto include shadow used module
+      #   "$line_break"  # line break
+      #   "$character"   # input character
+      # ];
+      format = ''
+        $username$hostname$directory$git_branch$git_status$nix_shell$rust$python$nodejs$c$lua$package$golang$java
+      ''
       # right part
       right_format = "$time$cmd_duration";
-      # character
+
+      # input character
       character = {
         success_symbol = "[➜](bold green)";
         error_symbol   = "[✗](bold red)";
         vicmd_symbol   = "[❮](bold cyan)";  # vi mode
+        format         = "$symbol\n";
       };
       # dir
       directory = {
@@ -53,51 +59,65 @@
         format = "[($all_status$ahead_behind)]($style)";
         style = "bold yellow";
         conflicted = "=";
-        ahead = "⇡${count}";
-        behind = "⇣${count}";
-        diverged = "⇕⇡${ahead_count}⇣${behind_count}";
-        untracked = "?${count}";
-        stashed = "\\$${count}";
-        modified = "!${count}";
-        staged = "+${count}";
-        renamed = "»${count}";
-        deleted = "−${count}";
+        ahead = "⇡$count";
+        behind = "⇣$count";
+        diverged = "⇕⇡$ahead_count⇣$behind_count";
+        untracked = "?$count";
+        stashed = "\\$$count";
+        modified = "!$count";
+        staged = "+$count";
+        renamed = "»$count";
+        deleted = "−$count";
       };
       # languages
+      c = {
+        format = ''via [$symbol$version]($style)'';
+        style = "bold bright-blue";
+        symbol = "🇨 ";
+      };
       rust = {
-        format = "via [🦀 $version]($style)";
+        format = ''via [$symbol$version]($style)'';
         style = "bold red";
+        symbol = "🦀 ";
       };
       python = {
-        format = "via [${symbol}${pyenv_prefix}${version}(\\($virtualenv\\))]($style)";
+        format = ''via [$symbol$version(\($virtualenv\))]($style)'';
         style = "yellow bold";
         symbol = "🐍 ";
       };
       nodejs = {
-        format = "via [⬢ $version]($style)";
+        format = ''via [$symbol$version]($style)'';
         style = "bold green";
+        symbol = "⬢ ";
+      };
+      lua = {
+        format = ''via [$symbol$version]($style)'';
+        style = "bold blue";
+        symbol = "🌙 ";
       };
       nix_shell = {
-        format = "via [❄️ $name]($style)";
+        format = ''via [$symbol$version]($style)'';
         style = "bold blue";
-      };
-      # command execute time (min > 1s)
-      cmd_duration = {
-        min_time = 1000;  # 1s
-        format = "took [$duration]($style)";
-        style = "bold yellow";
-      };
-      # time (right format)
-      time = {
-        format = "at [$time]($style)";
-        style = "dimmed white";
-        disabled = false;
+        symbol = "❄️ ";
       };
       # pkgs-manager(Cargo、npm、pip、etc.)
       package = {
         disabled = false;
-        format = "is [$symbol$version]($style)";
+        format = ''is [$symbol$version]($style)'';
         style = "208 bold";  # orange
+        symbol = "📦 ";
+      };
+      # command execute time (min > 1s)
+      cmd_duration = {
+        min_time = 1000;  # 1s
+        format = ''took [$duration]($style)'';
+        style = "bold yellow";
+      };
+      # time (right format)
+      time = {
+        format = ''at [$time]($style)'';
+        style = "dimmed white";
+        disabled = false;
       };
       # optimite
       username = { disabled = true; };
