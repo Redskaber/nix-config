@@ -12,14 +12,20 @@
     # at the same time. Here's an working example:
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     # Also see the 'unstable-packages' overlay at 'overlays/default.nix'.
-    
+
     # Home Manager
     home-manager.url = "github:nix-community/home-manager/release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
-    
+
     # Neovim Config
     nvim-config = {
       url = "github:Redskaber/nvim-config";
+      flake = false;
+    };
+
+    # Starship Config
+    starship-config = {
+      url = "github:/Redskaber/starship-config";
       flake = false;
     };
   };
@@ -29,7 +35,7 @@
     nixpkgs,
     home-manager,
     ...
-  } @ inputs: let 
+  } @ inputs: let
     # Supported systems for your flake packages, shell, etc.
     systems = [
       "aarch64-linux"
@@ -48,7 +54,7 @@
     # Formatter for your nix files, available through 'nix fmt'
     # Other options beside 'alejandra' include 'nixpkgs-fmt'
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
-    
+
     # Your custom packages and modifications, exported as overlays
     overlays = import ./overlays {inherit inputs;};
     # Reusable home-manager modules you might want to export
@@ -67,7 +73,7 @@
         # > Out main home-manager configuration file <
         modules = [ ./home-manager/home.nix ];
       };
-    };    
+    };
   };
 }
 

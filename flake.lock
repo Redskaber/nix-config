@@ -74,7 +74,24 @@
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
-        "nvim-config": "nvim-config"
+        "nvim-config": "nvim-config",
+        "starship-config": "starship-config"
+      }
+    },
+    "starship-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767188527,
+        "narHash": "sha256-/cuxbN33vteyA6PeA5hLf6e6qhQ3KufnAm+FhRDDEC8=",
+        "owner": "Redskaber",
+        "repo": "starship-config",
+        "rev": "af95c0d1369d8da2ed7d7b1c4d68818d4bfd897d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "starship-config",
+        "type": "github"
       }
     }
   },
