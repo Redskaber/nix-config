@@ -75,7 +75,8 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nvim-config": "nvim-config",
-        "starship-config": "starship-config"
+        "starship-config": "starship-config",
+        "wezterm-config": "wezterm-config"
       }
     },
     "starship-config": {
@@ -91,6 +92,22 @@
       "original": {
         "owner": "Redskaber",
         "repo": "starship-config",
+        "type": "github"
+      }
+    },
+    "wezterm-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767200360,
+        "narHash": "sha256-qcaKYbzVtEm8by5Ui+6/BbI0Sb9FMJCv0zIsN5ZRq5I=",
+        "owner": "Redskaber",
+        "repo": "wezterm-config",
+        "rev": "b45f4c670534cea6ce9e763bb0b83cabd3efca13",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "wezterm-config",
         "type": "github"
       }
     }

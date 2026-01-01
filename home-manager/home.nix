@@ -22,6 +22,7 @@
     ./system/git.nix
     ./system/starship.nix
     ./system/zsh.nix
+    ./system/fish.nix
     ./system/zoxide.nix
 
     ./app/nvim.nix
@@ -69,7 +70,7 @@
     gdb valgrind strace ltrace
     # Terminal prompt shell
     # wezterm (wrapper)
-    starship zsh
+    starship zsh fish
     # find and tools
     fzf ripgrep fd bat eza delta yazi zoxide
     # session
