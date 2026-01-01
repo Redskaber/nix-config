@@ -17,6 +17,7 @@ in {
   programs.fish = {
     enable = true;
     package = pkgs.fish;
+    preferAbbrs = true;
     generateCompletions = true;
 
     # session variables
@@ -35,6 +36,7 @@ in {
       grep = "rg";
       cat = "bat";
       top = "btm";
+      vi = "nvim";
     };
 
     # inputs auto expr
@@ -52,51 +54,8 @@ in {
 
     # (fisher env)
     plugins = [
-      {
-        name = "zoxide";
-        src = pkgs.fetchFromGitHub {
-          owner = "jethrokuan";
-          repo = "z";
-          rev = "v0.9.0";
-          sha256 = "sha256-4qG7ZxQbDyWkH8iJtY3KqXVhFgRcMmNpLsT9uVwEaBc=";
-        };
-      }
-      {
-        name = "autopair";
-        src = pkgs.fetchFromGitHub {
-          owner = "jorgebucaran";
-          repo = "autopair.fish";
-          rev = "v2.2.0";
-          sha256 = "sha256-1dD8vXxPqR7ZzKfV9yJmLcNnT6sUoWbAeQrYhGjKpLo=";
-        };
-      }
-      {
-        name = "fzf-fish";
-        src = pkgs.fetchFromGitHub {
-          owner = "PatrickF1";
-          repo = "fzf.fish";
-          rev = "v8.1.1";
-          sha256 = "sha256-3nXqWvYmZpKjLcRtS9uVwEaBcDfGhJkLmNoPqRsTuVw=";
-        };
-      }
-      {
-        name = "fish-syntax-highlighting";
-        src = pkgs.fetchFromGitHub {
-          owner = "fish-shell";
-          repo = "fish-syntax-highlighting";
-          rev = "3.1.0";
-          sha256 = "sha256-7JmKpLsT9uVwEaBcDfGhJkLmNoPqRsTuVwXyZ1a2b3c=";
-        };
-      }
-      {
-        name = "fish-autosuggestions";
-        src = pkgs.fetchFromGitHub {
-          owner = "fish-shell";
-          repo = "fish-autosuggestions";
-          rev = "v4.0.0";
-          sha256 = "sha256-9uVwEaBcDfGhJkLmNoPqRsTuVwXyZ1a2b3c4d5e6f7g=";
-        };
-      }
+      { name = "autopair"; src = pkgs.fishPlugins.autopair; }
+      { name = "fzf-fish"; src = pkgs.fishPlugins.fzf-fish; }
     ];
 
     functions = {
