@@ -1,6 +1,6 @@
 # @path: ~/projects/nix-config/home-manager/system/fish.nix
 # @author: redskaber
-# @datetime: 2025-12-12 → updated 2026-01-01
+# @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml#opt-programs.fish.enable
 # @depends: eza, zoxide, fzf, fisher, bat, ripgrep
 

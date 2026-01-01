@@ -12,6 +12,9 @@
   ...
 }: {
 
+  programs.tmux = {
+    enable = true;
+  };
 }
 
 
