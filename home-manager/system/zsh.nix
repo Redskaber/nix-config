@@ -30,8 +30,8 @@ in {
       # cat = "bat";  # bat
       # top = "btm";  # bottom
       vi = "nvim";
-      ".." = "cd .."
-      "..." = "cd ../.."
+      ".." = "cd ..";
+      "..." = "cd ../..";
     };
 
     history = {
