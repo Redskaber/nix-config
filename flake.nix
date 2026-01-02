@@ -1,6 +1,7 @@
 # @path: ~/projects/nix-config/flake.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 
 {
   description = "Kilig's declarative development environment";
@@ -12,6 +13,10 @@
     # at the same time. Here's an working example:
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     # Also see the 'unstable-packages' overlay at 'overlays/default.nix'.
+
+    # NUR (Nix User Repositories)
+    nur.url = "github:nix-community/NUR";
+    nur.inputs.nixpkgs.follows = "nixpkgs";
 
     # Home Manager
     home-manager.url = "github:nix-community/home-manager/release-25.11";

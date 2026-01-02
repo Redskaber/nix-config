@@ -29,6 +29,7 @@ in {
       # grep = "rg";  # ripgrep
       # cat = "bat";  # bat
       # top = "btm";  # bottom
+      vi = "nvim";
     };
 
     history = {

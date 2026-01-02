@@ -33,9 +33,9 @@ in {
       ll = "eza -l --icons=always";
       la = "eza -la --icons=always";
       lt = "eza --tree --icons=always";
-      grep = "rg";
-      cat = "bat";
-      top = "btm";
+      # grep = "rg";
+      # cat = "bat";
+      # top = "btm";
       vi = "nvim";
     };
 
