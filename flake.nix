@@ -30,27 +30,33 @@
 
     # Starship Config
     starship-config = {
-      url = "github:/Redskaber/starship-config";
+      url = "github:Redskaber/starship-config";
       flake = false;
     };
 
     # Wezterm Config
     wezterm-config = {
-      url = "github:/Redskaber/wezterm-config";
+      url = "github:Redskaber/wezterm-config";
       flake = false;
     };
 
     # Tmux-Config
     tmux-config = {
-      url = "github:/Redskaber/tmux-config";
+      url = "github:Redskaber/tmux-config";
       flake = false;
     };
 
     # Mpv-config
     # mpv-config = {
-    #   url = "github:/Redskaber/mpv-config";
+    #   url = "github:Redskaber/mpv-config";
     #   flake = false;
     # };
+
+    # Vscode-config
+    vscode-config = {
+      url = "github:Redskaber/vscode-config";
+      flake = false;
+    };
   };
 
   outputs = {

@@ -82,11 +82,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767435810,
-        "narHash": "sha256-2r5pCxuMYPFi5CToA1Egsi5/cHsxc5O1c72OkHqc78w=",
+        "lastModified": 1767459693,
+        "narHash": "sha256-CV5GBpRg9lGs4elx10v7RWU1eq06kANjTRKfeoX3PCY=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "fed43ae44806c3a2fe0f49fb030b07a3c820859d",
+        "rev": "52c84119bcf3b58b2bd605ecdcead109a7b834e4",
         "type": "github"
       },
       "original": {
@@ -120,6 +120,7 @@
         "nvim-config": "nvim-config",
         "starship-config": "starship-config",
         "tmux-config": "tmux-config",
+        "vscode-config": "vscode-config",
         "wezterm-config": "wezterm-config"
       }
     },
@@ -142,16 +143,32 @@
     "tmux-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1767445568,
-        "narHash": "sha256-w3NHHMGYr1MQMSz8awXQHeTHGe88at3ho3Jt1z14juw=",
+        "lastModified": 1767458859,
+        "narHash": "sha256-EHxiH51iuY7WlCTNxwMLSFv2t4PSuHTgZhnzZa5fxko=",
         "owner": "Redskaber",
         "repo": "tmux-config",
-        "rev": "c0e49c3ea4ec1f534bf044a5247b35d244f13397",
+        "rev": "a07217f220d6aa2a9d6c764d1788a440ed21b1d9",
         "type": "github"
       },
       "original": {
         "owner": "Redskaber",
         "repo": "tmux-config",
+        "type": "github"
+      }
+    },
+    "vscode-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767460221,
+        "narHash": "sha256-ghHp7RPUxiHkdrh5v9MktNVygVa77uvIdpTWceh/DkI=",
+        "owner": "Redskaber",
+        "repo": "vscode-config",
+        "rev": "3f7f43850ff4ea98697db6d5f533c7097f0bd08e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "vscode-config",
         "type": "github"
       }
     },

@@ -25,9 +25,20 @@
     ./system/fish.nix
     ./system/zoxide.nix
 
+    ./dev/c.nix
+    ./dev/cpp.nix
+    ./dev/java.nix
+    ./dev/javascript.nix
+    ./dev/lua.nix
+    ./dev/nix.nix
+    ./dev/python.nix
+    ./dev/rust.nix
+    ./dev/typescript.nix
+
     ./app/nvim.nix
     ./app/qq.nix
     ./app/tmux.nix
+    ./app/vscode.nix
     ./app/wezterm.nix
   ];
 
