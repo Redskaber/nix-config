@@ -12,8 +12,13 @@
   ...
 }: {
 
-  programs.tmux = {
-    enable = true;
+  programs.tmux.enable = true;
+
+  # Used user config:
+  xdg.configFile."tmux" = {
+    source = inputs.tmux-config;   # abs path
+    recursive = true;              # rec-link
+    force = true;
   };
 }
 

@@ -25,13 +25,10 @@
     ./system/fish.nix
     ./system/zoxide.nix
 
-    ./app/mpv.nix
     ./app/nvim.nix
     ./app/qq.nix
     ./app/tmux.nix
-    ./app/wechat.nix
     ./app/wezterm.nix
-    ./app/steam.nix
   ];
 
   nixpkgs = {
@@ -85,8 +82,7 @@
     nerd-fonts.jetbrains-mono
     noto-fonts-color-emoji
     # social
-    qq wechat steam
-    mpv
+    # qq wechat mpv steam
   ];
 
   # home-manager:

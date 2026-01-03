@@ -39,6 +39,18 @@
       url = "github:/Redskaber/wezterm-config";
       flake = false;
     };
+
+    # Tmux-Config
+    tmux-config = {
+      url = "github:/Redskaber/tmux-config";
+      flake = false;
+    };
+
+    # Mpv-config
+    # mpv-config = {
+    #   url = "github:/Redskaber/mpv-config";
+    #   flake = false;
+    # };
   };
 
   outputs = {
