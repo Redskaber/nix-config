@@ -77,6 +77,10 @@
     # pass to it, with each system as an argument
     forAllSystems = nixpkgs.lib.genAttrs systems;
   in {
+    # debug information
+    # Available through 'nix eval .#debug.test_forAllSystems'
+    debug.test_forAllSystems = forAllSystems (system: "Hello from ${system}");
+
     # Your custom packages
     # Accessible through 'nix build', 'nix shell', etc
     packages = forAllSystems (system: import ./pkgs nixpkgs.legacyPackages.${system});
@@ -90,7 +94,47 @@
     # These are usually stuff you would upstream into home-manager
     homeManagerModules = import ./modules/home-manager;
 
+    # Your custom dev shells
+    # Available through ''
+    # devShells = forAllSystems (
+    #   system: import ./home-manager/dev {
+    #     pkgs = nixpkgs.legacyPackages.${system};
+    #     inherit inputs;
+    #   }
+    # );
+
+    # devShells."x86_64-linux".default = tpkgs.mkShell {
+    #   buildInputs = with tpkgs; [
+    #     cargo rustc rustfmt clippy rust-analyzer
+    #     # (explicit optional) depends
+    #     glib
+    #   ];
+    #   # (explicit optional) build depends packages config inject
+    #   nativeBuildInputs = [ tpkgs.pkg-config ];
+    #   env.RUST_SRC_PATH = "${tpkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+    # };
+
+    devShells = forAllSystems( system: {
+    default = let
+      pkgs = nixpkgs.legacyPackages.${system};
+    in
+      pkgs.mkShell {
+        buildInputs = with pkgs; [
+          cargo rustc rustfmt clippy rust-analyzer
+          # (explicit optional) depends
+          glib
+        ];
+        # (explicit optional) build depends packages config inject
+        nativeBuildInputs = [ pkgs.pkg-config ];
+        # env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+        shellHook = ''
+          export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
+        '';
+      };
+    });
+
     # Standalone home-manager configuration entrypoint
+    # First: through 'nix build .#homeConfigurations.your-username@hostname.activationPackage' && './result/activate'
     # Available through 'home-manager --flake .#your-username@your-hostname'
     homeConfigurations = {
       # FIXME replace with your username@hostname
