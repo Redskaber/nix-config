@@ -94,6 +94,8 @@
     noto-fonts-color-emoji
     # social
     # qq wechat mpv steam
+    # dev
+    # c/c++,rust,js/ts,python,lua,nix,...
   ];
 
   # home-manager:

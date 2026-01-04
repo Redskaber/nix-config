@@ -10,16 +10,25 @@
   config,
   pkgs,
   ...
-}: {
+}:
+let
+  vscode-no-sandbox = pkgs.writeShellScriptBin "code" ''
+    exec ${pkgs.vscode}/bin/code --no-sandbox "$@"
+  '';
+in {
 
-  programs.vscode.enable = true;
+  # programs.vscode.enable = true;
+
+  home.packages = [ vscode-no-sandbox ];
 
   # Used user config:
-  xdg.configFile."vscode" = {
+  xdg.configFile."Code/User" = {
     source = inputs.vscode-config; # abs path
     recursive = true;              # rec-link
     force = true;
   };
+
 }
+
 
 
