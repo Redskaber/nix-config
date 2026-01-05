@@ -25,21 +25,13 @@
     ./system/fish.nix
     ./system/zoxide.nix
 
-    ./dev/c.nix
-    ./dev/cpp.nix
-    ./dev/java.nix
-    ./dev/javascript.nix
-    ./dev/lua.nix
-    ./dev/nix.nix
-    ./dev/python.nix
-    ./dev/rust.nix
-    ./dev/typescript.nix
-
     ./app/nvim.nix
     ./app/qq.nix
     ./app/tmux.nix
     ./app/vscode.nix
     ./app/wezterm.nix
+
+    # devShells: import dev/lang.nix from flake.nix
   ];
 
   nixpkgs = {
@@ -78,7 +70,7 @@
   home.packages = with pkgs; [
     # network utils
     curl wget gnupg git
-    htop tree
+    bottom htop tree
     gdb valgrind strace ltrace
     # Terminal prompt shell
     # wezterm (wrapper)
