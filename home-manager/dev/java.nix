@@ -1,4 +1,4 @@
-# @path: ～/projects/nix-config/home-manager/dev/java.nix
+# @path: ~/projects/nix-config/home-manager/dev/java.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: Modern Java dev environment: JDK 21 + Maven/Gradle + JDT.LS
