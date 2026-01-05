@@ -80,10 +80,9 @@
     # Helper: load all dev modules for a system
     devShellsForSystem = system:
     let
+      pkgs = nixpkgs.legacyPackages.${system};
       suffix = ".nix";
       default = "default";
-
-      pkgs = nixpkgs.legacyPackages.${system};
       devDir = ./home-manager/dev;
       devFiles = builtins.attrNames (builtins.readDir devDir);
       nixFiles = builtins.filter (name: pkgs.lib.hasSuffix suffix name) devFiles;
@@ -92,10 +91,7 @@
       rawModules = pkgs.lib.genAttrs nixFiles (file:
         import "${devDir}/${file}" { inherit pkgs inputs; }
       );
-
-      # Normalize: ensure every module has at least 'default'
-      # Also extract just the 'default' shell for merging
-      # Rename keys and validate: lang.nix -> lang = { default = ...; }
+      # Normalize: lang.nix -> lang = { default = ...; }
       normalizedModules = pkgs.lib.mapAttrs' (fileName: mod:
       let
         lang = pkgs.lib.removeSuffix suffix fileName;
@@ -107,22 +103,14 @@
 
       # Extract the actual shell derivation for each language
       langShells = pkgs.lib.mapAttrs (lang: mod: mod.default) normalizedModules;
-
-      # Merge all defaults into one global shell
-      allDefaultShells = builtins.attrValues langShells;
-      mergedInputs = pkgs.lib.unique (pkgs.lib.concatLists (map (s: s.buildInputs or []) allDefaultShells));
-      mergedNative = pkgs.lib.unique (pkgs.lib.concatLists (map (s: s.nativeBuildInputs or []) allDefaultShells));
-      mergedHooks = pkgs.lib.concatStringsSep "\n" (map (s: s.shellHook or "") allDefaultShells);
-
+      # CORRECT WAY: Use inputsFrom to merge all attributes automatically
+      allDefaultDerivations = builtins.attrValues langShells;
       globalDefault = pkgs.mkShell {
-        buildInputs = mergedInputs;
-        nativeBuildInputs = mergedNative;
-        shellHook = mergedHooks;
+        inputsFrom = allDefaultDerivations;
+        # optional other handler
       };
 
-      # Final devShells for this system:
-      # - Each language is available by name (e.g., rust, python)
-      # - Plus a 'default' that merges all
+      # Expose individual shells + golbal default
     in langShells // { default = globalDefault; };
   in {
     # debug information
