@@ -76,6 +76,54 @@
     # This is a function that generates an attribute by calling a function you
     # pass to it, with each system as an argument
     forAllSystems = nixpkgs.lib.genAttrs systems;
+
+    # Helper: load all dev modules for a system
+    devShellsForSystem = system:
+    let
+      suffix = ".nix";
+      default = "default";
+
+      pkgs = nixpkgs.legacyPackages.${system};
+      devDir = ./home-manager/dev;
+      devFiles = builtins.attrNames (builtins.readDir devDir);
+      nixFiles = builtins.filter (name: pkgs.lib.hasSuffix suffix name) devFiles;
+
+      # Load each raw dev module: e.g., rust.nix -> { default = ...; }
+      rawModules = pkgs.lib.genAttrs nixFiles (file:
+        import "${devDir}/${file}" { inherit pkgs inputs; }
+      );
+
+      # Normalize: ensure every module has at least 'default'
+      # Also extract just the 'default' shell for merging
+      # Rename keys and validate: lang.nix -> lang = { default = ...; }
+      normalizedModules = pkgs.lib.mapAttrs' (fileName: mod:
+      let
+        lang = pkgs.lib.removeSuffix suffix fileName;
+      in
+        if pkgs.lib.isAttrs mod && pkgs.lib.hasAttr default mod
+        then pkgs.lib.nameValuePair lang mod
+        else throw "Module ${fileName} does not export a 'default' attribute"
+      ) rawModules;
+
+      # Extract the actual shell derivation for each language
+      langShells = pkgs.lib.mapAttrs (lang: mod: mod.default) normalizedModules;
+
+      # Merge all defaults into one global shell
+      allDefaultShells = builtins.attrValues langShells;
+      mergedInputs = pkgs.lib.unique (pkgs.lib.concatLists (map (s: s.buildInputs or []) allDefaultShells));
+      mergedNative = pkgs.lib.unique (pkgs.lib.concatLists (map (s: s.nativeBuildInputs or []) allDefaultShells));
+      mergedHooks = pkgs.lib.concatStringsSep "\n" (map (s: s.shellHook or "") allDefaultShells);
+
+      globalDefault = pkgs.mkShell {
+        buildInputs = mergedInputs;
+        nativeBuildInputs = mergedNative;
+        shellHook = mergedHooks;
+      };
+
+      # Final devShells for this system:
+      # - Each language is available by name (e.g., rust, python)
+      # - Plus a 'default' that merges all
+    in langShells // { default = globalDefault; };
   in {
     # debug information
     # Available through 'nix eval .#debug.test_forAllSystems'
@@ -95,43 +143,26 @@
     homeManagerModules = import ./modules/home-manager;
 
     # Your custom dev shells
-    # Available through ''
-    # devShells = forAllSystems (
-    #   system: import ./home-manager/dev {
-    #     pkgs = nixpkgs.legacyPackages.${system};
-    #     inherit inputs;
-    #   }
-    # );
-
-    # devShells."x86_64-linux".default = tpkgs.mkShell {
-    #   buildInputs = with tpkgs; [
-    #     cargo rustc rustfmt clippy rust-analyzer
-    #     # (explicit optional) depends
-    #     glib
-    #   ];
-    #   # (explicit optional) build depends packages config inject
-    #   nativeBuildInputs = [ tpkgs.pkg-config ];
-    #   env.RUST_SRC_PATH = "${tpkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-    # };
-
-    devShells = forAllSystems( system: {
-    default = let
-      pkgs = nixpkgs.legacyPackages.${system};
-    in
-      pkgs.mkShell {
-        buildInputs = with pkgs; [
-          cargo rustc rustfmt clippy rust-analyzer
-          # (explicit optional) depends
-          glib
-        ];
-        # (explicit optional) build depends packages config inject
-        nativeBuildInputs = [ pkgs.pkg-config ];
-        # env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-        shellHook = ''
-          export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
-        '';
-      };
-    });
+    # devShells = forAllSystems( system: {
+    # default = let
+    #   pkgs = nixpkgs.legacyPackages.${system};
+    # in
+    #   pkgs.mkShell {
+    #     buildInputs = with pkgs; [
+    #       cargo rustc rustfmt clippy rust-analyzer
+    #       # (explicit optional) depends
+    #       glib
+    #     ];
+    #     # (explicit optional) build depends packages config inject
+    #     nativeBuildInputs = [ pkgs.pkg-config ];
+    #     # env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
+    #     shellHook = ''
+    #       export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
+    #     '';
+    #   };
+    # });
+    # devShells loader
+    devShells = forAllSystems devShellsForSystem;
 
     # Standalone home-manager configuration entrypoint
     # First: through 'nix build .#homeConfigurations.your-username@hostname.activationPackage' && './result/activate'

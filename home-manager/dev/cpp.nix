@@ -3,16 +3,8 @@
 # @datetime: 2025-12-12
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
+{ pkgs, inputs, ... }: {
+  default = pkgs.mkShell {
 
-  home.packages = with pkgs; [
-
-  ];
-
+  };
 }
