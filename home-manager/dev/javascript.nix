@@ -4,8 +4,10 @@
 # @desciption: Modern JS/TS dev env: Node.js 24 + Biome + LSP
 
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, common, ... }: {
   default = pkgs.mkShell {
+    inputsFrom = [ common ];
+
     buildInputs = with pkgs; [
       nodejs_24               # LTS-ish (Node 24 is current active release)
       yarn                    # Yarn Classic or Berry

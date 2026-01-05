@@ -4,8 +4,10 @@
 # @description: Modern, fast C development environment with clangd + bear
 
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, common, ... }: {
   default = pkgs.mkShell {
+    inputsFrom = [ common ];
+
     buildInputs = with pkgs; [
       gcc                 # GNU toolchain (fallback or specific needs)
       clang               # Primary C compiler (recommended)

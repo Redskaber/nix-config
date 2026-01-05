@@ -4,8 +4,10 @@
 # @description: Modern C++ dev environment: clang + clangd + build tools
 
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, common, ... }: {
   default = pkgs.mkShell {
+    inputsFrom = [ common ];
+
     buildInputs = with pkgs; [
       gcc                 # GNU toolchain (fallback)
       clang               # Primary C/C++ compiler

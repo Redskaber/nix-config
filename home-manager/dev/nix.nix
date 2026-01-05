@@ -4,8 +4,10 @@
 # @description: Modern Nix development environment — aligned with RFC 109 and community best practices
 
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, common, ... }: {
   default = pkgs.mkShell {
+    inputsFrom = [ common ];
+
     buildInputs = with pkgs; [
       nix                        # Core runtime (with flakes, experimental features)
       nixfmt-rfc-style           # Formatter(RFC 109): Officially endorsed formatter

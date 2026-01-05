@@ -3,8 +3,10 @@
 # @datetime: 2025-12-12
 # Focused TypeScript dev environment: tsc + LSP + runtime
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, common, ... }: {
   default = pkgs.mkShell {
+    inputsFrom = [ common ];
+
     buildInputs = with pkgs; [
       nodejs_24                     # Runtime (includes npm)
       pnpm                          # Recommended package manager

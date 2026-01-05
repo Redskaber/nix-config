@@ -4,8 +4,10 @@
 # @description: Modern Java dev environment: JDK 21 + Maven/Gradle + JDT.LS
 
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, common, ... }: {
   default = pkgs.mkShell {
+    inputsFrom = [ common ];
+
     buildInputs = with pkgs; [
       temurin-bin-21      # Eclipse Temurin JDK 21 (LTS, OpenJDK)
       maven               # Build tool

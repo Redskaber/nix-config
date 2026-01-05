@@ -5,8 +5,10 @@
 # Fully offline-capable and suitable for flakes-based workflows.
 
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, common, ... }: {
   default = pkgs.mkShell {
+    inputsFrom = [ common ];
+
     # Core Rust toolchain (stable, from nixpkgs)
     buildInputs = with pkgs; [
       rustc                # Rust compiler

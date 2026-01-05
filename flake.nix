@@ -82,28 +82,38 @@
     let
       pkgs = nixpkgs.legacyPackages.${system};
       suffix = ".nix";
-      default = "default";
       devDir = ./home-manager/dev;
-      devFiles = builtins.attrNames (builtins.readDir devDir);
-      nixFiles = builtins.filter (name: pkgs.lib.hasSuffix suffix name) devFiles;
 
-      # Load each raw dev module: e.g., rust.nix -> { default = ...; }
-      rawModules = pkgs.lib.genAttrs nixFiles (file:
-        import "${devDir}/${file}" { inherit pkgs inputs; }
+      # Load common module
+      commonModule = import "${devDir}/_common.nix" { inherit pkgs inputs; };
+      commonShell = commonModule.default;
+
+      # List and filter dev files
+      allFiles = builtins.attrNames (builtins.readDir devDir);
+      langFiles = builtins.filter (name:
+        pkgs.lib.hasSuffix suffix name && !pkgs.lib.hasPrefix "_" name
+      ) allFiles;
+
+      # Build attrset: "c.nix" -> { name = "c"; value = shell }
+      rawShells = pkgs.lib.genAttrs langFiles (file:
+        let
+          langName = pkgs.lib.removeSuffix suffix file;
+          mod = import "${devDir}/${file}" {
+            inherit pkgs inputs;
+            common=commonShell;
+          };
+        in
+          if pkgs.lib.isAttrs mod && pkgs.lib.hasAttr "default" mod
+          then { inherit langName; shell = mod.default; }
+          else throw "Module ${file} does not export a 'default' attribute"
       );
-      # Normalize: lang.nix -> lang = { default = ...; }
-      normalizedModules = pkgs.lib.mapAttrs' (fileName: mod:
-      let
-        lang = pkgs.lib.removeSuffix suffix fileName;
-      in
-        if pkgs.lib.isAttrs mod && pkgs.lib.hasAttr default mod
-        then pkgs.lib.nameValuePair lang mod
-        else throw "Module ${fileName} does not export a 'default' attribute"
-      ) rawModules;
 
-      # Extract the actual shell derivation for each language
-      langShells = pkgs.lib.mapAttrs (lang: mod: mod.default) normalizedModules;
-      # CORRECT WAY: Use inputsFrom to merge all attributes automatically
+      # Convert to final attrset: { c = shell; rust = shell; ... }
+      langShells = pkgs.lib.mapAttrs' (file: { langName, shell }:
+        pkgs.lib.nameValuePair langName shell
+      ) rawShells;
+
+      # Global default shell: merge all language shells' inputs
       allDefaultDerivations = builtins.attrValues langShells;
       globalDefault = pkgs.mkShell {
         inputsFrom = allDefaultDerivations;
