@@ -19,7 +19,7 @@
       };
       user = {
         name = "redskaber";
-	email = "redskaber@foxmail.com";
+	      email = "redskaber@foxmail.com";
       };
       core.editor = "nvim";
       pull.rebase = true;
@@ -35,8 +35,8 @@
 
 
 
-    
-    
-    
-    
+
+
+
+
 

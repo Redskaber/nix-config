@@ -4,7 +4,7 @@
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 
 {
-  description = "Kilig's declarative development environment";
+  description = "Kilig(Redskaber)'s declarative development environment";
 
   inputs = {
     # Nixpkgs (url version)
@@ -23,40 +23,29 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # Neovim Config
-    nvim-config = {
-      url = "github:Redskaber/nvim-config";
-      flake = false;
-    };
+    nvim-config.url = "github:Redskaber/nvim-config";
+    nvim-config.flake = false;
 
     # Starship Config
-    starship-config = {
-      url = "github:Redskaber/starship-config";
-      flake = false;
-    };
+    starship-config.url = "github:Redskaber/starship-config";
+    starship-config.flake = false;
 
     # Wezterm Config
-    wezterm-config = {
-      url = "github:Redskaber/wezterm-config";
-      flake = false;
-    };
+    wezterm-config.url = "github:Redskaber/wezterm-config";
+    wezterm-config.flake = false;
 
     # Tmux-Config
-    tmux-config = {
-      url = "github:Redskaber/tmux-config";
-      flake = false;
-    };
+    tmux-config.url = "github:Redskaber/tmux-config";
+    tmux-config.flake = false;
 
     # Mpv-config
-    # mpv-config = {
-    #   url = "github:Redskaber/mpv-config";
-    #   flake = false;
-    # };
+    # mpv-config.url = "github:Redskaber/mpv-config";
+    # mpv-config.flake = false;
 
     # Vscode-config
-    vscode-config = {
-      url = "github:Redskaber/vscode-config";
-      flake = false;
-    };
+    vscode-config.url = "github:Redskaber/vscode-config";
+    vscode-config.flake = false;
+
   };
 
   outputs = {
