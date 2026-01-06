@@ -2,6 +2,7 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: Utility to generate per-language dev shells from a directory
+# @TODO: extend mkShell Hook.(preInputsHook, postInputsHook, preShellHook)
 
 
 { pkgs, inputs, suffix, devDir, commonModule ? null, ... }:
@@ -41,7 +42,13 @@
     allDefaultDerivations = builtins.attrValues langShells;
     globalDefault = pkgs.mkShell {
       inputsFrom = allDefaultDerivations;
+
       # optional other handler
+      # buildInputs = with pkgs; [];
+      # nativeBuildInputs = with pkgs; [];
+      # shellHooks = ''
+      # Optional: global default devShells env
+      # '';
     };
 
   in

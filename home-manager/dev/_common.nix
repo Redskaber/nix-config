@@ -10,12 +10,12 @@
     nativeBuildInputs = with pkgs; [];
     shellHook = ''
       # auto inner env
-      if [ -z "$__NIX_DEV_SHELL_SPAWNED" ]; then
+      # if [ -z "$__NIX_DEV_SHELL_SPAWNED" ]; then
         # Nix devshell flag
-        export __NIX_DEV_SHELL_SPAWNED=1
+        # export __NIX_DEV_SHELL_SPAWNED=1
         # exec ${pkgs.zsh}/bin/zsh -l
-        exec ${pkgs.fish}/bin/fish
-      fi
+        # exec ${pkgs.fish}/bin/fish
+      # fi
     '';
   };
 }
