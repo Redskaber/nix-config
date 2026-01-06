@@ -3,9 +3,10 @@
 # @datetime: 2025-12-12
 # Focused TypeScript dev environment: tsc + LSP + runtime
 
-{ pkgs, inputs, common, ... }: {
-  default = pkgs.mkShell {
-    inputsFrom = [ common ];
+
+{ pkgs, inputs, common, mkDevShell, ... }: {
+  default = mkDevShell {
+    inheritFrom = [ common ];
 
     buildInputs = with pkgs; [
       nodejs_24                     # Runtime (includes npm)
@@ -22,7 +23,7 @@
       # vitest                      # Next-gen test runner with first-class TS support
     ];
 
-    shellHook = ''
+    postInputsHook = ''
       export NODE_OPTIONS="--no-warnings"
 
       # Verify toolchain

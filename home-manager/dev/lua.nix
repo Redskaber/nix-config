@@ -9,9 +9,9 @@
 #       Neovim plugin development and general scripting.
 
 
-{ pkgs, inputs, common, ... }: {
-  default = pkgs.mkShell {
-    inputsFrom = [ common ];
+{ pkgs, inputs, common, mkDevShell, ... }: {
+  default = mkDevShell {
+    inheritFrom = [ common ];
 
     buildInputs = with pkgs; [
       lua54Packages.lua     # Standard Lua 5.4 (for general scripting)
@@ -25,7 +25,7 @@
       # pkg-config          # Only needed if building C-based Lua modules
     ];
 
-    shellHook = ''
+    postInputsHook = ''
       # Set up Lua paths for lua54
       export LUA_PATH="./?.lua;${pkgs.lua54Packages.lua}/share/lua/5.4/?.lua;;"
       export LUA_CPATH="./?.so;${pkgs.lua54Packages.lua}/lib/lua/5.4/?.so;;"

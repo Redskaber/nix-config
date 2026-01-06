@@ -4,9 +4,9 @@
 # @description: Modern, fast C development environment with clangd + bear
 
 
-{ pkgs, inputs, common, ... }: {
-  default = pkgs.mkShell {
-    inputsFrom = [ common ];
+{ pkgs, inputs, common, mkDevShell, ... }: {
+  default = mkDevShell {
+    inheritFrom = [ common ];
 
     buildInputs = with pkgs; [
       gcc                 # GNU toolchain (fallback or specific needs)
@@ -22,14 +22,24 @@
       meson
       ninja
     ];
-
-    shellHook = ''
+    preInputsHook = ''
+      echo "[preInputsHook]: c hell!"
+    '';
+    postInputsHook = ''
       # Use Clang as default C compiler (modern, better diagnostics)
       export CC=${pkgs.clang}/bin/clang
 
       # Optional: if you ever compile C++ in this env
       # export CXX=${pkgs.clang}/bin/clang++
       # echo "C dev env ready: CC=clang, LSP=clangd"
+      echo "[postInputsHook]: c shell!"
+    '';
+
+    preShellHook = ''
+      echo "[preShellHook]: c shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: c shell!"
     '';
   };
 }

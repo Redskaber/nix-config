@@ -7,6 +7,8 @@
 
 { pkgs, inputs, suffix, devDir, commonModule ? null, ... }:
   let
+    inherit (import ./mk-dev-shell.nix { inherit pkgs; }) mkDevShell;
+
     # List and filter dev files
     allFiles = builtins.attrNames (builtins.readDir devDir);
     langFiles = builtins.filter (name:
@@ -16,7 +18,7 @@
     # Load common shell if provided
     commonShell =
       if commonModule != null
-      then (import commonModule { inherit pkgs inputs; }).default
+      then (import commonModule { inherit pkgs inputs mkDevShell; }).default
       else pkgs.mkShell {};
 
     # Build attrset: "c.nix" -> { name = "c"; value = shell }
@@ -26,6 +28,7 @@
         mod = import "${devDir}/${file}" {
           inherit pkgs inputs;
           common=commonShell;
+          mkDevShell = mkDevShell;
         };
       in
         if pkgs.lib.isAttrs mod && pkgs.lib.hasAttr "default" mod
@@ -40,12 +43,14 @@
 
     # Global default shell: merge all language shells' inputs
     allDefaultDerivations = builtins.attrValues langShells;
-    globalDefault = pkgs.mkShell {
-      inputsFrom = allDefaultDerivations;
+    globalDefault = mkDevShell {
+      inheritFrom = allDefaultDerivations;
 
       # optional other handler
       # buildInputs = with pkgs; [];
       # nativeBuildInputs = with pkgs; [];
+      #
+      # (Deprecated) -> used (Hook system)
       # shellHooks = ''
       # Optional: global default devShells env
       # '';

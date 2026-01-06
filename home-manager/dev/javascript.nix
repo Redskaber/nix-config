@@ -4,9 +4,9 @@
 # @desciption: Modern JS/TS dev env: Node.js 24 + Biome + LSP
 
 
-{ pkgs, inputs, common, ... }: {
-  default = pkgs.mkShell {
-    inputsFrom = [ common ];
+{ pkgs, inputs, common, mkDevShell, ... }: {
+  default = mkDevShell {
+    inheritFrom = [ common ];
 
     buildInputs = with pkgs; [
       nodejs_24               # LTS-ish (Node 24 is current active release)
@@ -23,7 +23,7 @@
       # prettier
     ];
 
-    shellHook = ''
+    postInputsHook = ''
       # Suppress Node.js experimental warnings (e.g., from ESM loaders)
       export NODE_OPTIONS="--no-warnings"
 

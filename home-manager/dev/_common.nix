@@ -4,18 +4,21 @@
 # @description: all dev shell base env
 
 
-{ pkgs, inputs, ... }: {
-  default = pkgs.mkShell {
+{ pkgs, inputs, mkDevShell, ... }: {
+  default = mkDevShell {
     buildInputs = with pkgs; [];
     nativeBuildInputs = with pkgs; [];
-    shellHook = ''
-      # auto inner env
-      # if [ -z "$__NIX_DEV_SHELL_SPAWNED" ]; then
-        # Nix devshell flag
-        # export __NIX_DEV_SHELL_SPAWNED=1
-        # exec ${pkgs.zsh}/bin/zsh -l
-        # exec ${pkgs.fish}/bin/fish
-      # fi
+    preInputsHook = ''
+      echo "[preInputsHook]: _common shell!"
+    '';
+    postInputsHook = ''
+      echo "[postInputsHook]: _common shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: _common shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: _common shell!"
     '';
   };
 }

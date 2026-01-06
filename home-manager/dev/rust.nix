@@ -5,9 +5,9 @@
 # Fully offline-capable and suitable for flakes-based workflows.
 
 
-{ pkgs, inputs, common, ... }: {
-  default = pkgs.mkShell {
-    inputsFrom = [ common ];
+{ pkgs, inputs, common, mkDevShell, ... }: {
+  default = mkDevShell {
+    inheritFrom = [ common ];
 
     # Core Rust toolchain (stable, from nixpkgs)
     buildInputs = with pkgs; [
@@ -30,7 +30,7 @@
 
     # Required for rust-analyzer to provide stdlib navigation and hover docs
     # env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-    shellHook = ''
+    postInputsHook = ''
       export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
     '';
   };

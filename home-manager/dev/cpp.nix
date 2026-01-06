@@ -4,9 +4,9 @@
 # @description: Modern C++ dev environment: clang + clangd + build tools
 
 
-{ pkgs, inputs, common, ... }: {
-  default = pkgs.mkShell {
-    inputsFrom = [ common ];
+{ pkgs, inputs, common, mkDevShell, ... }: {
+  default = mkDevShell {
+    inheritFrom = [ common ];
 
     buildInputs = with pkgs; [
       gcc                 # GNU toolchain (fallback)
@@ -32,7 +32,10 @@
       ninja
     ];
 
-    shellHook = ''
+    preInputsHook = ''
+      echo "[preInputsHook]: cpp shell!"
+    '';
+    postInputsHook = ''
       # Use Clang as default compiler (better diagnostics & LSP sync)
       export CC=${pkgs.clang}/bin/clang
       export CXX=${pkgs.clang}/bin/clang++
@@ -40,6 +43,13 @@
       # Optional: set standard (e.g., C++20)
       # export CXXFLAGS="-std=c++20 -Wall -Wextra"
       # echo "C++ dev env ready: compiler=clang++, LSP=clangd"
+      echo "[postInputsHook]: cpp shell!"
+    '';
+     preShellHook = ''
+      echo "[preShellHook]: cpp shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: cpp shell!"
     '';
   };
 }
