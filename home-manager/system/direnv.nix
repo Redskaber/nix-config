@@ -16,10 +16,10 @@
     enable = true;
     enableBashIntegration = true;
     enableZshIntegration = true;
-    enableFishIntegration = true;
-    config = {};
+    # enableFishIntegration = true;
+    # config = {};
     nix-direnv.enable = true;
-
+    # stdlib = "# Managed by Home Manager - enables nix-direnv";
   };
 }
 
