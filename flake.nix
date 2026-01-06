@@ -66,6 +66,7 @@
     # pass to it, with each system as an argument
     forAllSystems = nixpkgs.lib.genAttrs systems;
 
+    # TODO: Need Hooks System ?
     # Helper: load all dev modules for a system
     devShellsForSystem = system:
     let
@@ -117,6 +118,7 @@
     # devShells loader
     devShells = forAllSystems devShellsForSystem;
 
+    # TODO: function handler homeConfigurations, dynamic generates etc.
     # Standalone home-manager configuration entrypoint
     # First: through 'nix build .#homeConfigurations.your-username@hostname.activationPackage' && './result/activate'
     # Available through 'home-manager --flake .#your-username@your-hostname'
