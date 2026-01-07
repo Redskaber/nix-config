@@ -4,8 +4,8 @@
 # @desciption: Modern JS/TS dev env: Node.js 24 + Biome + LSP
 
 
-{ pkgs, inputs, dev, mkDevShell, ... }: {
-  default = mkDevShell {
+{ pkgs, inputs, dev, ... }: {
+  default = {
 
     buildInputs = with pkgs; [
       nodejs_24               # LTS-ish (Node 24 is current active release)

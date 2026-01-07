@@ -74,8 +74,8 @@
     in
       import ./lib/dev-shells.nix {
         inherit pkgs inputs;
-        suffix = ".nix";
         devDir = ./home-manager/dev;
+        suffix = ".nix";
       };
   in {
     # debug information

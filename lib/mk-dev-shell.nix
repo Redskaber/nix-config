@@ -11,8 +11,8 @@
     name ? "dev-shell",
     buildInputs ? [],
     nativeBuildInputs ? [],
-    # New: support inputsFrom for full composition
-    inheritFrom ? [],
+    # combin: combin From is now a list of CONFIG attrsets!
+    combinFrom ? [],
     # Hook strings
     preInputsHook ? "",
     postInputsHook ? "",
@@ -27,54 +27,65 @@
     ...
   } @ args:
   let
-    # === Deduplicate inheritFrom by outPath ===
-    # Filter out nulls and ensure each drv has an outPath
-    validInheritFrom = builtins.filter (drv:
-      drv != null && (builtins.hasAttr "outPath" drv)
-    ) inheritFrom;
-    # Use outPath as key for deduplication
-    dedupedDrvMap = pkgs.lib.listToAttrs (
-      map (drv: {
-        name = builtins.hashString "sha256" drv.outPath;
-        value = drv;
-      }) validInheritFrom
-    );
-    dedupedInheritFrom = builtins.attrValues dedupedDrvMap;
 
-    # === Extract from inputsFrom ===
-    # We assume each item in inputsFrom is a derivation created by mkShell or mkDevShell
-    # and may contain: buildInputs, nativeBuildInputs, shellHook
-    extracted = map (drv:
-      let
-        attrs = drv.drvAttrs or {};
-        bi = attrs.buildInputs or [];
-        nbi = attrs.nativeBuildInputs or [];
-        sh = attrs.shellHook or "";
-      in {
-        buildInputs = bi;
-        nativeBuildInputs = nbi;
-        shellHook = sh;
+    # === Smart resolve combinFrom entries ===
+    resolvedCombinFrom = map (rawCfg:
+      if pkgs.lib.isAttrs rawCfg then
+        if builtins.hasAttr "default" rawCfg then
+          # It's an attrset like { default = ..., full = ... } → use .default
+          rawCfg.default
+        else if builtins.hasAttr "buildInputs" rawCfg || builtins.hasAttr "shellHook" rawCfg then
+          # It's already a config attrset (e.g. { buildInputs = ... })
+          rawCfg
+        else
+          throw "combinFrom entry is an attrset but has no 'default' and no shell config keys: ${toString (builtins.attrNames rawCfg)}"
+      else
+        throw "combinFrom entry must be an attrset (config or lang group), got: ${toString (builtins.typeOf rawCfg)}"
+    ) combinFrom;
+
+    # Now extract from resolvedCombinFrom (each item is a config attrset)
+    extracted = map (cfg: {
+        buildInputs = cfg.buildInputs or [];
+        nativeBuildInputs = cfg.nativeBuildInputs or [];
+        shellHook = cfg.shellHook or "";
+        # Hook: extract custom hooks
+        preInputsHook = cfg.preInputsHook or "";
+        postInputsHook = cfg.postInputsHook or "";
+        preShellHook = cfg.preShellHook or "";
+        postShellHook = cfg.postShellHook or "";
       }
-    ) dedupedInheritFrom;
-    mergedBuildInputs = buildInputs ++ (pkgs.lib.concatMap (x: x.buildInputs) extracted);
-    mergedNativeBuildInputs = nativeBuildInputs ++ (pkgs.lib.concatMap (x: x.nativeBuildInputs) extracted);
-    mergedShellHooks = pkgs.lib.concatStringsSep "\n" (map (x: x.shellHook) extracted);
+    ) resolvedCombinFrom;
+    mergedBuildInputs = buildInputs ++ (
+      pkgs.lib.concatMap (x: x.buildInputs)
+      extracted
+    );
+    mergedNativeBuildInputs = nativeBuildInputs ++ (
+      pkgs.lib.concatMap (x: x.nativeBuildInputs)
+      extracted
+    );
 
+    # hooks
+    inheritedPreInputs  = pkgs.lib.concatStringsSep "\n" (map (x: x.preInputsHook) extracted);
+    inheritedPostInputs = pkgs.lib.concatStringsSep "\n" (map (x: x.postInputsHook) extracted);
+    inheritedPreShell   = pkgs.lib.concatStringsSep "\n" (map (x: x.preShellHook) extracted);
+    inheritedPostShell  = pkgs.lib.concatStringsSep "\n" (map (x: x.postShellHook) extracted);
+    inheritedShellHook  = pkgs.lib.concatStringsSep "\n" (map (x: x.shellHook) extracted);
     # execute hook functions
     callFn = fn:
       if fn != null
       then fn { inherit pkgs; }
       else "";
     # call hook functions
-    finalPreInputs = preInputsHook  + (callFn preInputsHookFn);
-    finalPostInputs= postInputsHook + (callFn postInputsHookFn);
-    finalPreShell  = preShellHook   + (callFn preShellHookFn);
-    finalPostShell = postShellHook  + (callFn postShellHookFn);
+    finalPreInputs  = inheritedPreInputs  + "\n" + preInputsHook  + "\n" + (callFn preInputsHookFn);
+    finalPostInputs = inheritedPostInputs + "\n" + postInputsHook + "\n" + (callFn postInputsHookFn);
+    finalPreShell   = inheritedPreShell   + "\n" + preShellHook   + "\n" + (callFn preShellHookFn);
+    finalPostShell  = inheritedPostShell  + "\n" + postShellHook  + "\n" + (callFn postShellHookFn);
+
     # concat string sep
     fullShellHook = pkgs.lib.concatStringsSep "\n" (
       pkgs.lib.filter (line: line != "") [
-        "# === Inherited shell hooks ==="
-        mergedShellHooks
+        "# === Inherited shellHook ==="
+        inheritedShellHook
         "# === Own pre-inputs hook ==="
         finalPreInputs
         "# === Own post-inputs hook ==="
@@ -85,9 +96,9 @@
         finalPostShell
       ]
     );
-    # builder final make shell parameters
+   # builder final make shell parameters
     mkShellArgs = (builtins.removeAttrs args [
-      "inheritFrom"
+      "combinFrom"
       "preInputsHook" "postInputsHook" "preShellHook" "postShellHook"
       "preInputsHookFn" "postInputsHookFn" "preShellHookFn" "postShellHookFn"
     ]) // {

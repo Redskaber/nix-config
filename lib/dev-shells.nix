@@ -2,55 +2,84 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: Utility to generate per-language dev shells from a directory
+# @Supports: nix develop .#<system>.<lang>.<variant>
 # @TODO: extend mkShell Hook.(preInputsHook, postInputsHook, preShellHook)
 
 
-{ pkgs, inputs, suffix, devDir, ... }:
+{ pkgs, inputs, devDir, suffix ? ".nix", ... }:
   let
     inherit (import ./mk-dev-shell.nix { inherit pkgs; }) mkDevShell;
 
     # List and filter dev files
     allFiles = builtins.attrNames (builtins.readDir devDir);
     langFiles = builtins.filter (name:
-      pkgs.lib.hasSuffix suffix name && !pkgs.lib.hasPrefix "_" name
+      pkgs.lib.hasSuffix suffix name &&
+      !pkgs.lib.hasPrefix "_" name &&
+      name != "default.nix"
     ) allFiles;
 
-    # Build attrset: "c.nix" -> { name = "c"; value = shell }
-    rawShells = pkgs.lib.genAttrs langFiles (file:
+    # Step 1: Load each lang file → returns attrset like { default = ..., full = ... }
+    langConfigsRaw = pkgs.lib.genAttrs langFiles (file:
       let
-        langName = pkgs.lib.removeSuffix suffix file;
         mod = import "${devDir}/${file}" {
           inherit pkgs inputs;
           dev = devDir;
-          mkDevShell = mkDevShell;
         };
       in
-        if pkgs.lib.isAttrs mod && pkgs.lib.hasAttr "default" mod
-        then { inherit langName; shell = mod.default; }
-        else throw "Module ${file} does not export a 'default' attribute"
+        if pkgs.lib.isAttrs mod
+          then mod
+        else throw "Module ${file} must return an attrset"
     );
 
-    # Convert to final attrset: { c = shell; rust = shell; ... }
-    langShells = pkgs.lib.mapAttrs' (file: { langName, shell }:
-      pkgs.lib.nameValuePair langName shell
-    ) rawShells;
+    # Step 2: Rename keys: "python.nix" → "python"
+    langConfigs = pkgs.lib.mapAttrs' (file:
+      value: pkgs.lib.nameValuePair (
+        pkgs.lib.removeSuffix suffix file
+      ) value
+    ) langConfigsRaw;
 
-    # === Load explicit default.nix if it exists ===
+    # Step 3: Convert each lang.<variant> into a real shell drv
+    langShells = pkgs.lib.mapAttrs (langName:
+      variants: pkgs.lib.mapAttrs (variantName:
+        cfg: mkDevShell (
+          cfg // {
+            name = "dev-shell-${langName}-${variantName}";
+          }
+        )
+      ) variants
+    ) langConfigs;
+
+    # Step 4: Handle top-level default.nix (if exists)
     hasDefault = builtins.pathExists "${devDir}/default.nix";
-    explicitDefault =
+    topLevelShells =
       if hasDefault
-      then (import "${devDir}/default.nix" {
-        inherit pkgs inputs devDir mkDevShell;
-        # Pass the individual shells so default.nix can reference them
-        dev = langShells;
-      }).default
+        then let
+          mod = import "${devDir}/default.nix" {
+            inherit pkgs inputs;
+            # Pass the individual shells so default.nix can reference them
+            dev = langConfigs;
+          };
+          # Assume default.nix returns { default = { ... }, minimal = { ... } }
+          shells = pkgs.lib.mapAttrs (name:
+            cfg: mkDevShell (
+              cfg // { name = "dev-shell-top-${name}"; }
+            )
+          ) mod;
+        in shells
       else
         # Optional: fallback to auto-merge (or throw error)
         throw "No default.nix found in ${devDir}, and no fallback defined.";
-
   in
-    # Expose individual shells + golbal default
-    langShells // { default = explicitDefault; }
-
+    # Merge everything
+    let
+      # Create aliases: python -> python.default, etc.
+      langAliases = pkgs.lib.mapAttrs (_shell:
+        variants:
+          if builtins.hasAttr "default" variants
+            then variants.default
+          else throw "No 'default' variant found!"
+      ) langShells;
+    in
+      topLevelShells // langShells // langAliases
 
 

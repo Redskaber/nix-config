@@ -4,8 +4,8 @@
 # Focused TypeScript dev environment: tsc + LSP + runtime
 
 
-{ pkgs, inputs, dev, mkDevShell, ... }: {
-  default = mkDevShell {
+{ pkgs, inputs, dev, ... }: {
+  default = {
 
     buildInputs = with pkgs; [
       nodejs_24                     # Runtime (includes npm)

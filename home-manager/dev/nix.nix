@@ -4,8 +4,8 @@
 # @description: Modern Nix development environment — aligned with RFC 109 and community best practices
 
 
-{ pkgs, inputs, dev, mkDevShell, ... }: {
-  default = mkDevShell {
+{ pkgs, inputs, dev, ... }: {
+  default = {
 
     buildInputs = with pkgs; [
       nix                        # Core runtime (with flakes, experimental features)

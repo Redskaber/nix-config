@@ -4,8 +4,8 @@
 # @description: Modern, fast, and minimal Python dev environment using uv + ruff
 
 
-{ pkgs, inputs, dev, mkDevShell, ... }: {
-  default = mkDevShell {
+{ pkgs, inputs, dev, ... }: {
+  default = {
 
     # Core runtime & tools
     buildInputs = with pkgs; [

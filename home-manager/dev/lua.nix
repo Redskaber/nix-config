@@ -9,8 +9,8 @@
 #       Neovim plugin development and general scripting.
 
 
-{ pkgs, inputs, dev, mkDevShell, ... }: {
-  default = mkDevShell {
+{ pkgs, inputs, dev, ... }: {
+  default = {
 
     buildInputs = with pkgs; [
       lua54Packages.lua     # Standard Lua 5.4 (for general scripting)
