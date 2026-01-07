@@ -36,6 +36,7 @@
       export UV_PYTHON=${pkgs.python312}/bin/python
       # Cache path
       export UV_CACHE_DIR="$PWD/.uv/cache"
+      echo "uv_cache_dir: " $UV_CACHE_DIR
 
       # Optional: alias for convenience (uncomment if desired)
       # alias python=python3
