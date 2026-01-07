@@ -31,6 +31,8 @@
     ./app/vscode.nix
     ./app/wezterm.nix
 
+    ./wm/niri.nix
+
     # devShells: import dev/lang.nix from flake.nix
   ];
 

@@ -44,7 +44,7 @@
     # Global default shell: merge all language shells' inputs
     allDefaultDerivations = builtins.attrValues langShells;
     globalDefault = mkDevShell {
-      inheritFrom = allDefaultDerivations;
+      inputsFrom = allDefaultDerivations;
 
       # optional other handler
       # buildInputs = with pkgs; [];
