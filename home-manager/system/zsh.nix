@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml#opt-programs.zsh.enable
-# @depends: eza, zoxide
+# @depends: eza, zoxide, direnv
 
 {
   inputs,
@@ -32,6 +32,7 @@ in {
       vi = "nvim";
       ".." = "cd ..";
       "..." = "cd ../..";
+      "nde" =  "nvim ./.envrc";
     };
 
     history = {

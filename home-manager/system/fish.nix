@@ -37,6 +37,7 @@ in {
       # cat = "bat";
       # top = "btm";
       vi = "nvim";
+      nde = "nvim ./.envrc";
     };
 
     # inputs auto expr
