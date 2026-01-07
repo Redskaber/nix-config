@@ -4,9 +4,8 @@
 # @description: Modern, fast C development environment with clangd + bear
 
 
-{ pkgs, inputs, common, mkDevShell, ... }: {
+{ pkgs, inputs, dev, mkDevShell, ... }: {
   default = mkDevShell {
-    inheritFrom = [ common ];
 
     buildInputs = with pkgs; [
       gcc                 # GNU toolchain (fallback or specific needs)

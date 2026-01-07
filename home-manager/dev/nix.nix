@@ -4,9 +4,8 @@
 # @description: Modern Nix development environment — aligned with RFC 109 and community best practices
 
 
-{ pkgs, inputs, common, mkDevShell, ... }: {
+{ pkgs, inputs, dev, mkDevShell, ... }: {
   default = mkDevShell {
-    inheritFrom = [ common ];
 
     buildInputs = with pkgs; [
       nix                        # Core runtime (with flakes, experimental features)
@@ -24,10 +23,19 @@
       # Usually empty for pure Nix dev
     ];
 
-    postInputsHook = ''
-      # echo "✨ Nix dev env ready: nixfmt (RFC 109) + statix + deadnix + nil"
-      # echo "💡 Tip: Use 'nix fmt' if you have nixpkgs-fmt in PATH, but prefer nixfmt directly"
+    preInputsHook = ''
+      echo "[preInputsHook]: nix hell!"
     '';
+    postInputsHook = ''
+      echo "[postInputsHook]: nix shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: nix shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: nix shell!"
+    '';
+
   };
 }
 

@@ -4,9 +4,8 @@
 # @description: Modern Java dev environment: JDK 21 + Maven/Gradle + JDT.LS
 
 
-{ pkgs, inputs, common, mkDevShell, ... }: {
+{ pkgs, inputs, dev, mkDevShell, ... }: {
   default = mkDevShell {
-    inheritFrom = [ common ];
 
     buildInputs = with pkgs; [
       temurin-bin-21      # Eclipse Temurin JDK 21 (LTS, OpenJDK)
@@ -19,12 +18,23 @@
       # Most Java tools are runtime deps, so nativeBuildInputs often empty
     ];
 
+    preInputsHook = ''
+      echo "[preInputsHook]: java hell!"
+    '';
     postInputsHook = ''
       # Set JAVA_HOME correctly for Temurin
       export JAVA_HOME=${pkgs.temurin-bin-21}
 
       # Optional: verify
       # echo "Java $(java -version 2>&1 | head -1)"
+      echo "[postInputsHook]: java shell!"
     '';
+    preShellHook = ''
+      echo "[preShellHook]: java shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: java shell!"
+    '';
+
   };
 }

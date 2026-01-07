@@ -76,7 +76,6 @@
         inherit pkgs inputs;
         suffix = ".nix";
         devDir = ./home-manager/dev;
-        commonModule = ./home-manager/dev/_common.nix;
       };
   in {
     # debug information

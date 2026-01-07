@@ -5,7 +5,7 @@
 # @TODO: extend mkShell Hook.(preInputsHook, postInputsHook, preShellHook)
 
 
-{ pkgs, inputs, suffix, devDir, commonModule ? null, ... }:
+{ pkgs, inputs, suffix, devDir, ... }:
   let
     inherit (import ./mk-dev-shell.nix { inherit pkgs; }) mkDevShell;
 
@@ -15,19 +15,13 @@
       pkgs.lib.hasSuffix suffix name && !pkgs.lib.hasPrefix "_" name
     ) allFiles;
 
-    # Load common shell if provided
-    commonShell =
-      if commonModule != null
-      then (import commonModule { inherit pkgs inputs mkDevShell; }).default
-      else pkgs.mkShell {};
-
     # Build attrset: "c.nix" -> { name = "c"; value = shell }
     rawShells = pkgs.lib.genAttrs langFiles (file:
       let
         langName = pkgs.lib.removeSuffix suffix file;
         mod = import "${devDir}/${file}" {
           inherit pkgs inputs;
-          common=commonShell;
+          dev = devDir;
           mkDevShell = mkDevShell;
         };
       in
@@ -41,24 +35,22 @@
       pkgs.lib.nameValuePair langName shell
     ) rawShells;
 
-    # Global default shell: merge all language shells' inputs
-    allDefaultDerivations = builtins.attrValues langShells;
-    globalDefault = mkDevShell {
-      inputsFrom = allDefaultDerivations;
-
-      # optional other handler
-      # buildInputs = with pkgs; [];
-      # nativeBuildInputs = with pkgs; [];
-      #
-      # (Deprecated) -> used (Hook system)
-      # shellHooks = ''
-      # Optional: global default devShells env
-      # '';
-    };
+    # === Load explicit default.nix if it exists ===
+    hasDefault = builtins.pathExists "${devDir}/default.nix";
+    explicitDefault =
+      if hasDefault
+      then (import "${devDir}/default.nix" {
+        inherit pkgs inputs devDir mkDevShell;
+        # Pass the individual shells so default.nix can reference them
+        dev = langShells;
+      }).default
+      else
+        # Optional: fallback to auto-merge (or throw error)
+        throw "No default.nix found in ${devDir}, and no fallback defined.";
 
   in
     # Expose individual shells + golbal default
-    langShells // { default = globalDefault; }
+    langShells // { default = explicitDefault; }
 
 
 

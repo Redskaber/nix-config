@@ -4,9 +4,8 @@
 # @description: Modern, fast, and minimal Python dev environment using uv + ruff
 
 
-{ pkgs, inputs, common, mkDevShell, ... }: {
+{ pkgs, inputs, dev, mkDevShell, ... }: {
   default = mkDevShell {
-    inheritFrom = [ common ];
 
     # Core runtime & tools
     buildInputs = with pkgs; [
@@ -26,6 +25,9 @@
     ];
 
     # env.xxx = xxx;
+    preInputsHook = ''
+      echo "[preInputsHook]: python hell!"
+    '';
     postInputsHook = ''
       # Speed up Python bytecode caching
       export PYTHONPYCACHEPREFIX="$HOME/.cache/python"
@@ -36,6 +38,13 @@
       # Optional: alias for convenience (uncomment if desired)
       # alias python=python3
       # alias pip='uv pip'
+      echo "[postInputsHook]: python shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: python shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: python shell!"
     '';
   };
 }

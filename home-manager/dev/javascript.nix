@@ -4,9 +4,8 @@
 # @desciption: Modern JS/TS dev env: Node.js 24 + Biome + LSP
 
 
-{ pkgs, inputs, common, mkDevShell, ... }: {
+{ pkgs, inputs, dev, mkDevShell, ... }: {
   default = mkDevShell {
-    inheritFrom = [ common ];
 
     buildInputs = with pkgs; [
       nodejs_24               # LTS-ish (Node 24 is current active release)
@@ -23,13 +22,24 @@
       # prettier
     ];
 
+    preInputsHook = ''
+      echo "[preInputsHook]: javascript hell!"
+    '';
     postInputsHook = ''
       # Suppress Node.js experimental warnings (e.g., from ESM loaders)
       export NODE_OPTIONS="--no-warnings"
 
-      # Optional: set default package manager
+      # Optional: set javascript package manager
       # alias ni="pnpm install"
       # alias nr="pnpm run"
+      echo "[postInputsHook]: javascript shell!"
     '';
+    preShellHook = ''
+      echo "[preShellHook]: javascript shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: javascript shell!"
+    '';
+
   };
 }
