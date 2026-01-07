@@ -6,7 +6,7 @@
   ...
 }: {
   home.packages = with pkgs; [
-    xorg.libcursor
+    xorg.libXcursor
     niri
   ];
 }
