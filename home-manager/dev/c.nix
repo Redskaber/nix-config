@@ -22,7 +22,7 @@
       ninja
     ];
     preInputsHook = ''
-      echo "[preInputsHook]: c hell!"
+      echo "[preInputsHook]: c shell!"
     '';
     postInputsHook = ''
       # Use Clang as default C compiler (modern, better diagnostics)

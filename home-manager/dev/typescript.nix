@@ -23,7 +23,7 @@
     ];
 
     preInputsHook = ''
-      echo "[preInputsHook]: typescript hell!"
+      echo "[preInputsHook]: typescript shell!"
     '';
     postInputsHook = ''
       export NODE_OPTIONS="--no-warnings"

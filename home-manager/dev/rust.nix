@@ -30,7 +30,7 @@
     # Required for rust-analyzer to provide stdlib navigation and hover docs
     # env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
     preInputsHook = ''
-      echo "[preInputsHook]: rust hell!"
+      echo "[preInputsHook]: rust shell!"
     '';
     postInputsHook = ''
       export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"

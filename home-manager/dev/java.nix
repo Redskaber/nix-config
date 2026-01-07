@@ -19,7 +19,7 @@
     ];
 
     preInputsHook = ''
-      echo "[preInputsHook]: java hell!"
+      echo "[preInputsHook]: java shell!"
     '';
     postInputsHook = ''
       # Set JAVA_HOME correctly for Temurin

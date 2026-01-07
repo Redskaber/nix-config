@@ -23,7 +23,7 @@
     ];
 
     preInputsHook = ''
-      echo "[preInputsHook]: javascript hell!"
+      echo "[preInputsHook]: javascript shell!"
     '';
     postInputsHook = ''
       # Suppress Node.js experimental warnings (e.g., from ESM loaders)

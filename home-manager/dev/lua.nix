@@ -25,7 +25,7 @@
     ];
 
     preInputsHook = ''
-      echo "[preInputsHook]: lua hell!"
+      echo "[preInputsHook]: lua shell!"
     '';
     postInputsHook = ''
       # Set up Lua paths for lua54

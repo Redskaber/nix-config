@@ -24,7 +24,7 @@
     ];
 
     preInputsHook = ''
-      echo "[preInputsHook]: nix hell!"
+      echo "[preInputsHook]: nix shell!"
     '';
     postInputsHook = ''
       echo "[postInputsHook]: nix shell!"

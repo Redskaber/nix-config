@@ -26,7 +26,7 @@
 
     # env.xxx = xxx;
     preInputsHook = ''
-      echo "[preInputsHook]: python hell!"
+      echo "[preInputsHook]: python shell!"
     '';
     postInputsHook = ''
       # Speed up Python bytecode caching

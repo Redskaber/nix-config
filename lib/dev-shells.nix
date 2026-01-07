@@ -62,24 +62,23 @@
           # Assume default.nix returns { default = { ... }, minimal = { ... } }
           shells = pkgs.lib.mapAttrs (name:
             cfg: mkDevShell (
-              cfg // { name = "dev-shell-top-${name}"; }
+              cfg // { name = "top-dev-shell-${name}"; }
             )
           ) mod;
         in shells
-      else
-        # Optional: fallback to auto-merge (or throw error)
-        throw "No default.nix found in ${devDir}, and no fallback defined.";
+      # Optional: allow flake to work without default.nix
+      else {};
+
+    # Create aliases: python -> python.default, etc.
+    langAliases = pkgs.lib.mapAttrs (_shell:
+      variants:
+        if builtins.hasAttr "default" variants
+          then variants.default
+        else throw "No 'default' variant found!"
+    ) langShells;
+
   in
     # Merge everything
-    let
-      # Create aliases: python -> python.default, etc.
-      langAliases = pkgs.lib.mapAttrs (_shell:
-        variants:
-          if builtins.hasAttr "default" variants
-            then variants.default
-          else throw "No 'default' variant found!"
-      ) langShells;
-    in
-      topLevelShells // langShells // langAliases
+    topLevelShells // langShells // langAliases
 
 

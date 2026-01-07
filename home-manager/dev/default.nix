@@ -20,7 +20,7 @@
     buildInputs = with pkgs; [];
     nativeBuildInputs = with pkgs; [];
     preInputsHook = ''
-      echo "[preInputsHook]: default hell!"
+      echo "[preInputsHook]: default shell!"
     '';
     postInputsHook = ''
       echo "[postInputsHook]: default shell!"
