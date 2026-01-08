@@ -81,7 +81,7 @@
       # transformers
 
       # runtime depends
-      gcc
+      stdenv.cc.cc.lib
     ];
 
     nativeBuildInputs = with pkgs; [
