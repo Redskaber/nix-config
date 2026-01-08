@@ -94,7 +94,9 @@
       export PYTHONPYCACHEPREFIX="$PWD/.cache/python"
 
       # Ensure uv uses the correct interpreter
-      export UV_PYTHON=${pkgs.python312}/bin/python
+      # Tips: don't set global uv python path
+      export UV_PYTHON=$PWD/.venv/bin/python
+      # Cacheing uv path to project
       export UV_CACHE_DIR="$PWD/.cache/uv"
 
       # Jupyter data directory
