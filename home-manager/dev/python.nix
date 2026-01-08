@@ -80,8 +80,8 @@
       # datasets
       # transformers
 
-      # depends
-      gcc
+      # runtime depends (libstdc++)
+      gcc.cc.lib
     ];
 
     nativeBuildInputs = with pkgs; [
