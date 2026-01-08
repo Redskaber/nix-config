@@ -127,11 +127,21 @@
     postShellHook = ''
       echo "Entry project:"
       echo "    uv init && uv venv && source .venv/bin/activate"
-      echo "    uv pip install numpy scipy pandas scikit-learn matplotlib seaborn plotly jupyter ipykernel tqdm rich polars"
-      echo "    uv pip install datasets transformers"
-      echo "    uv pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121"
+      echo "    uv add install numpy scipy pandas scikit-learn matplotlib seaborn plotly jupyter ipykernel tqdm rich polars"
+      echo "    uv add install datasets transformers"
+      echo "    uv add install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121"
       echo "[postShellHook]: ML/DL environment activated!"
     '';
   };
 
 }
+
+# direnv::dot_envrc content:
+# echo "# ############################################################################################"
+# echo "# Remote: github:redskaber/nix-config/26c7a7731734b88d51b70599a054f0e246b52262#python-machine"
+# echo "# commnd: direnv allow"
+# echo "# commnd: source .venv/bin/activate"
+# echo "# ############################################################################################"
+# use flake github:redskaber/nix-config/26c7a7731734b88d51b70599a054f0e246b52262#python-machine
+# source .venv/bin/activate
+
