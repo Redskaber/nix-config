@@ -38,14 +38,38 @@
       ) value
     ) langConfigsRaw;
 
-    # Step 3: Convert each lang.<variant> into a real shell drv
-    langShells = pkgs.lib.mapAttrs (langName:
-      variants: pkgs.lib.mapAttrs (variantName:
-        cfg: mkDevShell (
-          cfg // { name = "dev-shell-${langName}-${variantName}"; }
-        )
-      ) variants
-    ) langConfigs;
+    # Step 3: Flatten lang.variants into top-level names like "python", "python-machine"
+    # Custom flatten for lang.variants (no flattenTree needed)
+    flattenLangVariants = attrs:
+      pkgs.lib.concatMapAttrs (langName: variants:
+        if !pkgs.lib.isAttrs variants then
+          throw "Expected attrset for ${langName}, got ${builtins.typeOf variants}"
+        else
+          pkgs.lib.mapAttrs' (variantName: cfg:
+            let
+              key =
+                if variantName == "default"
+                  then langName
+                else "${langName}-${variantName}";
+            in
+              pkgs.lib.nameValuePair key cfg
+          ) variants
+      ) attrs;
+    langShellsFlat = flattenLangVariants (
+      pkgs.lib.mapAttrs (langName:
+        variants: pkgs.lib.mapAttrs (variantName:
+          cfg: mkDevShell (
+            cfg // {
+              name = "dev-shell-${
+                if variantName == "default"
+                  then langName
+                else "${langName}-${variantName}"
+              }";
+            }
+          )
+        ) variants
+      ) langConfigs
+    );
 
     # Step 4: Handle top-level default.nix (if exists)
     hasDefault = builtins.pathExists "${devDir}/default.nix";
@@ -67,21 +91,7 @@
       # Optional: allow flake to work without default.nix
       else {};
 
-    # Option A: Expose everything (recommended for your use case)
-    # Also keeps top-level .#<lang> pointing to default
-    # nix develop                   -> dev/default.nix::default config
-    # nix develop .#python          -> dev/python.nix::default config
-    # nix develop .#python.machine  -> dev/python.nix::machine config
-    # etc.
-    langAliases = pkgs.lib.mapAttrs (_shell:
-      variants:
-        if builtins.hasAttr "default" variants
-          then variants.default
-        else throw "No 'default' variant found!"
-    ) langShells;
-
   in
-    # Merge everything
-    topLevelShells // langShells // langAliases
-
+    # Final output: only flat derivations!
+    topLevelShells // langShellsFlat
 
