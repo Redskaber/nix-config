@@ -80,8 +80,8 @@
       # datasets
       # transformers
 
-      # runtime depends
-      stdenv.cc.cc.lib
+      # depends
+      gcc
     ];
 
     nativeBuildInputs = with pkgs; [
@@ -93,6 +93,8 @@
       echo "[preInputsHook]: python ML/DL shell!"
     '';
     postInputsHook = ''
+      # depends inject
+      export LD_LIBRARY_PATH="${pkgs.gcc}/lib:$LD_LIBRARY_PATH"
       # Bytecode cache isolation
       export PYTHONPYCACHEPREFIX="$PWD/.cache/python"
 
