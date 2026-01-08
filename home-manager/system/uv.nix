@@ -14,15 +14,15 @@
 
   programs.uv = {
     enable = true;
-    settings = {
-      pip = {
-        index-url = "https://pypi.tuna.tsinghua.edu.cn/simple/";
-        extra-index-url = [
-          "https://pypi.org/simple/"
-        ];
-      };
-      python-downloads = "never";
-      python-preference = "only-system";
-    }
+    # settings = {
+    #   pip = {
+    #     index-url = "https://pypi.tuna.tsinghua.edu.cn/simple/";
+    #     extra-index-url = [
+    #       "https://pypi.org/simple/"
+    #     ];
+    #   };
+    #   python-downloads = "never";
+    #   python-preference = "only-system";
+    # }
   };
 }

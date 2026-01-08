@@ -79,6 +79,9 @@
       # Hugging Face ecosystem (core packages available in Nixpkgs)
       # datasets
       # transformers
+
+      # runtime depends
+      gcc
     ];
 
     nativeBuildInputs = with pkgs; [
