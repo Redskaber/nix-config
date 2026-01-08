@@ -29,6 +29,7 @@
       ".DS_Store"
       ".direnv"     # direnv
       ".cache"      # devShell
+      ".venv"       # uv
       "*.swp"
       "*~"
     ];
