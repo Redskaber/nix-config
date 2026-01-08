@@ -95,7 +95,7 @@
 
       # Ensure uv uses the correct interpreter
       # Tips: don't set global uv python path
-      export UV_PYTHON=$PWD/.venv/bin/python
+      # export UV_PYTHON=${pkgs.python312}/bin/python
       # Cacheing uv path to project
       export UV_CACHE_DIR="$PWD/.cache/uv"
 
