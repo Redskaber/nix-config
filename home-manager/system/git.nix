@@ -28,6 +28,7 @@
     ignores = [
       ".DS_Store"
       ".direnv"     # direnv
+      ".cache"      # devShell
       "*.swp"
       "*~"
     ];

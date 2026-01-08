@@ -42,9 +42,7 @@
     langShells = pkgs.lib.mapAttrs (langName:
       variants: pkgs.lib.mapAttrs (variantName:
         cfg: mkDevShell (
-          cfg // {
-            name = "dev-shell-${langName}-${variantName}";
-          }
+          cfg // { name = "dev-shell-${langName}-${variantName}"; }
         )
       ) variants
     ) langConfigs;
@@ -69,7 +67,12 @@
       # Optional: allow flake to work without default.nix
       else {};
 
-    # Create aliases: python -> python.default, etc.
+    # Option A: Expose everything (recommended for your use case)
+    # Also keeps top-level .#<lang> pointing to default
+    # nix develop                   -> dev/default.nix::default config
+    # nix develop .#python          -> dev/python.nix::default config
+    # nix develop .#python.machine  -> dev/python.nix::machine config
+    # etc.
     langAliases = pkgs.lib.mapAttrs (_shell:
       variants:
         if builtins.hasAttr "default" variants
