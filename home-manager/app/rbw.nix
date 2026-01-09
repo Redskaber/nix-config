@@ -25,13 +25,9 @@
 
       # pinentry: input main pwd
       # choice desktop wm:
-      # - GNOME: pkgs.pinentry-gnome3
-      # - KDE: pkgs.pinentry-qt
-      # - normal/terminal: pkgs.pinentry-tty
-      # - remaind：pkgs.pinentry
-
-      # auto fallback -> backend
-      pinentry = pkgs.pinentry;
+      # - nix search nixpkgs pinentry
+      #
+      pinentry = lib.getExe pkgs.pinentry-gtk2;
     };
   };
 
