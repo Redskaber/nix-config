@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "fastfetch-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1767973027,
+        "narHash": "sha256-R/C8wthZXj9rYXvgKPThFUccdjyq/U8lVo8wsWI7W7c=",
+        "owner": "Redskaber",
+        "repo": "fastfetch-config",
+        "rev": "88695d44ac52406f84ae00341d1e35565711c636",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "fastfetch-config",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
@@ -82,11 +98,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767967772,
-        "narHash": "sha256-Mcp7KvJ5fSsvKAdwrEAo45Ecy0BI58W9MDIP0rKAkPM=",
+        "lastModified": 1767972048,
+        "narHash": "sha256-llv3860pM6nWZB/B15Yg905kbi2lMBfiwW2QCZWnwqM=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "337342ecb212bdfe80ade37d2f91a12db29c9542",
+        "rev": "84cb867cfa0be85d67b14a42e6ccfbefa8871dfe",
         "type": "github"
       },
       "original": {
@@ -113,6 +129,7 @@
     },
     "root": {
       "inputs": {
+        "fastfetch-config": "fastfetch-config",
         "home-manager": "home-manager",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",

@@ -30,6 +30,10 @@
     starship-config.url = "github:Redskaber/starship-config";
     starship-config.flake = false;
 
+    # Fastfetch Config
+    fastfetch-config.url = "github:Redskaber/fastfetch-config";
+    fastfetch-config.flake = false;
+
     # Wezterm Config
     wezterm-config.url = "github:Redskaber/wezterm-config";
     wezterm-config.flake = false;

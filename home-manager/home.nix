@@ -23,6 +23,7 @@
     ./system/starship.nix
     ./system/zsh.nix
     ./system/fish.nix
+    ./system/fastfetch.nix
     ./system/zoxide.nix
 
     ./app/nvim.nix
