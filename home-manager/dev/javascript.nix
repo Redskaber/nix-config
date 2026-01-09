@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/dev/javascript.nix
+# @path: ~/projects/configs/nix-config/home-manager/dev/javascript.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @desciption: Modern JS/TS dev env: Node.js 24 + Biome + LSP

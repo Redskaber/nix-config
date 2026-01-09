@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/app/qq.nix
+# @path: ~/projects/configs/nix-config/home-manager/app/qq.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 

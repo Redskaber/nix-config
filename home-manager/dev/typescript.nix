@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/dev/typescript.nix
+# @path: ~/projects/configs/nix-config/home-manager/dev/typescript.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # Focused TypeScript dev environment: tsc + LSP + runtime

@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/home.nix
+# @path: ~/projects/configs/nix-config/home-manager/home.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml
@@ -29,6 +29,7 @@
 
     ./app/nvim.nix
     ./app/qq.nix
+    ./app/rbw.nix
     ./app/tmux.nix
     ./app/vscode.nix
     ./app/wezterm.nix

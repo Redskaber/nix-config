@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/flake.nix
+# @path: ~/projects/configs/nix-config/flake.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html

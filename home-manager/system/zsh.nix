@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/system/zsh.nix
+# @path: ~/projects/configs/nix-config/home-manager/system/zsh.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml#opt-programs.zsh.enable

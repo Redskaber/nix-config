@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/dev/c.nix
+# @path: ~/projects/configs/nix-config/home-manager/dev/c.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: Modern, fast C development environment with clangd + bear

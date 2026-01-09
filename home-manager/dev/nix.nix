@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/dev/nix.nix
+# @path: ~/projects/configs/nix-config/home-manager/dev/nix.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: Modern Nix development environment — aligned with RFC 109 and community best practices

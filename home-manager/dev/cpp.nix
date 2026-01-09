@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/dev/cpp.nix
+# @path: ~/projects/configs/nix-config/home-manager/dev/cpp.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: Modern C++ dev environment: clang + clangd + build tools

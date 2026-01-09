@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/pkgs/default.nix
+# @path: ~/projects/configs/nix-config/pkgs/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 

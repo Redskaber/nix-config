@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/dev/rust.nix
+# @path: ~/projects/configs/nix-config/home-manager/dev/rust.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @desciption: Minimal, reproducible Rust development environment using nixpkgs' stable Rust toolchain.

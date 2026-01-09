@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/home-manager/dev/lua.nix
+# @path: ~/projects/configs/nix-config/home-manager/dev/lua.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: Modern Lua dev environment for Neovim/plugins/scripting
