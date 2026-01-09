@@ -57,7 +57,8 @@
     nixpkgs,
     home-manager,
     ...
-  } @ inputs: let
+  } @ inputs:
+  let
     # Supported systems for your flake packages, shell, etc.
     systems = [
       "aarch64-linux"
@@ -76,7 +77,7 @@
     let
       pkgs = nixpkgs.legacyPackages.${system};
     in
-      import ./lib/dev-shells.nix {
+      import ./lib/dev/dev-shells.nix {
         inherit pkgs inputs;
         devDir = ./home-manager/dev;
         suffix = ".nix";

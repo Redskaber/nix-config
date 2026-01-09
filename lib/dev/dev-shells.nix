@@ -1,8 +1,8 @@
-# @path: ~/projects/nix-config/lib/dev-shells.nix
+# @path: ~/projects/configs/nix-config/lib/dev/dev-shells.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: Utility to generate per-language dev shells from a directory
-# @Supports: nix develop .#<system>.<lang>.<variant>
+# @Supports: nix develop .#<system>.<lang>-<variant>
 # @TODO: extend mkShell Hook.(preInputsHook, postInputsHook, preShellHook)
 
 

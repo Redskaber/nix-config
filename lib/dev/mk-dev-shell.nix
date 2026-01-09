@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/lib/mk-dev-shells.nix
+# @path: ~/projects/configs/nix-config/lib/dev/mk-dev-shells.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: Utility to generate per-language dev shells from a directory
