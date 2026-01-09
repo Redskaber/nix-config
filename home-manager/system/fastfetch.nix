@@ -12,7 +12,7 @@
   ...
 }: {
 
-  programs.fastfetch = true;
+  programs.fastfetch.enable = true;
 
   # Used user config:
   xdg.configFile."fastfetch" = {
