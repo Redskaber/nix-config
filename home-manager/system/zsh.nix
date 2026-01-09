@@ -33,6 +33,14 @@ in {
       ".." = "cd ..";
       "..." = "cd ../..";
       "nde" =  "nvim ./.envrc";
+      # git alias
+      g = "git";
+      ga = "git add";
+      gc = "git commit";
+      gca = "git commit -a";
+      gco = "git checkout";
+      gst = "git status";
+      gl = "git log --oneline";
     };
 
     history = {
@@ -67,6 +75,32 @@ in {
       EDITOR = "nvim";
       VISUAL = "nvim";
     };
+
+    # Login-time welcome message
+    initContent = ''
+      # Welcome message (MOTD) for interactive shells
+      if [[ -o interactive && $SHLVL -eq 1 && -z "$WELCOME_SHOWN" ]]; then
+        export WELCOME_SHOWN=1
+        if [[ $TERM != "dumb" ]]; then
+          if command -v pokemon-colorscripts >/dev/null 2>&1 && command -v fastfetch >/dev/null 2>&1; then
+            # Display Pokemon-colorscripts
+            # Project page: https://gitlab.com/phoneybadger/pokemon-colorscripts#on-other-distros-and-macos
+            #pokemon-colorscripts --no-title -s -r #without fastfetch
+            pokemon-colorscripts --no-title -s -r | fastfetch -c "$HOME/.config/fastfetch/config-pokemon.jsonc" --logo-type file-raw --logo-height 10 --logo-width 5 --logo -
+          elif command -v fastfetch >/dev/null 2>&1; then
+            # fastfetch. Will be disabled if above colorscript was chosen to install
+            fastfetch -c "$HOME/.config/fastfetch/config-compact.jsonc"
+          fi
+          echo
+        fi
+      fi
+    '';
+
+    # dot zshenv configured
+    envExtra = ''
+      # global rust cargo env (Hydrland ubuntu)
+      . "$HOME/.cargo/env"
+    '';
   };
 
   home.activation.ensure_zsh_in_shells = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -84,5 +118,4 @@ in {
     fi
   '';
 }
-
 
