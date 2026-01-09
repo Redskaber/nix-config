@@ -27,7 +27,7 @@
       # choice desktop wm:
       # - nix search nixpkgs pinentry
       #
-      pinentry = lib.getExe pkgs.pinentry-gtk2;
+      pinentry = pkgs.pinentry-gtk2;
     };
   };
 
