@@ -17,7 +17,7 @@
     settings = {
       # global
       font = "JetBrainsMono Nerd Font 10";
-      background-color = "#1e1e2e";
+      background-color = "#881e1e2e";
       text-color = "#cdd6f4";
       border-color = "#89b4fa";
       border-radius = 8;
@@ -29,10 +29,13 @@
 
       # Optional: urgency group css
       "urgency=low" = {
-        background-color = "#313244";
+        background-color = "#88313244";  # surface0 with transparency
+      };
+      "urgency=normal" = {
+        background-color = "#881e1e2e";  # base with transparency
       };
       "urgency=critical" = {
-        background-color = "#eba0ac";
+        background-color = "#88eba0ac";
         text-color = "#111111";
         default-timeout = 0;  # don't auto shadow
       };
