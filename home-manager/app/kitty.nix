@@ -10,7 +10,9 @@
   config,
   pkgs,
   ...
-}: {
+}: let
+  kitty_path = "${config.home.profileDirectory}/bin/kitty";
+in {
 
   programs.kitty = {
     enable = true;
@@ -72,6 +74,20 @@
     recursive = true;              # rec-link
     force = true;
   };
+
+  home.activation.ensure_kitty_in_hyprland = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if [ -x ${kitty_path} ]; then
+      if [ ! -e /bin/kitty ] ; then
+        verboseEcho "Notice: /bin/kitty not found. To ensure Hyprland can launch kitty reliably, consider running:"
+        verboseEcho "  sudo ln -s ${kitty_path} /bin/kitty"
+      else
+        verboseEcho "'${kitty_path}' already present in /bin"
+      fi
+    else
+      verboseEcho "Warning: ${kitty_path} not found - skipping /bin check"
+    fi
+  '';
+
 }
 
 
