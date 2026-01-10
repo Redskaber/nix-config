@@ -13,43 +13,10 @@
 }: {
 
   programs.wezterm = {
-    # enable = true;
+    enable = true;
     enableZshIntegration = true;  # auto (source wezterm.sh)
     enableBashIntegration = true;
-
-    # wayland-config
-    # etc.
-
-    # x11-config
-    # package = let
-    #   core = pkgs.wezterm;
-    # in pkgs.symlinkJoin {
-    #   name = "wezterm-with-x11-gpu-deps";
-    #   paths = [
-    #     core
-    #     pkgs.mesa
-    #     pkgs.libglvnd
-    #     pkgs.xorg.libX11
-    #     pkgs.xorg.libxcb
-    #     pkgs.libxkbcommon
-    #   ];
-    #   buildInputs = [ pkgs.makeWrapper ];
-    #   postBuild = ''
-    #     for bin in $out/bin/wezterm $out/bin/wezterm-gui; do
-    #       if [ -e "$bin" ]; then
-    #         wrapProgram "$bin" --prefix LD_LIBRARY_PATH : ${
-    #           pkgs.lib.makeLibraryPath [
-    #             pkgs.mesa
-    #             pkgs.libglvnd
-    #             pkgs.xorg.libX11
-    #             pkgs.xorg.libxcb
-    #             pkgs.libxkbcommon
-    #           ]
-    #         }
-    #       fi
-    #     done
-    #   '';
-    # };
+    package = config.lib.nixGL.wrap pkgs.wezterm;
   };
 
   # Used user config:
