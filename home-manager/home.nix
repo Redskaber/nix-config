@@ -13,10 +13,23 @@
   pkgs,
   ...
 }: {
+
+  # linux non-nixos environment inject
+  targets.genericLinux = {
+    enable = true;
+    nixGL = {
+      packages = inputs.nixgl.packages;
+      defaultWrapper = "mesa";
+      offloadWrapper = "mesaPrime";
+    };
+  };
+
   # You can import other home-manager modules here
   imports = [
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
+    ./srv/mako.nix
+
     ./system/atuin.nix
     ./system/direnv.nix
     ./system/fonts.nix
@@ -73,11 +86,10 @@
   # Add stuff for your user as you see fit:
   home.packages = with pkgs; [
     # network utils
-    curl wget gnupg git
-    bottom htop tree
+    curl wget gnupg git bottom tree
     gdb valgrind strace ltrace
     # Terminal prompt shell
-    # wezterm (wrapper)
+    # wezterm (wrapper->nixgl) kitty (wrapper->nixgl)
     starship zsh fish
     # find and tools
     fzf ripgrep fd bat eza delta yazi zoxide

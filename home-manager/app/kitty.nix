@@ -14,6 +14,8 @@
 
   programs.kitty = {
     enable = true;
+    package = config.lib.nixGL.wrap pkgs.kitty;
+
     # themeFile = "Catppuccin-Mocha";  # from kitty-themes
     # font = {
     #   package = pkgs.jetbrains-mono;
@@ -25,7 +27,7 @@
     #   enable_audio_bell = false;
     #   update_check_interval = 0;
     #   confirm_os_window_close = 0;  # close is kill
-    #   window_padding_width = 8;
+    #   window_padding_width = 8 ;
     #   background_opacity = 0.95;
     #   allow_remote_control = "socket-only";
     #   listen_on = "unix:/tmp/kitty";
