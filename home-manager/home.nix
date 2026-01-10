@@ -27,6 +27,7 @@
     ./system/fastfetch.nix
     ./system/zoxide.nix
 
+    ./app/kitty.nix
     ./app/nvim.nix
     ./app/qq.nix
     ./app/rbw.nix

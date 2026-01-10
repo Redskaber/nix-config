@@ -58,6 +58,22 @@
         "type": "github"
       }
     },
+    "kitty-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768037648,
+        "narHash": "sha256-Sy04hOQwlbypNPUBltAJ4GTLW8+OmJQIKKeR/kpsYKs=",
+        "owner": "Redskaber",
+        "repo": "kitty-config",
+        "rev": "ecdf923315440c39c7b8bec7b6990c4e895139ed",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "kitty-config",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1767799921,
@@ -98,11 +114,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1767986976,
-        "narHash": "sha256-oYgnGrw7CshwDXJuigI+hxNmN+t7yiVDWfIeUTdnDC8=",
+        "lastModified": 1768037251,
+        "narHash": "sha256-rMER1ndaGBXPO2+/sq5JdEc+8Ozh2/7ReTZBKltwov4=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "6f79c7e3f40f3a4c4fe1cec2b1e6a224a22271ed",
+        "rev": "aadc99d68d5279ee68938bea04eb0763817aedbb",
         "type": "github"
       },
       "original": {
@@ -131,6 +147,7 @@
       "inputs": {
         "fastfetch-config": "fastfetch-config",
         "home-manager": "home-manager",
+        "kitty-config": "kitty-config",
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
@@ -160,11 +177,11 @@
     "tmux-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1767591962,
-        "narHash": "sha256-jzF2YHsFUFIm7uXA7spWLSh9snrL4VCtwaqLTXJc+Is=",
+        "lastModified": 1767994526,
+        "narHash": "sha256-fEs+cC9mXdH4OfYwnKBrZErbaF6h4Ic6fvs5tDMeYko=",
         "owner": "Redskaber",
         "repo": "tmux-config",
-        "rev": "ac8584fbe92f91f32c80d259e2c8aaceb4aa62bb",
+        "rev": "f1c581439bbf2c1fd3e7e00cbfbb547a72840d5c",
         "type": "github"
       },
       "original": {

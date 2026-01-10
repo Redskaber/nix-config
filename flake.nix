@@ -38,18 +38,21 @@
     wezterm-config.url = "github:Redskaber/wezterm-config";
     wezterm-config.flake = false;
 
+    # Kitty Config
+    kitty-config.url = "github:Redskaber/kitty-config";
+    kitty-config.flake = false;
+
     # Tmux-Config
     tmux-config.url = "github:Redskaber/tmux-config";
     tmux-config.flake = false;
-
-    # Mpv-config
-    # mpv-config.url = "github:Redskaber/mpv-config";
-    # mpv-config.flake = false;
 
     # Vscode-config
     vscode-config.url = "github:Redskaber/vscode-config";
     vscode-config.flake = false;
 
+    # Mpv-config
+    # mpv-config.url = "github:Redskaber/mpv-config";
+    # mpv-config.flake = false;
   };
 
   outputs = {
