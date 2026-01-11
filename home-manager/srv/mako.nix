@@ -13,7 +13,7 @@
 }: {
 
   services.mako = {
-    enable = true;
+    # enable = true;
     settings = {
       # global
       font = "JetBrainsMono Nerd Font 10";

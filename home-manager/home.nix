@@ -44,8 +44,10 @@
     ./app/nvim.nix
     ./app/qq.nix
     ./app/rbw.nix
+    ./app/steam.nix
     ./app/tmux.nix
     ./app/vscode.nix
+    ./app/wechat.nix
     ./app/wezterm.nix
 
     # devShells: import dev/lang.nix from flake.nix
