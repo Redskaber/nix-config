@@ -133,7 +133,7 @@
     devShells = forAllSystems devShellsForSystem;
 
     # NixOS configuration entrypoint
-    # Available through 'nixos-rebuild --flake .#your-hostname'
+    # Available through 'nixos-rebuild --flake <flake_path>.#your-hostname'
     nixosConfigurations = {
       # FIXME: replace with your hostname
       kilig-nixos = nixpkgs.lib.nixosSystem {
