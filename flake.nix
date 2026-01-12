@@ -102,6 +102,13 @@
 
     # Your custom packages and modifications, exported as overlays
     overlays = import ./overlays {inherit inputs;};
+<<<<<<< HEAD
+=======
+
+    # Reusable nixos modules you might want to export
+    # These are usually stuff you would upstream into nixpkgs
+    nixosModules = import ./modules/nixos;
+>>>>>>> 28ed91d ((chore): add suupect nixos)
     # Reusable home-manager modules you might want to export
     # These are usually stuff you would upstream into home-manager
     homeManagerModules = import ./modules/home-manager;
@@ -128,6 +135,17 @@
     # devShells loader
     devShells = forAllSystems devShellsForSystem;
 
+    # NixOS configuration entrypoint
+    # Available through 'nixos-rebuild --flake .#your-hostname'
+    nixosConfigurations = {
+      # FIXME: replace with your hostname
+      kilig-nixos = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs; };
+        # > Our main nixos configuration file <
+        modules = [ ./nixos/configuration.nix ];
+      };
+    };
+
     # TODO: function handler homeConfigurations, dynamic generates etc.
     # Standalone home-manager configuration entrypoint
     # First: through 'nix build .#homeConfigurations.your-username@hostname.activationPackage' && './result/activate'
@@ -140,6 +158,11 @@
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         extraSpecialArgs = { inherit inputs; };
         # > Out main home-manager configuration file <
+        modules = [ ./home-manager/home.nix ];
+      };
+      "kilig@nixos" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+        extraSpecialArgs = { inherit inputs; };
         modules = [ ./home-manager/home.nix ];
       };
     };
