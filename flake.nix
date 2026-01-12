@@ -3,6 +3,7 @@
 # @datetime: 2025-12-12
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 
+
 {
   description = "Kilig(Redskaber)'s declarative development environment";
 
@@ -83,9 +84,9 @@
     let
       pkgs = nixpkgs.legacyPackages.${system};
     in
-      import ./lib/dev/dev-shells.nix {
+      import ./lib/dev/shells.nix {
         inherit pkgs inputs;
-        devDir = ./home-manager/dev;
+        devDir = ./src/dev;
         suffix = ".nix";
       };
   in {
@@ -105,10 +106,10 @@
 
     # Reusable nixos modules you might want to export
     # These are usually stuff you would upstream into nixpkgs
-    nixosModules = import ./modules/nixos;
+    nixos = import ./export/nixos;
     # Reusable home-manager modules you might want to export
     # These are usually stuff you would upstream into home-manager
-    homeManagerModules = import ./modules/home-manager;
+    homeManager = import ./export/home-manager;
 
     # Your custom dev shells
     # devShells = forAllSystems( system: {
@@ -155,12 +156,12 @@
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         extraSpecialArgs = { inherit inputs; };
         # > Out main home-manager configuration file <
-        modules = [ ./home-manager/home.nix ];
+        modules = [ ./src/hosts/linux.nix ];
       };
       "kilig@nixos" = home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         extraSpecialArgs = { inherit inputs; };
-        modules = [ ./home-manager/home.nix ];
+        modules = [ ./src/hosts/nixos.nix ];
       };
     };
   };

@@ -1,9 +1,19 @@
-# Edit this configuration file to define what should be installed on
-# your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
+# @path: ~/projects/configs/nix-config/nixos/configuration.nix
+# @author: redskaber
+# @datetime: 2026-01-13
+# @description:
+# - Edit this configuration file to define what should be installed on your system.
+# - Help is available in the configuration.nix(5) man page,
+# - on https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
 
-{ inputs, config, lib, pkgs, ... }:
+{
+  inputs,
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   # You can import other NixOS modules here
   imports = [
@@ -224,7 +234,7 @@
   environment.systemPackages = with pkgs; [
     vim neovim
     wget curl
-    git zsh
+    git
     # sound
     pamixer
     pavucontrol
@@ -233,6 +243,7 @@
     # proxy
     clash-verge-rev
   ];
+  programs.zsh.enable = true;
   # programs.firefox.enable = true;
 
 
