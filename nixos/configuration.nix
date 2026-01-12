@@ -2,7 +2,8 @@
 # your system. Help is available in the configuration.nix(5) man page, on
 # https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-{ config, lib, pkgs, ... }:
+
+{ inputs, config, lib, pkgs, ... }:
 {
   # You can import other NixOS modules here
   imports = [
@@ -85,9 +86,10 @@
       # TODO: You can set an initial password for your user.
       # If you do, you can skip setting a root password by passing '--no-root-passwd' to nixos-install.
       # Be sure to change it (using passwd) after rebooting!
-      # entry: "nixos-enter --root /mnt 'passwd your-username'"
+      # entry: "nixos-enter --root /mnt -c 'passwd your-username'"
       initialPassword = "1024";
       isNormalUser = true;
+      description = "kilig";
       # TODO: Add your SSH public key(s) here, if you plan on using SSH to connect
       openssh.authorizedKeys.keys = [  ];
       # TODO: Be sure to add any other groups you need
@@ -98,7 +100,6 @@
         "input"
         "video"
         "audio"
-        "tss" 
       ];
       packages = with pkgs; [  ];
     };
@@ -167,7 +168,7 @@
       fcitx5.addons = with pkgs; [
         fcitx5-rime
         qt6Packages.fcitx5-chinese-addons
-      ]
+      ];
     };
   };
 
