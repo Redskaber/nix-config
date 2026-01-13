@@ -33,6 +33,7 @@
     # nixos base core configuration
     ./core/bluetooth.nix
     ./core/boot.nix
+    ./core/hardware.nix
     ./core/i18n.nix
     ./core/network.nix
     ./core/sound.nix
@@ -40,7 +41,7 @@
     ./core/user.nix
 
     ./wm/gnome.nix
-
+    ./wm/hyprland.nix
   ];
 
   nixpkgs = {

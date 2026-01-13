@@ -28,8 +28,9 @@
       # TODO: Be sure to add any other groups you need
       # (such as networkmanager, audio, docker, etc)
       extraGroups = [
-        "wheel"
-        "networkmanager"
+        "wheel"             # Sudo
+        "networkmanager"    # Network
+        "video"             # GPU (hardware)
       ];
       # shell = pkgs.zsh;
       packages = with pkgs; [  ];
