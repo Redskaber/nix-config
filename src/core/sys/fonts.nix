@@ -15,6 +15,7 @@
   home.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
     noto-fonts-color-emoji
+    # chinese
     noto-fonts-cjk-sans
   ];
 
