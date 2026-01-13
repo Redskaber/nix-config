@@ -1,4 +1,4 @@
-# @path: ~/projects/configs/nix-config/src/core/system/zsh.nix
+# @path: ~/projects/configs/nix-config/src/core/sys/zsh.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/src/options.xhtml#opt-programs.zsh.enable
@@ -96,11 +96,11 @@ in {
       fi
     '';
 
-    # dot zshenv configured
-    envExtra = ''
-      # global rust cargo env (Hydrland ubuntu)
-      . "$HOME/.cargo/env"
-    '';
+    # (non-nixos) dot zshenv configured
+    # envExtra = ''
+    #   # global rust cargo env (Hydrland ubuntu)
+    #   . "$HOME/.cargo/env"
+    # '';
   };
 
   home.activation.ensure_zsh_in_shells = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

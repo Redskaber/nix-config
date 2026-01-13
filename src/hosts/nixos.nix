@@ -91,6 +91,8 @@
     # network utils
     curl wget gnupg git bottom tree
     gdb valgrind strace ltrace
+    # wm-backend
+    wl-clipboard
     # Terminal prompt shell
     # wezterm (wrapper->nixgl) kitty (wrapper->nixgl)
     starship zsh fish
@@ -100,10 +102,9 @@
     tmux
     # env auto-switching
     direnv nix-direnv
-    # fonts
-    nerd-fonts.jetbrains-mono
-    noto-fonts-color-emoji
-    noto-fonts-cjk-sans
+    # fonts -> core::sys::fonts
+    # proxy
+    clash-verge-rev
     # social
     # qq wechat mpv steam
     # dev

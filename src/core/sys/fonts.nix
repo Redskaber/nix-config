@@ -12,6 +12,12 @@
   ...
 }: {
 
+  home.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+    noto-fonts-color-emoji
+    noto-fonts-cjk-sans
+  ];
+
   # fonts:
   # enable -> ~/.local/share/fonts/*
   fonts.fontconfig.enable = true;
