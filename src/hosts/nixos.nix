@@ -28,27 +28,28 @@
   imports = [
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
-    ./srv/mako.nix
+    ../core/srv/mako.nix
 
-    ./sys/atuin.nix
-    ./sys/direnv.nix
-    ./sys/fonts.nix
-    ./sys/git.nix
-    ./sys/starship.nix
-    ./sys/zsh.nix
-    ./sys/fish.nix
-    ./sys/fastfetch.nix
-    ./sys/zoxide.nix
+    ../core/sys/atuin.nix
+    ../core/sys/direnv.nix
+    ../core/sys/fonts.nix
+    ../core/sys/git.nix
+    ../core/sys/starship.nix
+    ../core/sys/zsh.nix
+    ../core/sys/fish.nix
+    ../core/sys/fastfetch.nix
+    ../core/sys/zoxide.nix
 
-    ./app/kitty.nix
-    ./app/nvim.nix
-    ./app/qq.nix
-    ./app/rbw.nix
-    ./app/steam.nix
-    ./app/tmux.nix
-    ./app/vscode.nix
-    ./app/wechat.nix
-    ./app/wezterm.nix
+    ../core/app/google-chrome.nix
+    ../core/app/kitty.nix
+    ../core/app/nvim.nix
+    ../core/app/qq.nix
+    ../core/app/rbw.nix
+    ../core/app/steam.nix
+    ../core/app/tmux.nix
+    ../core/app/vscode.nix
+    ../core/app/wechat.nix
+    ../core/app/wezterm.nix
 
     # devShells: import dev/lang.nix from flake.nix
   ];
@@ -102,6 +103,7 @@
     # fonts
     nerd-fonts.jetbrains-mono
     noto-fonts-color-emoji
+    noto-fonts-cjk-sans
     # social
     # qq wechat mpv steam
     # dev

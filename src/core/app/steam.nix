@@ -11,7 +11,7 @@
   ...
 }: {
   home.packages = [
-    pkgs.steam
+    (config.lib.nixGL.wrap pkgs.steam)
   ];
 }
 

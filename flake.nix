@@ -86,8 +86,7 @@
     in
       import ./lib/dev/shells.nix {
         inherit pkgs inputs;
-        devDir = ./src/dev;
-        suffix = ".nix";
+        devDir = ./src/core/dev;
       };
   in {
     # debug information
