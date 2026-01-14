@@ -15,38 +15,38 @@
   wayland.windowManager.hyprland.settings = {
     windowrule = [
       # Floating apps
-      "float, ^(imv|mpv|zenity|waypaper|SoundWireServer|.sameboy-wrapped|org.gnome.Calculator|org.gnome.FileRoller|org.pulseaudio.pavucontrol)$"
+      # "float, ^(imv|mpv|zenity|waypaper|SoundWireServer|.sameboy-wrapped|org.gnome.Calculator|org.gnome.FileRoller|org.pulseaudio.pavucontrol)$"
 
       # Pinned apps
-      "pin, ^(rofi|waypaper|Picture-in-Picture)$"
+      # "pin, ^(rofi|waypaper|Picture-in-Picture)$"
 
       # Tiled exceptions
-      "tile, ^(Aseprite)$"
+      # "tile, ^(Aseprite)$"
 
       # Sizing & positioning
-      "size 850 500, ^(zenity)$"
-      "size 725 330, ^(SoundWireServer)$"
-      "size 700 450, title:^(Volume Control)$"
-      "move 40 55%, title:^(Volume Control)$"
+      # "size 850 500, ^(zenity)$"
+      # "size 725 330, ^(SoundWireServer)$"
+      # "size 700 450, title:^(Volume Control)$"
+      # "move 40 55%, title:^(Volume Control)$"
 
       # Workspace assignments
-      "workspace 1, ^(zen-beta)$"
-      "workspace 4, ^(Gimp-2.10|Aseprite)$"
-      "workspace 5, ^(Audacious|Spotify)$"
-      "workspace 8, ^(com.obsproject.Studio)$"
-      "workspace 10, ^(discord|WebCord|vesktop)$"
+      # "workspace 1, ^(zen)$"
+      # "workspace 4, ^(Gimp-2.10|Aseprite)$"
+      # "workspace 5, ^(Audacious|Spotify)$"
+      # "workspace 8, ^(com.obsproject.Studio)$"
+      # "workspace 10, ^(discord|WebCord|vesktop)$"
 
       # Idle inhibit
-      "idle_inhibit focus, ^(mpv|zen-beta)$"
-      "idle_inhibit focus, ^(zen)$"  # ← 改为 focus 更可靠
+      # "idle_inhibit focus, ^(mpv|zen-beta)$"
+      # "idle_inhibit focus, ^(zen)$"  # ← 改为 focus 更可靠
 
       # Dim around portals
-      "dim_around, ^(xdg-desktop-portal-gtk)$"
+      # "dim_around, ^(xdg-desktop-portal-gtk)$"
     ];
 
-    layerrule = [
-      "dim_around, namespace:^(rofi|swaync-control-center)$"
-    ];
+    # layerrule = [
+    #   "dim_around, namespace:^(rofi|swaync-control-center)$"
+    # ];
 
     workspace = [
       "w[tv1], gapsout:0, gapsin:0"

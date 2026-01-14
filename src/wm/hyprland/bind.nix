@@ -24,12 +24,12 @@ let
     fileManager = "${pkgs.nemo}/bin/nemo";
     browser = "${inputs.zen-browser.packages.${system}.beta}/bin/zen-beta";
     rofi = "${pkgs.rofi}/bin/rofi";
-    waybarToggle = "toggle-waybar";
-    screenshot = "screenshot";
+    # waybarToggle = "toggle-waybar";
+    # screenshot = "screenshot";
     lock = "${pkgs.swaylock}/bin/swaylock";
     hyprlock = "${pkgs.hyprlock}/bin/hyprlock";
-    powerMenu = "power-menu";
-    wallpaperPicker = "wallpaper-picker";
+    # powerMenu = "power-menu";
+    # wallpaperPicker = "wallpaper-picker";
     waypaper = "${pkgs.waypaper}/bin/waypaper";
     woomer = "${pkgs.woomer}/bin/woomer";
     missioncenter = "${pkgs.mission-center}/bin/missioncenter";
@@ -41,8 +41,8 @@ in
 {
   wayland.windowManager.hyprland.settings = {
     # === 全局行为设置 ===
-    scroll_event_delay = 100;
-    movefocus_cycles_fullscreen = true;
+    # scroll_event_delay = 100;
+    # movefocus_cycles_fullscreen = true;
 
     # === 修饰键 ===
     "$mod" = mod;
@@ -67,7 +67,7 @@ in
       "${mod} SHIFT, Q, exit,"
       "${mod}, Escape, exec, ${apps.lock}"
       "ALT, Escape, exec, ${apps.hyprlock}"
-      "${mod} SHIFT, Escape, exec, ${apps.powerMenu}"
+      # "${mod} SHIFT, Escape, exec, ${apps.powerMenu}"
 
       # 窗口行为
       "${mod}, F, fullscreen, 0"
@@ -79,7 +79,7 @@ in
 
       # 工具
       "${mod}, C, exec, ${pkgs.hyprpicker}/bin/hyprpicker -a"
-      "${mod}, W, exec, ${apps.wallpaperPicker}"
+      # "${mod}, W, exec, ${apps.wallpaperPicker}"
       "${mod} SHIFT, W, exec, [float; size 925 615] ${apps.waypaper}"
       "${mod}, N, exec, swaync-client -t -sw"
       "${mod}, equal, exec, ${apps.woomer}"
@@ -88,9 +88,9 @@ in
       "${mod}, V, exec, ${apps.cliphist} list | ${apps.rofi} -dmenu -theme-str 'window {width: 50%;} listview {columns: 1;}' | ${apps.cliphist} decode | ${apps.wlCopy}"
 
       # 截图
-      ", Print, exec, ${apps.screenshot} --copy"
-      "${mod}, Print, exec, ${apps.screenshot} --save"
-      "${mod} SHIFT, Print, exec, ${apps.screenshot} --swappy"
+      # ", Print, exec, ${apps.screenshot} --copy"
+      # "${mod}, Print, exec, ${apps.screenshot} --save"
+      # "${mod} SHIFT, Print, exec, ${apps.screenshot} --swappy"
 
       # 工作区切换 (1-10)
       "${mod}, 1, workspace, 1"
