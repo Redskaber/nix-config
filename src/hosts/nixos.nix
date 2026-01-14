@@ -108,7 +108,7 @@
   home.packages = with pkgs; [
     # network utils
     curl wget gnupg git bottom tree
-    gdb valgrind strace ltrace
+    gdb valgrind strace ltrace pciutils
     # wm-backend
     # wl-clipboard
     # Terminal prompt shell

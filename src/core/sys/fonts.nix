@@ -21,9 +21,11 @@
 
   # fonts:
   # enable -> ~/.local/share/fonts/*
-  fonts.fontconfig.enable = true;
-  fonts.fontconfig.defaultFonts.monospace = [ "JetBrainsMono Nerd Font" ];
-  fonts.fontconfig.defaultFonts.emoji = [ "Noto Color Emoji" ];
+  fonts = {
+    fontconfig.enable = true;
+    fontconfig.defaultFonts.monospace = [ "JetBrainsMono Nerd Font" ];
+    fontconfig.defaultFonts.emoji = [ "Noto Color Emoji" ];
+  };
 }
 
 
