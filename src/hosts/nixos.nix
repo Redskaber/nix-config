@@ -35,14 +35,16 @@
     ../core/sys/atuin.nix
     ../core/sys/bat.nix
     ../core/sys/direnv.nix
+    ../core/sys/fastfetch.nix
+    ../core/sys/fish.nix
     ../core/sys/fonts.nix
     ../core/sys/fzf.nix
     ../core/sys/git.nix
     ../core/sys/starship.nix
-    ../core/sys/zsh.nix
-    ../core/sys/fish.nix
-    ../core/sys/fastfetch.nix
+    ../core/sys/uv.nix
+    ../core/sys/wl-clipboard.nix
     ../core/sys/zoxide.nix
+    ../core/sys/zsh.nix
 
     ../core/app/ghostty
     ../core/app/rofi
@@ -108,7 +110,7 @@
     curl wget gnupg git bottom tree
     gdb valgrind strace ltrace
     # wm-backend
-    wl-clipboard
+    # wl-clipboard
     # Terminal prompt shell
     # wezterm (wrapper->nixgl) kitty (wrapper->nixgl)
     starship zsh fish
