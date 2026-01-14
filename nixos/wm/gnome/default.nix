@@ -1,4 +1,4 @@
-# @path: ~/projects/configs/nix-config/nixos/wm/gnome.nix
+# @path: ~/projects/configs/nix-config/nixos/wm/gnome/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
 # @description: nixos::wm::gnome

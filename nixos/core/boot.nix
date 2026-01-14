@@ -24,6 +24,7 @@
 
     consoleLogLevel = 3;
     kernelPackages = pkgs.linuxPackages_latest;
+    supportedFilesystems = [ "ntfs" ];
 
   };
 }

@@ -4,4 +4,17 @@
 # @diractory: https://nix-community.github.io/src/options.xhtml#opt-programs.mpv.enable
 
 
+{
+  inputs,
+  lib,
+  config,
+  pkgs,
+  ...
+}:
+{
+
+
+}
+
+
 

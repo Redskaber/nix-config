@@ -25,12 +25,12 @@
   };
 
   # Configure keymap in X11
-  # services.xserver.xkb.layout = "us";
+  # services.xserver.xkb.layout = "us,cn";
   # services.xserver.xkb.options = "eurosign:e,caps:escape";
   # Enable CUPS to print documents.
   # services.printing.enable = true;
   # Enable touchpad support (enabled default in most desktopManager).
-  # services.libinput.enable = true;
+  services.libinput.enable = true;
 
 }
 

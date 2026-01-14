@@ -28,11 +28,15 @@
   imports = [
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
+    ../wm/hyprland
+
     ../core/srv/mako.nix
 
     ../core/sys/atuin.nix
+    ../core/sys/bat.nix
     ../core/sys/direnv.nix
     ../core/sys/fonts.nix
+    ../core/sys/fzf.nix
     ../core/sys/git.nix
     ../core/sys/starship.nix
     ../core/sys/zsh.nix
@@ -40,16 +44,27 @@
     ../core/sys/fastfetch.nix
     ../core/sys/zoxide.nix
 
+    ../core/app/ghostty
+    ../core/app/rofi
+    ../core/app/swaync
+    ../core/app/waybar
     ../core/app/google-chrome.nix
     ../core/app/kitty.nix
+    ../core/app/mpv.nix
+    ../core/app/nemo.nix
     ../core/app/nvim.nix
+    ../core/app/obsidian.nix
     ../core/app/qq.nix
     ../core/app/rbw.nix
+    ../core/app/rustdesk.nix
     ../core/app/steam.nix
+    ../core/app/swaylock.nix
+    ../core/app/swayosd.nix
     ../core/app/tmux.nix
     ../core/app/vscode.nix
     ../core/app/wechat.nix
     ../core/app/wezterm.nix
+    ../core/app/zen-browser.nix
 
     # devShells: import dev/lang.nix from flake.nix
   ];
@@ -61,6 +76,7 @@
       inputs.self.overlays.additions
       inputs.self.overlays.modifications
       inputs.self.overlays.unstable-packages
+
 
       # You can also add overlays exported from other flakes:
       # neovim-nightly-overlay.overlays.default
@@ -97,7 +113,8 @@
     # wezterm (wrapper->nixgl) kitty (wrapper->nixgl)
     starship zsh fish
     # find and tools
-    fzf ripgrep fd bat eza delta yazi zoxide
+    # bat fzf
+    ripgrep fd eza delta yazi zoxide
     # session
     tmux
     # env auto-switching
@@ -109,6 +126,7 @@
     # qq wechat mpv steam
     # dev
     # c/c++,rust,js/ts,python,lua,nix,...
+    appimage-run
   ];
 
   # home-manager:

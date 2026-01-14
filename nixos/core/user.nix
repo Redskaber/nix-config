@@ -36,4 +36,6 @@
       packages = with pkgs; [  ];
     };
   };
+
+  security.sudo.enable = true;    # wheel
 }
