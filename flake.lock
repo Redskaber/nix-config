@@ -237,11 +237,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1768518093,
-        "narHash": "sha256-L7ZZPz6n6u6avUmdlBjHU0y/YctYaLkhBwaQdou+/os=",
+        "lastModified": 1768520699,
+        "narHash": "sha256-MiinTRmeJ/27UhMaxgjtBi+nDFLFhm306AK6otdwflI=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "f2775ba931d2c2bd53a6cb9915684bf51e508bd1",
+        "rev": "e665398497323db2cd81ad842f061f1986700a34",
         "type": "github"
       },
       "original": {
@@ -305,16 +305,16 @@
     "quickshell-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1768509493,
-        "narHash": "sha256-KDSmSFkx/CvdMrHhErggnx+/h3p7T+FZr5LyCS5haFI=",
+        "lastModified": 1768419862,
+        "narHash": "sha256-jGVVU3uN6FMi82YWzcRsNekVMc4j6Xz/M06qUfEHO4w=",
         "owner": "Redskaber",
-        "repo": "hypr-config",
-        "rev": "aca99834fa239df8ef45a441fa30aec1ecf248b9",
+        "repo": "quickshell-config",
+        "rev": "f3048a86b5cf88fea4253bc520da1abca7a2f609",
         "type": "github"
       },
       "original": {
         "owner": "Redskaber",
-        "repo": "hypr-config",
+        "repo": "quickshell-config",
         "type": "github"
       }
     },

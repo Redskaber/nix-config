@@ -97,7 +97,7 @@
     qt6ct-config.flake = false;
 
     # Quickshell-config
-    quickshell-config.url = "github:Redskaber/hypr-config";
+    quickshell-config.url = "github:Redskaber/quickshell-config";
     quickshell-config.flake = false;
 
     # Rofi-config
