@@ -28,7 +28,8 @@
     # ./users.nix
 
     # Import your generated (nixos-generate-config) hardware configuration
-    ./hardware-configuration.nix
+    # (move -> boot): ./hardware-configuration.nix
+    # ./core/driver
 
     # nixos base core configuration
     ./core/bluetooth.nix
@@ -38,13 +39,15 @@
     ./core/network.nix
     ./core/nix.nix
     ./core/sound.nix
-    ./core/srv.nix
+    ./core/server.nix
+    ./core/systemd.nix
     ./core/user.nix
     ./core/virtual.nix
-    ./core/wayland.nix
+    ./core/portal.nix
 
     # window manager
-    ./wm/gnome
+    # ./wm/gnome
+    ./wm/hyprland
   ];
 
   nixpkgs = {
@@ -72,7 +75,19 @@
     };
   };
 
+  # zram
+  zramSwap = {
+    enable = true;
+    priority = 100;
+    memoryPercent = 30;
+    swapDevices = 1;
+    algorithm = "zstd";
+  };
 
+  powerManagement = {
+    enable = true;
+    cpuFreqGovernor = "schedutil";
+  };
 
 
   # List packages installed in system profile.
@@ -89,14 +104,7 @@
     # proxy
       # clash-verge-rev
   ];
-  # programs.firefox.enable = true;
 
-
-  # console = {
-  #   font = "Lat2-Terminus16";
-  #   keyMap = "us";
-  #   useXkbConfig = true; # use xkb.options in tty.
-  # };
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

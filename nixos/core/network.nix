@@ -43,6 +43,7 @@
       allowedTCPPorts = [ 22 80 443 ];
       allowedUDPPorts = [];
     };
+
   };
 
   environment.systemPackages = with pkgs; [ networkmanagerapplet ];

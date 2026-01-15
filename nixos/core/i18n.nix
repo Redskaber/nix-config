@@ -12,9 +12,12 @@
   ...
 }:
 {
+  # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   # Set TimeZone
   time.hardwareClockInLocalTime = true;
   time.timeZone = "Asia/Shanghai";
+  # services.automatic-timezoned.enable = true; # based on IP location
+
   # Set I18n
   i18n = {
     supportedLocales = [
@@ -43,6 +46,12 @@
     };
   };
 
+  environment.variables = {
+    GTK_IM_MODULE = "fcitx";
+    QT_IM_MODULE = "fcitx";
+    XMODIFIERS = "@im=fcitx";
+  };
+
   # Fonts
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
@@ -50,6 +59,16 @@
     # chinese
     noto-fonts-cjk-sans
   ];
+
+  # Configure keymap in X11
+  services.xserver.xkb.layout = "us,cn";
+  # services.xserver.xkb.options = "eurosign:e,caps:escape";
+
+  # console = {
+  #   font = "Lat2-Terminus16";
+  #   keyMap = "us";
+  #   useXkbConfig = true; # use xkb.options in tty.
+  # };
 
 }
 

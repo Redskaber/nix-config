@@ -36,6 +36,18 @@
       };
     };
 
+    # Quickshell
+    quickshell = {
+      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    ags = {
+      type = "github";
+      owner = "aylur";
+      repo = "ags";
+      ref = "v1";
+    };
+
     # Neovim Config
     nvim-config.url = "github:Redskaber/nvim-config";
     nvim-config.flake = false;
@@ -67,37 +79,84 @@
     # Mpv-config
     # mpv-config.url = "github:Redskaber/mpv-config";
     # mpv-config.flake = false;
+
+    # Btop-config
+    btop-config.url = "github:Redskaber/btop-config";
+    btop-config.flake = false;
+
+    # Cava-config
+    cava-config.url = "github:Redskaber/cava-config";
+    cava-config.flake = false;
+
+    # Hypr-config
+    hypr-config.url = "github:Redskaber/hypr-config";
+    hypr-config.flake = false;
+
+    # Qt6ct-config
+    qt6ct-config.url = "github:Redskaber/qt6ct-config";
+    qt6ct-config.flake = false;
+
+    # Quickshell-config
+    quickshell-config.url = "github:Redskaber/hypr-config";
+    quickshell-config.flake = false;
+
+    # Rofi-config
+    rofi-config.url = "github:Redskaber/rofi-config";
+    rofi-config.flake = false;
+
+    # Swappy-config
+    swappy-config.url = "github:Redskaber/swappy-config";
+    swappy-config.flake = false;
+
+    # Swaync-config
+    swaync-config.url = "github:Redskaber/swaync-config";
+    swaync-config.flake = false;
+
+    # Wallust-config
+    wallust-config.url = "github:Redskaber/wallust-config";
+    wallust-config.flake = false;
+
+    # Waybar-config
+    waybar-config.url = "github:Redskaber/waybar-config";
+    waybar-config.flake = false;
+
+    # Wlogout-config
+    wlogout-config.url = "github:Redskaber/wlogout-config";
+    wlogout-config.flake = false;
+
   };
 
-  outputs = {
+  outputs =
+  {
     self,
     nixpkgs,
     home-manager,
     ...
   } @ inputs:
-  let
-    # Supported systems for your flake packages, shell, etc.
-    systems = [
-      "aarch64-linux"
-      "i686-linux"
-      "x86_64-linux"
-      "aarch64-darwin"
-      "x86_64-darwin"
-    ];
-    # This is a function that generates an attribute by calling a function you
-    # pass to it, with each system as an argument
-    forAllSystems = nixpkgs.lib.genAttrs systems;
-
-    # Helper: load all dev modules for a system
-    devShellsForSystem = system:
     let
-      pkgs = nixpkgs.legacyPackages.${system};
+      # Supported systems for your flake packages, shell, etc.
+      systems = [
+        "aarch64-linux"
+        "i686-linux"
+        "x86_64-linux"
+        "aarch64-darwin"
+        "x86_64-darwin"
+      ];
+      # This is a function that generates an attribute by calling a function you
+      # pass to it, with each system as an argument
+      forAllSystems = nixpkgs.lib.genAttrs systems;
+
+      # Helper: load all dev modules for a system
+      devShellsForSystem = system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        import ./lib/dev/shells.nix {
+          inherit pkgs inputs;
+          devDir = ./home/core/dev;
+        };
     in
-      import ./lib/dev/shells.nix {
-        inherit pkgs inputs;
-        devDir = ./src/core/dev;
-      };
-  in {
+  {
     # debug information
     # Available through 'nix eval .#debug.test_forAllSystems'
     debug.test_forAllSystems = forAllSystems (system: "Hello from ${system}");
@@ -110,14 +169,14 @@
     formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
 
     # Your custom packages and modifications, exported as overlays
-    overlays = import ./overlays {inherit inputs;};
+    overlays = import ./overlays { inherit inputs; };
 
     # Reusable nixos modules you might want to export
     # These are usually stuff you would upstream into nixpkgs
     nixos = import ./export/nixos;
     # Reusable home-manager modules you might want to export
     # These are usually stuff you would upstream into home-manager
-    homeManager = import ./export/home-manager;
+    home = import ./export/home;
 
     # Your custom dev shells
     # devShells = forAllSystems( system: {
@@ -164,12 +223,12 @@
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         extraSpecialArgs = { inherit inputs; };
         # > Out main home-manager configuration file <
-        modules = [ ./src/hosts/linux.nix ];
+        modules = [ ./home/hosts/linux.nix ];
       };
       "kilig@nixos" = home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
         extraSpecialArgs = { inherit inputs; };
-        modules = [ ./src/hosts/nixos.nix ];
+        modules = [ ./home/hosts/nixos.nix ];
       };
     };
   };

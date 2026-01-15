@@ -12,15 +12,17 @@
   ...
 }:
 {
+  # FIXME: temp used driver mod config
   hardware = {
     graphics = {
       enable = true;
       extraPackages = with pkgs; [
-        intel-media-driver   # Gen8+
+        intel-media-driver    # Gen8+
         (intel-vaapi-driver.override { enableHybridCodec = true; })
-        # libva-utils        # (debug) vainfo
-        libva-vdpau-driver   # (vaapiVdpau) Firefox/Chromium
+        libva-utils           # (debug) vainfo
+        libva-vdpau-driver    # (vaapiVdpau) Firefox/Chromium
         libvdpau-va-gl
+        libva
       ];
     };
 

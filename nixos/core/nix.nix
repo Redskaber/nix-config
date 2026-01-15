@@ -10,10 +10,17 @@
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   flakeInputs = lib.filterAttrs (_: lib.isType "flake") inputs;
-in {
+in
+{
   nix = {
+    gc = {
+      automatic = true;
+      dates = "weekly";
+      options = "--delete-older-than 7d";
+    };
     settings = {
       auto-optimise-store = true;
       # Enable flakes and new 'nix' command
