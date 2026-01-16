@@ -18,7 +18,7 @@
     General = {
       Enable = "Source,Sink,Media,Socket";
       Experimental = true;
-    }
+    };
   };
   environment.systemPackages = with pkgs; [
     overskride
