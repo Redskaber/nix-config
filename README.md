@@ -1,29 +1,31 @@
 # 🧊 nix-config
 
-> **Minimal system. Maximal user freedom. Precise development environments.**
+> **Minimal system. Maximal user freedom. Precise, composable development environments.**
 
-My declarative Nix flake for **NixOS** and **Home Manager**, built on three core principles:
+My declarative Nix flake for **NixOS** and **Home Manager**, built on three pillars:
 
-1. **System layer**: Bare minimum — only what’s essential for boot, security, and hardware.
-2. **User layer**: Rich, modular, and fully declarative — your desktop, tools, and dotfiles.
-3. **Dev layer**: On-demand, composable development shells — no bloat, just what you need.
+1. **System layer**: Bare metal — only boot, drivers, security.
+2. **User layer**: Fully declarative desktop (Hyprland), apps, and dotfiles via Home Manager.
+3. **Dev layer**: On-demand, **composable dev shells** powered by a custom engine — no global pollution.
 
 ---
 
-## 🗂️ Structure Overview
+## 🗂️ Project Structure
 
 ```
 ├── flake.nix                 # Flake entrypoint
-├── nixos/                    # NixOS system configuration (minimal)
-│   └── core/                 # Boot, network, sound, drivers, etc.
-│   └── wm/hyprland/          # Hyprland compositor integration
-├── home/                     # Home Manager (user environment)
-│   ├── core/sys/             # Shell, git, fonts, CLI utils
-│   ├── core/app/             # GUI apps: nvim, wezterm, steam, etc.
-│   ├── core/dev/             # Language modules & dev shell definitions
-│   └── hosts/                # Host-specific HM profiles (linux, nixos)
-├── lib/dev/                  # Custom dev shell engine (`mk-dev-shell`)
-└── export/                   # Reusable modules (for external flakes)
+├── nixos/                    # Minimal NixOS config (core + WM)
+│   └── core/                 # Boot, network, sound, GPU drivers
+│   └── wm/hyprland/          # Wayland compositor setup
+├── home/                     # Home Manager profiles
+│   ├── core/sys/             # Shell (zsh/fish), git, fonts, CLI tools
+│   ├── core/app/             # GUI apps: nvim, wezterm, steam, obsidian...
+│   ├── core/dev/             # **Language modules & composite shells**
+│   └── hosts/                # Host-specific HM (nixos, linux)
+├── lib/dev/                  # **Custom dev shell engine**
+│   ├── mkShell.nix           # Smart combinator with dedup & hook merging
+│   └── shells.nix            # Auto-generates devShells from ./dev/*.nix
+└── export/                   # Reusable modules for other flakes
 ```
 
 ---
@@ -32,92 +34,112 @@ My declarative Nix flake for **NixOS** and **Home Manager**, built on three core
 
 ### On NixOS
 ```bash
-# Rebuild system (fast — only core services)
 sudo nixos-rebuild switch --flake .#kilig-nixos
-
-# Activate user environment
 home-manager switch --flake .#kilig@nixos
 ```
 
-### On any Linux (via Home Manager standalone)
+### On any Linux (standalone Home Manager)
 ```bash
 home-manager switch --flake .#kilig@extensa
 ```
 
-> 💡 System stays clean. All GUI apps, shells, and configs live in your user profile.
+> 💡 Your system stays clean. All development happens in ephemeral shells.
 
 ---
 
-## 🛠️ Development Shells
+## 🛠️ Composable Development Shells
 
-Powered by a custom **composable dev shell engine**. Each language is a reusable module; environments are declared via composition.
+This is the **core innovation**: development environments are **declared as compositions of language modules**, not hardcoded lists.
 
-### Available shells
+### How it works
+- Each language lives in `home/core/dev/<lang>.nix` → returns an **attrset of variants** (`default`, `machine`, etc.)
+- Composite shells (e.g., `cpython`) are defined in `home/core/dev/default.nix` using `combinFrom = [ dev.c dev.python ]`
+- The engine (`lib/dev/mkShell.nix`) **deduplicates packages**, **merges hooks**, and **resolves dependencies**
+
+### Available Shells
+Run `nix flake show` to see all:
 ```bash
-nix flake show  # See all devShells
-```
-
-### Examples
-```bash
-# Full-stack dev environment (C/C++/Rust/Python/JS/etc.)
+# Full-stack environment (C/C++/Rust/Py/JS/etc.)
 nix develop
 
-# CPython extension development (C + Python only)
+# CPython extension dev (C + Python only)
 nix develop .#cpython
 
-# Rust-only toolchain
-nix develop .#rust
+# Python for ML/DL (with uv, ruff, pyright + scientific stack)
+nix develop .#python-machine
 
-# Web dev (JS/TS/Node)
-nix develop .#web
+# Language-specific minimal shells
+nix develop .#rust
+nix develop .#java
+nix develop .#web  # (via combinFrom in default.nix)
 ```
 
 Each shell:
-- Loads **only necessary packages**
-- Sets up **language-specific hooks & env vars**
-- Avoids duplication via **smart merging & deduplication**
+- Loads **only necessary inputs**
+- Sets up **language-specific env vars & aliases**
+- Executes **pre/post hooks** at every stage (`preInputsHook`, `postShellHook`, etc.)
+- Avoids duplication via **smart merging**
 
-Define new combinations in [`home/core/dev/default.nix`](./home/core/dev/default.nix).
+> 🔍 See [`home/core/dev/c.nix`](./home/core/dev/c.nix) and [`home/core/dev/python.nix`](./home/core/dev/python.nix) for real-world examples.
 
 ---
 
 ## 🌐 Window Manager
 
-- **Hyprland** (Wayland compositor)
-- Full ecosystem: `waybar`, `swaync`, `rofi`, `swaylock`, `wl-clipboard`, etc.
-- All configured declaratively via Home Manager.
+- **Hyprland** (Wayland) with full ecosystem:
+  - `waybar`, `swaync`, `rofi`, `swaylock`, `wl-clipboard`
+- All configured **declaratively** via Home Manager
+- No imperative scripts — everything is reproducible
 
 ---
 
 ## 🔒 Philosophy
 
-- **No fat system**: `environment.systemPackages` is intentionally sparse.
-- **User-centric**: Your shell, editor, browser, and workflow — all yours.
-- **Reproducible**: Every environment is pinned via `flake.lock`.
-- **Portable**: Same config works across NixOS and generic Linux.
+- **System purity**: `environment.systemPackages` is nearly empty.
+- **User sovereignty**: Your editor, shell, and workflow — fully yours.
+- **Dev precision**: No “global Python” or “system Rust”. Every project gets exactly what it needs.
+- **Portability**: Same config works on NixOS and generic Linux.
 
-> “Give me a minimal kernel, and I shall build my world in userspace.”
+> “I don’t install tools. I compose environments.”
 
 ---
 
-## 📦 Inputs Highlights
+## 🧠 Under the Hood: The Dev Shell Engine
 
-- `nixpkgs` (stable `25.11`) + `nixpkgs-unstable` (selective access)
+Your custom `mkDevShell` provides:
+
+| Feature | Description |
+|--------|-------------|
+| **`combinFrom`** | Declare dependencies as **config attrsets**, not package lists |
+| **Deduplication** | `pkgs.lib.unique` on `buildInputs` / `nativeBuildInputs` |
+| **Hook Merging** | Concatenates `preInputsHook`, `postShellHook`, etc. from all layers |
+| **Variant Support** | `python.nix` → `python` (default) + `python-machine` |
+| **Function Hooks** | Optional `preShellHookFn` for dynamic logic |
+
+This turns dev environments into **first-class, composable data** — not just shell scripts.
+
+---
+
+## 📦 Inputs
+
+- `nixpkgs` (stable `25.11`)
+- `nixpkgs-unstable` (selective access via overlays)
 - `home-manager` (release-25.11)
-- `nixgl` for GPU-accelerated apps on non-NixOS
-- Personal config repos (neovim, starship, wezterm, etc.) as Git submodules
+- Personal config repos as submodules (neovim, starship, etc.)
 
 ---
 
 ## 📝 Notes
 
-- Replace `kilig-nixos`, `kilig@nixos`, etc. with your hostname/username if forking.
-- Hardware config (`hardware-configuration.nix`) is **not tracked** — generate per-machine.
-- All dev environments are **ephemeral** — nothing installed globally.
+- Hardware config (`hardware-configuration.nix`) is **not tracked** — generate per machine.
+- All dev shells are **ephemeral** — nothing leaks into your global environment.
+- Use `direnv` + `use flake` for seamless project integration (see `python-machine` example).
 
 ---
 
 > Crafted with ☕ and Nix  
 > — [@Redskaber](https://github.com/Redskaber)
-```
+
+
+
 
