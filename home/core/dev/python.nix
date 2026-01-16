@@ -115,9 +115,9 @@
       #     - (Optional): nvcc --version
       #
       # Example in your project (SUPPORT_MAX_VERSION=12.2):
-          uv add torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
-            --extra-index-url https://download.pytorch.org/whl/cu121 \
-            --index-strategy unsafe-best-match
+      #    uv add torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
+      #      --extra-index-url https://download.pytorch.org/whl/cu121 \
+      #      --index-strategy unsafe-best-match
 
       echo "[postInputsHook]: python ML/DL shell ready!"
     '';
