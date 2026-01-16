@@ -33,12 +33,15 @@
 
     ../core/sys/atuin.nix
     ../core/sys/bat.nix
+    ../core/sys/bottom.nix
+    ../core/sys/btop.nix
     ../core/sys/direnv.nix
     ../core/sys/fastfetch.nix
     ../core/sys/fish.nix
     ../core/sys/fonts.nix
     ../core/sys/fzf.nix
     ../core/sys/git.nix
+    ../core/sys/htop.nix
     ../core/sys/starship.nix
     ../core/sys/uv.nix
     ../core/sys/wl-clipboard.nix
@@ -46,6 +49,7 @@
     ../core/sys/zsh.nix
 
     ../core/app/ghostty
+    ../core/app/yazi
     ../core/app/cava.nix
     ../core/app/discord.nix
     ../core/app/google-chrome.nix
@@ -119,8 +123,8 @@
     # wezterm (wrapper->nixgl) kitty (wrapper->nixgl)
     starship zsh fish
     # find and tools
-    # bat fzf
-    ripgrep fd eza delta yazi zoxide
+    # bat fzf delta yazi
+    ripgrep fd eza zoxide
     # session
     tmux
     # env auto-switching
