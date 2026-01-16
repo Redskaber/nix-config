@@ -115,7 +115,9 @@
       #     - (Optional): nvcc --version
       #
       # Example in your project (SUPPORT_MAX_VERSION=12.2):
-      #   uv pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+          uv add torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \
+            --extra-index-url https://download.pytorch.org/whl/cu121 \
+            --index-strategy unsafe-best-match
 
       echo "[postInputsHook]: python ML/DL shell ready!"
     '';
@@ -127,9 +129,26 @@
     postShellHook = ''
       echo "Entry project:"
       echo "    uv init && uv venv && source .venv/bin/activate"
-      echo "    uv add install numpy scipy pandas scikit-learn matplotlib seaborn plotly jupyter ipykernel tqdm rich polars"
-      echo "    uv add install datasets transformers"
-      echo "    uv add install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121"
+      echo "    sed -i 's/^requires-python = .*/requires-python = \">=3.12,<3.13\"/' pyproject.toml"
+      echo "    uv add numpy scipy pandas scikit-learn matplotlib seaborn plotly jupyter ipykernel tqdm rich polars"
+      echo "    uv add datasets transformers"
+      echo "    uv add torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 \\"
+      echo "        --extra-index-url https://download.pytorch.org/whl/cu121 \\"
+      echo "        --index-strategy unsafe-best-match"
+      echo "Direnv:"
+      echo "cat > .envrc << 'EOF'"
+      echo "# direnv::dot_envrc content:"
+      echo "# echo \"# ############################################################################################\""
+      echo "# echo \"# Remote: github:redskaber/nix-config/26c7a7731734b88d51b70599a054f0e246b52262#python-machine\""
+      echo "# echo \"# commnd: direnv allow\""
+      echo "# echo \"# commnd: source .venv/bin/activate\""
+      echo "# echo \"# ############################################################################################\""
+      echo "# use flake github:redskaber/nix-config/26c7a7731734b88d51b70599a054f0e246b52262#python-machine"
+      echo "# source .venv/bin/activate"
+      echo "EOF"
+      echo ""
+      echo "direnv allow"
+
       echo "[postShellHook]: ML/DL environment activated!"
     '';
   };
@@ -139,7 +158,7 @@
 # direnv::dot_envrc content:
 # echo "# ############################################################################################"
 # echo "# Remote: github:redskaber/nix-config/26c7a7731734b88d51b70599a054f0e246b52262#python-machine"
-# echo "# commnd: direnv allow"
+# echo "# commnd: direnv allow"
 # echo "# commnd: source .venv/bin/activate"
 # echo "# ############################################################################################"
 # use flake github:redskaber/nix-config/26c7a7731734b88d51b70599a054f0e246b52262#python-machine
