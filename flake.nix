@@ -178,26 +178,16 @@
     # These are usually stuff you would upstream into home-manager
     home = import ./export/home;
 
-    # Your custom dev shells
-    # devShells = forAllSystems( system: {
-    # default = let
-    #   pkgs = nixpkgs.legacyPackages.${system};
-    # in
-    #   pkgs.mkShell {
-    #     buildInputs = with pkgs; [
-    #       cargo rustc rustfmt clippy rust-analyzer
-    #       # (explicit optional) depends
-    #       glib
-    #     ];
-    #     # (explicit optional) build depends packages config inject
-    #     nativeBuildInputs = [ pkgs.pkg-config ];
-    #     # env.RUST_SRC_PATH = "${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}";
-    #     shellHook = ''
-    #       export RUST_SRC_PATH=${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}
-    #     '';
-    #   };
-    # });
     # devShells loader
+    # Used:
+    #   home/core/dev/<lang.nix>  ---> this is you single language devshell config
+    #   home/core/dev/default.nix ---> this file you can mutil-language combi devshell config
+    # you can in 'home/core/dev'
+    #   create you single language devshell (
+    #     auto-load, devshell-name == config-name(default is file-name)
+    #     don't used other single-language conbim
+    #   )
+    #   default.nix (auto-load, devshell-name == config-name, and can used single-language conbim)
     devShells = forAllSystems devShellsForSystem;
 
     # NixOS configuration entrypoint
