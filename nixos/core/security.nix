@@ -4,12 +4,11 @@
 # @description: nixos::core::security
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # Security / Polkit
@@ -18,8 +17,10 @@
     polkit.extraConfig = ''
        polkit.addRule(function(action, subject) {
          if (
-           subject.isInGroup("users")
-             && (
+            subject.isInGroup("users") &&
+            subject.active == true &&
+            subject.local == true &&
+            (
                action.id == "org.freedesktop.login1.reboot" ||
                action.id == "org.freedesktop.login1.reboot-multiple-sessions" ||
                action.id == "org.freedesktop.login1.power-off" ||

@@ -4,12 +4,11 @@
 # @description: nixos::core::sound
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # Enable sound.

@@ -7,12 +7,11 @@
 # - on https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # You can import other NixOS modules here
@@ -36,6 +35,7 @@
     ./core/boot.nix
     ./core/hardware.nix
     ./core/i18n.nix
+    ./core/memory.nix
     ./core/network.nix
     ./core/nix.nix
     ./core/sound.nix
@@ -75,27 +75,11 @@
     };
   };
 
-  # zram
-  zramSwap = {
-    enable = true;
-    priority = 100;
-    memoryPercent = 30;
-    swapDevices = 1;
-    algorithm = "zstd";
-  };
-
-  powerManagement = {
-    enable = true;
-    cpuFreqGovernor = "schedutil";
-  };
-
 
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
   environment.systemPackages = with pkgs; [
-    vim neovim
-    wget curl
-    git
+    curl git vim wget
     # sound
       # pamixer
       # pavucontrol

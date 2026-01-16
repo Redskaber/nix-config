@@ -4,12 +4,11 @@
 # @description: nixos::core::hardware
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # FIXME: temp used driver mod config

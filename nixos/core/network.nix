@@ -4,12 +4,11 @@
 # @description: nixos::core::network
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   networking = {
@@ -18,9 +17,8 @@
 
     # Use: 'nmcli' or 'nmtui'
     networkmanager.enable = true;
-    wireless.enable = false;
 
-    # enableIPv6 = false;
+    enableIPv6 = true;
     # allowPing = true;
     # logRefusedConnections = false;
 
@@ -29,6 +27,7 @@
       "8.8.8.8"               # Google(main)
       "8.8.4.4"               # Google(other)
       "2606:4700:4700::1111"  # Cloudflare IPv6
+      "2001:4860:4860::8888"  # Google IPv6
     ];
 
     # proxy.default = "http://user:password@proxy:port/";
@@ -48,4 +47,5 @@
 
   environment.systemPackages = with pkgs; [ networkmanagerapplet ];
 }
+
 

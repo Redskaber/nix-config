@@ -4,12 +4,11 @@
 # @description: nixos::core::bluetooth
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # Enable Bluetooth
@@ -19,7 +18,7 @@
     General = {
       Enable = "Source,Sink,Media,Socket";
       Experimental = true;
-    };
+    }
   };
   environment.systemPackages = with pkgs; [
     overskride

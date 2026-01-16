@@ -4,12 +4,11 @@
 # @description: nixos::core::driver
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # TODO: waiting auto dispatch

@@ -4,17 +4,16 @@
 # @description: nixos::core::user
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # TODO: Configure your system-wide user settings (groups, etc), add more users as needed.
   users = {
-    mutableUsers = true;
+    mutableUsers = false;
     #defaultUserShell = pkgs.zsh;
     users = {
       # FIXME: Replace with your username
@@ -31,10 +30,10 @@
           "networkmanager"    # Network
           "video"             # GPU (hardware)
           "libvirtd"
-          "scanner"
-          "lp"
-          "input"
-          "audio"
+          "scanner"           # Scanner
+          "lp"                # Printer
+          "input"             # Inputer (Gaming Box ...)
+          "audio"             # GPU (/dev/dri ...)
         ];
         # shell = pkgs.zsh;
         packages = with pkgs; [  ];
@@ -49,3 +48,5 @@
 
   security.sudo.enable = true;    # wheel
 }
+
+

@@ -4,13 +4,12 @@
 # @description: nixos::core::boot
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  modulesPath,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, modulesPath
+, ...
 }:
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
@@ -33,8 +32,9 @@
   # Bootloader.
   boot = {
     consoleLogLevel = 3;
-    loader.systemd-boot.enable = true;
+
     loader.efi.canTouchEfiVariables = true;
+    loader.systemd-boot.enable = true;
     loader.timeout = 5;
 
     initrd = {

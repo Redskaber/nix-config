@@ -29,7 +29,8 @@
     # You can also split up your configuration and import pieces of it here:
     ../wm/hyprland
 
-    ../core/srv/mako.nix
+    # hyprland handle shadow
+    # ../core/srv/mako.nix
 
     ../core/sys/atuin.nix
     ../core/sys/bat.nix

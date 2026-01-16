@@ -4,12 +4,11 @@
 # @description: nixos::core::nix
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 let
   flakeInputs = lib.filterAttrs (_: lib.isType "flake") inputs;
@@ -30,8 +29,6 @@ in
       ];
       # Opinionated: disable global registry
       flake-registry = "";
-      # Workaround for https://github.com/NixOS/nix/issues/9574
-      nix-path = config.nix.nixPath;
       # downloads and updated mapping original
       substituters = [
         "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"

@@ -4,12 +4,11 @@
 # @description: nixos::core::virtual
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # # Add user to libvirtd group

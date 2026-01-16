@@ -4,12 +4,11 @@
 # @description: nixos::core::server
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # SSH
@@ -20,36 +19,38 @@
       PermitRootLogin = "no";
       # Opinionated: use keys only.
       # Remove if you want to SSH using passwords
-      # PasswordAuthentication = false;
+      PasswordAuthentication = false;
+
     };
   };
-
 
   # Enable CUPS to print documents.
   # services.printing.enable = true;
   # Enable touchpad support (enabled default in most desktopManager).
-  services.libinput.enable = true;
 
   services = {
+    # No-server disable
     smartd = {
       enable = false;
       autodetect = true;
     };
-    gvfs.enable = true;
-    tumbler.enable = true;
-    udev.enable = true;
-    envfs.enable = true;
-    dbus.enable = true;
+    # SSD optimite
     fstrim = {
       enable = true;
       interval = "weekly";
     };
-    rpcbind.enable = true;
-    nfs.server.enable = true;
+    # Flatpak app support
     flatpak.enable = true;
+    # Input, bluetooth
+    libinput.enable = true;
     blueman.enable = true;
+    # Firmware update and power manager
     fwupd.enable = true;
     upower.enable = true;
+    # Preview and remote support
+    gvfs.enable = true;
+    tumbler.enable = true;
+
     gnome.gnome-keyring.enable = true;
   };
 }

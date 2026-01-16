@@ -5,12 +5,11 @@
 # @description: nixos::core::portal
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   # base(wayland)
@@ -18,21 +17,18 @@
     enable = true;
     wlr.enable = true;
     xdgOpenUsePortal = true;
+
     config = {
       common.default = [ "gtk" ];
-      hyprland.default = [ "hyprland" "gtk" ];
+      hyprland.default = [ "hyprland" "gtk" "wlr" ];
     };
 
-    extraPortals = [
-      pkgs.xdg-desktop-portal-hyprland
-      pkgs.xdg-desktop-portal-gtk
-      pkgs.xdg-desktop-portal-wlr
+    extraPortals = with pkgs; [
+      xdg-desktop-portal-hyprland
+      xdg-desktop-portal-gtk
+      xdg-desktop-portal-wlr
     ];
-    configPackages = [
-      pkgs.xdg-desktop-portal-hyprland
-      pkgs.xdg-desktop-portal-gtk
-      pkgs.xdg-desktop-portal-wlr
-    ];
+
   };
 
 }

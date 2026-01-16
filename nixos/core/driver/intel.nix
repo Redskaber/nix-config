@@ -4,12 +4,11 @@
 # @description: nixos::core::driver::intel
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   # TODO: waiting impl!
