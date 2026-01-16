@@ -52,6 +52,7 @@
     ../core/app/ghostty
     ../core/app/yazi
     ../core/app/cava.nix
+    ../core/app/clash-verge-rev.nix
     ../core/app/discord.nix
     ../core/app/google-chrome.nix
     ../core/app/kitty.nix
@@ -116,28 +117,30 @@
   # Add stuff for your user as you see fit:
   home.packages = with pkgs; [
     # network utils
-    curl wget gnupg git bottom tree
-    gdb valgrind strace ltrace pciutils
+    #   git bottom
+        curl wget gnupg tree gdb
+        valgrind strace ltrace pciutils
     # wm-backend
-    # wl-clipboard
-    # Terminal prompt shell
-    # wezterm (wrapper->nixgl) kitty (wrapper->nixgl)
-    starship zsh fish
-    # find and tools
-    # bat fzf delta yazi
-    ripgrep fd eza zoxide
-    # session
-    tmux
-    # env auto-switching
-    direnv nix-direnv
-    # fonts -> core::sys::fonts
-    # proxy
-    clash-verge-rev
-    # social
-    # qq wechat mpv steam
-    # dev
-    # c/c++,rust,js/ts,python,lua,nix,...
-    appimage-run
+    #   wl-clipboard
+    # Terminal shell
+    #   wezterm (wrapper->nixgl) kitty (wrapper->nixgl)
+    #   starship zsh fish
+    # Tools
+    #   bat fzf delta yazi
+        ripgrep fd eza zoxide
+    # Session
+    #   tmux
+    # Env auto-switching
+        direnv nix-direnv
+    # Fonts -> core::sys::fonts
+    # Proxy
+    #   clash-verge-rev
+    # Social
+    #   qq wechat mpv steam
+    # Dev
+    #   c/c++,rust,js/ts,python,lua,nix,...
+    # Appimage runtime
+        appimage-run
   ];
 
   # home-manager:
