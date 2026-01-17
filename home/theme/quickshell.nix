@@ -14,7 +14,7 @@
 }:
 {
   home.packages = with pkgs; [
-    quickshell
+    inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # Qt6 dependencies for quickshell
     qt6.qtbase

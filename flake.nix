@@ -74,6 +74,10 @@
     # mpv-config.url = "github:Redskaber/mpv-config";
     # mpv-config.flake = false;
 
+    # Ags-config
+    ags-config.url = "github:Redskaber/ags-config";
+    ags-config.flake = false;
+
     # Btop-config
     btop-config.url = "github:Redskaber/btop-config";
     btop-config.flake = false;
