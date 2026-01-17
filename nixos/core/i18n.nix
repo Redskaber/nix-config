@@ -40,14 +40,17 @@
     inputMethod = {
       type = "fcitx5";
       enable = true;
-      waylandFrontend = true;             # suppress warning
-      fcitx5.addons = with pkgs; [
-        # fcitx5-rime                     # Traditional chinese
-        fcitx5-gtk
-        qt6Packages.fcitx5-chinese-addons # Chinese
-        qt6Packages.fcitx5-configtool     # Config GUI
-        fcitx5-nord                       # Color-theme
-      ];
+      fcitx5 = {
+        waylandFrontend = true;             # suppress warning
+        addons = with pkgs; [
+          # fcitx5-rime                     # Traditional chinese
+          fcitx5-gtk
+          qt6Packages.fcitx5-chinese-addons # Chinese
+          qt6Packages.fcitx5-configtool     # Config GUI
+          fcitx5-nord                       # Color-theme
+        ];
+      };
+
     };
 
   };
