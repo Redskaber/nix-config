@@ -1,25 +1,5 @@
 {
   "nodes": {
-    "ags": {
-      "inputs": {
-        "nixpkgs": "nixpkgs",
-        "systems": "systems"
-      },
-      "locked": {
-        "lastModified": 1735346349,
-        "narHash": "sha256-n/VeEnc6fra2SPgm2ppzwQ52ggYDhpzmBnIBrVD/f+0=",
-        "owner": "aylur",
-        "repo": "ags",
-        "rev": "237601999d65a4663bcbab934f4f6ce1f579d728",
-        "type": "github"
-      },
-      "original": {
-        "owner": "aylur",
-        "ref": "v1",
-        "repo": "ags",
-        "type": "github"
-      }
-    },
     "btop-config": {
       "flake": false,
       "locked": {
@@ -91,7 +71,7 @@
     },
     "flake-utils": {
       "inputs": {
-        "systems": "systems_2"
+        "systems": "systems"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -183,16 +163,16 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1725634671,
-        "narHash": "sha256-v3rIhsJBOMLR8e/RNWxr828tB+WywYIoajrZKFM+0Gg=",
+        "lastModified": 1768323494,
+        "narHash": "sha256-yBXJLE6WCtrGo7LKiB6NOt6nisBEEkguC/lq/rP3zRQ=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "574d1eac1c200690e27b8eb4e24887f8df7ac27c",
+        "rev": "2c3e5ec5df46d3aeee2a1da0bfedd74e21f4bf3a",
         "type": "github"
       },
       "original": {
         "owner": "NixOS",
-        "ref": "nixos-unstable",
+        "ref": "nixos-25.11",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -209,22 +189,6 @@
       "original": {
         "owner": "NixOS",
         "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1768323494,
-        "narHash": "sha256-yBXJLE6WCtrGo7LKiB6NOt6nisBEEkguC/lq/rP3zRQ=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "2c3e5ec5df46d3aeee2a1da0bfedd74e21f4bf3a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "nixos-25.11",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -263,22 +227,6 @@
       "original": {
         "owner": "Redskaber",
         "repo": "nvim-config",
-        "type": "github"
-      }
-    },
-    "qt6ct-config": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1768419960,
-        "narHash": "sha256-YvMvNbtKUXuXcDEdU2cSblKEXs4v8BSCm+x3Cdwjsqk=",
-        "owner": "Redskaber",
-        "repo": "qt6ct-config",
-        "rev": "bdd78a824571bc52cef6cc15df5684be5b2eb67e",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Redskaber",
-        "repo": "qt6ct-config",
         "type": "github"
       }
     },
@@ -336,7 +284,6 @@
     },
     "root": {
       "inputs": {
-        "ags": "ags",
         "btop-config": "btop-config",
         "cava-config": "cava-config",
         "fastfetch-config": "fastfetch-config",
@@ -344,16 +291,14 @@
         "hypr-config": "hypr-config",
         "kitty-config": "kitty-config",
         "nixgl": "nixgl",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
         "nvim-config": "nvim-config",
-        "qt6ct-config": "qt6ct-config",
         "quickshell": "quickshell",
         "quickshell-config": "quickshell-config",
         "rofi-config": "rofi-config",
         "starship-config": "starship-config",
-        "swappy-config": "swappy-config",
         "swaync-config": "swaync-config",
         "tmux-config": "tmux-config",
         "vscode-config": "vscode-config",
@@ -380,22 +325,6 @@
         "type": "github"
       }
     },
-    "swappy-config": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1768418896,
-        "narHash": "sha256-4ymewuu443hF37io0GTm8k4YQvd+nLkdYlviNzDWvQA=",
-        "owner": "Redskaber",
-        "repo": "swappy-config",
-        "rev": "fe8f8ffdae48eff9feee2200705845f5b87f4886",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Redskaber",
-        "repo": "swappy-config",
-        "type": "github"
-      }
-    },
     "swaync-config": {
       "flake": false,
       "locked": {
@@ -413,21 +342,6 @@
       }
     },
     "systems": {
-      "locked": {
-        "lastModified": 1689347949,
-        "narHash": "sha256-12tWmuL2zgBgZkdoB6qXZsgJEH9LR3oUgpaQq2RbI80=",
-        "owner": "nix-systems",
-        "repo": "default-linux",
-        "rev": "31732fcf5e8fea42e59c2488ad31a0e651500f68",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-systems",
-        "repo": "default-linux",
-        "type": "github"
-      }
-    },
-    "systems_2": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",

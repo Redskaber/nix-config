@@ -18,7 +18,7 @@
     # kdePackages.qt6ct
     # libsForQt5.qt5ct
 
-    catppuccin-qt6ct # qt5ct and qt6ct -> catppuccin
+    catppuccin-qt5ct # qt5ct and qt6ct -> catppuccin
   ];
 
 }
