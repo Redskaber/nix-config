@@ -1,7 +1,9 @@
-# @path: ~/projects/configs/nix-config/home/core/app/quickshell.nix
+# @path: ~/projects/configs/nix-config/home/theme/quickshell.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.quickshell.enable
+# @discription: home::theme::quickshell
+# - desctop ui, panel, launcher, system-pq, note-center
 
 
 { inputs
@@ -12,7 +14,7 @@
 }:
 {
   home.packages = with pkgs; [
-    inputs.quickshell.packages.${pkgs.stdenv.hostPlatform.system}.default
+    quickshell
 
     # Qt6 dependencies for quickshell
     qt6.qtbase

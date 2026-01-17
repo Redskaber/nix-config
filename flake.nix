@@ -41,12 +41,6 @@
       url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    ags = {
-      type = "github";
-      owner = "aylur";
-      repo = "ags";
-      ref = "v1";
-    };
 
     # Neovim Config
     nvim-config.url = "github:Redskaber/nvim-config";
@@ -92,21 +86,9 @@
     hypr-config.url = "github:Redskaber/hypr-config";
     hypr-config.flake = false;
 
-    # Qt6ct-config
-    qt6ct-config.url = "github:Redskaber/qt6ct-config";
-    qt6ct-config.flake = false;
-
-    # Quickshell-config
-    quickshell-config.url = "github:Redskaber/quickshell-config";
-    quickshell-config.flake = false;
-
     # Rofi-config
     rofi-config.url = "github:Redskaber/rofi-config";
     rofi-config.flake = false;
-
-    # Swappy-config
-    swappy-config.url = "github:Redskaber/swappy-config";
-    swappy-config.flake = false;
 
     # Swaync-config
     swaync-config.url = "github:Redskaber/swaync-config";
@@ -123,6 +105,10 @@
     # Wlogout-config
     wlogout-config.url = "github:Redskaber/wlogout-config";
     wlogout-config.flake = false;
+
+    # Quickshell-config
+    quickshell-config.url = "github:Redskaber/quickshell-config";
+    quickshell-config.flake = false;
 
   };
 

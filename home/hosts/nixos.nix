@@ -58,25 +58,31 @@
     ../core/app/kitty.nix
     ../core/app/mpv.nix
     ../core/app/nemo.nix
-    ../core/app/nh.nix
     ../core/app/nvim.nix
     ../core/app/obsidian.nix
     ../core/app/qq.nix
-    ../core/app/quickshell.nix
     ../core/app/rbw.nix
-    ../core/app/rofi.nix
-    ../core/app/rustdesk.nix
+    # ../core/app/rustdesk.nix  # (remote controller -> longtime-compiler)
     ../core/app/steam.nix
-    ../core/app/swaylock.nix
-    ../core/app/swaync.nix
-    ../core/app/swayosd.nix
     ../core/app/tealdeer.nix
     ../core/app/tmux.nix
     ../core/app/vscode.nix
-    ../core/app/waybar.nix
     ../core/app/wechat.nix
     ../core/app/wezterm.nix
     ../core/app/zen-browser.nix
+
+    # Kvantum ?
+    ../theme/ags.nix
+    ../theme/qtct.nix
+    ../theme/quickshell.nix
+    ../theme/rofi.nix
+    ../theme/satty.nix
+    ../theme/swaylock.nix
+    ../theme/swaync.nix
+    ../theme/swayosd.nix
+    ../theme/wallust.nix
+    ../theme/waybar.nix
+    ../theme/wlogout.nix
 
     # devShells: import dev/lang.nix from flake.nix
   ];

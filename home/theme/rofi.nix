@@ -1,7 +1,8 @@
-# @path: ~/projects/configs/nix-config/home/core/app/rofi.nix
+# @path: ~/projects/configs/nix-config/home/theme/rofi.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @directory: https://nix-community.github.io/home-manager/options.xhtml
+# @description: home::theme::rofi
+# - Run-Dialog , window-swicher
 
 
 { inputs

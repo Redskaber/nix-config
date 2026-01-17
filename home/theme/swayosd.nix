@@ -1,6 +1,9 @@
-# @path: ~/projects/configs/nix-config/home/core/app/swayosd.nix
+# @path: ~/projects/configs/nix-config/home/theme/swayosd.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: home::theme::swayosd
+# - A lightweight OSD tool designed specifically for
+#   Wayland (wlroots-based synthesizers such as Hyprland and Sway).
 
 
 {

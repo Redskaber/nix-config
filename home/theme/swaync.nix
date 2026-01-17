@@ -1,6 +1,9 @@
-# @path: ~/projects/configs/nix-config/home/core/app/swaync.nix
+# @path: ~/projects/configs/nix-config/home/theme/swaync.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: home::theme::swaync
+# - swaynotificationcenter
+# - Notification Center and Notification Daemon for wayland
 
 
 {

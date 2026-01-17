@@ -2,8 +2,12 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml
-# @depends:
-# - rofi, waybar, hypr, swaync, ...
+# @depends-and-description:
+# - waybar          : window-status-bar
+# - hyprand   (core): window manager main
+# - ags     (option): build theme cli
+# TODO: waiting full description.
+
 
 { inputs
 , lib
@@ -27,21 +31,20 @@
     nwg-look
     # base
     waypaper
-    waybar
+    # waybar
     hyprland-qt-support # for hyprland-qt-support
-    rofi
-    slurp
-    swappy
-    swaynotificationcenter
-    wallust
-    wlogout
-    (inputs.ags.packages.${pkgs.stdenv.hostPlatform.system}.default)
+    # rofi
+    # grim
+    # slurp
+    # swappy
+    # swaynotificationcenter
+    # wallust
+    # wlogout
+    # (inputs.ags.packages.${pkgs.stdenv.hostPlatform.system}.default)
 
     swww
     grimblast
     hyprpicker
-    grim
-    slurp
     wl-clip-persist
     cliphist
     wf-recorder

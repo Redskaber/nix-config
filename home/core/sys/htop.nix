@@ -1,4 +1,3 @@
-
 # @path: ~/projects/configs/nix-config/home/core/sys/htop.nix
 # @author: redskaber
 # @datetime: 2025-12-12

@@ -1,7 +1,8 @@
 # @path: ~/projects/configs/nix-config/home/core/app/cava.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @directory: https://nix-community.github.io/home-manager/options.xhtml
+# @discription: home::core::app:cava
+# - terminal visucalizer audio
 
 
 { inputs
