@@ -14,9 +14,7 @@
 }:
 {
 
-  home.packages = with pkgs; [
-    swaynotificationcenter
-  ];
+  home.packages = with pkgs; [ waybar ];
 
   xdg.configFile."waybar" = {
     source = inputs.waybar-config;  # abs path
