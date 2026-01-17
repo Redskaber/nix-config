@@ -14,22 +14,29 @@
 {
   imports = [ (modulesPath + "/installer/scan/not-detected.nix") ];
 
+
+  # FIXME: Repalce your fileSystems
+  # through: 'nixos-generate-config --root /mnt' &&
+  # Copy your hardware-configuration.nix: "fileSystems.xxx and swapDevices" configs
+  # Repalce start line
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/4ca724ea-aa6f-4be9-8a86-79a602cc835a";
+    { device = "/dev/disk/by-uuid/c2624c51-329a-4f2b-acc2-c829d6f3e324";
       fsType = "ext4";
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/3344-86BF";
+    { device = "/dev/disk/by-uuid/974A-6A53";
       fsType = "vfat";
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/f39e75e0-114c-49bf-8f7b-f89ead81519f"; }
+    [ { device = "/dev/disk/by-uuid/50edded4-41e4-4f7e-8e97-fd803b1eb420"; }
     ];
+  # Repalce end line
 
-  # Bootloader.
+
+  # Bootloader
   boot = {
     consoleLogLevel = 3;
 
@@ -88,4 +95,5 @@
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
 }
+
 
