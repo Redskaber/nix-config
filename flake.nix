@@ -2,6 +2,7 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
+# TODO: mutil-pal gl app transparent proxy choice version.
 
 
 {
@@ -36,12 +37,6 @@
       };
     };
 
-    # Quickshell
-    quickshell = {
-      url = "git+https://git.outfoxxed.me/outfoxxed/quickshell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Neovim Config
     nvim-config.url = "github:Redskaber/nvim-config";
     nvim-config.flake = false;
@@ -74,10 +69,6 @@
     # mpv-config.url = "github:Redskaber/mpv-config";
     # mpv-config.flake = false;
 
-    # Ags-config
-    ags-config.url = "github:Redskaber/ags-config";
-    ags-config.flake = false;
-
     # Btop-config
     btop-config.url = "github:Redskaber/btop-config";
     btop-config.flake = false;
@@ -109,10 +100,6 @@
     # Wlogout-config
     wlogout-config.url = "github:Redskaber/wlogout-config";
     wlogout-config.flake = false;
-
-    # Quickshell-config
-    quickshell-config.url = "github:Redskaber/quickshell-config";
-    quickshell-config.flake = false;
 
   };
 

@@ -71,9 +71,7 @@
     ../core/app/zen-browser.nix
 
     # Kvantum ?
-    ../theme/ags.nix
     ../theme/qtct.nix
-    ../theme/quickshell.nix
     ../theme/rofi.nix
     ../theme/satty.nix
     ../theme/swaylock.nix

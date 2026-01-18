@@ -1,21 +1,5 @@
 {
   "nodes": {
-    "ags-config": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1768691010,
-        "narHash": "sha256-4aPOCET86ZEtuJXD9lCaZ5ADH+UjO7xdOFf++5jIG4A=",
-        "owner": "Redskaber",
-        "repo": "ags-config",
-        "rev": "7bfb3ae69cd977e10a0a9fbc07e8567a8aa38b08",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Redskaber",
-        "repo": "ags-config",
-        "type": "github"
-      }
-    },
     "btop-config": {
       "flake": false,
       "locked": {
@@ -246,42 +230,6 @@
         "type": "github"
       }
     },
-    "quickshell": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1768375255,
-        "narHash": "sha256-4iRJS88M77nfMJfnszNs8FgNHpt4ldybiToMEto+qHE=",
-        "ref": "refs/heads/master",
-        "rev": "783b97152a25739340845c479d539bdd2a7c4d9c",
-        "revCount": 726,
-        "type": "git",
-        "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
-      },
-      "original": {
-        "type": "git",
-        "url": "https://git.outfoxxed.me/outfoxxed/quickshell"
-      }
-    },
-    "quickshell-config": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1768419862,
-        "narHash": "sha256-jGVVU3uN6FMi82YWzcRsNekVMc4j6Xz/M06qUfEHO4w=",
-        "owner": "Redskaber",
-        "repo": "quickshell-config",
-        "rev": "f3048a86b5cf88fea4253bc520da1abca7a2f609",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Redskaber",
-        "repo": "quickshell-config",
-        "type": "github"
-      }
-    },
     "rofi-config": {
       "flake": false,
       "locked": {
@@ -300,7 +248,6 @@
     },
     "root": {
       "inputs": {
-        "ags-config": "ags-config",
         "btop-config": "btop-config",
         "cava-config": "cava-config",
         "fastfetch-config": "fastfetch-config",
@@ -312,8 +259,6 @@
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
         "nvim-config": "nvim-config",
-        "quickshell": "quickshell",
-        "quickshell-config": "quickshell-config",
         "rofi-config": "rofi-config",
         "starship-config": "starship-config",
         "swaync-config": "swaync-config",

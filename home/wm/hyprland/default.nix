@@ -29,7 +29,7 @@
     hyprcursor
     nwg-displays
     nwg-look
-    # base
+    # Base
     waypaper
     # waybar
     hyprland-qt-support # for hyprland-qt-support
@@ -45,9 +45,12 @@
     swww
     grimblast
     hyprpicker
+    wf-recorder
+    # KeyHints
+    yad
+    # Cliphist
     wl-clip-persist
     cliphist
-    wf-recorder
   ];
 
   # hyprland through system enable
