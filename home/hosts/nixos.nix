@@ -44,6 +44,7 @@
     ../core/app/discord.nix
     ../core/app/google-chrome.nix
     ../core/app/kitty.nix
+    ../core/app/minecraft.nix
     ../core/app/mpv.nix
     ../core/app/nemo.nix
     ../core/app/nvim.nix
