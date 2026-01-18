@@ -168,6 +168,7 @@
     # These are usually stuff you would upstream into home-manager
     home = import ./export/home;
 
+    # TODO: Temporary, pending design optimization and integration
     # devShells loader
     # Used:
     #   home/core/dev/<lang.nix>  ---> this is you single language devshell config
@@ -178,10 +179,20 @@
     #     don't used other single-language conbim
     #   )
     #   default.nix (auto-load, devshell-name == config-name, and can used single-language conbim)
+    # Temp-Used:
+    #   nix develop <path>#<lang>
+    # Last-Used:
+    #   nix develop <path>#<lang> --profile <last_profile_path>
+    #     - last_profile_path -> nix gc-root ref, don't recycle
+    #     - recommend: /home/<user>/.local/state/nix/profiles/dev/<lang>/<user>-<lang_or_attrsetname>
+    #   if your after don't Last-Used:
+    #     - linux-command: rm <last_profile_path>
+    #       ps: more-link care clear full
     devShells = forAllSystems devShellsForSystem;
 
     # NixOS configuration entrypoint
-    # Available through 'nixos-rebuild --flake <flake_path>.#your-hostname'
+    # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'
+    # Available through: 'sudo nixos-rebuild --flake <flake_path>#your-hostname switch'
     nixosConfigurations = {
       # FIXME: replace with your hostname
       kilig-nixos = nixpkgs.lib.nixosSystem {
