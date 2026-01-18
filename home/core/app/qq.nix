@@ -9,14 +9,19 @@
   config,
   pkgs,
   ...
-}: let
-  qq = config.lib.nixGL.wrap pkgs.qq;
-  qq-no-sandbox = pkgs.writeShellScriptBin "qq" ''
-    exec ${qq}/bin/qq --no-sandbox "$@"
-  '';
-in {
+}:
+# let
+  # qq = config.lib.nixGL.wrap pkgs.qq; # non-nixos
+  # qq-no-sandbox = pkgs.writeShellScriptBin "qq" ''
+  #   exec ${qq}/bin/qq --no-sandbox "$@"
+  # '';
+# in
+{
   home.packages = [
-  qq-no-sandbox
+    # qq-no-sandbox
+    pkgs.qq
   ];
+
 }
+
 

@@ -11,15 +11,15 @@
   pkgs,
   ...
 }:
-let
-  vscode-no-sandbox = pkgs.writeShellScriptBin "code" ''
-    exec ${pkgs.vscode}/bin/code --no-sandbox "$@"
-  '';
-in {
+# let
+#   vscode-no-sandbox = pkgs.writeShellScriptBin "code" ''
+#     exec ${pkgs.vscode}/bin/code --no-sandbox "$@"
+#   '';
+# in
+{
 
-  # programs.vscode.enable = true;
-
-  home.packages = [ vscode-no-sandbox ];
+  programs.vscode.enable = true;
+  # home.packages = [ vscode-no-sandbox ]; # non-nixos
 
   # Used user config:
   xdg.configFile."Code/User" = {

@@ -13,16 +13,6 @@
 , ...
 }:
 {
-  # linux non-nixos environment inject
-  targets.genericLinux = {
-    enable = true;
-    nixGL = {
-      packages = inputs.nixgl.packages;
-      defaultWrapper = "mesa";
-      offloadWrapper = "mesaPrime";
-    };
-  };
-
   # You can import other home-manager modules here
   imports = [
     # If you import other home-manager modules from other flakes (such as nix-colors):
@@ -43,7 +33,6 @@
     ../core/sys/git.nix
     ../core/sys/htop.nix
     ../core/sys/starship.nix
-    ../core/sys/uv.nix
     ../core/sys/wl-clipboard.nix
     ../core/sys/zoxide.nix
     ../core/sys/zsh.nix
@@ -61,7 +50,6 @@
     ../core/app/obsidian.nix
     ../core/app/qq.nix
     ../core/app/rbw.nix
-    # ../core/app/rustdesk.nix  # (remote controller -> longtime-compiler)
     ../core/app/steam.nix
     ../core/app/tealdeer.nix
     ../core/app/tmux.nix
@@ -70,7 +58,6 @@
     ../core/app/wezterm.nix
     ../core/app/zen-browser.nix
 
-    # Kvantum ?
     ../theme/qtct.nix
     ../theme/rofi.nix
     ../theme/satty.nix
@@ -122,8 +109,8 @@
   # Add stuff for your user as you see fit:
   home.packages = with pkgs; [
     # network utils
-    #   git bottom
-        curl wget gnupg tree gdb
+    #   git bottom tree
+        curl wget gnupg gdb
         valgrind strace ltrace pciutils
     # wm-backend
     #   wl-clipboard
@@ -132,11 +119,12 @@
     #   starship zsh fish
     # Tools
     #   bat fzf delta yazi
-        ripgrep fd eza zoxide
+        ripgrep fd eza
+    #   zoxide
     # Session
     #   tmux
     # Env auto-switching
-        direnv nix-direnv
+    #   direnv nix-direnv
     # Fonts -> core::sys::fonts
     # Proxy
     #   clash-verge-rev

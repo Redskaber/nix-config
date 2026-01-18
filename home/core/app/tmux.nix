@@ -12,10 +12,7 @@
   ...
 }: {
 
-  programs.tmux = {
-    enable = true;
-    shell = "${pkgs.zsh}/bin/zsh";
-  };
+  programs.tmux.enable = true;
 
   # Used user config:
   xdg.configFile."tmux" = {

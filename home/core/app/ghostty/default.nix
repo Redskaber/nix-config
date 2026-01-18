@@ -24,7 +24,7 @@
         "DejaVu Sans Mono"
         "monospace"
       ];
-      font-size = 10;
+      font-size = 8;
       font-feature = [
         "calt"
         "cv66"
@@ -33,7 +33,7 @@
 
       ##### Theme #####
       theme = "gruvbox";
-      background-opacity = 0.5;
+      background-opacity = 0.9;
       adjust-cursor-thickness = 1;
 
       selection-clear-on-copy = true;

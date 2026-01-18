@@ -17,7 +17,8 @@ in
 
   programs.kitty = {
     enable = true;
-    package = config.lib.nixGL.wrap pkgs.kitty;
+    package = pkgs.kitty;
+    # package = config.lib.nixGL.wrap pkgs.kitty;   # non-nixos
   };
 
   # Used user config:

@@ -16,7 +16,8 @@
     enable = true;
     enableZshIntegration = true;  # auto (source wezterm.sh)
     enableBashIntegration = true;
-    package = config.lib.nixGL.wrap pkgs.wezterm;
+    # package = config.lib.nixGL.wrap pkgs.wezterm; # non-nixos
+    package = pkgs.wezterm;
   };
 
   # Used user config:
