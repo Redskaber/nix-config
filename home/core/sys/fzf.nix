@@ -5,12 +5,11 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.fzf.enable
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   programs.fzf = {

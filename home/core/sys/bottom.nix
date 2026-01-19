@@ -4,7 +4,8 @@
 # @description: home::core::sys::bottom
 
 
-{ config
+{ inputs
+, config
 , lib
 , pkgs
 , ...

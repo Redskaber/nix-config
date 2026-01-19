@@ -4,11 +4,11 @@
 # @description: home::core::sys::bat
 
 
-{
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 {
   programs.bat = {

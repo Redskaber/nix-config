@@ -5,13 +5,13 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.starship.enable
 
 
+{ inputs
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
 
   programs.starship = {
     enable = true;

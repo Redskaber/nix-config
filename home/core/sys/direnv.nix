@@ -5,13 +5,13 @@
 # - https://nix-community.github.io/home/options.xhtml#opt-programs.direnv.enable
 
 
+{ inputs
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
 
   programs.direnv = {
     enable = true;

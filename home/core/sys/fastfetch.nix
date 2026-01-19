@@ -5,13 +5,13 @@
 # - https://nix-community.github.io/home/options.xhtml#opt-programs.fastfetch.enable
 
 
+{ inputs
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
 
   programs.fastfetch.enable = true;
 

@@ -29,12 +29,30 @@
   ];
 
 
-  # Compat: Platform
- environment.systemPackages = with pkgs; [
+  # Compat: Platform Windows
+  # Wine:
+  #   - initial: winecfg
+  #   - win-con: wine control
+  #   - win-cmd: wine cmd
+  #   - win-run: wine <app>
+  #   - win-exp: wine explorer
+  #   - win-kall:wineserver -k
+  #   - wine-ver: wine --version
+  # winetricks:
+  #   - install-depend: winetricks -q <depends-name>
+  #     - corefonts (must)
+  #     - vcrun2019 (visual-c++)
+  #     - dotnet48  (.net-framework)
+  #     - msxml6, riched20, gdiplus, ...
+  # Add:
+  #   wine-prefix to rc or env
+  #   export WINEARCH=win64
+  #   export WINEPREFIX=~/.wine
+  environment.systemPackages = with pkgs; [
     wineWowPackages.waylandFull   # wayland
     winetricks
     corefonts
- ];
+  ];
 
 
 }

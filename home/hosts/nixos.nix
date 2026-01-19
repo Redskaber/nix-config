@@ -25,6 +25,7 @@
     ../core/sys/bat.nix
     ../core/sys/bottom.nix
     ../core/sys/btop.nix
+    ../core/sys/compat.nix
     ../core/sys/direnv.nix
     ../core/sys/fastfetch.nix
     ../core/sys/ffmpeg.nix

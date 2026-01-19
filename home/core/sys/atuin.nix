@@ -6,11 +6,11 @@
 # @reference: https://docs.atuin.sh
 
 
-{
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }: {
   programs.atuin = {
     enable = true;

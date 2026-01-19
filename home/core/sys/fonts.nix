@@ -5,13 +5,13 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.fonts.enable
 
 
+{ inputs
+, config
+, lib
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
 
   home.packages = with pkgs; [
     nerd-fonts.jetbrains-mono

@@ -4,7 +4,8 @@
 # @description: home::core::sys::btop
 
 
-{ config
+{ inputs
+, config
 , lib
 , pkgs
 , ...

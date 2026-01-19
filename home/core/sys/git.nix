@@ -5,13 +5,13 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.git.enable
 
 
+{ inputs
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
   programs.git = {
     enable = true;
     settings = {

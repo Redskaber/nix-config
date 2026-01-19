@@ -5,16 +5,16 @@
 # - https://nix-community.github.io/home/options.xhtml#opt-programs.fish.enable
 # @depends: eza, zoxide, fzf, fisher, bat, ripgrep
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, config
+, lib
+, pkgs
+, ...
 }:
 let
   fish_path = "${config.home.profileDirectory}/bin/fish";
-in {
+in
+{
   programs.fish = {
     enable = true;
     package = pkgs.fish;

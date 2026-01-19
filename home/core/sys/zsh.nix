@@ -5,16 +5,16 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.zsh.enable
 # @depends: eza, zoxide, direnv
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, lib
+, config
+, pkgs
+, ...
 }:
 let
   zsh_path = "${config.home.profileDirectory}/bin/zsh";
-in {
+in
+{
   programs.zsh = {
     enable = true;
     enableCompletion = true;
