@@ -15,6 +15,8 @@
 , ...
 }:
 {
+
+  # Compat: FileSystem
   programs.nix-ld.enable = true;
   programs.nix-ld.libraries = with pkgs; [
     stdenv.cc.libc
@@ -25,6 +27,15 @@
     gmp
     ncurses
   ];
+
+
+  # Compat: Platform
+ environment.systemPackages = with pkgs; [
+    wineWowPackages.waylandFull   # wayland
+    winetricks
+    corefonts
+ ];
+
 
 }
 
