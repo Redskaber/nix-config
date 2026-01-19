@@ -1,6 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/system/starship.nix
+# @path: ~/projects/configs/nix-config/home/core/sys/starship.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: home::core::sys::starship
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.starship.enable
 
 

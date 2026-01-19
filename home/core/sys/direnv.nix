@@ -1,7 +1,8 @@
-# @path: ~/projects/configs/nix-config/home/core/system/direnv.nix
+# @path: ~/projects/configs/nix-config/home/core/sys/direnv.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.direnv.enable
+# @diractory: home::core::sys::direnv
+# - https://nix-community.github.io/home/options.xhtml#opt-programs.direnv.enable
 
 
 {

@@ -1,6 +1,7 @@
 # @path: ~/projects/configs/nix-config/home/core/sys/htop.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: home::core::sys:htop
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.htop.enable
 
 

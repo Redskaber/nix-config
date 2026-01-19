@@ -1,7 +1,8 @@
-# @path: ~/projects/configs/nix-config/home/core/system/fastfetch.nix
+# @path: ~/projects/configs/nix-config/home/core/sys/fastfetch.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.fastfetch.enable
+# @diractory: home::core::sys::fastfetch
+# - https://nix-community.github.io/home/options.xhtml#opt-programs.fastfetch.enable
 
 
 {

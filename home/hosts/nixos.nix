@@ -27,6 +27,7 @@
     ../core/sys/btop.nix
     ../core/sys/direnv.nix
     ../core/sys/fastfetch.nix
+    ../core/sys/ffmpeg.nix
     ../core/sys/fish.nix
     ../core/sys/fonts.nix
     ../core/sys/fzf.nix
@@ -112,7 +113,7 @@
     # network utils
     #   git bottom tree
         curl wget gnupg gdb
-        valgrind strace ltrace pciutils
+        valgrind strace ltrace pciutils vulkan-tools mesa
     # wm-backend
     #   wl-clipboard
     # Terminal shell

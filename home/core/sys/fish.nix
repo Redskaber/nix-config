@@ -1,7 +1,8 @@
 # @path: ~/projects/configs/nix-config/home/core/sys/fish.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.fish.enable
+# @diractory: home::core::sys::fish
+# - https://nix-community.github.io/home/options.xhtml#opt-programs.fish.enable
 # @depends: eza, zoxide, fzf, fisher, bat, ripgrep
 
 {

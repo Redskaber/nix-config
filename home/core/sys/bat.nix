@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/home/core/sys/bat.nix
 # @author: redskaber
 # @datetime: 2026-01-10
-# @description: Atuin — Magical shell history with sync, search & stats
+# @description: home::core::sys::bat
 
 
 {

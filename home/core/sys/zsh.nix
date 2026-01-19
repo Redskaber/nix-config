@@ -1,6 +1,7 @@
 # @path: ~/projects/configs/nix-config/home/core/sys/zsh.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: home::core::sys::zsh
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.zsh.enable
 # @depends: eza, zoxide, direnv
 

@@ -1,7 +1,8 @@
-# @path: ~/projects/configs/nix-config/home/core/system/atuin.nix
+# @path: ~/projects/configs/nix-config/home/core/sys/atuin.nix
 # @author: redskaber
 # @datetime: 2026-01-10
-# @description: Atuin — Magical shell history with sync, search & stats
+# @description: home::core::sys::atuin
+# - Atuin — Magical shell history with sync, search & stats
 # @reference: https://docs.atuin.sh
 
 

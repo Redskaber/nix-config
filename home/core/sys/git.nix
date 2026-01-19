@@ -1,6 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/git.nix
+# @path: ~/projects/configs/nix-config/home/core/sys/git.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: home::core::sys::git
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.git.enable
 
 
