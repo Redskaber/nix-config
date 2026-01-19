@@ -201,11 +201,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1768764536,
-        "narHash": "sha256-LDfZjdmPgIdNirjPgRvSsNkfOnH7h1YtFCARagXarx4=",
+        "lastModified": 1768846903,
+        "narHash": "sha256-Xv6N5Ac8SIRjnS7oIh/pi3yM6FNpOdNTtD2PeGj03Ho=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "2b24142aa76934f3c09ae0e0f58ae5f1fc9bd5a0",
+        "rev": "1cfee2590d09dfefb41af7825e96c319993d03ba",
         "type": "github"
       },
       "original": {
@@ -217,11 +217,11 @@
     "nvim-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1767091964,
-        "narHash": "sha256-DqGw8kRGY5JdrrI52SwxAdTlYZrkl4Hsg5t9aUKL1ts=",
+        "lastModified": 1768846782,
+        "narHash": "sha256-V3K8ypVhNADNon17RfDnJx001qfrHEhk9ei8ZtmkUe0=",
         "owner": "Redskaber",
         "repo": "nvim-config",
-        "rev": "065ad1924c4525ca1f828ad5afc8160d9856856a",
+        "rev": "3ec0b6f7501f54e4c9227e52b06de2b6109a000c",
         "type": "github"
       },
       "original": {
@@ -321,11 +321,11 @@
     "tmux-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1768763671,
-        "narHash": "sha256-N7CvLI96hU+dXv2l72MkhJvrYbk3DErZNKSJ9dcXtaU=",
+        "lastModified": 1768773514,
+        "narHash": "sha256-/f4MCf+thdOYCT/qqQCIBHKDdxWqmyZdGVBWJCgfLXA=",
         "owner": "Redskaber",
         "repo": "tmux-config",
-        "rev": "077b97c37d35572494f13e8c40076d234e1465dc",
+        "rev": "7bf781b5fc12348dbb1b3c3a95db02d71126e31f",
         "type": "github"
       },
       "original": {
