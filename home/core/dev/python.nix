@@ -16,6 +16,9 @@
       # mypy            # Static type checker
       # Optional: keep poetry if you need its plugin ecosystem
       # poetry
+
+      # pyright depands
+      nodejs_24
     ];
 
     nativeBuildInputs = with pkgs; [
@@ -82,6 +85,7 @@
 
       # runtime depends (libstdc++)
       gcc.cc.lib
+      nodejs_24
     ];
 
     nativeBuildInputs = with pkgs; [
