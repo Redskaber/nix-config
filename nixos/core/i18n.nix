@@ -13,7 +13,7 @@
 {
   # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   # Set TimeZone
-  time.hardwareClockInLocalTime = true;
+  time.hardwareClockInLocalTime = false;
   time.timeZone = "Asia/Shanghai";
   # services.automatic-timezoned.enable = true; # based on IP location
 
@@ -63,6 +63,7 @@
   };
 
   # Fonts
+  fonts.fontconfig.enable = true;
   fonts.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
     noto-fonts-color-emoji

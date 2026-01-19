@@ -33,6 +33,7 @@
     # nixos base core configuration
     ./core/bluetooth.nix
     ./core/boot.nix
+    ./core/compat.nix
     ./core/hardware.nix
     ./core/i18n.nix
     ./core/memory.nix
