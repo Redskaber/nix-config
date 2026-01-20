@@ -31,6 +31,12 @@
     winekill = "wineserver -k";
     winecfg-default = "winecfg";  # used ~/.wine
 
+    # clear
+    wineclear = ''
+      echo "🧹 Clear Wine cache and temp file..." &&
+      find ~/.wine* -type d \( -name "cache" -o -name "Temp" -o -name "temp" -o -name "logs" \) -prune -exec rm -rf {} + 2>/dev/null || true &&
+      echo "✅ 清理完成。"
+    '';
   };
 
 }
