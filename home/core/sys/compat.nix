@@ -17,15 +17,14 @@
 
   home.shellAliases = {
     # default
-    wine        = "WINEPREFIX=~/.wine/default wine";
-    winecfg     = "WINEPREFIX=~/.wine/default winecfg";
-
+    wine-default    = "WINEPREFIX=~/.wine/default wine";
+    winecfg-default = "WINEPREFIX=~/.wine/default winecfg";
     # app
-    wineapp     = "WINEPREFIX=~/.wine/app wine";
-    wineapp-init = "WINEPREFIX=~/.wine/app winetricks -q corefonts cjkfonts vcrun2019";
+    wineapp       = "WINEPREFIX=~/.wine/app wine";
+    wineapp-init  = "WINEPREFIX=~/.wine/app winetricks -q corefonts cjkfonts vcrun2019";
 
     # game
-    winegame    = "WINEPREFIX=~/.wine/game wine";
+    winegame      = "WINEPREFIX=~/.wine/game wine";
     winegame-init = "WINEPREFIX=~/.wine/game winetricks -q corefonts cjkfonts dxvk d3dcompiler_47";
 
     # clear
