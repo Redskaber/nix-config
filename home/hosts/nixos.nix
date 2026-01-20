@@ -41,6 +41,7 @@
 
     ../core/app/ghostty
     ../core/app/yazi
+    ../core/app/baidupcs-go.nix
     ../core/app/cava.nix
     ../core/app/clash-verge-rev.nix
     ../core/app/discord.nix

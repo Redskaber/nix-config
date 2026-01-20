@@ -17,31 +17,26 @@
 
   home.shellAliases = {
     # default
-    # winenormal = "WINEPREFIX=~/.wine wine";
+    wine        = "WINEPREFIX=~/.wine/default wine";
+    winecfg     = "WINEPREFIX=~/.wine/default winecfg";
 
-    # wechat
-    # winewechat = "WINEPREFIX=~/.wine-wechat wine";
-    # winewechat-init = "WINEPREFIX=~/.wine-wechat winetricks -q corefonts vcrun2019";
+    # app
+    wineapp     = "WINEPREFIX=~/.wine/app wine";
+    wineapp-init = "WINEPREFIX=~/.wine/app winetricks -q corefonts vcrun2019";
 
-    # gaming
-    winegames = "WINEPREFIX=~/.wine-games wine";
-    winegames-init = "WINEPREFIX=~/.wine-games winetricks -q dxvk d3dcompiler_47";
-
-    # tools
-    winekill = "wineserver -k";
-    winecfg-default = "winecfg";  # used ~/.wine
+    # game
+    winegame    = "WINEPREFIX=~/.wine/game wine";
+    winegame-init = "WINEPREFIX=~/.wine/game winetricks -q dxvk d3dcompiler_47";
 
     # clear
     wineclear = ''
-      echo "🧹 Clear Wine cache and temp file..." &&
-      find ~/.wine* -type d \( -name "cache" -o -name "Temp" -o -name "temp" -o -name "logs" \) -prune -exec sh -c 'rm -rf "{}"/* 2>/dev/null || true' \; &&
+      echo "🧹 Clear Wine prefixes cache and temp files..." &&
+      find ~/.wine -type d \( -name "cache" -o -name "Temp" -o -name "temp" -o -name "logs" \) -prune -exec sh -c 'rm -rf "{}"/* 2>/dev/null || true' \; &&
       echo "✅ Clear over"
     '';
   };
 
 }
-
-
 
 
 
