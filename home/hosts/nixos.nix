@@ -52,7 +52,6 @@
     ../core/app/obsidian.nix
     ../core/app/qq.nix
     ../core/app/rbw.nix
-    ../core/app/steam.nix
     ../core/app/tealdeer.nix
     ../core/app/tmux.nix
     ../core/app/vscode.nix

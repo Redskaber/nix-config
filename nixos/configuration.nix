@@ -40,6 +40,7 @@
     ./core/network.nix
     ./core/nix.nix
     ./core/sound.nix
+    ./core/steam.nix
     ./core/server.nix
     ./core/systemd.nix
     ./core/user.nix

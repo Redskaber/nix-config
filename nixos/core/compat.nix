@@ -48,11 +48,11 @@
   #   wine-prefix to rc or env
   #   export WINEARCH=win64
   #   export WINEPREFIX=~/.wine
-  environment.systemPackages = with pkgs; [
-    wineWowPackages.waylandFull   # wayland
-    winetricks
-    corefonts
-  ];
+  # environment.systemPackages = with pkgs; [
+  #   wineWowPackages.waylandFull   # wayland
+  #   winetricks
+  #   corefonts
+  # ];
 
 
 }
