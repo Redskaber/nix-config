@@ -39,7 +39,6 @@
     ../core/sys/zoxide.nix
     ../core/sys/zsh.nix
 
-    ../core/app/ghostty
     ../core/app/yazi
     ../core/app/baidupcs-go.nix
     ../core/app/cava.nix
@@ -47,7 +46,6 @@
     ../core/app/discord.nix
     ../core/app/google-chrome.nix
     ../core/app/kitty.nix
-    ../core/app/minecraft.nix
     ../core/app/mpv.nix
     ../core/app/nemo.nix
     ../core/app/nvim.nix
@@ -61,6 +59,7 @@
     ../core/app/wechat.nix
     ../core/app/wezterm.nix
     ../core/app/zen-browser.nix
+    ../core/app/game/minecraft.nix
 
     ../theme/qtct.nix
     ../theme/rofi.nix
