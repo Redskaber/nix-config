@@ -22,11 +22,11 @@
 
     # app
     wineapp     = "WINEPREFIX=~/.wine/app wine";
-    wineapp-init = "WINEPREFIX=~/.wine/app winetricks -q corefonts vcrun2019";
+    wineapp-init = "WINEPREFIX=~/.wine/app winetricks -q corefonts cjkfonts vcrun2019";
 
     # game
     winegame    = "WINEPREFIX=~/.wine/game wine";
-    winegame-init = "WINEPREFIX=~/.wine/game winetricks -q dxvk d3dcompiler_47";
+    winegame-init = "WINEPREFIX=~/.wine/game winetricks -q corefonts cjkfonts dxvk d3dcompiler_47";
 
     # clear
     wineclear = ''
