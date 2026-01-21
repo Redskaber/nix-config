@@ -26,6 +26,7 @@
     ../core/sys/bottom.nix
     ../core/sys/btop.nix
     ../core/sys/compat.nix
+    ../core/sys/compress.nix
     ../core/sys/direnv.nix
     ../core/sys/fastfetch.nix
     ../core/sys/ffmpeg.nix
@@ -46,6 +47,7 @@
     ../core/app/discord.nix
     ../core/app/google-chrome.nix
     ../core/app/kitty.nix
+    ../core/app/lutris.nix
     ../core/app/mpv.nix
     ../core/app/nemo.nix
     ../core/app/nvim.nix
