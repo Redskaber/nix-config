@@ -62,6 +62,9 @@
     ../core/app/wezterm.nix
     ../core/app/zen-browser.nix
     ../core/app/game/minecraft.nix
+    ../core/app/img/gimp.nix
+    ../core/app/img/imagemagick.nix
+    ../core/app/img/imv.nix
 
     ../theme/qtct.nix
     ../theme/rofi.nix
