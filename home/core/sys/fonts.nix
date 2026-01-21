@@ -15,9 +15,23 @@
 
   home.packages = with pkgs; [
     nerd-fonts.jetbrains-mono
+    noto-fonts
     noto-fonts-color-emoji
     # chinese
     noto-fonts-cjk-sans
+    noto-fonts-cjk-serif
+    # custom
+    fira-code fira-code-symbols
+    font-awesome
+    hackgen-nf-font
+    material-icons
+    maple-mono.NF
+    minecraftia
+    powerline-fonts
+    roboto roboto-mono
+    symbola
+    terminus_font
+    victor-mono
   ];
 
   # fonts:

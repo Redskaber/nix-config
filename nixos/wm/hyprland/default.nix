@@ -22,7 +22,10 @@
   environment.sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
   # For Hyprland QT Support
   environment.sessionVariables.QML_IMPORT_PATH = "${pkgs.hyprland-qt-support}/lib/qt-6/qml";
-
+  # GTK app Wayland
+  environment.sessionVariables.GDK_BACKEND = "wayland";
+  # Electron app to wayland
+  environment.sessionVariables.ELECTRON_OZONE_PLATFORM_HINT = "auto";
 
 }
 

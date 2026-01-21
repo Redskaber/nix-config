@@ -35,6 +35,7 @@
     ../core/sys/fzf.nix
     ../core/sys/git.nix
     ../core/sys/htop.nix
+    ../core/sys/portal.nix
     ../core/sys/starship.nix
     ../core/sys/wl-clipboard.nix
     ../core/sys/zoxide.nix

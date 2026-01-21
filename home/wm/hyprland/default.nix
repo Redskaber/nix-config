@@ -56,19 +56,28 @@
   # hyprland through system enable
   wayland.windowManager.hyprland = {
     enable = true;
+    package = null;
     xwayland.enable = true;
     systemd = {
       enable = true;
       enableXdgAutostart = true;    # auto-enable: ~/.config/autostart/
     };
+    portalPackage = pkgs.xdg-desktop-portal-hyprland;
   };
 
+  # Used Hyprland config
   xdg.configFile."hypr" = {
     source = inputs.hypr-config;    # abs path
     recursive = true;               # rec-link
     force = true;
   };
 
+  # Env Variables
+  home.sessionVariables = {
+    GDK_BACKEND = "wayland,x11";
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
+    XDG_CURRENT_DESKTOP = "Hyprland";
+  };
 
 }
 
