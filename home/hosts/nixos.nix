@@ -45,6 +45,7 @@
     ../core/app/cava.nix
     ../core/app/clash-verge-rev.nix
     ../core/app/discord.nix
+    ../core/app/downloader.nix
     ../core/app/google-chrome.nix
     ../core/app/kitty.nix
     ../core/app/lutris.nix
