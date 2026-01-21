@@ -20,11 +20,10 @@
 
     config = {
       common.default = [ "gtk" ];
-      hyprland.default = [ "hyprland" "gtk" "wlr" ];
+      hyprland.default = [ "gtk" "wlr" ];
     };
 
     extraPortals = with pkgs; [
-      xdg-desktop-portal-hyprland
       xdg-desktop-portal-gtk
       xdg-desktop-portal-wlr
     ];
