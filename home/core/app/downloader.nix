@@ -13,12 +13,13 @@
 }:
 {
   home.packages = with pkgs; [
-    # qbittorrent
+    qbittorrent
+    # qbittorrent-nox
     # qbittorrent-enhanced
 
     # Magnet links, torrents, DHT, PEX, crypto
     # transmission_4
-    transmission_4-gtk  # gui
+    # transmission_4-gtk  # gui
 
     # Sup HTTP/HTTPS/FTP/BT/Magnet
     # - aria2c "magnet:?xt=urn:btih:..."
