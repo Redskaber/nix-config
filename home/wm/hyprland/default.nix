@@ -81,7 +81,7 @@
 
   # Env Aliases
   home.shellAliases = {
-    start_wallpaper = ''swww-daemon --format xrgb && swww img "$HOME/.config/rofi/.current_wallpaper"'';
+    start_wallpaper = ''swww-daemon --format argb && swww img "$HOME/.config/rofi/.current_wallpaper"'';
   };
 
 
