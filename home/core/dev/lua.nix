@@ -1,12 +1,12 @@
 # @path: ~/projects/configs/nix-config/home/core/dev/lua.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: Modern Lua dev environment for Neovim/plugins/scripting
+# @description: home::core::dev::lua
 #
-# Note: Lua 5.5 was released in Dec 2025 (https://www.lua.org/manual/5.5/)
-#       but is not yet available in nixpkgs as of early 2026.
-#       We use Lua 5.4 which is stable, well-supported, and sufficient for
-#       Neovim plugin development and general scripting.
+# Modern Lua dev environment for Neovim/plugins/scripting
+# - Attrset   : (Permission , Scope , Load      )
+# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
 { pkgs, inputs, dev, ... }: {

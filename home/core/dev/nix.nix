@@ -1,7 +1,12 @@
 # @path: ~/projects/configs/nix-config/home/core/dev/nix.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: Modern Nix development environment — aligned with RFC 109 and community best practices
+# @description: home::core::dev::nix
+#
+# Modern Nix development environment — aligned with RFC 109 and community best practices
+# - Attrset   : (Permission , Scope , Load      )
+# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
 { pkgs, inputs, dev, ... }: {

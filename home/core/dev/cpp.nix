@@ -1,7 +1,12 @@
 # @path: ~/projects/configs/nix-config/home/core/dev/cpp.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: Modern C++ dev environment: clang + clangd + build tools
+# @description: home::core::dev::cpp
+#
+# Modern C++ dev environment: clang + clangd + build tools
+# - Attrset   : (Permission , Scope , Load      )
+# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
 { pkgs, inputs, dev, ... }: {

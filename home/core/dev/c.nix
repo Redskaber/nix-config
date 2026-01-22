@@ -1,7 +1,12 @@
 # @path: ~/projects/configs/nix-config/home/core/dev/c.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: Modern, fast C development environment with clangd + bear
+# @description: home::core::dev::c
+#
+# Modern, fast C development environment with clangd + bear
+# - Attrset   : (Permission , Scope , Load      )
+# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
 { pkgs, inputs, dev, ... }: {

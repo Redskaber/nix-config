@@ -1,7 +1,12 @@
 # @path: ~/projects/configs/nix-config/home/core/dev/javascript.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @desciption: Modern JS/TS dev env: Node.js 24 + Biome + LSP
+# @description: home::core::dev::javascript
+#
+# Modern JS/TS dev env: Node.js 24 + Biome + LSP
+# - Attrset   : (Permission , Scope , Load      )
+# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
 { pkgs, inputs, dev, ... }: {

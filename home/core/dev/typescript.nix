@@ -1,7 +1,12 @@
 # @path: ~/projects/configs/nix-config/home/core/dev/typescript.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: home::core::dev::typescript
+#
 # Focused TypeScript dev environment: tsc + LSP + runtime
+# - Attrset   : (Permission , Scope , Load      )
+# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
 { pkgs, inputs, dev, ... }: {

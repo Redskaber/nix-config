@@ -1,10 +1,17 @@
 # @path: ~/projects/configs/nix-config/home/core/dev/python.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: Modern, fast, and minimal Python dev environment using uv + ruff
+# @description: home::core::dev::python
+#
+# Modern, fast, and minimal Python dev environment using uv + ruff
+# - Attrset   : (Permission , Scope , Load      )
+# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
 { pkgs, inputs, dev, ... }: {
+
+  # default: (readonly) : used nixos origin link
   default = {
 
     # Core runtime & tools
@@ -61,6 +68,7 @@
       ruff
       pyright
 
+      # Don't used nix install all depends
       # Scientific computing & ML stack
       # numpy
       # scipy
@@ -97,14 +105,12 @@
       echo "[preInputsHook]: python ML/DL shell!"
     '';
     postInputsHook = ''
-      # depends inject
+      # depends inject (c/cpp env)
       export LD_LIBRARY_PATH="${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH"
       # Bytecode cache isolation
       export PYTHONPYCACHEPREFIX="$PWD/.cache/python"
 
       # Ensure uv uses the correct interpreter
-      # Tips: don't set global uv python path
-      # export UV_PYTHON=${pkgs.python312}/bin/python
       # Cacheing uv path to project
       export UV_CACHE_DIR="$PWD/.cache/uv"
 

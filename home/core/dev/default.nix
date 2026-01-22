@@ -1,11 +1,20 @@
 # @path: ~/projects/configs/nix-config/home/core/dev/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: Modern, fast C development environment with clangd + bear
+# @description: home::core::dev::default
+#
+# Modern, fast C development environment with clangd + bear
 # @Tips: Only this file combinFrom base dev shell
+# - Attrset   : (Permission , Scope , Load      )
+# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
+#
+# dev.<lang> == dev.<lang>.default
 
 
 { pkgs, inputs, dev, ... }: {
+
+  # (readonly)
   default = {
     combinFrom = [
       dev.c
@@ -33,6 +42,8 @@
       echo "[postShellHook]: default shell!"
     '';
   };
+
+  # (custom)
   cpython = {
     combinFrom = [
       dev.c
