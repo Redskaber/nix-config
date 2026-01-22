@@ -39,13 +39,14 @@
     ./core/memory.nix
     ./core/network.nix
     ./core/nix.nix
+    ./core/portal.nix
     ./core/sound.nix
     ./core/steam.nix
     ./core/server.nix
     ./core/systemd.nix
     ./core/user.nix
     ./core/virtual.nix
-    ./core/portal.nix
+
 
     # window manager
     # ./wm/gnome

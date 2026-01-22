@@ -39,7 +39,7 @@
   # ];
 
   # Optional: open extest（used Steam inputer test）
-  # programs.steam.extest.enable = false;
+  programs.steam.extest.enable = true;
 
 
 }

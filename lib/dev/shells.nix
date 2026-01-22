@@ -1,14 +1,15 @@
 # @path: ~/projects/configs/nix-config/lib/dev/shells.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: Utility to generate per-language dev shells from a directory
+# @description: lib::dev::shells
+# - Utility to generate per-language dev shells from a directory
 # @Supports: nix develop .#<system>.<lang>-<variant>
 # @TODO: extend mkShell Hook.(preInputsHook, postInputsHook, preShellHook)
 
 
 { pkgs, inputs, devDir, suffix ? ".nix", ... }:
   let
-    inherit (import ./mkShell.nix { inherit pkgs; }) mkDevShell;
+    inherit (import ./mk-shell.nix { inherit pkgs; }) mkDevShell;
 
     # List and filter dev files
     allFiles = builtins.attrNames (builtins.readDir devDir);

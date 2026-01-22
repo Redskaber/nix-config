@@ -2,6 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-01-13
 # @description: nixos::core::nix
+# @origin: https://search.nixos.org/options?channel=25.11&query=nix.
 
 
 { inputs
@@ -15,11 +16,13 @@ let
 in
 {
   nix = {
+
     gc = {
       automatic = true;
       dates = "weekly";
       options = "--delete-older-than 7d";
     };
+
     settings = {
       auto-optimise-store = true;
       # Enable flakes and new 'nix' command
@@ -47,7 +50,10 @@ in
         "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
         "ghostty.cachix.org-1:QB389yTa6gTyneehvqG58y0WnHjQOqgnA+wBnpWWxns="
       ];
+      # trusted useds
+      trusted-users = [ "kilig" ];
     };
+
     # Opinionated: disable channels
     channel.enable = false;
 

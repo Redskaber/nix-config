@@ -44,7 +44,7 @@
     ../core/app/yazi
     ../core/app/baidupcs-go.nix
     ../core/app/cava.nix
-    ../core/app/clash-verge-rev.nix
+    ../core/app/clash-verge.nix
     ../core/app/discord.nix
     ../core/app/downloader.nix
     ../core/app/google-chrome.nix
