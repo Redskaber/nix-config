@@ -79,6 +79,12 @@
     XDG_CURRENT_DESKTOP = "Hyprland";
   };
 
+  # Env Aliases
+  home.shellAliases = {
+    start_wallpaper = ''swww-daemon --format xrgb && swww img "$HOME/.config/rofi/.current_wallpaper"'';
+  }
+
+
 }
 
 
