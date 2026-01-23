@@ -13,17 +13,19 @@
   default = {
 
     buildInputs = with pkgs; [
-      gcc                 # GNU toolchain (fallback or specific needs)
+      # gcc               # GNU toolchain (fallback or specific needs)
       clang               # Primary C compiler (recommended)
       clang-tools         # Provides clangd (LSP), clang-tidy, etc.
-      gdb                 # Debugger
+      lld                 # Fast LLVM linker (optional but recommended)
+
+      lldb                # Debugger (gdb)
       bear                # Generates compile_commands.json for LSP/tools
+      ccache              # Compiler cache (transparent speedup)
     ];
 
     nativeBuildInputs = with pkgs; [
       pkg-config
       cmake
-      meson
       ninja
     ];
     preInputsHook = ''
@@ -31,10 +33,10 @@
     '';
     postInputsHook = ''
       # Use Clang as default C compiler (modern, better diagnostics)
-      export CC=${pkgs.clang}/bin/clang
+      export CC="ccache  ${pkgs.clang}/bin/clang -fuse-ld=lld"
+      # export C_INCLUDE_PATH=" ${pkgs.glibc.dev}/include"
 
-      # Optional: if you ever compile C++ in this env
-      # export CXX=${pkgs.clang}/bin/clang++
+      export CLANG_COLOR_DIAGNOSTICS=always
       # echo "C dev env ready: CC=clang, LSP=clangd"
       echo "[postInputsHook]: c shell!"
     '';

@@ -7,32 +7,29 @@
 # - Attrset   : (Permission , Scope , Load      )
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
+# FIXME: clangd in NixOS header find is idiot, waiting fix Neovim lsp used non-nixos (mason false).
 
 
 { pkgs, inputs, dev, ... }: {
   default = {
 
     buildInputs = with pkgs; [
-      gcc                 # GNU toolchain (fallback)
-      clang               # Primary C/C++ compiler
       clang-tools         # Provides clangd, clang-tidy, clang-format
+      clang               # Primary C/C++ compiler
+      libcxx              # Clang's C++ standard library
+      lld                 # Fast LLVM linker (optional but recommended)
       llvm                # LLVM utilities (opt, llc, etc.)
-      gdb                 # Debugger
+      lldb                # Debugger
       bear                # Generates compile_commands.json
-      boost               # Popular C++ libraries
+      fmt                 # Essential modern C++ libs (header-only, widely used)
+      spdlog
       eigen               # Linear algebra (common in scientific computing)
-      # vcpkg             # Optional: uncomment if you use vcpkg for deps
-      # openblas
-      # lapack
-      # fmt
-      # spdlog
-      # conan
+      ccache              # Compiler cache (transparent speedup)
     ];
 
     nativeBuildInputs = with pkgs; [
       pkg-config
       cmake
-      meson
       ninja
     ];
 
@@ -41,12 +38,16 @@
     '';
     postInputsHook = ''
       # Use Clang as default compiler (better diagnostics & LSP sync)
-      export CC=${pkgs.clang}/bin/clang
-      export CXX=${pkgs.clang}/bin/clang++
+      export CC="ccache ${pkgs.clang}/bin/clang -fuse-ld=lld"
+      export CXX="ccache ${pkgs.clang}/bin/clang++ -fuse-ld=lld"
+      export C_INCLUDE_PATH=" ${pkgs.glibc.dev}/include"
+      export CPLUS_INCLUDE_PATH=" ${pkgs.libcxx.dev}/include/c++/v1: ${pkgs.glibc.dev}/include"
 
-      # Optional: set standard (e.g., C++20)
-      # export CXXFLAGS="-std=c++20 -Wall -Wextra"
-      # echo "C++ dev env ready: compiler=clang++, LSP=clangd"
+      # Enable color diagnostics by default
+      export CLANG_COLOR_DIAGNOSTICS=always
+
+      # Optional: set default standard (commented to avoid side effects in generic env)
+      # export CXXFLAGS="-std=c++20 -Wall -Wextra -Wpedantic -fdiagnostics-color=always"
       echo "[postInputsHook]: cpp shell!"
     '';
      preShellHook = ''
