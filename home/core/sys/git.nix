@@ -11,6 +11,9 @@
 , pkgs
 , ...
 }:
+let
+  githubToken = builtins.getEnv "GITHUB_TOKEN";
+in
 {
   programs.git = {
     enable = true;
@@ -25,6 +28,11 @@
       core.editor = "nvim";
       pull.rebase = true;
       push.autoSetupRemote = true;
+      url = lib.optionalAttrs (githubToken != "") {
+        "https://${githubToken}@github.com/" = {
+          insteadOf = "https://github.com/";
+        };
+      };
     };
     ignores = [
       ".DS_Store"

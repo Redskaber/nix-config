@@ -26,5 +26,9 @@
     recursive = true;                 # rec-link
     force = true;
   };
+
+  home.sessionVariables.STARTSHIP_CONFIG = "~/.config/starship/starship.toml"
+
 }
+
 
