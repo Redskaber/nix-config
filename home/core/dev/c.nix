@@ -33,7 +33,7 @@
     '';
     postInputsHook = ''
       # Use Clang as default C compiler (modern, better diagnostics)
-      export CC="ccache  ${pkgs.clang}/bin/clang -fuse-ld=lld"
+      export CC="ccache  ${pkgs.clang}/bin/clang"
       # export C_INCLUDE_PATH=" ${pkgs.glibc.dev}/include"
 
       export CLANG_COLOR_DIAGNOSTICS=always
