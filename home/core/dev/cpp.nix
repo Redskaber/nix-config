@@ -39,7 +39,7 @@
     postInputsHook = ''
       # Use Clang as default compiler (better diagnostics & LSP sync)
       export CC="ccache ${pkgs.clang}/bin/clang -fuse-ld=lld"
-      export CXX="ccache ${pkgs.clang}/bin/clang++ -fuse-ld=lld"
+      export CXX="ccache ${pkgs.clang}/bin/clang++ -fuse-ld=lld -stdlib=libc++"
       export C_INCLUDE_PATH=" ${pkgs.glibc.dev}/include"
       export CPLUS_INCLUDE_PATH=" ${pkgs.libcxx.dev}/include/c++/v1: ${pkgs.glibc.dev}/include"
 
