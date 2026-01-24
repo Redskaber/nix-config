@@ -21,13 +21,7 @@
   };
 
   # Used user config:
-  xdg.configFile."starship" = {
-    source = inputs.starship-config;  # abs path
-    recursive = true;                 # rec-link
-    force = true;
-  };
-
-  home.sessionVariables.STARTSHIP_CONFIG = "~/.config/starship/starship.toml"
+  xdg.configFile."starship.toml".source = "${inputs.starship-config}/starship.toml";
 
 }
 
