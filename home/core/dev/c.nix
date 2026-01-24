@@ -34,7 +34,8 @@
     postInputsHook = ''
       # Use Clang as default C compiler (modern, better diagnostics)
       export CC="ccache  ${pkgs.clang}/bin/clang"
-      # export C_INCLUDE_PATH=" ${pkgs.glibc.dev}/include"
+      export LD="${pkgs.lld}/bin/ld.lld"
+      export LDFLAGS="-fuse-ld=lld"
 
       export CLANG_COLOR_DIAGNOSTICS=always
       # echo "C dev env ready: CC=clang, LSP=clangd"

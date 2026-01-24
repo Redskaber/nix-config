@@ -3,28 +3,39 @@
 # @datetime: 2025-12-12
 # @description: home::core::dev::cpp
 #
-# Modern C++ dev environment: clang + clangd + build tools
+# Pure LLVM-based Modern C++ dev environment:
+# - Compiler: clang (via llvmPackages.libcxxClang)
+# - Stdlib:   libc++ (not libstdc++)
+# - Linker:   lld
+# - Debugger: lldb
+# - LSP:      clangd
+#
 # - Attrset   : (Permission , Scope , Load      )
-# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - default   : (readonly   , global, default   ): minimal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
+#
 # FIXME: clangd in NixOS header find is idiot, waiting fix Neovim lsp used non-nixos (mason false).
-
 
 { pkgs, inputs, dev, ... }: {
   default = {
 
     buildInputs = with pkgs; [
-      clang-tools         # Provides clangd, clang-tidy, clang-format
-      clang               # Primary C/C++ compiler
-      libcxx              # Clang's C++ standard library
-      lld                 # Fast LLVM linker (optional but recommended)
-      llvm                # LLVM utilities (opt, llc, etc.)
-      lldb                # Debugger
-      bear                # Generates compile_commands.json
-      fmt                 # Essential modern C++ libs (header-only, widely used)
+      # Core LLVM toolchain (pure)
+      llvmPackages.libcxxClang  # Clang++ preconfigured wrapper
+      libcxx                    # provodes libc++ and lib++abi
+      clang-tools               # clangd, clang-tidy, clang-format
+      lld                       # LLVM linker
+      lldb                      # LLVM debugger
+      llvm                      # opt, llc, etc.
+
+      # Build & analysis
+      bear                      # compile_commands.json
+      ccache                    # compiler cache
+
+      # Common modern C++ libraries (header-only or built against libc++)
+      fmt
       spdlog
-      eigen               # Linear algebra (common in scientific computing)
-      ccache              # Compiler cache (transparent speedup)
+      eigen
     ];
 
     nativeBuildInputs = with pkgs; [
@@ -34,27 +45,44 @@
     ];
 
     preInputsHook = ''
-      echo "[preInputsHook]: cpp shell!"
+      echo "[preInputsHook]: pure LLVM C++ shell!"
     '';
-    postInputsHook = ''
-      # Use Clang as default compiler (better diagnostics & LSP sync)
-      export CC="ccache ${pkgs.clang}/bin/clang"
-      export CXX="ccache ${pkgs.clang}/bin/clang++"
-      export C_INCLUDE_PATH=" ${pkgs.glibc.dev}/include"
-      export CPLUS_INCLUDE_PATH=" ${pkgs.libcxx.dev}/include/c++/v1: ${pkgs.glibc.dev}/include"
 
-      # Enable color diagnostics by default
+    postInputsHook = ''
+      # Use the pure libc++-aware Clang wrapper as default compilers
+      export CC="ccache  ${pkgs.llvmPackages.libcxxClang}/bin/clang"
+      export CXX="ccache  ${pkgs.llvmPackages.libcxxClang}/bin/clang++"
+
+      # Explicitly set include paths to prefer libc++ headers
+      # Note: glibc C headers are still needed (libc is glibc), but C++ must be libc++
+      export C_INCLUDE_PATH="${pkgs.glibc.dev}/include"
+      export CPLUS_INCLUDE_PATH="${pkgs.libcxx.dev}/include/c++/v1:${pkgs.glibc.dev}/include"
+
+      # Force use of lld linker
+      export LD=${pkgs.lld}/bin/ld.lld
+      export LDFLAGS="-fuse-ld=lld"
+
+      # Enable color diagnostics
       export CLANG_COLOR_DIAGNOSTICS=always
 
-      # Optional: set default standard (commented to avoid side effects in generic env)
-      # export CXXFLAGS="-std=c++20 -Wall -Wextra -Wpedantic -fdiagnostics-color=always"
-      echo "[postInputsHook]: cpp shell!"
+      # Runtime-Linker
+      export LD_LIBRARY_PATH="${pkgs.libcxx}/lib:$LD_LIBRARY_PATH"
+
+      # Optional: uncomment to enforce C++20+ in all builds (use cautiously in generic env)
+      # export CXXFLAGS="-std=c++20 -stdlib=libc++ -Wall -Wextra -Wpedantic -fdiagnostics-color=always"
+      # export LDFLAGS=" $ LDFLAGS -lc++abi"
+
+      echo "[postInputsHook]: pure LLVM C++ shell ready!"
     '';
-     preShellHook = ''
-      echo "[preShellHook]: cpp shell!"
+
+    preShellHook = ''
+      echo "[preShellHook]: entering pure LLVM C++ environment"
     '';
+
     postShellHook = ''
-      echo "[postShellHook]: cpp shell!"
+      echo "[postShellHook]: pure LLVM C++ environment active"
     '';
   };
 }
+
+
