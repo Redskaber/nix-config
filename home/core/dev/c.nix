@@ -13,14 +13,16 @@
   default = {
 
     buildInputs = with pkgs; [
-      # gcc               # GNU toolchain (fallback or specific needs)
-      clang               # Primary C compiler (recommended)
-      clang-tools         # Provides clangd (LSP), clang-tidy, etc.
-      lld                 # Fast LLVM linker (optional but recommended)
+      # gcc                     # GNU toolchain (fallback or specific needs)
+      clang                     # Primary C compiler (recommended)
+      clang-tools               # Provides clangd (LSP), clang-tidy, etc.
+      lld                       # Fast LLVM linker (optional but recommended)
+      lldb                      # LLVM debugger
+      glibc                     # C Libray (macos musl)
 
-      lldb                # Debugger (gdb)
-      bear                # Generates compile_commands.json for LSP/tools
-      ccache              # Compiler cache (transparent speedup)
+      # Build & analysis
+      bear                      # Generates compile_commands.json for LSP/tools
+      ccache                    # Compiler cache (transparent speedup)
     ];
 
     nativeBuildInputs = with pkgs; [
@@ -34,10 +36,15 @@
     postInputsHook = ''
       # Use Clang as default C compiler (modern, better diagnostics)
       export CC="ccache  ${pkgs.clang}/bin/clang"
-      export LD="${pkgs.lld}/bin/ld.lld"
-      export LDFLAGS="-fuse-ld=lld"
+      export C_INCLUDE_PATH="${pkgs.glibc.dev}/include"
 
+      # Force use of lld linker
+      export LD=${pkgs.lld}/bin/ld.lld
+      export LDFLAGS="-fuse-ld=lld"
       export CLANG_COLOR_DIAGNOSTICS=always
+      # Optional: Symbols
+      export CFLAGS=" $CFLAGS -g"
+
       # echo "C dev env ready: CC=clang, LSP=clangd"
       echo "[postInputsHook]: c shell!"
     '';

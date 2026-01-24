@@ -70,7 +70,7 @@
 
       # Optional: uncomment to enforce C++20+ in all builds (use cautiously in generic env)
       # export CXXFLAGS="-std=c++20 -stdlib=libc++ -Wall -Wextra -Wpedantic -fdiagnostics-color=always"
-      # export LDFLAGS=" $ LDFLAGS -lc++abi"
+      # export LDFLAGS=" $LDFLAGS -lc++abi"
 
       echo "[postInputsHook]: pure LLVM C++ shell ready!"
     '';
