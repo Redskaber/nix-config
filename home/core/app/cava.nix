@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @discription: home::core::app:cava
-# - terminal visucalizer audio
+# - terminal visucalizer audio (Decorations, Optional)
 
 
 { inputs

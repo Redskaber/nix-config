@@ -11,8 +11,8 @@
   ...
 }:
 {
-  # home.packages = [
-  #   pkgs.wechat
-  # ];
+  home.packages = [
+    pkgs.wechat
+  ];
 
 }

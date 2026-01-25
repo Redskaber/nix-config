@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/home/hosts/nixos.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @diractory: https://nix-community.github.io/home-manager/options.xhtml
+# @directory: https://nix-community.github.io/home-manager/options.xhtml
 
 
 # This is your home-manager configuration file
@@ -23,7 +23,7 @@
 
     ../core/sys/atuin.nix
     ../core/sys/bat.nix
-    ../core/sys/bottom.nix
+    # ../core/sys/bottom.nix        # btop
     ../core/sys/btop.nix
     ../core/sys/compat.nix
     ../core/sys/compress.nix
@@ -34,7 +34,8 @@
     ../core/sys/fonts.nix
     ../core/sys/fzf.nix
     ../core/sys/git.nix
-    ../core/sys/htop.nix
+    # ../core/sys/htop.nix          # btop
+    ../core/sys/jq.nix
     ../core/sys/portal.nix
     ../core/sys/starship.nix
     ../core/sys/wl-clipboard.nix
@@ -43,7 +44,7 @@
 
     ../core/app/yazi
     ../core/app/baidupcs-go.nix
-    # ../core/app/cava.nix
+    # ../core/app/cava.nix          # optional
     ../core/app/clash-verge.nix
     ../core/app/discord.nix
     ../core/app/downloader.nix
@@ -51,7 +52,7 @@
     ../core/app/kitty.nix
     ../core/app/lutris.nix
     ../core/app/mpv.nix
-    ../core/app/nemo.nix
+    # ../core/app/nemo.nix          # yazi
     ../core/app/nvim.nix
     ../core/app/obsidian.nix
     ../core/app/qq.nix
@@ -61,7 +62,7 @@
     ../core/app/vscode.nix
     ../core/app/wechat.nix
     ../core/app/wezterm.nix
-    ../core/app/zen-browser.nix
+    # ../core/app/zen-browser.nix   # google-chrome
     ../core/app/game/minecraft.nix
     ../core/app/img/gimp.nix
     ../core/app/img/imagemagick.nix

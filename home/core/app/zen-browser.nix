@@ -2,6 +2,9 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @depends: https://github:0xc000022070/zen-browser-flake
+# @description: home::core::app::zen-browser
+# - Optional: browser
+# - default used google-chrome
 
 
 { inputs
