@@ -60,7 +60,7 @@
     ../core/app/tealdeer.nix
     ../core/app/tmux.nix
     ../core/app/vscode.nix
-    ../core/app/wechat.nix
+    # ../core/app/wechat.nix        # timeout
     ../core/app/wezterm.nix
     # ../core/app/zen-browser.nix   # google-chrome
     ../core/app/game/minecraft.nix
