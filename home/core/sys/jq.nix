@@ -13,7 +13,7 @@
 , ...
 }:
 {
-  progorams.jq.enable = true;
+  programs.jq.enable = true;
 
 }
 
