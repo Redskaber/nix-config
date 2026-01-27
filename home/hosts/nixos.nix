@@ -42,6 +42,7 @@
     ../core/sys/wl-clipboard.nix
     ../core/sys/zoxide.nix
     ../core/sys/zsh.nix
+    ../core/sys/script/checker.nix
 
     ../core/app/yazi
     ../core/app/baidupcs-go.nix
