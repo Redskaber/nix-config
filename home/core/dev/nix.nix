@@ -104,9 +104,9 @@
       patchelf                     # ELF 二进制重定向（关键！修复 RPATH/interpreter）
       chrpath                      # 修改二进制 RPATH（轻量替代 patchelf）
       makeself                     # 创建自解压安装包（.run 格式）
-      appimagekit                  # 构建 AppImage 交付物
+      appimage-run                 # 运行 AppImage 时支持
       fpm                          # 多格式包转换（deb/rpm等）
-      licensefinder                # 依赖许可证扫描（合规审计）
+      licensecheck                 # 依赖许可证扫描（合规审计）
       jq                           # 许可证元数据处理
       gnupg                        # 签名/验证（交付物完整性）
       sbomnix                      # 生成 SPDX SBOM（软件物料清单）
@@ -139,8 +139,8 @@
 
       # Custom workflow alias
       alias wrap-bin='patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)"'
-      alias make-delivery='makeself . installer.run "Proprietary Installer"'
-      alias check-licenses='licensefinder --format=json > licenses.json'
+      alias make-delivery='makeself . installer.run "Unfree Installer"'
+      alias check-licenses='licensecheck -r .'
       alias sign-artifact='gpg --detach-sign'
 
       # auto-set safeenv var
