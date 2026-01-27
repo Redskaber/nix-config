@@ -20,6 +20,8 @@
     # chinese
     noto-fonts-cjk-sans
     noto-fonts-cjk-serif
+    vista-fonts-chs
+    source-han-serif
     # custom
     fira-code fira-code-symbols
     font-awesome

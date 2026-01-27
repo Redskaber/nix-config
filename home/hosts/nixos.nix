@@ -36,6 +36,7 @@
     ../core/sys/git.nix
     # ../core/sys/htop.nix          # btop
     ../core/sys/jq.nix
+    ../core/sys/just.nix
     ../core/sys/portal.nix
     ../core/sys/starship.nix
     ../core/sys/wl-clipboard.nix
@@ -62,6 +63,7 @@
     ../core/app/vscode.nix
     # ../core/app/wechat.nix        # timeout
     ../core/app/wezterm.nix
+    ../core/app/xunlei.nix
     # ../core/app/zen-browser.nix   # google-chrome
     ../core/app/game/minecraft.nix
     ../core/app/img/gimp.nix
