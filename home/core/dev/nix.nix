@@ -106,7 +106,7 @@
       makeself                     # 创建自解压安装包（.run 格式）
       appimage-run                 # 运行 AppImage 时支持
       fpm                          # 多格式包转换（deb/rpm等）
-      licensecheck                 # 依赖许可证扫描（合规审计）
+      hawkeye                      # 依赖许可证扫描（合规审计）
       jq                           # 许可证元数据处理
       gnupg                        # 签名/验证（交付物完整性）
       sbomnix                      # 生成 SPDX SBOM（软件物料清单）
@@ -140,7 +140,6 @@
       # Custom workflow alias
       alias wrap-bin='patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)"'
       alias make-delivery='makeself . installer.run "Unfree Installer"'
-      alias check-licenses='licensecheck -r .'
       alias sign-artifact='gpg --detach-sign'
 
       # auto-set safeenv var
