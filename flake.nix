@@ -128,9 +128,12 @@
         let
           pkgs = nixpkgs.legacyPackages.${system};
         in
-        import ./lib/dev/shells.nix {
+        import ./lib/dev/dshells.nix {
           inherit pkgs inputs;
-          devDir = ./home/core/dev;
+          devDir = ./home/core/dev;             # default fm
+          # devDir = ./docs/example/dev/fm;     # example fm
+          # devDir = ./docs/example/dev/dm;     # example dm
+          # suffix = ".nix"                     # default suffix
         };
     in
   {
