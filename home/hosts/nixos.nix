@@ -27,8 +27,11 @@
     ../core/sys/btop.nix
     ../core/sys/compat.nix
     ../core/sys/compress.nix
+    ../core/sys/debug.nix
     ../core/sys/direnv.nix
+    ../core/sys/eza.nix
     ../core/sys/fastfetch.nix
+    ../core/sys/fd.nix
     ../core/sys/ffmpeg.nix
     ../core/sys/fish.nix
     ../core/sys/fonts.nix
@@ -37,7 +40,10 @@
     # ../core/sys/htop.nix          # btop
     ../core/sys/jq.nix
     ../core/sys/just.nix
+    ../core/sys/netutils.nix
     ../core/sys/portal.nix
+    ../core/sys/ripgrep.nix
+    ../core/sys/security.nix
     ../core/sys/starship.nix
     ../core/sys/wl-clipboard.nix
     ../core/sys/zoxide.nix
@@ -120,11 +126,11 @@
   };
 
   # Add stuff for your user as you see fit:
-  home.packages = with pkgs; [
+  # home.packages = with pkgs; [
     # network utils
     #   git bottom tree
-        curl wget gnupg gdb
-        valgrind strace ltrace pciutils vulkan-tools mesa
+        # curl wget gnupg gdb
+        # valgrind strace ltrace pciutils vulkan-tools mesa
     # wm-backend
     #   wl-clipboard
     # Terminal shell
@@ -132,7 +138,7 @@
     #   starship zsh fish
     # Tools
     #   bat fzf delta yazi
-        ripgrep fd eza
+    #   ripgrep fd eza
     #   zoxide
     # Session
     #   tmux
@@ -146,8 +152,8 @@
     # Dev
     #   c/c++,rust,js/ts,python,lua,nix,...
     # Appimage runtime
-        appimage-run
-  ];
+    #   appimage-run
+  # ];
 
   # home-manager:
   programs.home-manager.enable = true;
