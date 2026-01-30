@@ -17,6 +17,7 @@
       nix                        # Core runtime (with flakes, experimental features)
       nixfmt-rfc-style           # Formatter(RFC 109): Officially endorsed formatter
       statix                     # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
+      alejandra                  # Format specifications
       deadnix                    # Dead-code-eliminayion: Removes unused definitions
       nil                        # Language-Server-Protocol: Fast, official LSP by NixOS team (supports flakes, overlays, etc.)
 
@@ -53,6 +54,7 @@
       nix                          # 核心工具链（含 flakes 支持）
       nixfmt-rfc-style             # RFC 109 官方格式化器
       statix                       # 静态分析（检测反模式/未使用绑定）
+      alejandra                    # Format specifications
       deadnix                      # 死代码清理
       nil                          # 官方 LSP（支持 flakes/overlays）
 

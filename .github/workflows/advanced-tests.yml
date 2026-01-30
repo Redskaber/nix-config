@@ -1,0 +1,43 @@
+name: Advanced Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'nixos/**'
+      - 'home/**'
+  pull_request:
+    paths:
+      - 'nixos/**'
+      - 'home/**'
+
+jobs:
+  nixos-vm-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      
+      - name: Build NixOS VM
+        run: nix build ".#nixosConfigurations.kilig-nixos.config.system.build.vm"
+        
+      - name: Test VM starts
+        run: |
+          ./result/bin/run-*-vm < /dev/null &
+          VM_PID=$!
+          sleep 15  # 等待 VM 启动
+          # 检查基本服务状态
+          echo "Checking system services..."
+          # 添加具体的测试命令
+          kill $VM_PID
+        
+  home-manager-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      
+      - name: Generate Home Manager config
+        run: nix eval ".#homeConfigurations.kilig@nixos.config.home.activation"
+
+

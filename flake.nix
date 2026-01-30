@@ -130,7 +130,7 @@
         in
         import ./lib/dev/dshells.nix {
           inherit pkgs inputs;
-          devDir = ./home/core/dev;             # default fm
+          devDir = ./home/core/dev;
           # devDir = ./docs/example/dev/fm;     # example fm
           # devDir = ./docs/example/dev/dm;     # example dm
           # suffix = ".nix"                     # default suffix
@@ -198,7 +198,7 @@
     # Available through 'home-manager --flake .#your-username@your-hostname'
     homeConfigurations = {
       # FIXME replace with your username@hostname
-      "kilig@extensa" = home-manager.lib.homeManagerConfiguration {
+      "kilig@linux" = home-manager.lib.homeManagerConfiguration {
         # Home-manager requires 'pkgs' instance
         # FIXME replace x86_64-linux with your architecure
         pkgs = nixpkgs.legacyPackages.x86_64-linux;

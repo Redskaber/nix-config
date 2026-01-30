@@ -49,7 +49,7 @@
     # KeyHints
     yad
     # Cliphist
-    wl-clip-persist
+    # wl-clip-persist
     cliphist
   ];
 

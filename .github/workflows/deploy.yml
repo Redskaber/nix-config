@@ -1,0 +1,54 @@
+name: Deploy Configuration
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target system to deploy to'
+        required: true
+        type: choice
+        options:
+        - kilig-nixos
+        - kilig-linux
+        - all
+      confirm:
+        description: 'Confirm deployment (type "deploy")'
+        required: true
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.confirm == 'deploy' }}
+    environment: production
+    
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+          
+      - name: Deploy to NixOS
+        if: ${{ github.event.inputs.target == 'kilig-nixos' || github.event.inputs.target == 'all' }}
+        run: |
+          ssh kilig@kilig-nixos "sudo nixos-rebuild switch --flake github:${{ github.repository }}#${{ github.ref_name }}"
+          
+      - name: Deploy to Linux
+        if: ${{ github.event.inputs.target == 'kilig-linux' || github.event.inputs.target == 'all' }}
+        run: |
+          ssh kilig@kilig-linux "home-manager switch --flake github:${{ github.repository }}#${{ github.ref_name }}"
+          
+      - name: Notify success
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `Deployment to ${{ github.event.inputs.target }} ${context.job.status}!`
+            })
+
+

@@ -1,0 +1,34 @@
+name: Nix Configuration CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+      
+      - name: Check formatting
+        run: nix fmt --check
+        
+      - name: Validate flake
+        run: nix flake check
+        
+      - name: Build critical configurations
+        run: |
+          nix build .#nixosConfigurations.kilig-nixos.config.system.build.toplevel
+          nix build .#homeConfigurations.kilig@nixos.activationPackage
+          nix build .#homeConfigurations.kilig@linux.activationPackage
+          
+      - name: Build essential dev shells
+        run: |
+          nix build .#devShells.x86_64-linux.default
+          nix build .#devShells.x86_64-linux.python
+          nix build .#devShells.x86_64-linux.cpp
+
