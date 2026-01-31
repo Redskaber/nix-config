@@ -48,6 +48,12 @@ let
       throw "INVALID VARIANT CONFIG in ${path}: '${varName}' must be an attrset (got ${builtins.typeOf cfg})"
     else cfg;
 
+  # DEV_SHELL FULL_NAME
+  devShellFullName = fullName: basePath: sourceType: varName:
+    if fullName == "" && basePath == "" && sourceType == "default-nix" && varName == "default"
+      then "default"    # top full name
+    else fullName;
+
   # GENERATE SEMANTIC FULL_NAME (SPEC-COMPLIANT)
   # basePath: accumulated path (e.g., "python-derivation")
   # sourceType: "default-nix" | "file"
@@ -62,7 +68,8 @@ let
               sourceName;  # non-default files inject filename
       suffixPart = if varName == "default" then "" else varName;
       parts = pkgs.lib.filter (x: x != "") [base mid suffixPart];
-    in pkgs.lib.concatStringsSep "-" parts;
+      fullName = pkgs.lib.concatStringsSep "-" parts;
+    in devShellFullName fullName basePath sourceType varName;
 
   # RECURSIVE PROCESSOR: returns { flatShells, variantsTree, shellNames }
   processDirectory = currentPath: basePath:
