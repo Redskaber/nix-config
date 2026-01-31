@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/dev/python.nix
+# @path: ~/projects/configs/nix-config/home/core/dev/python/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::dev::python
+# @description: home::core::dev::python::default
 #
 # Modern, fast, and minimal Python dev environment using uv + ruff
 # - Attrset   : (Permission , Scope , Load      )
@@ -173,6 +173,5 @@
 # echo "# ############################################################################################"
 # use flake github:redskaber/nix-config/26c7a7731734b88d51b70599a054f0e246b52262#python-machine
 # source .venv/bin/activate
-
 
 

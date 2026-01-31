@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/dev/rust.nix
+# @path: ~/projects/configs/nix-config/home/core/dev/rust/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::dev::rust
+# @description: home::core::dev::rust:default
 #
 # Minimal, reproducible Rust development environment using nixpkgs' stable Rust toolchain.
 # Fully offline-capable and suitable for flakes-based workflows.
@@ -49,4 +49,5 @@
     '';
   };
 }
+
 

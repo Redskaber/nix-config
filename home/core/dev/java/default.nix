@@ -1,7 +1,8 @@
-# @path: ~/projects/configs/nix-config/home/core/dev/java.nix
+
+# @path: ~/projects/configs/nix-config/home/core/dev/java/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::dev::java
+# @description: home::core::dev::java::default
 #
 # Modern Java dev environment: JDK 21 + Maven/Gradle + JDT.LS
 # - Attrset   : (Permission , Scope , Load      )
@@ -43,3 +44,5 @@
 
   };
 }
+
+

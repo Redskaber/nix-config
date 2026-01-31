@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/dev/typescript.nix
+# @path: ~/projects/configs/nix-config/home/core/dev/typescript/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::dev::typescript
+# @description: home::core::dev::typescript::default
 #
 # Focused TypeScript dev environment: tsc + LSP + runtime
 # - Attrset   : (Permission , Scope , Load      )
@@ -45,3 +45,5 @@
     '';
   };
 }
+
+

@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/dev/javascript.nix
+# @path: ~/projects/configs/nix-config/home/core/dev/javascript/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::dev::javascript
+# @description: home::core::dev::javascript::default
 #
 # Modern JS/TS dev env: Node.js 24 + Biome + LSP
 # - Attrset   : (Permission , Scope , Load      )

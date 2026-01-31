@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/dev/lua.nix
+# @path: ~/projects/configs/nix-config/home/core/dev/lua/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::dev::lua
+# @description: home::core::dev::lua::default
 #
 # Modern Lua dev environment for Neovim/plugins/scripting
 # - Attrset   : (Permission , Scope , Load      )
@@ -51,3 +51,5 @@
 
   };
 }
+
+

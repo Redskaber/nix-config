@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/dev/c.nix
+# @path: ~/projects/configs/nix-config/home/core/dev/c/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::dev::c
+# @description: home::core::dev::c::default
 #
 # Modern, fast C development environment with clangd + bear
 # - Attrset   : (Permission , Scope , Load      )
@@ -57,4 +57,5 @@
     '';
   };
 }
+
 

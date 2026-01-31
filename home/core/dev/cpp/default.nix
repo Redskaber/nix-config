@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/dev/cpp.nix
+# @path: ~/projects/configs/nix-config/home/core/dev/cpp/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::dev::cpp
+# @description: home::core::dev::cpp::default
 #
 # Pure LLVM-based Modern C++ dev environment:
 # - Compiler: clang (via llvmPackages.libcxxClang)
