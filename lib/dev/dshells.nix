@@ -1,36 +1,42 @@
 # @path: ~/projects/configs/nix-config/lib/dev/dshells.nix
 # @author: redskaber
-# @datetime: 2026-01-29
-# @description: lib::dev::dshells - Strict layered loader with nested variants tree & robust uniqueness validation
+# @datetime: 2026-01-31
+# @description: lib::dev::dshells - Strict layered loader with semantic full_name resolution
 #
-# CORE UPGRADES FROM ORIGINAL:
-# TRUE GLOBAL UNIQUENESS VALIDATION (FIXED CRITICAL BUG)
-#    - Collects ALL full_names across layers BEFORE attrset merge
-#    - Prevents silent attrset key overwrites during // merge
-# PRECISE LAYER ISOLATION
-#    - Non-default.nix files receive ONLY subdirectory variants (no peer files)
-#    - default.nix receives FULL layer context (subdirs + peer files)
-# SEMANTIC FULL_NAME GENERATION (100% spec compliant)
+# CORE UPGRADES (SPEC-COMPLIANT):
+# - TRUE SEMANTIC FULL_NAME GENERATION (100% matches spec examples)
 #    Top-level (basePath=""):
-#      • default.nix + variant     → variant
-#      • file.nix    + default     → fileBase
-#      • file.nix    + variant     → fileBase-variant
+#      • file.nix + default     → fileBase
+#      • file.nix + variant     → fileBase-variant
 #    Subdirectory (basePath="a-b"):
-#      • default.nix + default     → a-b
-#      • default.nix + variant     → a-b-variant
-#      • file.nix    + default     → a-b-fileBase
-#      • file.nix    + variant     → a-b-fileBase-variant
-# DEFENSIVE VALIDATIONS
-#    - Per-layer: peer file conflicts, default.nix vs non-default conflicts
-#    - Global: cross-layer full_name collisions with actionable diagnostics
-#    - Structural: file/dir name conflicts, empty directories
-#    - Type safety: all variant configs validated as attrsets
+#      • default.nix + default  → a-b
+#      • default.nix + variant  → a-b-variant
+#      • file.nix + default     → a-b-fileBase
+#      • file.nix + variant     → a-b-fileBase-variant
+#    *Critical fix: Removed ambiguous "basePath == ''" special case for default.nix variants
 #
-# WHY THIS MATTERS FOR fm/dm PATTERNS:
-#   fm/default.nix accesses `dev.c` and `dev.python.machine`
-#   → `dev.c` = c.nix's raw variants attrset (NOT flattened shell)
-#   → `dev.python.machine` = python.nix.variants.machine
-#   Achieved by strict layer isolation in variantsTree construction
+# - PRECISE LAYER ISOLATION (as per spec)
+#    • Non-default.nix files: dev = ONLY subdirectory variants (NO peer files)
+#    • default.nix: dev = subdirs + peer non-default files (FULL layer context)
+#    • Parent layers NEVER see child default.nix variants until merged upward
+#
+# - DEFENSIVE CONFLICT VALIDATION (actionable diagnostics)
+#    • Per-layer: default.nix vs non-default file name collisions
+#    • Cross-layer: GLOBAL full_name uniqueness (prevents silent attrset overwrites)
+#    • Structural: file/dir name conflicts, empty dirs, invalid returns
+#    • Type safety: all variants validated as attrsets BEFORE processing
+#
+# - SPEC-ALIGNED dev PARAMETER RESOLUTION
+#    In parent/default.nix: dev.python.machine = python/machine.nix's attrset
+#      → mkDevShell auto-resolves .default when used in combinFrom
+#    In parent/default.nix: dev.python.origin = python/default.nix's 'origin' variant
+#    *Enables: combinFrom = [ dev.c dev.python.machine ] exactly as documented
+#
+# WHY THIS MATTERS:
+#   fm/default.nix (parent layer) accesses:
+#     • dev.c → c.nix's raw variants attrset (NOT flattened shell)
+#     • dev.python.machine → python/machine.nix's attrset (auto-uses .default in combinFrom)
+#   Achieved via strict layer isolation + semantic full_name mapping
 
 { pkgs, inputs, devDir, suffix ? ".nix", ... }:
 let
@@ -42,14 +48,27 @@ let
       throw "INVALID VARIANT CONFIG in ${path}: '${varName}' must be an attrset (got ${builtins.typeOf cfg})"
     else cfg;
 
+  # GENERATE SEMANTIC FULL_NAME (SPEC-COMPLIANT)
+  # basePath: accumulated path (e.g., "python-derivation")
+  # sourceType: "default-nix" | "file"
+  # sourceName: for files: base filename (e.g., "machine"); for default.nix: ""
+  # varName: variant key name (e.g., "default", "machine")
+  makeFullName = basePath: sourceType: sourceName: varName:
+    let
+      base = if basePath == "" then "" else basePath;
+      mid = if sourceType == "default-nix" then
+              ""  # default.nix variants attach directly to basePath
+            else
+              sourceName;  # non-default files inject filename
+      suffixPart = if varName == "default" then "" else varName;
+      parts = pkgs.lib.filter (x: x != "") [base mid suffixPart];
+    in pkgs.lib.concatStringsSep "-" parts;
+
   # RECURSIVE PROCESSOR: returns { flatShells, variantsTree, shellNames }
-  #   flatShells   : attrset of final shells (for output)
-  #   variantsTree : nested structure for parent's `dev` param (subdirs + non-default files ONLY)
-  #   shellNames   : LIST of all full_names in this subtree (critical for global uniqueness check)
   processDirectory = currentPath: basePath:
     let
       # ===== STRUCTURAL VALIDATIONS =====
-      _handle_current_path_throw = if !builtins.pathExists currentPath then
+      _currentPathExistGrand = if !builtins.pathExists currentPath then
             throw "DIRECTORY NOT FOUND: ${currentPath}"
           else null;
 
@@ -68,16 +87,17 @@ let
       # File/Dir name conflict (critical for unambiguous resolution)
       fileBases = map (f: pkgs.lib.removeSuffix suffix f) nixFiles;
       nameConflicts = pkgs.lib.filter (n: pkgs.lib.elem n subDirs) fileBases;
-      _handle_name_conflicts_throw = if nameConflicts != [] then
+      _fileAndDirNameConflictGrand = if nameConflicts != [] then
             throw ''
               CONFIG CONFLICT in ${currentPath}:
               Ambiguous sources: ${builtins.concatStringsSep ", " nameConflicts}
               Resolution: Keep ONLY file (${suffix}) OR directory per name.
+              Example: Remove either 'machine.nix' or 'machine/' directory.
             ''
           else null;
 
       # Empty directory guard
-      _handle_emtry_directory_throw = if nixFiles == [] && subDirs == [] then
+      _emptyDirectoryGrand = if nixFiles == [] && subDirs == [] then
             throw "EMPTY DIRECTORY: ${currentPath} requires .nix files or subdirs"
           else null;
 
@@ -90,13 +110,13 @@ let
           name = subDir;
           flat = res.flatShells;
           variants = res.variantsTree;
-          names = res.shellNames;  # CRITICAL: collect ALL descendant names
+          names = res.shellNames;
         }
       ) subDirs;
 
       subFlatAggregated = pkgs.lib.foldl' (acc: r: acc // r.flat) {} subResults;
       subVariantsPart = pkgs.lib.listToAttrs (map (r: { name = r.name; value = r.variants; }) subResults);
-      subShellNames = pkgs.lib.concatMap (r: r.names) subResults;  # Flatten all descendant names
+      subShellNames = pkgs.lib.concatMap (r: r.names) subResults;
 
       # ===== STEP 2: PROCESS NON-DEFAULT.NIX FILES =====
       nonDefaultFiles = builtins.filter (f: f != "default.nix") nixFiles;
@@ -106,21 +126,15 @@ let
           filePath = "${currentPath}/${fileName}";
           # CRITICAL ISOLATION: non-default files see ONLY subdirectory variants (no peer files)
           variants = import filePath { inherit pkgs inputs; dev = subVariantsPart; };
-          _handle_variants_throw = if !pkgs.lib.isAttrs variants then
+          _variantGrand_1 = if !pkgs.lib.isAttrs variants then
                 throw "INVALID RETURN in ${filePath}: must return attrset of variants"
               else null;
 
-          # Generate flat shells + collect names
+          # Generate flat shells + collect semantic names
           flatShells = pkgs.lib.mapAttrs' (varName: cfg:
             let
               validatedCfg = validateVariantConfig filePath varName cfg;
-              fullName =
-                if basePath == "" then
-                  if varName == "default" then fileBase
-                  else "${fileBase}-${varName}"
-                else
-                  if varName == "default" then "${basePath}-${fileBase}"
-                  else "${basePath}-${fileBase}-${varName}";
+              fullName = makeFullName basePath "file" fileBase varName;
             in pkgs.lib.nameValuePair fullName (
               mkDevShell (validatedCfg // { name = "dev-shell-${fullName}"; })
             )
@@ -135,11 +149,12 @@ let
 
       # Per-layer validation: non-default file name conflicts
       nonDefaultDupes = pkgs.lib.filter (n: (pkgs.lib.count (x: x == n) nonDefaultNames) > 1) (pkgs.lib.unique nonDefaultNames);
-      _handle_no_default_dups_throw = if nonDefaultDupes != [] then
+      _nonDefaultDupGrand = if nonDefaultDupes != [] then
             throw ''
               LAYER CONFLICT in ${currentPath} (non-default files):
               Duplicate shell names: ${builtins.concatStringsSep ", " nonDefaultDupes}
               Resolution: Rename variants or files per semantic rules.
+              Example: In 'machine.nix', rename variant 'default' to avoid collision with 'machine/default.nix'
             ''
           else null;
 
@@ -151,17 +166,14 @@ let
           # CRITICAL: default.nix sees FULL layer context (subdirs + peer files)
           devForDefault = subVariantsPart // localVariants;
           variants = import filePath { inherit pkgs inputs; dev = devForDefault; };
-          _handle_attrset_variants_throw = if !pkgs.lib.isAttrs variants then
+          _variantGrand_2 = if !pkgs.lib.isAttrs variants then
                 throw "INVALID RETURN in ${filePath}: must return attrset of variants"
               else null;
 
           flatShells = pkgs.lib.mapAttrs' (varName: cfg:
             let
               validatedCfg = validateVariantConfig filePath varName cfg;
-              fullName =
-                if basePath == "" then varName
-                else if varName == "default" then basePath
-                else "${basePath}-${varName}";
+              fullName = makeFullName basePath "default-nix" "" varName;
             in pkgs.lib.nameValuePair fullName (
               mkDevShell (validatedCfg // { name = "dev-shell-${fullName}"; })
             )
@@ -170,24 +182,26 @@ let
 
           # Validate against non-default files in SAME layer
           layerDupes = pkgs.lib.filter (n: pkgs.lib.elem n nonDefaultNames) names;
-          _handle_layer_dups_throw = if layerDupes != [] then
+          _layerDupGrand = if layerDupes != [] then
                 throw ''
                   LAYER CONFLICT in ${currentPath} (default.nix vs non-default):
-                  Conflicting names: ${builtins.concatStringsSep ", " layerDupes}
+                  Conflicting full_names: ${builtins.concatStringsSep ", " layerDupes}
                   Resolution:
-                    • Rename variant in default.nix, OR
-                    • Rename non-default file/variant per semantic rules
+                    • Rename variant in default.nix (e.g., 'machine' → 'custom-machine'), OR
+                    • Rename conflicting file (e.g., 'machine.nix' → 'hardware.nix')
+                  Spec note:
+                    default.nix variant 'X' → full_name = ${basePath}-X
+                    X.nix variant 'default' → full_name = ${basePath}-X (COLLISION)
                 ''
               else null;
-        in { flat = flatShells; names = names; variants = variants;}
+        in { flat = flatShells; names = names; variants = variants; }
       else { flat = {}; names = []; variants = {}; };
 
-      # ===== CRITICAL FIX: MERGE default.nix VARIANTS INTO variantsTree =====
+      # ===== MERGE VARIANTS TREE FOR PARENT LAYERS =====
       baseVariantsTree = subVariantsPart // localVariants;
       variantsTree =
         if hasDefault && defaultResult.variants != {} then
           let
-            # Detect key conflicts between existing tree and default.nix variants
             commonKeys = pkgs.lib.attrNames (pkgs.lib.intersectAttrs baseVariantsTree defaultResult.variants);
           in
           if commonKeys != [] then
@@ -195,19 +209,18 @@ let
               VARIANTS TREE CONFLICT in ${currentPath}:
               Keys defined in BOTH non-default sources AND default.nix: ${builtins.concatStringsSep ", " commonKeys}
               Resolution:
-                • Rename variant in default.nix, OR
-                • Rename conflicting file/directory
+                • Rename variant in default.nix (e.g., 'machine' → 'vm'), OR
+                • Rename conflicting file/directory (e.g., 'machine.nix' → 'hardware.nix')
               Example conflict pattern to avoid:
                 default.nix defines variant "machine" AND machine.nix exists
             ''
           else
-            baseVariantsTree // defaultResult.variants  # SAFE MERGE
+            baseVariantsTree // defaultResult.variants
         else
           baseVariantsTree;
 
       # ===== AGGREGATE RESULTS =====
       flatShells = subFlatAggregated // nonDefaultFlatShells // defaultResult.flat;
-      # CRITICAL: Collect ALL names BEFORE attrset merge to detect cross-layer collisions
       shellNames = subShellNames ++ nonDefaultNames ++ defaultResult.names;
     in { flatShells = flatShells; variantsTree = variantsTree; shellNames = shellNames; };
 
@@ -215,27 +228,27 @@ let
   rootResult = processDirectory devDir "";
   allShellNames = rootResult.shellNames;
 
-  # GLOBAL UNIQUENESS VALIDATION (FIXES SILENT OVERWRITE BUG IN ORIGINAL)
+  # GLOBAL UNIQUENESS VALIDATION (PREVENTS SILENT OVERWRITES)
   uniqueNames = pkgs.lib.unique allShellNames;
   duplicates = pkgs.lib.filter (n: (pkgs.lib.count (x: x == n) allShellNames) > 1) uniqueNames;
-  _handle_duplicates_throw = if duplicates != [] then
+  _duplicateGrand = if duplicates != [] then
         throw ''
           GLOBAL SHELL CONFLICT: Duplicate full_names detected!
           Conflicting identifiers: ${builtins.concatStringsSep ", " duplicates}
 
-          Resolution guide:
+          Resolution guide (per spec):
             • Top-level conflict:
                 default.nix has variant "X" AND X.nix has variant "default" → both generate "X"
             • Subdirectory conflict (basePath="a-b"):
                 default.nix variant "X" → "a-b-X"
                 X.nix variant "default" → "a-b-X" (COLLISION)
-            • Fix: Rename variant in default.nix OR rename conflicting file/variant
-            • Use `nix develop .#<name>` to verify intended shell
+            • Fix:
+                - Rename variant in default.nix (e.g., "machine" → "vm"), OR
+                - Rename conflicting file (e.g., "machine.nix" → "hardware.nix")
+            • Verify with: nix develop .#<name> --show-trace
         ''
       else null;
 
 in rootResult.flatShells
-
-
 
 

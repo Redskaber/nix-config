@@ -24,8 +24,6 @@
       deadnix                      # 死代码清理
       nil                          # 官方 LSP（支持 flakes/overlays）
 
-      # vulnix                     # NixOS vulnerability scanner (need python env)
-
       # 构建诊断与可视化
       nix-output-monitor           # 实时构建输出可视化（CI/调试利器）
       nix-tree                     # 交互式依赖树探索

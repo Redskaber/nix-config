@@ -10,6 +10,7 @@
 
 
 { pkgs, inputs, dev, ... }: {
+
   # base attrset
   default = {
 
@@ -21,8 +22,6 @@
       deadnix                    # Dead-code-eliminayion: Removes unused definitions
       nil                        # Language-Server-Protocol: Fast, official LSP by NixOS team (supports flakes, overlays, etc.)
       nvd                        # Nix/NixOS package version diff tool
-
-      # vulnix                     # NixOS vulnerability scanner (need python env)
 
       # Optional but useful:
       # nix-output-monitor       # Visualize build outputs (great for CI/debugging)
@@ -49,16 +48,29 @@
   };
 
   derivation-free-security = {
-    combiFrom = [
+    combinFrom = [
       dev.derivation.free
     ];
 
     # extras
     buildInputs = with pkgs; [
-      python312                  # python enviroment
-      vulnix                     # NixOS vulnerability scanner (need python env)
+      vulnix                            # NixOS vulnerability scanner
     ];
 
+    preInputsHook = ''
+      echo "[preInputsHook]: nix derivation-free-security shell!"
+    '';
+    postInputsHook = ''
+      echo "[postInputsHook]: nix derivation-free-security shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: nix derivation-free-security shell!"
+    '';
+    postShellHook = ''
+      # Must: grand python path environment Interference
+      unset PYTHONPATH
+      echo "[postShellHook]: nix derivation-free-security shell!"
+    '';
   };
 
 }

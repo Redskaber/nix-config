@@ -27,8 +27,8 @@
       dev.rust
       dev.typescript
     ];
-    buildInputs = with pkgs; [];
-    nativeBuildInputs = with pkgs; [];
+    # buildInputs = with pkgs; [];
+    # nativeBuildInputs = with pkgs; [];
     preInputsHook = ''
       echo "[preInputsHook]: default shell!"
     '';
@@ -50,8 +50,8 @@
       dev.cpp
       dev.python
     ];
-    buildInputs = with pkgs; [];
-    nativeBuildInputs = with pkgs; [];
+    # buildInputs = with pkgs; [];
+    # nativeBuildInputs = with pkgs; [];
     preInputsHook = ''
       echo "[preInputsHook]: cpython shell!"
     '';
