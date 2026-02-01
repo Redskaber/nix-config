@@ -51,7 +51,7 @@ let
   # DEV_SHELL FULL_NAME
   devShellFullName = fullName: basePath: sourceType: varName:
     if fullName == "" && basePath == "" && sourceType == "default-nix" && varName == "default"
-      then "default"    # top full name
+      then "default"
     else fullName;
 
   # GENERATE SEMANTIC FULL_NAME (SPEC-COMPLIANT)
