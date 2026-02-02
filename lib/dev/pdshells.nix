@@ -7,38 +7,67 @@
 let
   inherit (import ./mk-shell.nix { inherit pkgs; }) mkDevShell;
 
+  # == VALIDATION MODULE (pipeline-optimized) ==
+  validate = {
+    # Pipeline-friendly validation primitives (curried)
+    assertAttrSet = context: value:
+      value
+      |> (v: if pkgs.lib.isAttrs v then v else throw ''
+        INVALID STRUCTURE (${context}):
+        • Expected: attrset
+        • Got: ${builtins.typeOf v}
+        Resolution: Ensure file returns an attrset like:
+          { default = { buildInputs = [ ... ]; }; }
+      '');
+
+    assertUniqueNames = context: names:
+      let
+        dupes = names
+          |> pkgs.lib.unique
+          |> (uniqueNames: pkgs.lib.filter (n: pkgs.lib.count (x: x == n) names > 1) uniqueNames);
+        report = dupes
+          |> (d: if d == [] then null else throw ''
+            ${context} NAMING CONFLICT:
+            • Duplicate identifiers: ${builtins.concatStringsSep ", " d}
+            Resolution: Follow naming protocol:
+              - default.nix variant 'X' → [base]-X
+              - X.nix variant 'default' → [base]-X (AVOID if [base]-X exists)
+            Fix by renaming variants/files for global uniqueness.
+          '');
+      in names;
+
+    assertFileExists = path:
+      if builtins.pathExists path then path else throw ''
+        PATH NOT FOUND: ${path}
+        Resolution: Verify directory structure matches expectations.
+      '';
+
+    assertNoKeyConflicts = context: base: new:
+      let
+        conflicts = (builtins.attrNames new)
+          |> (newKeys: pkgs.lib.filter (k: pkgs.lib.hasAttr k base) newKeys);
+        _ = conflicts
+          |> (c: if c != [] then throw ''
+            ${context} KEY COLLISION:
+            • Conflicting keys: ${builtins.concatStringsSep ", " c}
+            • Base keys: ${builtins.concatStringsSep ", " (builtins.attrNames base)}
+            • New keys: ${builtins.concatStringsSep ", " (builtins.attrNames new)}
+            Resolution: Rename variants in default.nix or conflicting files/dirs.
+          '' else null);
+      in new;
+
+    # Composable validator pipeline
+    pipeValidators = validators: value:
+      builtins.foldl' (v: validator: v |> validator) value validators;
+  };
+
   # == CORE ARCHITECTURE PATTERNS ==
-  # 1. Pipeline composition: |> |> for data transformation
+  # 1. Pipeline composition: |> for data transformation
   # 2. Layer isolation: pure functions with explicit context
   # 3. Early validation: fail-fast at source
   # 4. Semantic naming: decoupled naming strategy
 
-  # == PIPELINE PRIMITIVES ==
-  # pipe = initial: steps: builtins.foldl' (acc: step: step acc) initial steps;
-
-  # == VALIDATION MODULE (fail-fast at source) ==
-  validate = {
-    isAttrSet = path: value:
-      if !pkgs.lib.isAttrs value
-      then throw "INVALID STRUCTURE (${path}): Expected attrset but got ${builtins.typeOf value}"
-      else value;
-
-    uniqueNames = context: names:
-      let
-        dupes = pkgs.lib.filter (n: pkgs.lib.count (x: x == n) names > 1) (pkgs.lib.unique names);
-      in
-      if dupes != []
-      then throw ''
-        ${context} CONFLICT: Duplicate identifiers detected!
-        Conflicting names: ${builtins.concatStringsSep ", " dupes}
-        Resolution: Follow semantic naming rules:
-          • default.nix variant 'X' → full_name = [base]-X
-          • X.nix variant 'default' → full_name = [base]-X (COLLISION)
-      ''
-      else names;
-  };
-
-  # == NAMING STRATEGY MODULE (decoupled policy) ==
+  # == NAMING STRATEGY MODULE ==
   naming = {
     # Unified naming pipeline with pipe operators
     makeFullName = basePath: sourceType: sourceName: variantName:
@@ -63,19 +92,15 @@ let
     isSubDir = dir: name:
       let type = (builtins.readDir dir).${name};
       in type == "directory" && !pkgs.lib.hasPrefix "_" name;
-
-    ensureExists = path:
-      if !builtins.pathExists path
-      then throw "PATH NOT FOUND: ${path}"
-      else path;
   };
 
-  # == LAYER PROCESSING MODULE (isolated context) ==
+  # == LAYER PROCESSING MODULE ==
   layer = {
     # Process subdirectories FIRST (depth-first)
     processSubdirs = currentPath: basePath: ctx:
       let
-        subDirs = fs.listEntries currentPath |> pkgs.lib.filter (fs.isSubDir currentPath);
+        subDirs = (fs.listEntries currentPath)
+          |> (entries: pkgs.lib.filter (fs.isSubDir currentPath) entries);
         subResults = map (subDir:
           let
             newBase = if basePath == "" then subDir else "${basePath}-${subDir}";
@@ -88,9 +113,12 @@ let
           }
         ) subDirs;
 
-        flatShells = pkgs.lib.foldl' (acc: r: acc // r.flat) {} subResults;
-        variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.name; value = r.variants; }) subResults);
-        shellNames = pkgs.lib.concatMap (r: r.names) subResults;
+        flatShells = subResults
+          |> (results: pkgs.lib.foldl' (acc: r: acc // r.flat) {} results);
+        variantsTree = subResults
+          |> (results: pkgs.lib.listToAttrs (map (r: { name = r.name; value = r.variants; }) results));
+        shellNames = subResults
+          |> (results: pkgs.lib.concatMap (r: r.names) results);
       in ctx // {
         subdirs = {
           flatShells = flatShells;
@@ -102,26 +130,28 @@ let
     # Process non-default files (isolated context: sees ONLY subdirs)
     processNonDefault = currentPath: basePath: ctx:
       let
-        nixFiles = fs.listEntries currentPath
-          |> pkgs.lib.filter (fs.isNixFile currentPath)
-          |> pkgs.lib.filter (name: name != "default.nix");
+        nixFiles = (fs.listEntries currentPath)
+          |> (entries: pkgs.lib.filter (fs.isNixFile currentPath) entries)
+          |> (files: pkgs.lib.filter (name: name != "default.nix") files);
 
         fileResults = map (fileName:
           let
             fileBase = pkgs.lib.removeSuffix suffix fileName;
             filePath = "${currentPath}/${fileName}";
             # CRITICAL ISOLATION: non-default files see ONLY subdirectory variants
-            variants = import filePath {
-              inherit pkgs inputs;
-              dev = ctx.subdirs.variantsTree;
-            } |> validate.isAttrSet filePath;
+            variants = (import filePath {
+                inherit pkgs inputs;
+                dev = ctx.subdirs.variantsTree;
+              })
+              |> (v: validate.assertAttrSet filePath v); # Validation in pipeline
 
-            flatShells = pkgs.lib.mapAttrs' (varName: cfg:
-              let
-                fullName = naming.makeFullName basePath "file" fileBase varName;
-                shell = mkDevShell (cfg // { name = "dev-shell-${fullName}"; });
-              in { name = fullName; value = shell; }
-            ) variants;
+            flatShells = variants
+              |> (vars: pkgs.lib.mapAttrs' (varName: cfg:
+                let
+                  fullName = naming.makeFullName basePath "file" fileBase varName;
+                  shell = mkDevShell (cfg // { name = "dev-shell-${fullName}"; });
+                in { name = fullName; value = shell; }
+              ) vars);
 
             shellNames = builtins.attrNames flatShells;
           in {
@@ -132,12 +162,15 @@ let
           }
         ) nixFiles;
 
-        # Validate intra-layer collisions
-        localNames = pkgs.lib.concatMap (r: r.shellNames) fileResults;
-        _ = validate.uniqueNames "NON-DEFAULT FILES" (ctx.shellNames ++ localNames);
+        # Validate intra-layer collisions via pipeline
+        localNames = fileResults
+          |> (results: pkgs.lib.concatMap (r: r.shellNames) results)
+          |> (names: validate.assertUniqueNames "NON-DEFAULT FILES" names);
 
-        flatShells = pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} fileResults;
-        variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.fileBase; value = r.variants; }) fileResults);
+        flatShells = fileResults
+          |> (results: pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} results);
+        variantsTree = fileResults
+          |> (results: pkgs.lib.listToAttrs (map (r: { name = r.fileBase; value = r.variants; }) results));
         shellNames = ctx.shellNames ++ localNames;
       in ctx // {
         nonDefault = {
@@ -153,37 +186,34 @@ let
     # Process default.nix LAST (full context: subdirs + non-default files)
     processDefault = currentPath: basePath: ctx:
       let
-        hasDefault = pkgs.lib.any (name: name == "default.nix") (fs.listEntries currentPath);
+        hasDefault = (fs.listEntries currentPath)
+          |> (entries: pkgs.lib.any (name: name == "default.nix") entries);
       in if !hasDefault then ctx else
         let
           filePath = "${currentPath}/default.nix";
           # FULL CONTEXT: sees subdirs AND non-default files
-          variants = import filePath {
-            inherit pkgs inputs;
-            dev = ctx.variantsTree;
-          } |> validate.isAttrSet filePath;
+          variants = (import filePath {
+              inherit pkgs inputs;
+              dev = ctx.variantsTree; # Full context
+            })
+            |> (v: validate.assertAttrSet filePath v); # Pipeline validation
 
-          flatShells = pkgs.lib.mapAttrs' (varName: cfg:
-            let
-              fullName = naming.makeFullName basePath "default-nix" "" varName;
-              shell = mkDevShell (cfg // { name = "dev-shell-${fullName}"; });
-            in { name = fullName; value = shell; }
-          ) variants;
+          flatShells = variants
+            |> (vars: pkgs.lib.mapAttrs' (varName: cfg:
+              let
+                fullName = naming.makeFullName basePath "default-nix" "" varName;
+                shell = mkDevShell (cfg // { name = "dev-shell-${fullName}"; });
+              in { name = fullName; value = shell; }
+            ) vars);
 
-          shellNames = builtins.attrNames flatShells;
+          shellNames = builtins.attrNames flatShells
+            |> (names: validate.assertUniqueNames "DEFAULT.NIX" (ctx.shellNames ++ names));
 
-          # Validate against existing names in THIS LAYER
-          _validate_unique_name_ = validate.uniqueNames "DEFAULT.NIX" (ctx.shellNames ++ shellNames);
+          # Prevent key collisions in variants tree
+          _no_key_conflict_validation = validate.assertNoKeyConflicts "VARIANTS TREE" ctx.variantsTree variants
+            |> (new: ctx.variantsTree // new); # Safe merge
 
-          # Merge into variants tree (prevent key collisions)
           mergedVariants = ctx.variantsTree // variants;
-          _variant_tree_conflict_ = if pkgs.lib.attrNames ctx.variantsTree != pkgs.lib.attrNames mergedVariants
-            then throw ''
-              VARIANTS TREE CONFLICT in ${currentPath}:
-              Keys overlap between default.nix and existing sources.
-              Resolution: Rename variants in default.nix or rename conflicting files/dirs.
-            ''
-            else null;
         in ctx // {
           default = {
             flatShells = flatShells;
@@ -198,7 +228,8 @@ let
 
     # Main directory processor (pipeline architecture)
     processDirectory = currentPath: basePath:
-      fs.ensureExists currentPath
+      currentPath
+      |> validate.assertFileExists  # Fail-fast path validation
       |> (path: {
         # Initial context
         flatShells = {};
@@ -208,21 +239,23 @@ let
         basePath = basePath;
       })
       |> (ctx:
-        # Structural validation
+        # Structural validation pipeline
         let entries = fs.listEntries ctx.currentPath;
-            nixFiles = pkgs.lib.filter (fs.isNixFile ctx.currentPath) entries;
-            subDirs = pkgs.lib.filter (fs.isSubDir ctx.currentPath) entries;
-            fileBases = map (f: pkgs.lib.removeSuffix suffix f) nixFiles;
-            conflicts = pkgs.lib.filter (n: pkgs.lib.elem n subDirs) fileBases;
-        in if conflicts != []
-          then throw ''
-            STRUCTURAL CONFLICT in ${ctx.currentPath}:
-            Ambiguous sources: ${builtins.concatStringsSep ", " conflicts}
-            Resolution: Keep ONLY file (${suffix}) OR directory per base name.
-          ''
-          else if nixFiles == [] && subDirs == []
-          then throw "EMPTY DIRECTORY: ${ctx.currentPath} requires .nix files or subdirs"
-          else ctx
+            nixFiles = entries |> (e: pkgs.lib.filter (fs.isNixFile ctx.currentPath) e);
+            subDirs = entries |> (e: pkgs.lib.filter (fs.isSubDir ctx.currentPath) e);
+            fileBases = nixFiles |> (files: map (f: pkgs.lib.removeSuffix suffix f) files);
+            conflicts = fileBases |> (bases: pkgs.lib.filter (n: pkgs.lib.elem n subDirs) bases);
+        in conflicts
+          |> (c: if c != [] then throw ''
+            STRUCTURAL AMBIGUITY in ${ctx.currentPath}:
+            • Conflicting sources: ${builtins.concatStringsSep ", " c}
+            Resolution: Maintain ONE source per base name:
+              - EITHER file (${suffix}) OR directory
+              - NOT both ${builtins.concatStringsSep " AND " (map (name: "${name}${suffix} vs ${name}/") c)}
+          '' else null)
+          |> (ignore: if nixFiles == [] && subDirs == []
+                then throw "EMPTY DIRECTORY: ${ctx.currentPath} requires .nix files or subdirs"
+                else ctx)
       )
       |> (layer.processSubdirs currentPath basePath)
       |> (layer.processNonDefault currentPath basePath)
@@ -238,8 +271,9 @@ let
   # == TOP-LEVEL EXECUTION ==
   rootResult = layer.processDirectory devDir "";
 
-  # Global uniqueness validation (fail-fast before derivation)
-  _ = validate.uniqueNames "GLOBAL NAMESPACE" rootResult.shellNames;
+  # Global uniqueness validation (pipeline-style)
+  _global_unique_validation = rootResult.shellNames
+    |> (names: validate.assertUniqueNames "GLOBAL NAMESPACE" names);
 
 in rootResult.flatShells
 
