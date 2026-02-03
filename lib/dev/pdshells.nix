@@ -121,38 +121,95 @@ let
 
   # == LAYER PROCESSING MODULE ==
   layer = {
-    # Process subdirectories FIRST (depth-first)
-    processSubdirs = currentPath: basePath: ctx:
+    # Common layer attrs schema
+    CommonAttrs = {
+      flatShells ? {},
+      variantsTree ?{},
+      shellNames ? []
+    }: {
+      flatShells = flatShells;
+      variantsTree = variantsTree;
+      shellNames = shellNames;
+    };
+   # Context attrs schema
+    Context = {
+      currentPath,
+      basePath,
+      flatShells ? {},
+      variantsTree ? {},
+      shellNames ? {},
+      subDirsAttrs ? layer.CommonAttrs {},
+      commonAttrs ? layer.CommonAttrs {},
+      defaultAttrs ? layer.CommonAttrs {}
+    }: {
+      currentPath = currentPath;
+      basePath = basePath;
+      flatShells = flatShells;
+      variantsTree = variantsTree;
+      shellNames = shellNames;
+      subDirsAttrs = subDirsAttrs;
+      commonAttrs = commonAttrs;
+      defaultAttrs = defaultAttrs;
+    };
+
+    # Initial Context Function Call
+    initialContext = currentPath: basePath:
+      (layer.Context { currentPath=currentPath; basePath=basePath; });
+
+    # Structural validation pipeline
+    structuralValidation = suffix: ctx:
       let
-        subDirs = fs.listSubDirs currentPath;
+        entries = fs.listEntries ctx.currentPath;
+        nixFiles = entries |> (e: pkgs.lib.filter (fs.isAttrsFile ctx.currentPath suffix) e);
+        subDirs = entries |> (e: pkgs.lib.filter (fs.isSubDir ctx.currentPath) e);
+        fileBases = nixFiles |> (files: map (f: pkgs.lib.removeSuffix suffix f) files);
+        conflicts = fileBases |> (bases: pkgs.lib.filter (n: pkgs.lib.elem n subDirs) bases);
+      in
+        conflicts
+        |> (c: if c != [] then throw ''
+          STRUCTURAL AMBIGUITY in ${ctx.currentPath}:
+          • Conflicting sources: ${builtins.concatStringsSep ", " c}
+          Resolution: Maintain ONE source per base name:
+            - EITHER file (${suffix}) OR directory
+            - NOT both ${builtins.concatStringsSep " AND " (map (name: "${name}${suffix} vs ${name}/") c)}
+          ''
+          else null)
+        |> (ignore: if nixFiles == [] && subDirs == [] then
+          throw "EMPTY DIRECTORY: ${ctx.currentPath} requires .nix files or subdirs"
+          else ctx);
+
+    # Process subdirectories FIRST (depth-first)
+    processSubdirsAttrs = currentPath: basePath: ctx:
+      let
+        subDirsAttrs = fs.listSubDirs currentPath;
         subResults = map (subDir:
           let
             newBase = if basePath == "" then subDir else "${basePath}-${subDir}";
             res = layer.processDirectory "${currentPath}/${subDir}" newBase;
           in {
             name = subDir;
-            flat = res.flatShells;
-            variants = res.variantsTree;
-            names = res.shellNames;
+            flatShells = res.flatShells;
+            variantsTree = res.variantsTree;
+            shellNames = res.shellNames;
           }
-        ) subDirs;
+        ) subDirsAttrs;
 
         flatShells = subResults
-          |> (results: pkgs.lib.foldl' (acc: r: acc // r.flat) {} results);
+          |> (results: pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} results);
         variantsTree = subResults
-          |> (results: pkgs.lib.listToAttrs (map (r: { name = r.name; value = r.variants; }) results));
+          |> (results: pkgs.lib.listToAttrs (map (r: { name = r.name; value = r.variantsTree; }) results));
         shellNames = subResults
-          |> (results: pkgs.lib.concatMap (r: r.names) results);
+          |> (results: pkgs.lib.concatMap (r: r.shellNames) results);
       in ctx // {
-        subdirs = {
+        subDirsAttrs = {
           flatShells = flatShells;
           variantsTree = variantsTree;
           shellNames = shellNames;
         };
       };
 
-    # Process non-default files (isolated context: sees ONLY subdirs)
-    processNonDefault = currentPath: basePath: ctx:
+    # Process non-default files (common attrs files, isolated context: sees ONLY subdirs)
+    processCommonAttrs = currentPath: basePath: ctx:
       let
         attrsFiles = fs.listAttrsFiles currentPath suffix;
         fileResults = map (fileName:
@@ -162,9 +219,9 @@ let
             # CRITICAL ISOLATION: non-default files see ONLY subdirectory variants
             variants = (import filePath {
                 inherit pkgs inputs;
-                dev = ctx.subdirs.variantsTree;
+                dev = ctx.subDirsAttrs.variantsTree;
               })
-              |> (v: validate.assertAttrSet filePath v); # Validation in pipeline
+              |> (v: validate.assertAttrSet filePath v);  # Validation in pipeline
 
             flatShells = variants
               |> (vars: pkgs.lib.mapAttrs' (variantName: cfg:
@@ -194,18 +251,18 @@ let
           |> (results: pkgs.lib.listToAttrs (map (r: { name = r.fileBase; value = r.variants; }) results));
         shellNames = ctx.shellNames ++ localNames;
       in ctx // {
-        nonDefault = {
+        commonAttrs = {
           flatShells = flatShells;
           variantsTree = variantsTree;
           shellNames = shellNames;
         };
         # Update context for next stage
         shellNames = shellNames;
-        variantsTree = ctx.subdirs.variantsTree // variantsTree;
+        variantsTree = ctx.subDirsAttrs.variantsTree // variantsTree;
       };
 
-    # Process default.nix LAST (full context: subdirs + non-default files)
-    processDefault = currentPath: basePath: ctx:
+    # Process default.nix LAST (default attrs file, full context: subdirs + non-default files)
+    processDefaultAttrs = currentPath: basePath: ctx:
       let
         hasDefault = (fs.listEntries currentPath)
           |> (entries: pkgs.lib.any (name: name == "default.nix") entries);
@@ -217,7 +274,7 @@ let
               inherit pkgs inputs;
               dev = ctx.variantsTree; # Full context
             })
-            |> (v: validate.assertAttrSet filePath v); # Pipeline validation
+            |> (v: validate.assertAttrSet filePath v);  # Pipeline validation
 
           flatShells = variants
             |> (vars: pkgs.lib.mapAttrs' (variantName: cfg:
@@ -232,11 +289,11 @@ let
 
           # Prevent key collisions in variants tree
           _no_key_conflict_validation = validate.assertNoKeyConflicts "VARIANTS TREE" ctx.variantsTree variants
-            |> (new: ctx.variantsTree // new); # Safe merge
+            |> (new: ctx.variantsTree // new);  # Safe merge
 
           mergedVariants = ctx.variantsTree // variants;
         in ctx // {
-          default = {
+          defaultAttrs = {
             flatShells = flatShells;
             shellNames = shellNames;
             variants = variants;
@@ -251,39 +308,14 @@ let
     processDirectory = currentPath: basePath:
       currentPath
       |> validate.assertFileExists  # Fail-fast path validation
-      |> (path: {
-          # Initial context
-          flatShells = {};
-          variantsTree = {};
-          shellNames = [];
-          currentPath = path;
-          basePath = basePath;
-        })
-      |> (ctx:
-        # Structural validation pipeline
-        let entries = fs.listEntries ctx.currentPath;
-            nixFiles = entries |> (e: pkgs.lib.filter (fs.isAttrsFile ctx.currentPath suffix) e);
-            subDirs = entries |> (e: pkgs.lib.filter (fs.isSubDir ctx.currentPath) e);
-            fileBases = nixFiles |> (files: map (f: pkgs.lib.removeSuffix suffix f) files);
-            conflicts = fileBases |> (bases: pkgs.lib.filter (n: pkgs.lib.elem n subDirs) bases);
-        in conflicts
-          |> (c: if c != [] then throw ''
-            STRUCTURAL AMBIGUITY in ${ctx.currentPath}:
-            • Conflicting sources: ${builtins.concatStringsSep ", " c}
-            Resolution: Maintain ONE source per base name:
-              - EITHER file (${suffix}) OR directory
-              - NOT both ${builtins.concatStringsSep " AND " (map (name: "${name}${suffix} vs ${name}/") c)}
-          '' else null)
-          |> (ignore: if nixFiles == [] && subDirs == []
-                then throw "EMPTY DIRECTORY: ${ctx.currentPath} requires .nix files or subdirs"
-                else ctx)
-      )
-      |> (layer.processSubdirs currentPath basePath)
-      |> (layer.processNonDefault currentPath basePath)
-      |> (layer.processDefault currentPath basePath)
+      |> (path: layer.initialContext path basePath)
+      |> (ctx: layer.structuralValidation suffix ctx)
+      |> (layer.processSubdirsAttrs currentPath basePath)
+      |> (layer.processCommonAttrs currentPath basePath)
+      |> (layer.processDefaultAttrs currentPath basePath)
       # Final layer state
       |> (ctx: {
-        flatShells = ctx.flatShells // ctx.subdirs.flatShells // ctx.nonDefault.flatShells;
+        flatShells = ctx.flatShells // ctx.subDirsAttrs.flatShells // ctx.commonAttrs.flatShells;
         variantsTree = ctx.variantsTree;
         shellNames = ctx.shellNames;
       });
