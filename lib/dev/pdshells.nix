@@ -57,9 +57,6 @@ let
           '' else null);
       in new;
 
-    # Composable validator pipeline
-    pipeValidators = validators: value:
-      builtins.foldl' (v: validator: v |> validator) value validators;
   };
 
   # == CORE ARCHITECTURE PATTERNS ==
@@ -71,10 +68,10 @@ let
   # == NAMING STRATEGY MODULE ==
   naming = {
     # Unified naming pipeline with pipe operators
-    makeFullName = basePath: sourceType: sourceName: variantName:
+    makeFullName = basePath: attrType: sourceName: variantName:
       ([
         (if basePath == "" then null else basePath)
-        (if sourceType == "default-nix" then null else sourceName)
+        (if attrType == fs.attrType.Default then null else sourceName)
         (if variantName == "default" then null else variantName)
       ]
       |> pkgs.lib.filter (x: x != null))                              # Remove empty parts
@@ -84,6 +81,11 @@ let
 
   # == FILESYSTEM MODULE (pure path operations) ==
   fs = {
+    attrType = {
+      Default = 0;
+      Normal = 1;
+    };
+
     # Curried type checkers (pipeline-ready)
     isPrivate = name: (pkgs.lib.hasPrefix "_" name);
     isNixFile = suffix: name: (pkgs.lib.hasSuffix suffix name);
@@ -165,9 +167,9 @@ let
               |> (v: validate.assertAttrSet filePath v); # Validation in pipeline
 
             flatShells = variants
-              |> (vars: pkgs.lib.mapAttrs' (varName: cfg:
+              |> (vars: pkgs.lib.mapAttrs' (variantName: cfg:
                 let
-                  fullName = naming.makeFullName basePath "file" fileBase varName;
+                  fullName = naming.makeFullName basePath fs.attrType.Normal fileBase variantName;
                   shell = mkDevShell (cfg // { name = "dev-shell-${fullName}"; });
                 in { name = fullName; value = shell; }
               ) vars);
@@ -218,9 +220,9 @@ let
             |> (v: validate.assertAttrSet filePath v); # Pipeline validation
 
           flatShells = variants
-            |> (vars: pkgs.lib.mapAttrs' (varName: cfg:
+            |> (vars: pkgs.lib.mapAttrs' (variantName: cfg:
               let
-                fullName = naming.makeFullName basePath "default-nix" "" varName;
+                fullName = naming.makeFullName basePath fs.attrType.Default "" variantName;
                 shell = mkDevShell (cfg // { name = "dev-shell-${fullName}"; });
               in { name = fullName; value = shell; }
             ) vars);
@@ -250,13 +252,13 @@ let
       currentPath
       |> validate.assertFileExists  # Fail-fast path validation
       |> (path: {
-        # Initial context
-        flatShells = {};
-        variantsTree = {};
-        shellNames = [];
-        currentPath = path;
-        basePath = basePath;
-      })
+          # Initial context
+          flatShells = {};
+          variantsTree = {};
+          shellNames = [];
+          currentPath = path;
+          basePath = basePath;
+        })
       |> (ctx:
         # Structural validation pipeline
         let entries = fs.listEntries ctx.currentPath;
