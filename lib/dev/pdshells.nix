@@ -2,6 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-02-02
 # @description: lib::dev::dshells - Dataflow-driven layered loader with pipeline architecture
+# - Pipeline and Dataflow and Currying
 
 { pkgs, inputs, devDir, suffix ? ".nix", ... }:
 let
@@ -83,24 +84,45 @@ let
 
   # == FILESYSTEM MODULE (pure path operations) ==
   fs = {
-    listEntries = dir: builtins.attrNames (builtins.readDir dir);
+    # Curried type checkers (pipeline-ready)
+    isPrivate = name: (pkgs.lib.hasPrefix "_" name);
+    isNixFile = suffix: name: (pkgs.lib.hasSuffix suffix name);
 
-    isNixFile = dir: name:
-      let type = (builtins.readDir dir).${name};
-      in type == "regular" && pkgs.lib.hasSuffix suffix name && !pkgs.lib.hasPrefix "_" name;
+    isType = expectedType: path: name:
+      (builtins.readDir path).${name}
+      |>(type: type == expectedType);
 
-    isSubDir = dir: name:
-      let type = (builtins.readDir dir).${name};
-      in type == "directory" && !pkgs.lib.hasPrefix "_" name;
+    isRegular = fs.isType "regular";
+    isDirectory = fs.isType "directory";
+    isSubDir = path: name:
+      (fs.isDirectory path name)
+      && !fs.isPrivate name;
+    isAttrsFile = path: suffix: name:
+      (fs.isRegular path name)
+      && fs.isNixFile suffix name
+      && !fs.isPrivate name;
+
+    listEntries = path:
+      builtins.readDir path
+      |> builtins.attrNames;
+
+    # High-level directory scanners (optimized pipelines)
+    listSubDirs = path:
+      (fs.listEntries path)
+      |> (entries: pkgs.lib.filter (name: fs.isSubDir path name) entries);
+    listAttrsFiles = path: suffix:
+      (fs.listEntries path)
+      |> (entries: pkgs.lib.filter (name: name != "default.nix" && fs.isAttrsFile path suffix name) entries);
+
   };
+
 
   # == LAYER PROCESSING MODULE ==
   layer = {
     # Process subdirectories FIRST (depth-first)
     processSubdirs = currentPath: basePath: ctx:
       let
-        subDirs = (fs.listEntries currentPath)
-          |> (entries: pkgs.lib.filter (fs.isSubDir currentPath) entries);
+        subDirs = fs.listSubDirs currentPath;
         subResults = map (subDir:
           let
             newBase = if basePath == "" then subDir else "${basePath}-${subDir}";
@@ -130,10 +152,7 @@ let
     # Process non-default files (isolated context: sees ONLY subdirs)
     processNonDefault = currentPath: basePath: ctx:
       let
-        nixFiles = (fs.listEntries currentPath)
-          |> (entries: pkgs.lib.filter (fs.isNixFile currentPath) entries)
-          |> (files: pkgs.lib.filter (name: name != "default.nix") files);
-
+        attrsFiles = fs.listAttrsFiles currentPath suffix;
         fileResults = map (fileName:
           let
             fileBase = pkgs.lib.removeSuffix suffix fileName;
@@ -160,7 +179,7 @@ let
             flatShells = flatShells;
             shellNames = shellNames;
           }
-        ) nixFiles;
+        ) attrsFiles;
 
         # Validate intra-layer collisions via pipeline
         localNames = fileResults
@@ -241,7 +260,7 @@ let
       |> (ctx:
         # Structural validation pipeline
         let entries = fs.listEntries ctx.currentPath;
-            nixFiles = entries |> (e: pkgs.lib.filter (fs.isNixFile ctx.currentPath) e);
+            nixFiles = entries |> (e: pkgs.lib.filter (fs.isAttrsFile ctx.currentPath suffix) e);
             subDirs = entries |> (e: pkgs.lib.filter (fs.isSubDir ctx.currentPath) e);
             fileBases = nixFiles |> (files: map (f: pkgs.lib.removeSuffix suffix f) files);
             conflicts = fileBases |> (bases: pkgs.lib.filter (n: pkgs.lib.elem n subDirs) bases);
