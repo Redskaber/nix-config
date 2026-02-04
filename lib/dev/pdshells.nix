@@ -81,9 +81,12 @@ let
 
   # == FILESYSTEM MODULE (pure path operations) ==
   fs = {
+    # Since Nix lacks native support for data structures,
+    # we utilize native datasets and employ a contract-based approach to simulate enums,
+    # aiming for clearer semantic expression.
     attrType = {
       Default = 0;
-      Normal = 1;
+      Common  = 1;
     };
 
     # Curried type checkers (pipeline-ready)
@@ -116,11 +119,19 @@ let
       (fs.listEntries path)
       |> (entries: pkgs.lib.filter (name: name != "default.nix" && fs.isAttrsFile path suffix name) entries);
 
+    hasDefaultAttrs = path:
+      (fs.listEntries path)
+      |> (entries: pkgs.lib.any (name: name == "default.nix") entries);
+
   };
 
 
   # == LAYER PROCESSING MODULE ==
   layer = {
+    # Since Nix lacks native support for data structures,
+    # we simulate structs using its native function capabilities
+    # to achieve a visual representation of the internal data.
+
     # Common layer attrs schema
     CommonAttrs = {
       flatShells ? {},
@@ -152,7 +163,7 @@ let
       defaultAttrs = defaultAttrs;
     };
 
-    # Initial Context Function Call
+    # Initial Context Function Callable
     initialContext = currentPath: basePath:
       (layer.Context { currentPath=currentPath; basePath=basePath; });
 
@@ -181,18 +192,18 @@ let
     # Process subdirectories FIRST (depth-first)
     processSubdirsAttrs = currentPath: basePath: ctx:
       let
-        subDirsAttrs = fs.listSubDirs currentPath;
-        subResults = map (subDir:
+        subDirPaths = fs.listSubDirs currentPath;
+        subResults = map (path:
           let
-            newBase = if basePath == "" then subDir else "${basePath}-${subDir}";
-            res = layer.processDirectory "${currentPath}/${subDir}" newBase;
+            newBase = if basePath == "" then path else "${basePath}-${path}";
+            res = layer.processDirectory "${currentPath}/${path}" newBase;
           in {
-            name = subDir;
+            name = path;
             flatShells = res.flatShells;
             variantsTree = res.variantsTree;
             shellNames = res.shellNames;
           }
-        ) subDirsAttrs;
+        ) subDirPaths;
 
         flatShells = subResults
           |> (results: pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} results);
@@ -226,9 +237,12 @@ let
             flatShells = variants
               |> (vars: pkgs.lib.mapAttrs' (variantName: cfg:
                 let
-                  fullName = naming.makeFullName basePath fs.attrType.Normal fileBase variantName;
+                  fullName = naming.makeFullName basePath fs.attrType.Common fileBase variantName;
                   shell = mkDevShell (cfg // { name = "dev-shell-${fullName}"; });
-                in { name = fullName; value = shell; }
+                in {
+                  name = fullName;
+                  value = shell;
+                }
               ) vars);
 
             shellNames = builtins.attrNames flatShells;
@@ -263,10 +277,7 @@ let
 
     # Process default.nix LAST (default attrs file, full context: subdirs + non-default files)
     processDefaultAttrs = currentPath: basePath: ctx:
-      let
-        hasDefault = (fs.listEntries currentPath)
-          |> (entries: pkgs.lib.any (name: name == "default.nix") entries);
-      in if !hasDefault then ctx else
+      if !(fs.hasDefaultAttrs currentPath) then ctx else
         let
           filePath = "${currentPath}/default.nix";
           # FULL CONTEXT: sees subdirs AND non-default files
@@ -281,7 +292,10 @@ let
               let
                 fullName = naming.makeFullName basePath fs.attrType.Default "" variantName;
                 shell = mkDevShell (cfg // { name = "dev-shell-${fullName}"; });
-              in { name = fullName; value = shell; }
+              in {
+                name = fullName;
+                value = shell;
+              }
             ) vars);
 
           shellNames = builtins.attrNames flatShells
