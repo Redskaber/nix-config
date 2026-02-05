@@ -26,11 +26,12 @@ let
     # @context: string
     # @names: [ string ]
     assertUniqueNames = context: names:
-      (pkgs.lib.unique names)
-      |> (uniqueNames: pkgs.lib.filter (n: pkgs.lib.count (x: x == n) names > 1) uniqueNames)
-      |> (dupes: if dupes == [] then names else throw ''
+      (builtins.groupBy (x: x) names) # O(n)
+      |> (groups: pkgs.lib.filterAttrs (_: g: builtins.length g > 1) groups)  # O(m)
+      |> (dupGroups: builtins.attrNames dupGroups)
+      |> (dupNames: if dupNames == [] then names else throw ''
           ${context} NAMING CONFLICT:
-          • Duplicate identifiers: ${builtins.concatStringsSep ", " dupes}
+          • Duplicate identifiers: ${builtins.concatStringsSep ", " dupNames}
           Resolution: Follow naming protocol:
             - default.nix variant 'X' → [base]-X
             - X.nix variant 'default' → [base]-X (AVOID if [base]-X exists)
@@ -44,7 +45,7 @@ let
         Resolution: Verify directory structure matches expectations.
       '';
 
-    # Pipeline checker
+    # Pipeline checker for pipeline build variantsTree
     # @context: string
     # @base: {...}
     # @new: {...}
@@ -113,6 +114,7 @@ let
 
   # == FILESYSTEM MODULE (pure path operations) ==
   fs = {
+    default-nix = "default.nix";
     # Since Nix lacks native support for data structures,
     # we utilize native datasets and employ a contract-based approach to simulate enums,
     # aiming for clearer semantic expression.
@@ -149,11 +151,11 @@ let
       |> (entries: pkgs.lib.filter (name: fs.isSubDir path name) entries);
     listAttrsFiles = path: suffix:
       (fs.listEntries path)
-      |> (entries: pkgs.lib.filter (name: name != "default.nix" && fs.isAttrsFile path suffix name) entries);
+      |> (entries: pkgs.lib.filter (name: name != fs.default-nix && fs.isAttrsFile path suffix name) entries);
 
     hasDefaultAttrs = path:
       (fs.listEntries path)
-      |> (entries: pkgs.lib.any (name: name == "default.nix") entries);
+      |> (entries: pkgs.lib.any (name: name == fs.default-nix) entries);
 
     # Single file attrs mapAttrs' and flat shells
     # @basePath: string
@@ -297,8 +299,7 @@ let
         filePath = "${fileCtx.currentPath}/${fileCtx.fileName}";
         variantsTree = fs.readFileAttrs filePath fileCtx.pkgs fileCtx.inputs fileCtx.subVariantsTree;
         flatShells = fs.flatShellsMapAttrs' fileCtx.basePath fileCtx.attrType fileBase variantsTree;
-        shellNames = builtins.attrNames flatShells
-          |> (names: validate.assertUniqueNames "FILE INTERNAL(${fileCtx.fileName})" names);
+        shellNames = builtins.attrNames flatShells;
       in layer.FileResult {
         fileBase = fileBase;  # Used commonAttrs File mapping'
         flatShells = flatShells;
@@ -317,7 +318,7 @@ let
         flatShells = pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} subResults;
         variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.path; value = r.variantsTree; }) subResults);
         shellNames = (pkgs.lib.concatMap (r: r.shellNames) subResults)
-          |> (names: validate.assertUniqueNames "SUB DIRECTORY ATTRS" names);
+          |> (names: validate.assertUniqueNames "SUB DIRECTORY ATTRS(${currentPath})" names);
       in ctx // {
         subDirsAttrs = {
           flatShells = flatShells;
@@ -346,7 +347,7 @@ let
         variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.fileBase; value = r.variantsTree; }) fileResults);
         flatShells = pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} fileResults;
         shellNames = (pkgs.lib.concatMap (r: r.shellNames) fileResults)
-          |> (names: validate.assertUniqueNames "COMMON ATTRS FILES" names);
+          |> (names: validate.assertUniqueNames "COMMON ATTRS FILES(${currentPath})" names);
       in ctx // {
         commonAttrs = {
           flatShells = flatShells;
@@ -365,8 +366,8 @@ let
           fr = layer.initialFileResult (layer.FileContext {
             inherit currentPath basePath pkgs inputs;
             attrType = fs.AttrType.Default;
+            fileName = fs.default-nix;
             suffix = ctx.suffix;
-            fileName = "default.nix";
             # FULL CONTEXT: Default.nix sees subdirs + peer files (spec-compliant)
             subVariantsTree = ctx.subDirsAttrs.variantsTree // ctx.commonAttrs.variantsTree;
           });
