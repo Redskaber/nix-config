@@ -155,6 +155,32 @@ let
       (fs.listEntries path)
       |> (entries: pkgs.lib.any (name: name == "default.nix") entries);
 
+    # Single file attrs mapAttrs' and flat shells
+    # @basePath: string
+    # @attrType: AttrType
+    # @fileBase: string
+    # @variantsTree: { ... }
+    flatShellsMapAttrs' = basePth: attrType: fileBase: variantsTree:
+      pkgs.lib.mapAttrs' (variantName: attrsetCfg:
+        (naming.makeFullName basePth attrType fileBase variantName)
+        |> (name: {
+          name = name;
+          value = mkDevShell (attrsetCfg // { name = "dev-shell-${name}"; });
+        })
+      ) variantsTree;
+
+    # Get file base
+    # @attrType: AttrType
+    # @suffix: string
+    # @fileName: string
+    getFileBase = attrType: suffix: fileName:
+      if attrType == fs.AttrType.Default then ""
+        else pkgs.lib.removeSuffix suffix fileName;
+
+    # Read file attrsets
+    readFileAttrs = filePath: pkgs: inputs: variantsTree:
+      (import filePath { inherit pkgs inputs; dev = variantsTree; })
+      |> (vars: validate.assertAttrSet "FILE CONTENT (${filePath})" vars);
   };
 
 
@@ -195,27 +221,101 @@ let
     };
 
     # Initial Context Function Callable
+    # @currentPath: string
+    # @basePath: string
+    # @suffix: string
     initialContext = currentPath: basePath: suffix:
       (layer.Context { currentPath=currentPath; basePath=basePath; suffix=suffix; });
 
+    # Layer result data schema
+    LayerResult = {
+      path,
+      flatShells,
+      variantsTree,
+      shellNames
+    }: {
+      path = path;
+      flatShells = flatShells;
+      variantsTree = variantsTree;
+      shellNames = shellNames;
+    };
+
+    #Initial LayerResult Function Callable
+    # @currentPath: string
+    # @basePath: string
+    # @path: string
+    initialLayerResult = currentPath: basePath: path:
+      (if basePath == "" then path else "${basePath}-${path}")
+      |>(newBasePath: layer.processDirectory "${currentPath}/${path}" newBasePath)
+      |>(res: layer.LayerResult {
+        path = path;
+        flatShells = res.flatShells;
+        variantsTree = res.variantsTree;
+        shellNames = res.shellNames;
+      });
+
+    # File result date schema
+    FileResult = {
+      fileBase,
+      flatShells,
+      variantsTree,
+      shellNames,
+    }: {
+      fileBase = fileBase;
+      flatShells = flatShells;
+      variantsTree = variantsTree;
+      shellNames = shellNames;
+    };
+
+    # File constract schema
+    FileContext = {
+      currentPath,
+      basePath,
+      attrType,
+      fileName,
+      subVariantsTree,
+      inputs,
+      suffix ? ".nix",
+      pkgs ? import <nixpkgs> {},
+    }: {
+      currentPath = currentPath;
+      basePath = basePath;
+      attrType = attrType;
+      fileName = fileName;
+      subVariantsTree = subVariantsTree;
+      inputs = inputs;
+      suffix = suffix;
+      pkgs = pkgs;
+    };
+
+    # Initial FileResult Function Callsble
+    # @fileCtx: FileContext
+    # @return: FileResult
+    initialFileResult = fileCtx:
+      let
+        fileBase = fs.getFileBase fileCtx.attrType fileCtx.suffix fileCtx.fileName;
+        filePath = "${fileCtx.currentPath}/${fileCtx.fileName}";
+        variantsTree = fs.readFileAttrs filePath fileCtx.pkgs fileCtx.inputs fileCtx.subVariantsTree;
+        flatShells = fs.flatShellsMapAttrs' fileCtx.basePath fileCtx.attrType fileBase variantsTree;
+        shellNames = builtins.attrNames flatShells
+          |> (names: validate.assertUniqueNames "FILE INTERNAL(${fileCtx.fileName})" names);
+      in layer.FileResult {
+        fileBase = fileBase;  # Used commonAttrs File mapping'
+        flatShells = flatShells;
+        variantsTree = variantsTree;
+        shellNames = shellNames;
+      };
+
     # Process subdirectories FIRST (depth-first)
-    processSubdirsAttrs = currentPath: basePath: ctx:
+    # @currentPath: string
+    # @basePath: string
+    # @ctx: Context
+    processSubDirsAttrs = currentPath: basePath: ctx:
       let
         subDirPaths = fs.listSubDirs currentPath;
-        subResults = map (path:
-          let
-            newBasePath = if basePath == "" then path else "${basePath}-${path}";
-            res = layer.processDirectory "${currentPath}/${path}" newBasePath;
-          in {
-            name = path;
-            flatShells = res.flatShells;
-            variantsTree = res.variantsTree;
-            shellNames = res.shellNames;
-          }
-        ) subDirPaths;
-
+        subResults = map (path: layer.initialLayerResult currentPath basePath path) subDirPaths;
         flatShells = pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} subResults;
-        variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.name; value = r.variantsTree; }) subResults);
+        variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.path; value = r.variantsTree; }) subResults);
         shellNames = (pkgs.lib.concatMap (r: r.shellNames) subResults)
           |> (names: validate.assertUniqueNames "SUB DIRECTORY ATTRS" names);
       in ctx // {
@@ -227,33 +327,19 @@ let
       };
 
     # Process non-default files (common attrs files, isolated context: sees ONLY subdirs)
+    # @currentPath: string
+    # @basePath: string
+    # @ctx: Context
     processCommonAttrs = currentPath: basePath: ctx:
       let
-        attrsFiles = fs.listAttrsFiles currentPath suffix;
-        fileResults = map (fileName:
-          let
-            fileBase = pkgs.lib.removeSuffix suffix fileName;
-            filePath = "${currentPath}/${fileName}";
-            # CRITICAL ISOLATION: non-default files see ONLY subdirectory variants
-            variantsTree = (import filePath {
-                inherit pkgs inputs;
-                dev = ctx.subDirsAttrs.variantsTree;
-              }) |> (vars: validate.assertAttrSet filePath vars);  # Validation in pipeline
-
-            flatShells = pkgs.lib.mapAttrs' (variantName: attrsetCfg:
-                let
-                  fullName = naming.makeFullName basePath fs.AttrType.Common fileBase variantName;
-                  shell = mkDevShell (attrsetCfg // { name = "dev-shell-${fullName}"; });
-                in { name = fullName; value = shell; }
-              ) variantsTree;
-
-            shellNames = builtins.attrNames flatShells;
-          in {
-            fileBase = fileBase;
-            flatShells = flatShells;
-            variantsTree = variantsTree;
-            shellNames = shellNames;
-          }
+        attrsFiles = fs.listAttrsFiles currentPath ctx.suffix;
+        fileResults = map (fileName: layer.initialFileResult (layer.FileContext {
+            inherit currentPath basePath pkgs inputs fileName;
+            attrType = fs.AttrType.Common;
+            suffix = ctx.suffix;
+            # ENFORCED ISOLATION: Non-default files see ONLY subdirectory variants
+            subVariantsTree = ctx.subDirsAttrs.variantsTree;
+          })
         ) attrsFiles;
 
         # Validate intra-layer collisions via pipeline
@@ -270,41 +356,37 @@ let
       };
 
     # Process default.nix LAST (default attrs file, full context: subdirs + non-default files)
+    # @currentPath: string
+    # @basePath: string
+    # @ctx: Context
     processDefaultAttrs = currentPath: basePath: ctx:
       if !(fs.hasDefaultAttrs currentPath) then ctx else
         let
-          fileBase = "";
-          filePath = "${currentPath}/default.nix";
-          # FULL CONTEXT: sees subdirs AND non-default files
-          variantsTree = (import filePath {
-              inherit pkgs inputs;
-              dev = ctx.subDirsAttrs.variantsTree // ctx.commonAttrs.variantsTree;  # Full context
-            }) |> (vars: validate.assertAttrSet filePath vars);  # Pipeline validation
-
-          flatShells = pkgs.lib.mapAttrs' (variantName: attrsetCfg:
-              let
-                fullName = naming.makeFullName basePath fs.AttrType.Default fileBase variantName;
-                shell = mkDevShell (attrsetCfg // { name = "dev-shell-${fullName}"; });
-              in { name = fullName; value = shell; }
-            ) variantsTree;
-
-          shellNames = builtins.attrNames flatShells
-            |> (names: validate.assertUniqueNames "DEFAULT ATTRS FILE" names);
+          fr = layer.initialFileResult (layer.FileContext {
+            inherit currentPath basePath pkgs inputs;
+            attrType = fs.AttrType.Default;
+            suffix = ctx.suffix;
+            fileName = "default.nix";
+            # FULL CONTEXT: Default.nix sees subdirs + peer files (spec-compliant)
+            subVariantsTree = ctx.subDirsAttrs.variantsTree // ctx.commonAttrs.variantsTree;
+          });
         in ctx // {
           defaultAttrs = {
-            flatShells = flatShells;
-            variantsTree = variantsTree;
-            shellNames = shellNames;
+            flatShells = fr.flatShells;
+            variantsTree = fr.variantsTree;
+            shellNames = fr.shellNames;
           };
         };
 
     # Main directory processor (pipeline architecture)
+    # @currentPath: string
+    # @basePath: string
     processDirectory = currentPath: basePath:
       currentPath
       |> validate.assertFileExists  # Fail-fast path validation
       |> (path: layer.initialContext path basePath suffix)
       |> (ctx: validate.assertStructuralValidation ctx)
-      |> (layer.processSubdirsAttrs currentPath basePath)
+      |> (layer.processSubDirsAttrs currentPath basePath)
       |> (layer.processCommonAttrs currentPath basePath)
       |> (layer.processDefaultAttrs currentPath basePath)
       |> (ctx: validate.assertDefaultAttrsConflicts ctx)
