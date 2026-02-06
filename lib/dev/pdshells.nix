@@ -1,4 +1,4 @@
-# @path: ～/projects/configs/nix-config/lib/dev/dshells.nix
+# @path: ～/projects/configs/nix-config/lib/dev/pdshells.nix
 # @author: redskaber
 # @datetime: 2026-02-02
 # @description: lib::dev::dshells - Dataflow-driven layered loader with pipeline architecture
@@ -72,10 +72,10 @@ let
     assertStructuralValidation = ctx:
       let
         entries = fs.listEntries ctx.currentPath;
-        nixFiles = entries |> (e: pkgs.lib.filter (fs.isAttrsFile ctx.currentPath ctx.suffix) e);
-        subDirs = entries |> (e: pkgs.lib.filter (fs.isSubDir ctx.currentPath) e);
-        fileBases = nixFiles |> (files: map (f: pkgs.lib.removeSuffix ctx.suffix f) files);
-        conflicts = fileBases |> (bases: pkgs.lib.filter (n: pkgs.lib.elem n subDirs) bases);
+        nixFiles = pkgs.lib.filter (fs.isAttrsFile ctx.currentPath ctx.suffix) entries;
+        subDirs = pkgs.lib.filter (fs.isSubDir ctx.currentPath) entries;
+        fileBases = map (f: pkgs.lib.removeSuffix ctx.suffix f) nixFiles;
+        conflicts = pkgs.lib.filter (n: pkgs.lib.elem n subDirs) fileBases;
       in if conflicts == [] then ctx else throw ''
           STRUCTURAL AMBIGUITY in ${ctx.currentPath}:
           • Conflicting sources: ${builtins.concatStringsSep ", " conflicts}
