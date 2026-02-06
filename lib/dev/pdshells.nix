@@ -96,6 +96,8 @@ let
 
   # == NAMING STRATEGY MODULE ==
   naming = {
+    default-variantName = "default";
+    default-concat-sep = "-";
     # Unified naming pipeline with pipe operators
     # @basePath: string
     # @attrType: enum::AttrType
@@ -103,18 +105,21 @@ let
     # @variantName: string
     makeFullName = basePath: attrType: fileBase: variantName:
       ([
-        (if basePath == "" then null else basePath)
+        (if basePath == fs.default-basePath then null else basePath)
         (if attrType == fs.AttrType.Default then null else fileBase)
-        (if variantName == "default" then null else variantName)
+        (if variantName == naming.default-variantName then null else variantName)
       ]
-      |> pkgs.lib.filter (x: x != null))                              # Remove empty parts
-      |> pkgs.lib.concatStringsSep "-"                                # Join with hyphens
-      |> (fullName: if fullName == "" then "default" else fullName);  # Handle empty case
+      |> pkgs.lib.filter (x: x != null))                      # Remove empty parts
+      |> pkgs.lib.concatStringsSep naming.default-concat-sep  # Join with hyphens
+      |> (fullName: if fullName == "" then naming.default-variantName else fullName); # Handle empty case
   };
 
   # == FILESYSTEM MODULE (pure path operations) ==
   fs = {
     default-nix = "default.nix";
+    default-fileBase = "";
+    default-basePath = "";
+    default-private-prefix = "_";
     # Since Nix lacks native support for data structures,
     # we utilize native datasets and employ a contract-based approach to simulate enums,
     # aiming for clearer semantic expression.
@@ -124,7 +129,7 @@ let
     };
 
     # Curried type checkers (pipeline-ready)
-    isPrivate = name: (pkgs.lib.hasPrefix "_" name);
+    isPrivate = name: (pkgs.lib.hasPrefix fs.default-private-prefix name);
     isNixFile = suffix: name: (pkgs.lib.hasSuffix suffix name);
 
     isType = expectedType: path: name:
@@ -176,7 +181,7 @@ let
     # @suffix: string
     # @fileName: string
     getFileBase = attrType: suffix: fileName:
-      if attrType == fs.AttrType.Default then ""
+      if attrType == fs.AttrType.Default then fs.default-fileBase
         else pkgs.lib.removeSuffix suffix fileName;
 
     # Read file attrsets
@@ -247,7 +252,7 @@ let
     # @basePath: string
     # @path: string
     initialLayerResult = currentPath: basePath: path:
-      (if basePath == "" then path else "${basePath}-${path}")
+      (if basePath == fs.default-basePath then path else "${basePath}-${path}")
       |>(newBasePath: layer.processDirectory "${currentPath}/${path}" newBasePath)
       |>(res: layer.LayerResult {
         path = path;
@@ -400,7 +405,7 @@ let
   };
 
   # == TOP-LEVEL EXECUTION ==
-  rootResult = layer.processDirectory devDir "";
+  rootResult = layer.processDirectory devDir fs.default-basePath;
 
   # Global uniqueness validation (pipeline-style)
   _global_unique_validation = rootResult.shellNames
