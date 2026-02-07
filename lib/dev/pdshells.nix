@@ -196,9 +196,9 @@ let
     # to achieve a visual representation of the internal data.
 
     # Common layer attrs schema
-    # @flatShells:   { shellName<string> : Shell<derivation> }
+    # @flatShells:   { shellName<string> : Shell<derivation>, ... }
     # @variantsTree: { sublayer::variantsTree<string, attrset>, commonAttrsets<string, attrset>, defaultAttrsets<string, attrset> }
-    # @shellNames:   { shellNames<string> }
+    # @shellNames:   { shellNames<string>, ... }
     CommonAttrs = {
       flatShells ? {},
       variantsTree ? {},
@@ -373,7 +373,7 @@ let
                 suffix = ctx.suffix;
                 subVariantsTree = strategy.fn-getSubVariantsTree ctx;
             })) files
-            |> (fileResults: {
+            |> (fileResults: layer.CommonAttrs {
               variantsTree = (strategy.fn-aggregateVariantsTree fileResults);
               flatShells   = (pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} fileResults);
               shellNames   = (pkgs.lib.concatMap (r: r.shellNames) fileResults)
@@ -391,10 +391,10 @@ let
     fn-processLayerAttrs = currentPath: basePath: ctx:
       (fs.fn-getAttrsDirs currentPath)
       |> (dirPaths: map (path: layer.fn-initialLayerResult currentPath basePath path ctx) dirPaths)
-      |> (results: layer.CommonAttrs {
-          flatShells = pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} results;
-          variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.path; value = r.variantsTree; }) results);
-          shellNames = (pkgs.lib.concatMap (r: r.shellNames) results)
+      |> (layerResults: layer.CommonAttrs {
+          flatShells = pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} layerResults;
+          variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.path; value = r.variantsTree; }) layerResults);
+          shellNames = (pkgs.lib.concatMap (r: r.shellNames) layerResults)
             |> (names: validate.fn-assertUniqueNames "LAYER DIRECTORY ATTRS(${currentPath})" names);
         })
       |> (attrs: ctx // { subDirsAttrs = attrs; });
