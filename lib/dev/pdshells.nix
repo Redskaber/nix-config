@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-02-02
 # @description: lib::dev::dshells - Dataflow-driven layered loader with pipeline architecture
-# - Pipeline and Dataflow and Currying
+# - Pipeline and Dataflow and Currying and Strategy
 
 { pkgs, inputs, devDir, suffix ? ".nix", ... }:
 let
@@ -14,7 +14,7 @@ let
 
     # @context: string
     # @value: any
-    assertAttrSet = context: value:
+    fn-assertAttrSet = context: value:
       if pkgs.lib.isAttrs value then value else throw ''
         INVALID STRUCTURE (${context}):
         • Expected: attrset
@@ -25,7 +25,7 @@ let
 
     # @context: string
     # @names: [ string ]
-    assertUniqueNames = context: names:
+    fn-assertUniqueNames = context: names:
       (builtins.groupBy (x: x) names) # O(n)
       |> (groups: pkgs.lib.filterAttrs (_: g: builtins.length g > 1) groups)  # O(m)
       |> (dupGroups: builtins.attrNames dupGroups)
@@ -39,7 +39,7 @@ let
         '');
 
     # @path: string
-    assertFileExists = path:
+    fn-assertFileExists = path:
       if builtins.pathExists path then path else throw ''
         PATH NOT FOUND: ${path}
         Resolution: Verify directory structure matches expectations.
@@ -50,7 +50,7 @@ let
     # @base: {...}
     # @new: {...}
     # @ctx: Context
-    assertNoKeyConflicts = context: base: new: ctx:
+    fn-assertNoKeyConflicts = context: base: new: ctx:
       (builtins.attrNames new)
       |> (newKeys: pkgs.lib.filter (key: pkgs.lib.hasAttr key base) newKeys)
       |> (conflicts: if conflicts == [] then ctx else throw ''
@@ -63,17 +63,17 @@ let
 
     # Prevent key collisions in variants tree
     # @ctx: Context
-    assertDefaultAttrsConflicts = ctx:
+    fn-assertDefaultAttrsConflicts = ctx:
       (ctx.subDirsAttrs.variantsTree // ctx.commonAttrs.variantsTree)
-      |> (variantsTree: validate.assertNoKeyConflicts "VARIANTS TREE" variantsTree ctx.defaultAttrs.variantsTree ctx);
+      |> (variantsTree: validate.fn-assertNoKeyConflicts "VARIANTS TREE" variantsTree ctx.defaultAttrs.variantsTree ctx);
 
     # Structural validation pipeline
     # @ctx: Context
-    assertStructuralValidation = ctx:
+    fn-assertStructuralValidation = ctx:
       let
-        entries = fs.listEntries ctx.currentPath;
-        nixFiles = pkgs.lib.filter (fs.isAttrsFile ctx.currentPath ctx.suffix) entries;
-        subDirs = pkgs.lib.filter (fs.isSubDir ctx.currentPath) entries;
+        entries = fs.fn-listDir ctx.currentPath;
+        nixFiles = pkgs.lib.filter (fs.fn-isAttrsFile ctx.currentPath ctx.suffix) entries;
+        subDirs = pkgs.lib.filter (fs.fn-isAttrsDir ctx.currentPath) entries;
         fileBases = map (f: pkgs.lib.removeSuffix ctx.suffix f) nixFiles;
         conflicts = pkgs.lib.filter (n: pkgs.lib.elem n subDirs) fileBases;
       in if conflicts == [] then ctx else throw ''
@@ -103,7 +103,7 @@ let
     # @attrType: enum::AttrType
     # @fileBase: string
     # @variantName: string
-    makeFullName = basePath: attrType: fileBase: variantName:
+    fn-makeFullName = basePath: attrType: fileBase: variantName:
       ([
         (if basePath == fs.default-basePath then null else basePath)
         (if attrType == fs.AttrType.Default then null else fileBase)
@@ -117,8 +117,9 @@ let
   # == FILESYSTEM MODULE (pure path operations) ==
   fs = {
     default-nix = "default.nix";
-    default-fileBase = "";
+    default-path = "dev";
     default-basePath = "";
+    default-fileBase = "";
     default-private-prefix = "_";
     # Since Nix lacks native support for data structures,
     # we utilize native datasets and employ a contract-based approach to simulate enums,
@@ -129,37 +130,37 @@ let
     };
 
     # Curried type checkers (pipeline-ready)
-    isPrivate = name: (pkgs.lib.hasPrefix fs.default-private-prefix name);
-    isNixFile = suffix: name: (pkgs.lib.hasSuffix suffix name);
+    fn-isPrivate = name: (pkgs.lib.hasPrefix fs.default-private-prefix name);
+    fn-isNixFile = suffix: name: (pkgs.lib.hasSuffix suffix name);
 
-    isType = expectedType: path: name:
+    fn-isType = expectedType: path: name:
       (builtins.readDir path).${name}
-      |>(type: type == expectedType);
+      |> (type: type == expectedType);
 
-    isRegular = fs.isType "regular";
-    isDirectory = fs.isType "directory";
-    isSubDir = path: name:
-      (fs.isDirectory path name)
-      && !fs.isPrivate name;
-    isAttrsFile = path: suffix: name:
-      (fs.isRegular path name)
-      && fs.isNixFile suffix name
-      && !fs.isPrivate name;
+    fn-isRegular = fs.fn-isType "regular";
+    fn-isDirectory = fs.fn-isType "directory";
+    fn-isAttrsDir = path: name:
+      (fs.fn-isDirectory path name)
+      && !fs.fn-isPrivate name;
+    fn-isAttrsFile = path: suffix: name:
+      (fs.fn-isRegular path name)
+      && fs.fn-isNixFile suffix name
+      && !fs.fn-isPrivate name;
 
-    listEntries = path:
+    fn-listDir = path:
       builtins.readDir path
       |> builtins.attrNames;
 
     # High-level directory scanners (optimized pipelines)
-    listSubDirs = path:
-      (fs.listEntries path)
-      |> (entries: pkgs.lib.filter (name: fs.isSubDir path name) entries);
-    listAttrsFiles = path: suffix:
-      (fs.listEntries path)
-      |> (entries: pkgs.lib.filter (name: name != fs.default-nix && fs.isAttrsFile path suffix name) entries);
+    fn-getAttrsDirs = path:
+      (fs.fn-listDir path)
+      |> (entries: pkgs.lib.filter (name: fs.fn-isAttrsDir path name) entries);
+    fn-getAttrsFiles = path: suffix:
+      (fs.fn-listDir path)
+      |> (entries: pkgs.lib.filter (name: name != fs.default-nix && fs.fn-isAttrsFile path suffix name) entries);
 
-    hasDefaultAttrs = path:
-      (fs.listEntries path)
+    fn-hasDefaultAttrs = path:
+      (fs.fn-listDir path)
       |> (entries: pkgs.lib.any (name: name == fs.default-nix) entries);
 
     # Single file attrs mapAttrs' and flat shells
@@ -167,9 +168,9 @@ let
     # @attrType: AttrType
     # @fileBase: string
     # @variantsTree: { ... }
-    flatShellsMapAttrs' = basePth: attrType: fileBase: variantsTree:
+    fn-flatShellsMapAttrs' = basePth: attrType: fileBase: variantsTree:
       pkgs.lib.mapAttrs' (variantName: attrsetCfg:
-        (naming.makeFullName basePth attrType fileBase variantName)
+        (naming.fn-makeFullName basePth attrType fileBase variantName)
         |> (name: {
           name = name;
           value = mkDevShell (attrsetCfg // { name = "dev-shell-${name}"; });
@@ -179,12 +180,12 @@ let
     # Get file base
     # @suffix: string
     # @fileName: string
-    getFileBase = suffix: fileName: pkgs.lib.removeSuffix suffix fileName;
+    fn-makeFileBase = suffix: fileName: pkgs.lib.removeSuffix suffix fileName;
 
     # Read file attrsets
-    readFileAttrs = filePath: pkgs: inputs: variantsTree:
+    fn-readFileAttrs = filePath: pkgs: inputs: variantsTree:
       (import filePath { inherit pkgs inputs; dev = variantsTree; })
-      |> (vars: validate.assertAttrSet "FILE CONTENT (${filePath})" vars);
+      |> (vars: validate.fn-assertAttrSet "FILE CONTENT (${filePath})" vars);
   };
 
 
@@ -228,12 +229,14 @@ let
     # @currentPath: string
     # @basePath: string
     # @suffix: string
-    initialContext = currentPath: basePath: suffix:
+    fn-initialContext = currentPath: basePath: suffix:
       (layer.Context { currentPath=currentPath; basePath=basePath; suffix=suffix; });
 
     # Layer result data schema
     # @path: string
-    # ...
+    # @flatShells:   { shellName<string> : Shell<derivation> }
+    # @variantsTree: { sublayer::variantsTree<string, attrset>, commonAttrsets<string, attrset>, defaultAttrsets<string, attrset> }
+    # @shellNames:   { shellNames<string> }
     LayerResult = {
       path,
       flatShells,
@@ -247,20 +250,18 @@ let
     };
 
     #Initial LayerResult Function Callable
-    # @currentPath: string
+    # @currentPath: string (current full path)
     # @basePath: string
-    # @path: string
-    initialLayerResult = currentPath: basePath: path: ctx:
+    # @path: string (current active path)
+    fn-initialLayerResult = currentPath: basePath: path: ctx:
       (if basePath == fs.default-basePath then path else "${basePath}-${path}")
-      |>(newBasePath: layer.processDirectory "${currentPath}/${path}" newBasePath ctx)
-      |>(res: layer.LayerResult {
-        path = path;
-        flatShells = res.flatShells;
-        variantsTree = res.variantsTree;
-        shellNames = res.shellNames;
-      });
+      |>(newBasePath: layer.fn-processDirectory "${currentPath}/${path}" newBasePath path ctx);
 
     # File result date schema
+    # @fileBase: string
+    # @flatShells:   { shellName<string> : Shell<derivation>, ... }
+    # @variantsTree: { sublayer::variantsTree<string, attrset>, commonAttrsets<string, attrset>, defaultAttrsets<string, attrset> }
+    # @shellNames:   { shellNames<string>, ... }
     FileResult = {
       fileBase,
       flatShells,
@@ -274,6 +275,14 @@ let
     };
 
     # File constract schema
+    # @currentPath: string
+    # @basePath: string
+    # @attrType: AttrType
+    # @fileName: string
+    # @subVariantsTree: variantsTree
+    # @inputs: { ... }
+    # @suffix: string
+    # @pkgs: nixpkgs
     FileContext = {
       currentPath,
       basePath,
@@ -297,12 +306,12 @@ let
     # Initial FileResult Function Callsble
     # @fileCtx: FileContext
     # @return: FileResult
-    initialFileResult = fileCtx:
+    fn-initialFileResult = fileCtx:
       let
-        fileBase = fs.getFileBase fileCtx.suffix fileCtx.fileName;
+        fileBase = fs.fn-makeFileBase fileCtx.suffix fileCtx.fileName;
         filePath = "${fileCtx.currentPath}/${fileCtx.fileName}";
-        variantsTree = fs.readFileAttrs filePath fileCtx.pkgs fileCtx.inputs fileCtx.subVariantsTree;
-        flatShells = fs.flatShellsMapAttrs' fileCtx.basePath fileCtx.attrType fileBase variantsTree;
+        variantsTree = fs.fn-readFileAttrs filePath fileCtx.pkgs fileCtx.inputs fileCtx.subVariantsTree;
+        flatShells = fs.fn-flatShellsMapAttrs' fileCtx.basePath fileCtx.attrType fileBase variantsTree;
         shellNames = builtins.attrNames flatShells;
       in layer.FileResult {
         fileBase = fileBase;  # Used common attrs files mapping'
@@ -338,7 +347,7 @@ let
       CommonStrategy = layer.FileProcessStrategy.FileStrategy {
         attrType = fs.AttrType.Common;
         targetField = "commonAttrs";
-        fn-getFileList = currentPath: suffix: fs.listAttrsFiles currentPath suffix;
+        fn-getFileList = currentPath: suffix: fs.fn-getAttrsFiles currentPath suffix;
         fn-getSubVariantsTree = ctx: ctx.subDirsAttrs.variantsTree;
         fn-validationContext = currentPath: "COMMON ATTRS FILES(${currentPath})";
         fn-aggregateVariantsTree = fileResults: pkgs.lib.listToAttrs (map (r: { name = r.fileBase; value = r.variantsTree; }) fileResults);
@@ -347,7 +356,7 @@ let
       DefaultStrategy = layer.FileProcessStrategy.FileStrategy {
         attrType = fs.AttrType.Default;
         targetField = "defaultAttrs";
-        fn-getFileList = currentPath: suffix: if fs.hasDefaultAttrs currentPath then [ fs.default-nix ] else [];
+        fn-getFileList = currentPath: suffix: if fs.fn-hasDefaultAttrs currentPath then [ fs.default-nix ] else [];
         fn-getSubVariantsTree = ctx: ctx.subDirsAttrs.variantsTree // ctx.commonAttrs.variantsTree;
         fn-validationContext = currentPath: "DEFAULT ATTRS FILE(${currentPath})";
         fn-aggregateVariantsTree = fileResults: (builtins.head fileResults).variantsTree;
@@ -358,7 +367,7 @@ let
         |>(files: if files == []
           then ctx
           else (
-            map (fileName: layer.initialFileResult (layer.FileContext {
+            map (fileName: layer.fn-initialFileResult (layer.FileContext {
                 inherit currentPath basePath pkgs inputs fileName;
                 attrType = strategy.attrType;
                 suffix = ctx.suffix;
@@ -368,80 +377,79 @@ let
               variantsTree = (strategy.fn-aggregateVariantsTree fileResults);
               flatShells   = (pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} fileResults);
               shellNames   = (pkgs.lib.concatMap (r: r.shellNames) fileResults)
-                |> (names: validate.assertUniqueNames (strategy.fn-validationContext currentPath)  names);
+                |> (names: validate.fn-assertUniqueNames (strategy.fn-validationContext currentPath)  names);
             })
             |> (attrs: ctx // { ${strategy.targetField} = attrs; })
           )
         );
     };
 
-    # Process subdirectories FIRST (depth-first)
+    # Process subdir dectories FIRST (depth-first)
     # @currentPath: string
     # @basePath: string
     # @ctx: Context
-    processSubDirsAttrs = currentPath: basePath: ctx:
-      let
-        subDirPaths = fs.listSubDirs currentPath;
-        subResults = map (path: layer.initialLayerResult currentPath basePath path ctx) subDirPaths;
-        flatShells = pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} subResults;
-        variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.path; value = r.variantsTree; }) subResults);
-        shellNames = (pkgs.lib.concatMap (r: r.shellNames) subResults)
-          |> (names: validate.assertUniqueNames "SUB DIRECTORY ATTRS(${currentPath})" names);
-      in ctx // {
-        subDirsAttrs = {
-          flatShells = flatShells;
-          variantsTree = variantsTree;
-          shellNames = shellNames;
-        };
-      };
+    fn-processLayerAttrs = currentPath: basePath: ctx:
+      (fs.fn-getAttrsDirs currentPath)
+      |> (dirPaths: map (path: layer.fn-initialLayerResult currentPath basePath path ctx) dirPaths)
+      |> (results: layer.CommonAttrs {
+          flatShells = pkgs.lib.foldl' (acc: r: acc // r.flatShells) {} results;
+          variantsTree = pkgs.lib.listToAttrs (map (r: { name = r.path; value = r.variantsTree; }) results);
+          shellNames = (pkgs.lib.concatMap (r: r.shellNames) results)
+            |> (names: validate.fn-assertUniqueNames "LAYER DIRECTORY ATTRS(${currentPath})" names);
+        })
+      |> (attrs: ctx // { subDirsAttrs = attrs; });
 
     # Process non-default files (common attrs files, isolated context: sees ONLY subdirs)
     # @currentPath: string
     # @basePath: string
     # @ctx: Context
-    processCommonAttrs = currentPath: basePath: ctx:
-      layer.FileProcessStrategy.fn-execute layer.FileProcessStrategy.CommonStrategy currentPath basePath ctx;
+    fn-processCommonAttrs = currentPath: basePath: ctx:
+      layer.FileProcessStrategy.fn-execute
+        layer.FileProcessStrategy.CommonStrategy currentPath basePath ctx;
 
     # Process default.nix LAST (default attrs file, full context: subdirs + non-default files)
     # @currentPath: string
     # @basePath: string
     # @ctx: Context
-    processDefaultAttrs = currentPath: basePath: ctx:
-      layer.FileProcessStrategy.fn-execute layer.FileProcessStrategy.DefaultStrategy currentPath basePath ctx;
+    fn-processDefaultAttrs = currentPath: basePath: ctx:
+      layer.FileProcessStrategy.fn-execute
+        layer.FileProcessStrategy.DefaultStrategy currentPath basePath ctx;
 
     # Directory processor (pipeline architecture)
     # @currentPath: string
     # @basePath: string
-    processDirectory = currentPath: basePath: ctx:
+    fn-processDirectory = currentPath: basePath: path: ctx:
       ctx
-      |> (ctx: validate.assertStructuralValidation ctx)
-      |> (ctx: layer.processSubDirsAttrs currentPath basePath ctx)
-      |> (ctx: layer.processCommonAttrs currentPath basePath ctx)
-      |> (ctx: layer.processDefaultAttrs currentPath basePath ctx)
-      |> (ctx: validate.assertDefaultAttrsConflicts ctx)
-      # Final layer state -> layer.LayerResult res
-      |> (ctx: {
+      |> (ctx: validate.fn-assertStructuralValidation ctx)
+      |> (ctx: layer.fn-processLayerAttrs currentPath basePath ctx)
+      |> (ctx: layer.fn-processCommonAttrs currentPath basePath ctx)
+      |> (ctx: layer.fn-processDefaultAttrs currentPath basePath ctx)
+      |> (ctx: validate.fn-assertDefaultAttrsConflicts ctx)
+      # Final layer state -> layer.LayerResult result
+      |> (ctx: layer.LayerResult {
+        path = path;
         flatShells   = ctx.subDirsAttrs.flatShells   // ctx.commonAttrs.flatShells   // ctx.defaultAttrs.flatShells;
         variantsTree = ctx.subDirsAttrs.variantsTree // ctx.commonAttrs.variantsTree // ctx.defaultAttrs.variantsTree;
         shellNames   = ctx.subDirsAttrs.shellNames   ++ ctx.commonAttrs.shellNames   ++ ctx.defaultAttrs.shellNames;
       });
 
     # Main processor
-    # @currentPath: string
+    # @currentPath: string (current active full path)
     # @basePath: string
+    # @path: string (current active path)
     # @suffix: string
-    processMain = currentPath: basePath: suffix:
-      (validate.assertFileExists currentPath) # Fail-fast path validation
-      |> (path: layer.initialContext path basePath suffix)
-      |> (ctx: layer.processDirectory currentPath basePath ctx);
+    fn-processMain = currentPath: basePath: path: suffix:
+      (validate.fn-assertFileExists currentPath) # Fail-fast path validation
+      |> (path: layer.fn-initialContext path basePath suffix)
+      |> (ctx: layer.fn-processDirectory currentPath basePath path ctx);
   };
 
   # == TOP-LEVEL EXECUTION ==
-  rootResult = layer.processMain devDir fs.default-basePath suffix;
+  rootResult = layer.fn-processMain devDir fs.default-basePath fs.default-path suffix;
 
   # Global uniqueness validation (pipeline-style)
   _global_unique_validation = rootResult.shellNames
-    |> (names: validate.assertUniqueNames "GLOBAL NAMESPACE" names);
+    |> (names: validate.fn-assertUniqueNames "GLOBAL NAMESPACE" names);
 
 in rootResult.flatShells
 
