@@ -26,6 +26,7 @@
       dev.python
       dev.rust
       dev.typescript
+      dev.zig
     ];
     # buildInputs = with pkgs; [];
     # nativeBuildInputs = with pkgs; [];
