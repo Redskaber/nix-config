@@ -70,22 +70,26 @@ let
     # Structural validation pipeline
     # @ctx: Context
     fn-assertStructuralValidation = ctx:
-      let
-        entries = fs.fn-listDir ctx.currentPath;
+      (fs.fn-listDir ctx.currentPath)
+      |> (entries: {
         nixFiles = pkgs.lib.filter (fs.fn-isAttrsFile ctx.currentPath ctx.suffix) entries;
         subDirs = pkgs.lib.filter (fs.fn-isAttrsDir ctx.currentPath) entries;
-        fileBases = map (f: pkgs.lib.removeSuffix ctx.suffix f) nixFiles;
-        conflicts = pkgs.lib.filter (n: pkgs.lib.elem n subDirs) fileBases;
-      in if conflicts == [] then ctx else throw ''
-          STRUCTURAL AMBIGUITY in ${ctx.currentPath}:
-          • Conflicting sources: ${builtins.concatStringsSep ", " conflicts}
-          Resolution: Maintain ONE source per base name:
-            - EITHER file (${ctx.suffix}) OR directory
-            - NOT both ${builtins.concatStringsSep " AND " (map (name: "${name}${ctx.suffix} vs ${name}/") conflicts)}
-          ''
-        |> (ctx: if nixFiles == [] && subDirs == [] then
-          throw "EMPTY DIRECTORY: ${ctx.currentPath} requires .nix files or subdirs"
-          else ctx);
+        })
+      |> (items: if items.nixFiles == [] && items.subDirs == []
+        then throw "EMPTY DIRECTORY: ${ctx.currentPath} requires attrs .nix files or sub dirs"
+        else items
+        )
+      |> (items: (map (fileName: fs.fn-makeFileBase ctx.suffix fileName) items.nixFiles)
+          |> (fileBases: pkgs.lib.filter (n: pkgs.lib.elem n items.subDirs) fileBases)
+        )
+      |> (conflicts : if conflicts  != [] then throw ''
+        STRUCTURAL AMBIGUITY in ${ctx.currentPath}:
+        • Conflicting sources: ${builtins.concatStringsSep ", " conflicts}
+        Resolution: Maintain ONE source per base name:
+          - EITHER file (${ctx.suffix}) OR directory
+          - NOT both ${builtins.concatStringsSep " AND " (map (name: "${name}${ctx.suffix} vs ${name}/") conflicts)}
+        ''
+        else ctx);
   };
 
   # == CORE ARCHITECTURE PATTERNS ==

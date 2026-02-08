@@ -72,6 +72,7 @@
     # ../core/app/wechat.nix        # timeout
     ../core/app/wezterm.nix
     ../core/app/xunlei.nix
+    ../core/app/zed.nix
     # ../core/app/zen-browser.nix   # google-chrome
     ../core/app/game/minecraft.nix
     ../core/app/img/gimp.nix
