@@ -78,6 +78,10 @@
     ../core/app/img/gimp.nix
     ../core/app/img/imagemagick.nix
     ../core/app/img/imv.nix
+    ../core/app/office/pandoc.nix
+    ../core/app/office/pdf.nix
+    ../core/app/office/unoconv.nix
+    ../core/app/office/wps.nix
 
     ../theme/qtct.nix
     ../theme/rofi.nix
