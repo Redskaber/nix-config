@@ -1,8 +1,8 @@
 # @path: ～/projects/configs/nix-config/lib/dev/pdshells.nix
 # @author: redskaber
 # @datetime: 2026-02-02
-# @description: lib::dev::dshells - Dataflow-driven layered loader with pipeline architecture
-# - Pipeline and Dataflow and Currying and Strategy
+# @description: lib::dev::pdshells - Dataflow-driven layered loader with pipeline architecture
+# - Pipeline and Dataflow and Currying and Strategy and Recursive
 
 { pkgs, inputs, devDir, suffix ? ".nix", ... }:
 let
@@ -72,7 +72,7 @@ let
     fn-assertStructuralValidation = ctx:
       (fs.fn-listDir ctx.currentPath)
       |> (entries: {
-          nixFiles = pkgs.lib.filter (fs.fn-isAttrsFile ctx.currentPath ctx.suffix) entries;
+          nixFiles = pkgs.lib.filter (fs.fn-isAttrsFile ctx.currentPath) entries;
           subDirs = pkgs.lib.filter (fs.fn-isAttrsDir ctx.currentPath) entries;
         })
       |> (items: if items.nixFiles == [] && items.subDirs == []
@@ -124,6 +124,7 @@ let
     default-basePath = "";
     default-fileBase = "";
     default-private-prefix = "_";
+    default-nixSuffix = ".nix";
     # Since Nix lacks native support for data structures,
     # we utilize native datasets and employ a contract-based approach to simulate enums,
     # aiming for clearer semantic expression.
@@ -132,9 +133,20 @@ let
       Common  = 1;
     };
 
+    # AttrFile Params Protocol
+    AttrFileParams = {
+      pkgs ? import <nixpkgs> {},
+      inputs ? {},
+      dev ? {},
+    }: {
+      pkgs = pkgs;
+      inputs = inputs;
+      dev = dev;
+    };
+
     # Curried type checkers (pipeline-ready)
     fn-isPrivate = name: (pkgs.lib.hasPrefix fs.default-private-prefix name);
-    fn-isNixFile = suffix: name: (pkgs.lib.hasSuffix suffix name);
+    fn-isNixFile = name: (pkgs.lib.hasSuffix fs.default-nixSuffix name);
 
     fn-isType = expectedType: path: name:
       (builtins.readDir path).${name}
@@ -145,9 +157,9 @@ let
     fn-isAttrsDir = path: name:
       (fs.fn-isDirectory path name)
       && !fs.fn-isPrivate name;
-    fn-isAttrsFile = path: suffix: name:
+    fn-isAttrsFile = path: name:
       (fs.fn-isRegular path name)
-      && fs.fn-isNixFile suffix name
+      && fs.fn-isNixFile name
       && !fs.fn-isPrivate name;
 
     fn-listDir = path:
@@ -158,9 +170,9 @@ let
     fn-getAttrsDirs = path:
       (fs.fn-listDir path)
       |> (entries: pkgs.lib.filter (name: fs.fn-isAttrsDir path name) entries);
-    fn-getAttrsFiles = path: suffix:
+    fn-getAttrsFiles = path:
       (fs.fn-listDir path)
-      |> (entries: pkgs.lib.filter (name: name != fs.default-nix && fs.fn-isAttrsFile path suffix name) entries);
+      |> (entries: pkgs.lib.filter (name: name != fs.default-nix && fs.fn-isAttrsFile path name) entries);
 
     fn-hasDefaultAttrs = path:
       (fs.fn-listDir path)
@@ -183,11 +195,13 @@ let
     # Get file base
     # @suffix: string
     # @fileName: string
-    fn-makeFileBase = suffix: fileName: pkgs.lib.removeSuffix suffix fileName;
+    fn-makeFileBase = suffix: fileName:
+      pkgs.lib.removeSuffix suffix fileName;
 
     # Read file attrsets
     fn-readFileAttrs = filePath: pkgs: inputs: variantsTree:
-      (import filePath { inherit pkgs inputs; dev = variantsTree; })
+      (fs.AttrFileParams { inherit pkgs inputs; dev = variantsTree; })
+      |> (attrFileParams: import filePath attrFileParams )
       |> (vars: validate.fn-assertAttrSet "FILE CONTENT (${filePath})" vars);
   };
 
@@ -215,7 +229,7 @@ let
     Context = {
       currentPath,
       basePath,
-      suffix ? ".nix",
+      suffix ? fs.default-nixSuffix,
       subDirsAttrs ? layer.CommonAttrs {},
       commonAttrs ? layer.CommonAttrs {},
       defaultAttrs ? layer.CommonAttrs {},
@@ -293,7 +307,7 @@ let
       fileName,
       subVariantsTree,
       inputs,
-      suffix ? ".nix",
+      suffix ? fs.default-nixSuffix,
       pkgs ? import <nixpkgs> {},
     }: {
       currentPath = currentPath;
@@ -350,7 +364,7 @@ let
       CommonStrategy = layer.FileProcessStrategy.FileStrategy {
         attrType = fs.AttrType.Common;
         targetField = "commonAttrs";
-        fn-getFileList = currentPath: suffix: fs.fn-getAttrsFiles currentPath suffix;
+        fn-getFileList = currentPath: fs.fn-getAttrsFiles currentPath;
         fn-getSubVariantsTree = ctx: ctx.subDirsAttrs.variantsTree;
         fn-validationContext = currentPath: "COMMON ATTRS FILES(${currentPath})";
         fn-aggregateVariantsTree = fileResults: pkgs.lib.listToAttrs (map (r: { name = r.fileBase; value = r.variantsTree; }) fileResults);
@@ -359,14 +373,14 @@ let
       DefaultStrategy = layer.FileProcessStrategy.FileStrategy {
         attrType = fs.AttrType.Default;
         targetField = "defaultAttrs";
-        fn-getFileList = currentPath: suffix: if fs.fn-hasDefaultAttrs currentPath then [ fs.default-nix ] else [];
+        fn-getFileList = currentPath: if fs.fn-hasDefaultAttrs currentPath then [ fs.default-nix ] else [];
         fn-getSubVariantsTree = ctx: ctx.subDirsAttrs.variantsTree // ctx.commonAttrs.variantsTree;
         fn-validationContext = currentPath: "DEFAULT ATTRS FILE(${currentPath})";
         fn-aggregateVariantsTree = fileResults: (builtins.head fileResults).variantsTree;
       };
 
       fn-execute = strategy: currentPath: basePath: ctx:
-        (strategy.fn-getFileList currentPath ctx.suffix)
+        (strategy.fn-getFileList currentPath)
         |>(files: if files == []
           then ctx
           else (

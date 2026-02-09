@@ -131,8 +131,6 @@
         import ./lib/dev/pdshells.nix {
           inherit pkgs inputs;
           devDir = ./home/core/dev;
-          # devDir = ./docs/example/dev/fm;     # example fm
-          # devDir = ./docs/example/dev/dm;     # example dm
           # suffix = ".nix"                     # default suffix
         };
     in
