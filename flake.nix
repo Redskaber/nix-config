@@ -66,8 +66,8 @@
     vscode-config.flake = false;
 
     # Mpv-config
-    # mpv-config.url = "github:Redskaber/mpv-config";
-    # mpv-config.flake = false;
+    mpv-config.url = "github:Redskaber/mpv-config";
+    mpv-config.flake = false;
 
     # Btop-config
     btop-config.url = "github:Redskaber/btop-config";

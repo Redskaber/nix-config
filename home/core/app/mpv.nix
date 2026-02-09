@@ -16,6 +16,14 @@
   home.packages = with pkgs; [
     mpv
   ];
+
+  # Used user config:
+  xdg.configFile."mpv" = {
+    source = inputs.mpv-config;     # abs path
+    recursive = true;               # rec-link
+    force = true;
+  };
+
 }
 
 
