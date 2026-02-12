@@ -96,11 +96,6 @@ in
       fi
     '';
 
-    # (non-nixos) dot zshenv configured
-    # envExtra = ''
-    #   # global rust cargo env (Hydrland ubuntu)
-    #   . "$HOME/.cargo/env"
-    # '';
   };
 
   home.activation.ensure_zsh_in_shells = lib.hm.dag.entryAfter [ "writeBoundary" ] ''

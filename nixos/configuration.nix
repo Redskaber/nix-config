@@ -47,10 +47,16 @@
     ./core/user.nix
     ./core/virtual.nix
 
-
     # window manager
     # ./wm/gnome
     ./wm/hyprland
+
+    # srv
+    ./core/srv/mongodb.nix
+    ./core/srv/mysql.nix
+    ./core/srv/postgresql.nix
+    ./core/srv/redis.nix
+
   ];
 
   nixpkgs = {

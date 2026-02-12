@@ -30,6 +30,7 @@
     ../core/sys/compress.nix
     ../core/sys/debug.nix
     ../core/sys/direnv.nix
+    ../core/sys/duf.nix
     ../core/sys/eza.nix
     ../core/sys/fastfetch.nix
     ../core/sys/fd.nix
@@ -69,7 +70,7 @@
     ../core/app/tealdeer.nix
     ../core/app/tmux.nix
     ../core/app/vscode.nix
-    # ../core/app/wechat.nix        # timeout
+    # ../core/app/wechat.nix          # timeout (wechat mkdrv is longtime no up)
     ../core/app/wezterm.nix
     ../core/app/xunlei.nix
     ../core/app/zed.nix

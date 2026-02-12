@@ -143,11 +143,11 @@
     "mpv-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1767424032,
-        "narHash": "sha256-RZvCuyh0Arls82/9cnVTYMSBpLEyunlUuQk2fgpzPpM=",
+        "lastModified": 1770667564,
+        "narHash": "sha256-8LQA2BxUw3tg/A6EsZtRee+r+dro9uCEy6EPwY4dzBA=",
         "owner": "Redskaber",
         "repo": "mpv-config",
-        "rev": "2cb15e4c69cc1203a1d083cff9a7b2217d0265a6",
+        "rev": "961f99acfc13231dcbfd5ecd4af9b39fa8da00d8",
         "type": "github"
       },
       "original": {
@@ -217,11 +217,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1770652941,
-        "narHash": "sha256-ZDqBoK8gUjuxYuDrDA61MpvdQB6oVipTi/NwM7RIE2Y=",
+        "lastModified": 1770671471,
+        "narHash": "sha256-XpSArPAk0WwHVB3Lj4/J9eFUTWhjhL9KXSIOPelCENY=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "7d09c3ec564c6a1b9a1924353183648e0ac7ebe8",
+        "rev": "2a64dca9f90414d5cf6d5c49c30aff09dcb709de",
         "type": "github"
       },
       "original": {

@@ -34,10 +34,13 @@ in
       ll = "eza -l --icons=always";
       la = "eza -la --icons=always";
       lt = "eza --tree --icons=always";
+      j = "z";
       # grep = "rg";
       # cat = "bat";
       # top = "btm";
+      # df = duf;
       vi = "nvim";
+      # dotenvrc
       nde = "nvim ./.envrc";
     };
 
@@ -48,7 +51,7 @@ in
       gc = "git commit";
       gp = "git push";
       gl = "git log --oneline";
-      j = "z";  # zoxide
+      # j = "z";  # zoxide
       v = "nvim";
       ".." = "cd ..";
       "..." = "cd ../..";

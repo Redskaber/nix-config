@@ -2,4 +2,7 @@
 tests
 result
 *.log
+\.*
+
+
 
