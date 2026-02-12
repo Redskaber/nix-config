@@ -85,10 +85,6 @@
       };
 
       git = {
-        paging = {
-          colorArg = "always";
-          useConfig = false;  # 优先使用 delta 配置
-        };
         merging = {
           # 智能合并策略
           manualCommit = false;
