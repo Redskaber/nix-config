@@ -37,6 +37,10 @@
       };
     };
 
+    # Ren'Py
+    # Unpryc
+    unrpyc.url = "github:Redskaber/unrpyc";
+
     # Neovim Config
     nvim-config.url = "github:Redskaber/nvim-config";
     nvim-config.flake = false;

@@ -58,6 +58,7 @@
     ../core/app/clash-verge.nix
     ../core/app/discord.nix
     ../core/app/downloader.nix
+    ../core/app/emacs.nix
     ../core/app/google-chrome.nix
     ../core/app/kitty.nix
     ../core/app/lutris.nix
@@ -79,10 +80,17 @@
     ../core/app/img/gimp.nix
     ../core/app/img/imagemagick.nix
     ../core/app/img/imv.nix
+    ../core/app/music/default.nix
+    ../core/app/music/easyeffects.nix
+    ../core/app/music/lx-music.nix
+    ../core/app/music/mpd.nix
+    ../core/app/music/playerctld.nix
+    # ../core/app/music/spotify.nix
     ../core/app/office/pandoc.nix
     ../core/app/office/pdf.nix
     ../core/app/office/unoconv.nix
     ../core/app/office/wps.nix
+    ../core/app/ra
 
     ../theme/qtct.nix
     ../theme/rofi.nix
