@@ -23,7 +23,7 @@
       renpy             # Visual Novel Engine
 
       unrpa             # github package nix
-      inputs.unpryc     # github package nix
+      inputs.unrpyc.packages.x86_64-linux.default # github package nix
       # pyright depands
       nodejs_24
     ];
