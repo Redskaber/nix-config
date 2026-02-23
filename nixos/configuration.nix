@@ -28,7 +28,7 @@
 
     # Import your generated (nixos-generate-config) hardware configuration
     # (move -> boot): ./hardware-configuration.nix
-    # ./core/driver
+    # ./core/drive
 
     # nixos base core configuration
     ./core/bluetooth.nix

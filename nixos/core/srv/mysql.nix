@@ -10,7 +10,13 @@
 , ...
 }:
 {
+  # MYSQL VERSION
   environment.systemPackages = with pkgs; [ mysql84 ];
+  # MYSQLD sservices
+  services.mysql = {
+    enable = true;
+    package = pkgs.mariadb;
+  };
 
 }
 
