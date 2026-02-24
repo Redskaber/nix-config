@@ -49,6 +49,8 @@
     # security
     ./core/security/pam.nix
     ./core/security/polkit.nix
+    ./core/security/secret/age.nix
+    ./core/security/secret/sops.nix
 
     # srv
     ./core/srv/db/mongodb.nix     # Optional
