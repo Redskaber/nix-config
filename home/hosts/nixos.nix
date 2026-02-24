@@ -140,36 +140,6 @@
     stateVersion = "25.11";
   };
 
-  # Add stuff for your user as you see fit:
-  # home.packages = with pkgs; [
-    # network utils
-    #   git bottom tree
-        # curl wget gnupg gdb
-        # valgrind strace ltrace pciutils vulkan-tools mesa
-    # wm-backend
-    #   wl-clipboard
-    # Terminal shell
-    #   wezterm (wrapper->nixgl) kitty (wrapper->nixgl)
-    #   starship zsh fish
-    # Tools
-    #   bat fzf delta yazi
-    #   ripgrep fd eza
-    #   zoxide
-    # Session
-    #   tmux
-    # Env auto-switching
-    #   direnv nix-direnv
-    # Fonts -> core::sys::fonts
-    # Proxy
-    #   clash-verge-rev
-    # Social
-    #   qq wechat mpv steam
-    # Dev
-    #   c/c++,rust,js/ts,python,lua,nix,...
-    # Appimage runtime
-    #   appimage-run
-  # ];
-
   # home-manager:
   programs.home-manager.enable = true;
 

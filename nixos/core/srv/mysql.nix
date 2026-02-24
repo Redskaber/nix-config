@@ -23,7 +23,7 @@
 {
   # LOGGER DIR
   systemd.tmpfiles.rules = [
-    "d /var/log/mysql 0750 mysql mysql - -"
+    "d /var/log/mysql 0755 mysql mysql - -"
   ];
 
   # MYSQL VERSION
