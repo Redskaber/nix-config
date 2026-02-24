@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/nixos/core/srv/postgresql.nix
+# @path: ~/projects/configs/nix-config/nixos/core/srv/db/postgresql.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: nixos::core::srv::postgresql
+# @description: nixos::core::srv::db::postgresql
 # @deploy: 验证安装:
 #   psql -U kilig -d dev -c "\dt"
 #   psql -h 127.0.0.1 -U redskaber -d dev -W   # 密码=1024
@@ -95,8 +95,10 @@
 
       # 日志（开发环境详细，生产环境精简）
       logging_collector = true;
-      log_filename = "postgresql-%Y-%m-%d_%H%M%S.log";
-      log_statement = "all";                    # 生产环境应为 "ddl"，开发环境可设为 "all"
+      log_filename = "postgresql-%Y-%m-%d.log";
+      log_truncate_on_rotation = true;
+      log_rotation_age = "1d";
+      log_statement = "ddl";                    # 生产环境应为 "ddl"，调试环境可设为 "all"
       log_line_prefix = "%m [%p] %q%u@%d ";     # 丰富日志前缀
       log_timezone = "Asia/Shanghai";
 

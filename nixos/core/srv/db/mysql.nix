@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/nixos/core/srv/mysql.nix
+# @path: ~/projects/configs/nix-config/nixos/core/srv/db/mysql.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: nixos::core::srv::mysql - 本地 MySQL 服务配置 (开发环境)
+# @description: nixos::core::srv::db::mysql - 本地 MySQL 服务配置 (开发环境)
 # @usage: 初始化应用用户（首次部署时执行一次）
 #   sudo mysql
 #   CREATE USER 'redskaber'@'localhost' IDENTIFIED BY 'your_secure_password';
@@ -21,10 +21,6 @@
 , ...
 }:
 {
-  # LOGGER DIR
-  systemd.tmpfiles.rules = [
-    "d /var/log/mysql 0755 mysql mysql - -"
-  ];
 
   # MYSQL VERSION
   environment.systemPackages = with pkgs; [
@@ -52,8 +48,8 @@
         innodb_log_file_size    = "256M";
         max_connections     = 100;
         slow_query_log      = true;
-        slow_query_log_file = "/var/log/mysql/slow.log";
-        log-error           = "/var/log/mysql/error.log";
+        slow_query_log_file = "/var/lib/mysql/slow.log";
+        log-error           = "/var/lib/mysql/error.log";
         long_query_time     = 2;                    # 记录超过 2 秒的查询
       };
       client = {
@@ -71,7 +67,6 @@
         name = "kilig";
         ensurePermissions = {
           "dev.*" = "ALL PRIVILEGES";
-          "*.*" = "PROCESS";                # 允许查看进程
         };
       }
     ];

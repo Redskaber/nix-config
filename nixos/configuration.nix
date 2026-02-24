@@ -52,10 +52,12 @@
     ./wm/hyprland
 
     # srv
-    ./core/srv/mongodb.nix
-    ./core/srv/mysql.nix
-    ./core/srv/postgresql.nix
-    ./core/srv/redis.nix
+    ./core/srv/db/mongodb.nix
+    ./core/srv/db/mysql.nix
+    ./core/srv/db/postgresql.nix
+    ./core/srv/db/redis.nix
+
+    ./core/srv/log/logrotate.nix
 
   ];
 

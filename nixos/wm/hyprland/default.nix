@@ -20,7 +20,7 @@
   environment.sessionVariables.NIXOS_OZONE_WL = "1";
   # Used Hyprland cursor
   environment.sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
-  # For Hyprland QT Support
+  # For Hyprland QT Support (Optional)
   environment.sessionVariables.QML_IMPORT_PATH = "${pkgs.hyprland-qt-support}/lib/qt-6/qml";
   # GTK app Wayland
   environment.sessionVariables.GDK_BACKEND = "wayland";

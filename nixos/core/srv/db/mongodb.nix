@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/nixos/core/srv/mongodb.nix
+# @path: ~/projects/configs/nix-config/nixos/core/srv/db/mongodb.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: nixos::core::srv::mongodb
+# @description: nixos::core::srv::db::mongodb
 # @deploy: 首次部署后验证:
 #   mongosh -u root -p <pwd> --authenticationDatabase admin
 #   use admin
