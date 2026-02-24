@@ -40,23 +40,26 @@
     ./core/network.nix
     ./core/nix.nix
     ./core/portal.nix
-    ./core/sound.nix
-    ./core/steam.nix
     ./core/server.nix
+    ./core/sound.nix
+    ./core/steam.nix         # Optional
     ./core/systemd.nix
     ./core/user.nix
-    ./core/virtual.nix
+    ./core/virtual.nix       # Optional
+
+    # security
+    ./core/security/pam.nix
+    ./core/security/polkit.nix
 
     # window manager
     # ./wm/gnome
     ./wm/hyprland
 
-    # srv
+    # srv (Optional)
     ./core/srv/db/mongodb.nix
     ./core/srv/db/mysql.nix
     ./core/srv/db/postgresql.nix
     ./core/srv/db/redis.nix
-
     ./core/srv/log/logrotate.nix
 
   ];

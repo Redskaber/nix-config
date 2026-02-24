@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/nixos/core/security.nix
+# @path: ~/projects/configs/nix-config/nixos/core/security/polkit.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: nixos::core::security
+# @description: nixos::core::security::polkit
 
 
 { inputs
@@ -11,7 +11,6 @@
 , ...
 }:
 {
-  # Security / Polkit
   security = {
     polkit.enable = true;
     polkit.extraConfig = ''
@@ -33,11 +32,7 @@
       })
     '';
   };
-  security.pam.services.swaylock = {
-    text = ''
-      auth include login
-    '';
-  };
+
 
 }
 
