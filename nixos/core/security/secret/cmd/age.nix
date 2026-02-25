@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/nixos/core/security/secret/age.nix
+# @path: ~/projects/configs/nix-config/nixos/core/security/secret/cmd/age.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: nixos::core::security::secret::age
+# @description: nixos::core::security::secret::cmd::age
 
 
 { inputs
