@@ -18,6 +18,8 @@
 }:
 {
 
+  environment.systemPackages = with pkgs; [ gnupg ];
+
   programs.gnupg = {
     package = pkgs.gnupg;
     agent = {
@@ -25,20 +27,15 @@
       enableSSHSupport = true;
       enableExtraSocket = false;
       enableBrowserSocket = false;
-      pinentryPackage = pkgs.pinentry-bemenu;
+      pinentryPackage = pkgs.pinentry-curses;
       # 参考: NIST SP 800-63B 建议 ≤ 15min，桌面体验可适度放宽
-      settings = {
-        default-cache-ttl = 600;          # 30分钟（日常操作舒适区）
-        max-cache-ttl = 3600;             # 1小时（防长时间离席风险）
-        allow-loopback-pinentry = false;  # 默认即 false，显式注释说明
-      };
+      # ssettings
     };
-    dirmngr.enable = false;
+    dirmngr.enable = true;
   };
 
-  services = {
-    gnome.gnome-keyring.enable = true;
-  };
+  # only gnome used
+  # services.gnome.gnome-keyring.enable = true;
 
 }
 
