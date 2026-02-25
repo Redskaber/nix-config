@@ -4,6 +4,11 @@
 # @description: nixos::core::srv::security::keyring
 # - gnupg: https://search.nixos.org/options?channel=25.11&query=programs.gnupg
 # - gnome-keyring: https://search.nixos.org/options?channel=25.11&query=services.gnome.gnome-keyring
+# @usage:
+# - terminal: pinentry-curses
+# - gnome: pinentry-gnome3
+# - hyprland: pinentry-bemenu
+
 
 { inputs
 , config
@@ -20,7 +25,7 @@
       enableSSHSupport = true;
       enableExtraSocket = false;
       enableBrowserSocket = false;
-      pinentryPackage = pkgs.pinentry-curses;
+      pinentryPackage = pkgs.pinentry-bemenu;
       # 参考: NIST SP 800-63B 建议 ≤ 15min，桌面体验可适度放宽
       settings = {
         default-cache-ttl = 600;          # 30分钟（日常操作舒适区）
