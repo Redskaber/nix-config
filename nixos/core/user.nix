@@ -2,6 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-01-13
 # @description: nixos::core::user
+# - log: 2026-02-27: sup `sops-nix` used hashedPasswordFile
 
 
 { inputs
@@ -41,7 +42,10 @@
         # If you do, you can skip setting a root password by passing '--no-root-passwd' to nixos-install.
         # Be sure to change it (using passwd) after rebooting!
         # entry: "nixos-enter --root /mnt -c 'passwd your-username'"
-        initialPassword = "1024";
+        # initialPassword = "1024";
+
+        # Used Sops-nix manager User pwd
+        hashedPasswordFile = config.sops.secrets."nixos/users/kilig/password".path;
       };
     };
   };
