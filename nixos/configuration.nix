@@ -52,6 +52,7 @@
     ./core/security/secret/cmd/age.nix
     ./core/security/secret/cmd/sops.nix
     ./core/security/secret/cmd/ssh-to-age.nix
+    ./core/security/secret/cmd/ssh-to-pgp.nix
     ./core/security/secret/config.nix
 
     # srv
