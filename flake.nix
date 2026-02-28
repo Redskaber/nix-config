@@ -164,26 +164,19 @@
     # These are usually stuff you would upstream into home-manager
     home = import ./export/home;
 
-    # TODO: Temporary, pending design optimization and integration
     # devShells loader
-    # Used:
-    #   home/core/dev/<lang.nix>  ---> this is you single language devshell config
-    #   home/core/dev/default.nix ---> this file you can mutil-language combi devshell config
-    # you can in 'home/core/dev'
-    #   create you single language devshell (
-    #     auto-load, devshell-name == config-name(default is file-name)
-    #     don't used other single-language conbim
-    #   )
-    #   default.nix (auto-load, devshell-name == config-name, and can used single-language conbim)
-    # Temp-Used:
-    #   nix develop <path>#<lang>
-    # Last-Used:
-    #   nix develop <path>#<lang> --profile <last_profile_path>
-    #     - last_profile_path -> nix gc-root ref, don't recycle
-    #     - recommend: /home/<user>/.local/state/nix/profiles/dev/<lang>/<user>-<lang_or_attrsetname>
-    #   if your after don't Last-Used:
-    #     - linux-command: rm <last_profile_path>
-    #       ps: more-link care clear full
+    # USAGE: auto-read and lazy-load
+    #   default-dev-root:
+    #     ./home/core/dev/
+    #   mode:
+    #     dirmode | filemode
+    #   show:
+    #     nix falke show  -> devShells (existed fullnames)
+    #   used:
+    #     nix develop <flake.nix-path>#<fullname>
+    #     # or used profile
+    #     nix develop <profile-path>         # from `nix develop <flake-path>#<fullname> --profile <profile-save-path>`
+    # More: read ./lib/dev
     devShells = forAllSystems devShellsForSystem;
 
     # NixOS configuration entrypoint
