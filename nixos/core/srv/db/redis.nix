@@ -24,7 +24,7 @@
         enable = true;
         port = 6379;
         bind = "127.0.0.1";
-        # group = "Redis";  # auto-created
+        group = "Redis";  # auto-created
         syslog = true;
         # slaveOf = {ip=...,port=...};
         logfile = "/dev/null";

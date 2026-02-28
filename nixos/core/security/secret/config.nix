@@ -2,6 +2,9 @@
 # @author: redskaber
 # @datetime: 2026-01-13
 # @description: nixos::core::security::secret::config
+#
+# By default secrets are owned by root:root.
+# Furthermore the parent directory /run/secrets.d is only owned by root and the keys group has read access to it.
 # {
 #   # Permission modes are in octal representation (same as chmod),
 #   # the digits represent: user|group|others
