@@ -40,6 +40,13 @@
 #   };
 # }
 #
+# | 场景 | 需要的内容 | 工具 |
+# |------|------------|------|
+# | Linux 系统用户密码              | `/etc/shadow` 中的 HASH | `mkpasswd -s`         |
+# | MongoDB initialRootPasswordFile | 明文密码                | 直接写字符串          |
+# | Nginx htpasswd                  | HASH                    | `openssl passwd -apr1`|
+# | PostgreSQL pg_hba.conf          | 明文或 SCRAM            | `postgres` 命令       |
+#
 
 { inputs
 , config
@@ -49,20 +56,34 @@
 }:
 {
   imports = [
-    inputs.sops-nix.nixosModules.sops                           # import sops-nix
+    inputs.sops-nix.nixosModules.sops                             # import sops-nix
   ];
 
   sops = {
-    defaultSopsFile = ../../../../secrets/secrets.yaml;         # relave path (current file)
-    age.generateKey = true;
-    age.keyFile = "/home/kilig/.config/sops/age/keys.txt";      # age publish key file position
-    age.sshKeyPaths = [ "/home/kilig/.ssh/id_ed25519_github" ]; # ssh key path
-    secrets."nixos/users/kilig/password" = {
-      neededForUsers = true;                                    # user create before execute
-      mode = "0400";
-      owner = config.users.users.kilig.name;
-      group = config.users.users.kilig.group;
-      path = "/home/kilig/.config/sops/age/serects/nixos/users/kilig/password";   # symlink
+    # defaultSopsFile = ../../../../secrets/secrets.yaml;         # relave path (current file)
+    age = {
+      generateKey = true;
+      keyFile = "/home/kilig/.config/sops/age/keys.txt";          # age publish key file position
+      sshKeyPaths = [ "/home/kilig/.ssh/id_ed25519_github" ];     # ssh key path
+    };
+    secrets = {
+      "nixos/users/kilig/password" = {
+        neededForUsers = true;                                    # user create before execute
+        format = "yaml";
+        sopsFile = ../../../../secrets/secrets.yaml;
+        mode = "0400";
+        owner = config.users.users.kilig.name;
+        group = config.users.users.kilig.group;
+        path = "/run/secrets-for-users/nixos/users/kilig/password";     # symlink
+      };
+      "nixos/srv/db/mongodb/password" = {
+        format = "yaml";
+        sopsFile = ../../../../secrets/db/mongodb.yaml;
+        mode = "0400";
+        owner = "mongodb";
+        group = "mongodb";
+        path = "/run/secrets/nixos/srv/db/mongodb/password";            # symlink
+      };
     };
   };
 

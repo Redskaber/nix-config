@@ -3,6 +3,5 @@ tests
 result
 *.log
 \.*
-
-
+secrets/origin
 
