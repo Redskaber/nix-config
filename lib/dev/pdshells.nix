@@ -6,7 +6,7 @@
 
 { pkgs, inputs, devDir, suffix ? ".nix", ... }:
 let
-  inherit (import ./mk-shell.nix { inherit pkgs; }) mkDevShell;
+  inherit (import ./mk-pdshell.nix { inherit pkgs; }) mkDevShell;
 
   # == VALIDATION MODULE (pipeline-optimized) ==
   validate = {

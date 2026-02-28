@@ -19,6 +19,7 @@
     combinFrom = [
       dev.c
       dev.cpp
+      dev.go
       dev.java
       dev.javascript
       dev.lua
