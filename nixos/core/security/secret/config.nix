@@ -83,9 +83,25 @@
         format = "yaml";
         sopsFile = ../../../../secrets/db/mongodb.yaml;
         mode = "0400";
-        owner = "mongodb";
-        group = "mongodb";
+        owner = config.users.users.mongodb.name;
+        group = config.users.users.mongodb.group;
         path = "/run/secrets/nixos/srv/db/mongodb/password";            # symlink
+      };
+      "nixos/srv/db/mysql/users/root/password" = {
+        format = "yaml";
+        sopsFile = ../../../../secrets/db/mysql.yaml;
+        mode = "0400";
+        owner = config.users.users.root.name;
+        group = config.users.users.root.group;
+        path = "/run/secrets/nixos/srv/db/mysql/users/root/password";
+      };
+      "nixos/srv/db/mysql/users/kilig/password" = {
+        format = "yaml";
+        sopsFile = ../../../../secrets/db/mysql.yaml;
+        mode = "0440";
+        owner = config.users.users.root.name;
+        group = config.users.users.mysql.group;
+        path = "/run/secrets/nixos/srv/db/mysql/users/kilig/password";
       };
     };
   };

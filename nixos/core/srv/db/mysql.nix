@@ -51,6 +51,7 @@
         slow_query_log_file = "/var/lib/mysql/slow.log";
         log-error           = "/var/lib/mysql/error.log";
         long_query_time     = 2;                    # 记录超过 2 秒的查询
+        secure-file-priv    = config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path;
       };
       client = {
         default-character-set = "utf8mb4";
@@ -61,7 +62,6 @@
       };
     };
     ensureDatabases = [ "dev" ];
-    # 系统用户权限
     ensureUsers = [
       {
         name = "kilig";
@@ -70,6 +70,62 @@
         };
       }
     ];
+  };
+
+
+  # 专用服务：仅处理密码（运行时安全注入）
+  systemd.services.mysql-set-passwords = {
+    description = "Securely set MySQL user passwords from sops secrets";
+    after = [ "mysql.service" ];
+    requires = [ "mysql.service" ];
+    wantedBy = [ "multi-user.target" ];
+
+    path = with pkgs; [ mariadb ];
+    script = ''
+      # 检查是否已设置密码(如果需要已经存在就不再设置则取消注释)
+      # if [ -f /var/lib/mysql/.passwords_set ]; then
+      #   exit 0
+      # fi
+
+      # 等待 MySQL 就绪
+      while ! mysqladmin ping -u root --silent 2>/dev/null; do
+        sleep 0.5
+      done
+
+      # 安全读取密码
+      kilig_pwd=$(tr -d '\n' < ${config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path})
+
+      # 安全设置密码
+      mysql -u root <<SQL_EOF
+      ALTER USER 'kilig'@'localhost'
+        IDENTIFIED VIA mysql_native_password
+        USING PASSWORD('$kilig_pwd');
+      FLUSH PRIVILEGES;
+      SELECT '✅ Passwords secured' AS status;
+      SQL_EOF
+
+      # 创建标记文件
+      touch /var/lib/mysql/.passwords_set
+    '';
+
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      User = "root";
+      Environment = "MYSQL_PWD=";
+      PrivateTmp = true;
+      # 最小权限文件系统视图
+      ReadOnlyDirectories = [ "/" ];
+      # 阻止密码出现在 systemd 日志
+      StandardOutput = "journal";
+      StandardError = "journal";
+      ReadWritePaths = [
+        "/var/lib/mysql"
+        "/run/mysqld"
+      ];
+      ReadOnlyPaths = [ config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path ];
+    };
+    unitConfig.RequiresMountsFor = [ config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path ];
   };
 
 

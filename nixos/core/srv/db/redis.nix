@@ -19,12 +19,12 @@
     package = pkgs.redis;
     vmOverCommit = true;
     servers = {
-      # full-name: redis + <keyname>
+      # full-name: redis + <-keyname>
       "server" = {
         enable = true;
         port = 6379;
         bind = "127.0.0.1";
-        group = "Redis";  # auto-created
+        group = "redis-server";  # auto-created => full-name
         syslog = true;
         # slaveOf = {ip=...,port=...};
         logfile = "/dev/null";
