@@ -11,7 +11,7 @@
 
 { pkgs, inputs, dev, ... }: {
   default = {
-
+    shell = "zsh";
     buildInputs = with pkgs; [
       # gcc                     # GNU toolchain (fallback or specific needs)
       clang                     # Primary C compiler (recommended)

@@ -12,7 +12,7 @@
 
 { pkgs, inputs, dev, ... }: {
   default = {
-
+    shell = "zsh";
     buildInputs = with pkgs; [
       temurin-bin-21      # Eclipse Temurin JDK 21 (LTS, OpenJDK)
       maven               # Build tool

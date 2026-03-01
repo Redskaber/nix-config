@@ -11,7 +11,7 @@
 
 { pkgs, inputs, dev, ... }: {
   default = {
-
+    shell = "zsh";
     buildInputs = with pkgs; [
       nodejs_24                     # Runtime (includes npm)
       pnpm                          # Recommended package manager

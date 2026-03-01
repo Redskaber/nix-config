@@ -13,7 +13,7 @@
 
   # default: (readonly) : used nixos origin link
   default = {
-
+    shell = "zsh";
     # Core runtime & tools
     buildInputs = with pkgs; [
       python312         # Stable, reproducible base interpreter

@@ -11,7 +11,7 @@
 
 { pkgs, inputs, dev, ... }: {
   default = {
-
+    shell = "zsh";
     # === Core Toolchain ===
     buildInputs = with pkgs; [
       zig             # Zig compiler (nixpkgs stable, usually the latest LTS)

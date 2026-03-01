@@ -12,6 +12,7 @@
 { pkgs, inputs, ... }: {
 
   default = {
+    shell = "zsh";
     buildInputs = with pkgs; [
       # Core runtime & tooling
       python312

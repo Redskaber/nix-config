@@ -16,6 +16,7 @@
 
   # (readonly)
   default = {
+    shell = "zsh";
     combinFrom = [
       dev.c
       dev.cpp
@@ -47,6 +48,7 @@
 
   # (custom)
   cpython = {
+    shell = "zsh";
     combinFrom = [
       dev.c
       dev.cpp

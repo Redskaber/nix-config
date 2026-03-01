@@ -11,7 +11,7 @@
 
 { pkgs, inputs, dev, ... }: {
   default = {
-
+    shell = "zsh";
     buildInputs = with pkgs; [
       lua54Packages.lua     # Standard Lua 5.4 (for general scripting)
       luajit                # LuaJIT 2.1 (Lua 5.1 compatible, used by Neovim)

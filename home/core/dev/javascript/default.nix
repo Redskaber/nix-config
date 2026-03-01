@@ -11,7 +11,7 @@
 
 { pkgs, inputs, dev, ... }: {
   default = {
-
+    shell = "zsh";
     buildInputs = with pkgs; [
       nodejs_24               # LTS-ish (Node 24 is current active release)
       yarn                    # Yarn Classic or Berry

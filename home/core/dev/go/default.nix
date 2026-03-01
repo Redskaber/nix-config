@@ -9,6 +9,7 @@
 
 { pkgs, inputs, dev, ... }: {
   default = {
+    shell = "zsh";
     # 🌐 核心工具链（Go 1.22+ 现代标准）
     buildInputs = with pkgs; [
       go

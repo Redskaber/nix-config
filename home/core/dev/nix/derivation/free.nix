@@ -15,7 +15,7 @@
   # === 开源项目构建环境 ===
   # 专注：Nix 表达式开发、PR 审查、社区协作、可复现构建
   default = {
-
+    shell = "zsh";
     buildInputs = with pkgs; [
       nix                          # 核心工具链（含 flakes 支持）
       nixfmt-rfc-style             # RFC 109 官方格式化器

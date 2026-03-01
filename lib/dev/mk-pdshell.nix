@@ -118,6 +118,15 @@ let
       ]
       |> pkgs.lib.filter (s: s != "")
       |> pkgs.lib.concatStringsSep "\n\n";
+
+    fn-execShell = shellHooks: ctx:
+      if (ctx.args ? shell && ctx.args.shell != null) then
+        # Append AFTER all hooks (exec replaces current process)
+        # Note: User must ensure shell is in PATH or absolute path
+        shellHooks + "\n\n# === FINAL SHELL OVERRIDE ===\nexec ${ctx.args.shell}"
+      else
+        shellHooks;
+
   };
 
   # == MERGER MODULE: Idempotent input merging ==
@@ -228,17 +237,19 @@ let
     # Stage 6: Assemble final mkShell parameters
     fn-buildParams = ctx:
       let
-        shellHook = hook.fn-assembleShellHook {
+        baseShellHook = hook.fn-assembleShellHook {
           inheritedShell = ctx.composedHooks.inheritedShell;
           preInputs = ctx.composedHooks.preInputs;
           postInputs = ctx.composedHooks.postInputs;
           preShell = ctx.composedHooks.preShell;
           postShell = ctx.composedHooks.postShell;
         };
+        shellHook = hook.fn-execShell baseShellHook ctx;
         baseParams = builtins.removeAttrs ctx.args [
           "combinFrom"
           "preInputsHook" "postInputsHook" "preShellHook" "postShellHook" "shellHook"
           "preInputsHookFn" "postInputsHookFn" "preShellHookFn" "postShellHookFn"
+          "shell"
         ];
       in ctx // {
         mkShellParams = baseParams // {
@@ -273,6 +284,14 @@ let
     postInputsHookFn ? null,
     preShellHookFn ? null,
     postShellHookFn ? null,
+    # shell ? null:
+    #   Optional final shell override (e.g., "zsh", "/bin/fish", "bash -l")
+    #   • Executes AFTER all hooks via `exec` (replaces current process)
+    #   • ONLY uses TOP-LEVEL value (combinFrom entries IGNORED for safety)
+    #   • If null/omitted: uses mkShell default (typically bash)
+    #   • WARNING: Shell must exist in PATH or be absolute path
+    #   • EXAMPLE: shell = "zsh";  # Enters zsh after all setup
+    shell ? null,
     ...
   } @args:
     # FULL DATAFLOW PIPELINE: Explicit, traceable, maintainable

@@ -18,7 +18,7 @@
 
 { pkgs, inputs, dev, ... }: {
   default = {
-
+    shell = "zsh";
     buildInputs = with pkgs; [
       # Core LLVM toolchain (pure)
       llvmPackages.libcxxClang  # Clang++ preconfigured wrapper

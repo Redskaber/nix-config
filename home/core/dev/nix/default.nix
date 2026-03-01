@@ -13,7 +13,7 @@
 
   # base attrset
   default = {
-
+    shell = "zsh";
     buildInputs = with pkgs; [
       nix                        # Core runtime (with flakes, experimental features)
       nixfmt-rfc-style           # Formatter(RFC 109): Officially endorsed formatter
@@ -48,6 +48,7 @@
   };
 
   derivation-free-security = {
+    shell = "zsh";
     combinFrom = [
       dev.derivation.free
     ];

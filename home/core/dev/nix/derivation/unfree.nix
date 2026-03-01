@@ -14,6 +14,7 @@
   # === 闭源/专有软件构建环境 ===
   # 专注：二进制封装、许可证合规、非自由依赖处理、安全交付
   default = {
+    shell = "zsh";
     buildInputs = with pkgs; [
       nix
       patchelf                     # ELF 二进制重定向（关键！修复 RPATH/interpreter）

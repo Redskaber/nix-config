@@ -12,7 +12,7 @@
 
 { pkgs, inputs, dev, ... }: {
   default = {
-
+    shell = "zsh";
     # Core Rust toolchain (stable, from nixpkgs)
     buildInputs = with pkgs; [
       rustc                # Rust compiler
