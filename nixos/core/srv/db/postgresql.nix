@@ -35,6 +35,7 @@
 #   # 取消注释 systemd.tmpfiles.rules 和 settings.ssl 相关行
 #
 # @verify: 验证部署:
+#   sudo -u postgres psql -U postgres -d postgres -c "\du"
 #   psql -U kilig -d kilig -c "SELECT current_user;"          # peer 认证（无密码）
 #   psql -h 127.0.0.1 -U redskaber -d dev -W                  # TCP + 密码认证(1024)
 #
@@ -125,11 +126,11 @@
     # 初始化脚本：创建应用用户和数据库（幂等）
     # @note: 此脚本仅在首次初始化时执行
     initialScript = pkgs.writeText "app-init.sql" ''
-      -- 创建应用用户（密码=1024，仅开发环境！）
+      -- 创建应用用户
       DO $$ BEGIN
-        CREATE USER redskaber WITH PASSWORD '1024' NOSUPERUSER NOCREATEDB NOCREATEROLE;
+        CREATE USER redskaber WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
       EXCEPTION WHEN duplicate_object THEN
-        RAISE NOTICE 'User redskaber already exists.';
+        RAISE NOTICE 'User redskaber exists (password managed externally)';
       END $$;
 
       -- 创建数据库
@@ -164,15 +165,13 @@
 
     # 确保关键数据库存在（即使 initialScript 失败）
     ensureDatabases = [ "kilig" ];
-
-    # 确保系统用户可访问（peer 认证）
     ensureUsers = [
       {
-        name = "kilig";  # 当前系统用户名
+        name = "kilig";
         ensureDBOwnership = true;
         ensureClauses = {
           login = true;
-          createdb = true;  # 允许创建数据库
+          createdb = true;
         };
       }
       {
@@ -180,7 +179,7 @@
         ensureDBOwnership = false;
         ensureClauses = {
           login = true;
-          # 无 createdb/createrole 权限（最小权限原则）
+          createdb = true;
         };
       }
     ];
@@ -203,9 +202,8 @@
     # ident 映射：允许系统用户映射到 DB 用户
     identMap = ''
       # MapName       SystemUser      DBUser
-      superuser_map    root            postgres
+      superuser_map    postgres        postgres
       superuser_map    kilig           kilig      # 系统用户 kilig      → DB 用户 kilig
-      # appuser_map      redskaber       redskaber  # 系统用户 redskaber  → DB 用户 redskaber
     '';
 
     # 系统调用过滤（增强安全性，生产环境必需）
@@ -218,6 +216,43 @@
       "@debug"      = false;
       "@module"     = false;
     };
+  };
+
+  # 🔒 专用服务：安全注入密码（运行时）
+  systemd.services.postgresql-set-passwords = {
+    description = "Inject PostgreSQL user passwords from sops secrets";
+    after = [ "postgresql.service" ];
+    requires = [ "postgresql.service" ];
+    wantedBy = [ "multi-user.target" ];
+
+    path = with pkgs; [ postgresql ];
+    script = ''
+      while ! pg_isready -q 2>/dev/null; do sleep 0.5; done
+      pwd=$(cat ${config.sops.secrets."nixos/srv/db/postgresql/users/redskaber/password".path})
+
+      psql -d postgres <<SQL_EOF
+      ALTER USER redskaber WITH PASSWORD '$pwd';
+      SELECT '✅ Password injected for redskaber' AS status;
+      SQL_EOF
+    '';
+
+    serviceConfig = {
+      Type = "oneshot";
+      User = "postgres";
+      # 🌐 最小权限三重锁
+      ReadOnlyPaths = [ "${config.sops.secrets."nixos/srv/db/postgresql/users/redskaber/password".path}" ];
+      # 🛡️ 深度加固
+      PrivateTmp = true;
+      NoNewPrivileges = true;
+      CapabilityBoundingSet = "";
+      RestrictAddressFamilies = "AF_UNIX";  # 仅允许 Unix socket
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      StandardOutput = "journal";
+      StandardError = "journal";
+      UMask = "0077";  # 临时文件权限加固
+    };
+    unitConfig.RequiresMountsFor = [ "${config.sops.secrets."nixos/srv/db/postgresql/users/redskaber/password".path}" ];
   };
 
 

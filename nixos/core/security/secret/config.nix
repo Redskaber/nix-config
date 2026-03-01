@@ -103,6 +103,14 @@
         group = config.users.users.mysql.group;
         path = "/run/secrets/nixos/srv/db/mysql/users/kilig/password";
       };
+      "nixos/srv/db/postgresql/users/redskaber/password" = {
+        format = "yaml";
+        sopsFile = ../../../../secrets/db/postgresql.yaml;
+        mode = "0440";
+        owner = config.users.users.root.name;
+        group = config.users.users.postgres.group;
+        path = "/run/secrets/nixos/srv/db/postgresql/users/redskaber/password";
+      };
     };
   };
 
