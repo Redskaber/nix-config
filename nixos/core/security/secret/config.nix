@@ -111,6 +111,15 @@
         group = config.users.users.postgres.group;
         path = "/run/secrets/nixos/srv/db/postgresql/users/redskaber/password";
       };
+      "nixos/srv/db/redis/users/redis-server/password" = {
+        format = "yaml";
+        sopsFile = ../../../../secrets/db/redis.yaml;
+        mode = "0440";
+        owner = config.users.users.root.name;
+        group = config.users.users.redis-server.group;
+        path = "/run/secrets/nixos/srv/db/redis/users/redis-server/password";
+      };
+
     };
   };
 

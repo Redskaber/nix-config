@@ -24,6 +24,7 @@
         enable = true;
         port = 6379;
         bind = "127.0.0.1";
+        user =  "redis-server";
         group = "redis-server";  # auto-created => full-name
         syslog = true;
         # slaveOf = {ip=...,port=...};
@@ -34,6 +35,7 @@
         # openFirewall = true;
         slowLogMaxLen = 128;
         slowLogLogSlowerThan = 10000;
+        requirePassFile = config.sops.secrets."nixos/srv/db/redis/users/redis-server/password".path;
       };
     };
   };
