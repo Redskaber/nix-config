@@ -12,6 +12,11 @@
   ...
 }:
 {
+  environment.systemPackages = with pkgs; [
+    # ssl calc noyify bc
+    openssl libqalculate libnotify bc
+  ];
+
   programs.hyprland.enable = true;
   services.displayManager.gdm.enable = true;
 

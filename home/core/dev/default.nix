@@ -70,5 +70,32 @@
     '';
   };
 
+  godot = {
+    shell = "zsh";
+    combinFrom = [
+      dev.c
+      dev.cpp
+      dev.python
+    ];
+    buildInputs = with pkgs; [ godot ];
+    nativeBuildInputs = with pkgs; [ ];
+
+    preInputsHook = ''
+      echo "[preInputsHook]: godot shell!"
+    '';
+    postInputsHook = ''
+      echo "[postInputsHook]: godot shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: godot shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: godot shell!"
+    '';
+
+  };
+
+
 }
+
 

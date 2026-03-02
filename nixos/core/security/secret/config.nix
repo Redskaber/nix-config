@@ -63,6 +63,7 @@
   ];
 
   sops = {
+    # defaultSopsFormat = "yaml";
     # defaultSopsFile = ../../../../secrets/secrets.yaml;         # relave path (current file)
     age = {
       generateKey = true;
