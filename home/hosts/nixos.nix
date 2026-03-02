@@ -80,12 +80,13 @@
     ../core/app/img/gimp.nix
     ../core/app/img/imagemagick.nix
     ../core/app/img/imv.nix
+
     ../core/app/music
+
     ../core/app/office/pandoc.nix
     ../core/app/office/pdf.nix
     ../core/app/office/unoconv.nix
     ../core/app/office/wps.nix
-    ../core/app/ra
 
     ../theme/qtct.nix
     ../theme/rofi.nix

@@ -54,37 +54,20 @@ let
   # ===== 统一路径定义 (集中管理) =====
   paths = {
     musicDir    = "${config.home.homeDirectory}/Music";         # 主音乐库目录
-    mpdData     = "${config.xdg.dataHome}/mpd";                 # MPD 核心数据
-    playlists   = "${config.xdg.dataHome}/mpd/playlists";       # 播放列表存储
-    tagCache    = "${config.xdg.dataHome}/mpd/tag_cache";       # 音乐数据库
-    lyrics      = "${config.xdg.dataHome}/lyrics";              # 歌词存储
-    visualizerFifo = "/tmp/mpd.fifo";                           # 音频可视化管道
-    spotifyCache = "${config.xdg.cacheHome}/spotifyd";          # Spotify 缓存
-    ncspotCache  = "${config.xdg.cacheHome}/ncspot";            # ncspot 缓存
   };
 in
 {
   # ===== 目录初始化 =====
-  home.activation.ensureMpdDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    # 创建 MPD 核心目录
-    mkdir -p "${paths.mpdData}"
-    mkdir -p "${paths.playlists}"
-    mkdir -p "${paths.lyrics}"
-
+  home.activation.ensureMusicDir = lib.hm.dag.entryAfter ["writeBoundary"] ''
     # 创建音乐库目录
     mkdir -p "${paths.musicDir}"
-
-    # 创建 Spotify 缓存目录
-    mkdir -p "${paths.spotifyCache}"
-    mkdir -p "${paths.ncspotCache}"
-
-    # 设置安全权限
-    chmod 755 "${paths.mpdData}"
-    chmod 755 "${paths.lyrics}"
-    # chmod 755 "${paths.spotifyCache}"
-    # chmod 755 "${paths.ncspotCache}"
   '';
 
+  # ===== XDG 用户目录规范 =====
+  xdg.userDirs = {
+    enable = true;
+    music = paths.musicDir;  # 标准化音乐目录位置
+  };
 
   # ===== 实用工具包 =====
   home.packages = with pkgs; [

@@ -21,11 +21,13 @@ let
   };
 in
 {
-  # ===== XDG 用户目录规范 =====
-  xdg.userDirs = {
-    enable = true;
-    music = paths.musicDir;  # 标准化音乐目录位置
-  };
+  # ===== 目录初始化 =====
+  home.activation.ensureMpdDirs = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    # 创建 MPD 核心目录
+    mkdir -p "${paths.mpdData}"
+    mkdir -p "${paths.playlists}"
+    mkdir -p "${paths.lyrics}"
+  '';
 
   # ===== 实用工具包 =====
   home.packages = with pkgs; [
