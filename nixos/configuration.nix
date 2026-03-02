@@ -39,6 +39,7 @@
     ./core/memory.nix
     ./core/network.nix
     ./core/nix.nix
+    ./core/obs.nix                # Optional
     ./core/portal.nix
     ./core/sound.nix
     ./core/steam.nix              # Optional
