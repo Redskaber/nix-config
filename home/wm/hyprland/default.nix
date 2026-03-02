@@ -21,6 +21,7 @@
   home.packages = with pkgs; [
     # Hyprland Stuff
     hypridle
+    hyprlock
     hyprpolkitagent
     pyprland
     #uwsm

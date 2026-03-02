@@ -13,8 +13,11 @@
 }:
 {
   environment.systemPackages = with pkgs; [
-    # ssl calc noyify bc
-    openssl libqalculate libnotify bc
+    openssl       # rain-border dep
+    libqalculate  # clac allocate dep
+    libnotify     # notify dep
+    bc            # wallpaper select dep
+    mpvpaper      # mp4 wallpaper dep
   ];
 
   programs.hyprland.enable = true;

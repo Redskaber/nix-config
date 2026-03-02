@@ -94,13 +94,13 @@ in
     yt-dlp           # 音频下载工具 (yt-dlp -x --audio-format mp3 url)
   ];
 
-  # imports = [
-  #   ./easyeffects.nix
-  #   ./lx-music.nix
-  #   ./mpd.nix
-  #   ./playerctld.nix
-  #   ./spotify.nix
-  # ];
+  imports = [
+    ./easyeffects.nix
+    ./lx-music.nix
+    ./mpd.nix
+    ./playerctld.nix
+    ./spotify.nix
+  ];
 
 
 }

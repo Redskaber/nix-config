@@ -3,5 +3,8 @@ tests
 result
 *.log
 \.*
+
 secrets/origin
+TODO
+todo
 
