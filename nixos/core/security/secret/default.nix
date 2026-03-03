@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/nixos/core/security/secret/config.nix
+# @path: ~/projects/configs/nix-config/nixos/core/security/secret/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: nixos::core::security::secret::config
+# @description: nixos::core::security::secret::default
 #
 # By default secrets are owned by root:root.
 # Furthermore the parent directory /run/secrets.d is only owned by root and the keys group has read access to it.
@@ -60,6 +60,10 @@
 {
   imports = [
     inputs.sops-nix.nixosModules.sops                             # import sops-nix
+    ./cmd/age.nix
+    ./cmd/sops.nix
+    ./cmd/ssh-to-age.nix
+    ./cmd/ssh-to-pgp.nix
   ];
 
   sops = {

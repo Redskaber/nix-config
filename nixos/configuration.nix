@@ -25,56 +25,11 @@
 
     # You can also split up your configuration and import pieces of it here:
     # ./users.nix
-
     # Import your generated (nixos-generate-config) hardware configuration
-    # (move -> boot): ./hardware-configuration.nix
-    # ./core/drive
-
     # nixos base core configuration
-    ./core/bluetooth.nix
-    ./core/boot.nix
-    ./core/compat.nix
-    ./core/hardware.nix
-    ./core/i18n.nix
-    ./core/memory.nix
-    ./core/network.nix
-    ./core/nix.nix
-    ./core/obs.nix                # Optional
-    ./core/portal.nix
-    ./core/sound.nix
-    ./core/steam.nix              # Optional
-    ./core/systemd.nix
-    ./core/user.nix
-    ./core/virtual.nix            # Optional
-
-    # security
-    ./core/security/pam.nix
-    ./core/security/polkit.nix
-    ./core/security/secret/cmd/age.nix
-    ./core/security/secret/cmd/sops.nix
-    ./core/security/secret/cmd/ssh-to-age.nix
-    ./core/security/secret/cmd/ssh-to-pgp.nix
-    ./core/security/secret/config.nix
-
-    # srv
-    ./core/srv/db/mongodb.nix     # Optional
-    ./core/srv/db/mysql.nix       # Optional
-    ./core/srv/db/postgresql.nix  # Optional
-    ./core/srv/db/redis.nix       # Optional
-    ./core/srv/desktop/file-manage.nix
-    ./core/srv/desktop/flatpak.nix
-    ./core/srv/hardware/bluetooth.nix
-    ./core/srv/hardware/firmware.nix
-    ./core/srv/hardware/power.nix
-    ./core/srv/hardware/printing.nix
-    ./core/srv/hardware/storage.nix
-    ./core/srv/log/logrotate.nix  # Optional
-    ./core/srv/security/keyring.nix
-    ./core/srv/security/ssh.nix
-
+    ./core
     # window manager
-    # ./wm/gnome
-    ./wm/hyprland
+    ./wm
 
   ];
 
@@ -129,5 +84,7 @@
 
   system.stateVersion = "25.11"; # Did you read the comment?
 
+
 }
+
 
