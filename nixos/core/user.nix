@@ -30,7 +30,7 @@
           "wheel"             # Sudo
           "networkmanager"    # Network
           "video"             # GPU (hardware)
-          "libvirtd"
+          "libvirtd"          # Virtual
           "scanner"           # Scanner
           "lp"                # Printer
           "input"             # Inputer (Gaming Box ...)
