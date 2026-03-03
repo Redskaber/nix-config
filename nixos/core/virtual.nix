@@ -158,12 +158,6 @@
     # Waydroid - Android应用
     waydroid = {
       enable = true;
-      # 对于AMD GPU，通常不需要特殊配置
-      # 对于NVIDIA GPU，需要配置:
-      # extraProperties = lib.optionalAttrs (config.hardware.graphics.nvidia) {
-      #   "ro.hardware.gralloc" = "default";
-      #   "ro.hardware.egl" = "swiftshader";
-      # };
     };
 
     # 容器策略
