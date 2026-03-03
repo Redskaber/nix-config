@@ -1,0 +1,23 @@
+# @path: ~/projects/configs/nix-config/home/wm/default.nix
+# @author: redskaber
+# @datetime: 2026-03-04
+# @description: home::wm::default
+
+
+
+{ inputs
+, lib
+, config
+, pkgs
+, ...
+}:
+{
+
+  imports = [
+    ./hyprland
+  ];
+
+
+}
+
+
