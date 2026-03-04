@@ -4,13 +4,14 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.obsidian.enable
 
 
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
 
   home.packages = with pkgs; [ obsidian ];
 }

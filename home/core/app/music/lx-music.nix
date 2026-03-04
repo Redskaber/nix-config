@@ -4,6 +4,7 @@
 # @description: home::core::app::music::lx-music
 
 { inputs
+, shared
 , lib
 , config
 , pkgs

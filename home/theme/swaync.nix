@@ -6,12 +6,12 @@
 # - Notification Center and Notification Daemon for wayland
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
 

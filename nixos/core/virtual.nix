@@ -5,6 +5,7 @@
 
 
 { inputs
+, shared
 , config
 , lib
 , pkgs
@@ -12,7 +13,7 @@
 }:
 {
   # Add user to libvirtd incus-admin waydroid group
-  users.users.kilig.extraGroups = [ "libvirtd" "incus-admin" "waydroid" ];
+  users.users.${shared.user.username}.extraGroups = [ "libvirtd" "incus-admin" "waydroid" ];
 
   ## For AMD CPU, add "kvm-amd" to kernelModules.
   # boot.kernelModules = ["kvm-amd"];

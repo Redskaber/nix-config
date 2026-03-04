@@ -4,14 +4,14 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.tmux.enable
 
 
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
-
   programs.tmux.enable = true;
 
   # Used user config:

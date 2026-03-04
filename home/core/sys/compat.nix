@@ -4,12 +4,12 @@
 # @diractory: home::core::sys::compat
 # - appimage-run: used run appimage
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
 

@@ -4,12 +4,12 @@
 # @description: nixos::wm::hyprland
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   environment.systemPackages = with pkgs; [

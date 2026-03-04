@@ -3,12 +3,12 @@
 # @datetime: 2025-12-12
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   home.packages = [

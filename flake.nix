@@ -131,6 +131,9 @@
       # pass to it, with each system as an argument
       forAllSystems = nixpkgs.lib.genAttrs systems;
 
+      # User-Shared Config
+      shared = import ./lib/shared;
+
       # Helper: load all dev modules for a system
       devShellsForSystem = system:
         let
@@ -143,6 +146,7 @@
     # debug information
     # Available through 'nix eval .#debug.test_forAllSystems'
     debug.test_forAllSystems = forAllSystems (system: "Hello from ${system}");
+    debug.test_shared = shared;
 
     # Your custom packages
     # Accessible through 'nix build', 'nix shell', etc
@@ -182,7 +186,7 @@
     nixosConfigurations = {
       # FIXME: replace with your hostname
       kilig-nixos = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; };
+        specialArgs = { inherit inputs shared; };
         # > Our main nixos configuration file <
         modules = [ ./nixos/configuration.nix ];
       };
@@ -198,13 +202,13 @@
         # Home-manager requires 'pkgs' instance
         # FIXME replace x86_64-linux with your architecure
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        extraSpecialArgs = { inherit inputs; };
+        extraSpecialArgs = { inherit inputs shared; };
         # > Out main home-manager configuration file <
         modules = [ ./home/hosts/linux.nix ];
       };
       "kilig@nixos" = home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        extraSpecialArgs = { inherit inputs; };
+        extraSpecialArgs = { inherit inputs shared; };
         modules = [ ./home/hosts/nixos.nix ];
       };
     };

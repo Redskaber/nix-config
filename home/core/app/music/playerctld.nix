@@ -4,6 +4,7 @@
 # @description: home::core::app::music::playerctld
 
 { inputs
+, shared
 , lib
 , config
 , pkgs

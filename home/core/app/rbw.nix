@@ -4,20 +4,20 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.rbw.enable
 
 
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
-
   programs.rbw = {
     enable = true;
     settings = {
       # core config
-      email = "alexredskaber@gmail.com";
-      lock_timeout = 600; # sec
+      email = shared.rbw.email;
+      lock_timeout = shared.rbw.lock_timeout; # sec
 
       # server config
       # base_url = "https://vault.yourdomain.com";

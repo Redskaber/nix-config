@@ -4,14 +4,14 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.neovide.enable
 
 
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
-
   programs.neovim = {
     enable = true;
     defaultEditor = true;

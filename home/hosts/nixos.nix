@@ -8,20 +8,18 @@
 # This is your home-manager configuration file
 # Use this to configure your home environment (it replace ~/.config/nixpkgs/home.nix)
 { inputs
+, shared
 , lib
 , config
 , pkgs
 , ...
 }:
 {
-  # TODO: Set your username
   home = {
-    username = "kilig";
-    homeDirectory = "/home/kilig";
-    stateVersion = "25.11";
+    username = shared.user.username;
+    homeDirectory = "/home/${shared.user.username}";
+    stateVersion = shared.version;
   };
-
-  # home-manager:
   programs.home-manager.enable = true;
 
   # You can import other home-manager modules here

@@ -6,6 +6,7 @@
 # @depends: eza, zoxide, direnv
 
 { inputs
+, shared
 , lib
 , config
 , pkgs
@@ -72,8 +73,8 @@ in
 
     # share session variable configured
     sessionVariables = {
-      EDITOR = "nvim";
-      VISUAL = "nvim";
+      EDITOR = shared.editor;
+      VISUAL = shared.editor;
     };
 
     # Login-time welcome message

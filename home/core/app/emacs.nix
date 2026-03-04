@@ -4,12 +4,12 @@
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml#opt-programs.emacs.enable
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
 

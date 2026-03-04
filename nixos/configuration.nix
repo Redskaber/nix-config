@@ -8,6 +8,7 @@
 
 
 { inputs
+, shared
 , config
 , lib
 , pkgs
@@ -82,7 +83,7 @@
   # accidentally delete configuration.nix.
   # system.copySystemConfiguration = true;
 
-  system.stateVersion = "25.11"; # Did you read the comment?
+  system.stateVersion = shared.version; # Did you read the comment?
 
 
 }

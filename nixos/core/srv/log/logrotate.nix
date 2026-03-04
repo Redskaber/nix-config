@@ -8,6 +8,7 @@
 # - and delete old logs to prevent the disk from being filled with log files.
 
 { inputs
+, shared
 , lib
 , config
 , pkgs

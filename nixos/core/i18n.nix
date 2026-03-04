@@ -5,6 +5,7 @@
 
 
 { inputs
+, shared
 , config
 , lib
 , pkgs
@@ -14,8 +15,8 @@
   # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   # Set TimeZone
   time.hardwareClockInLocalTime = false;
-  time.timeZone = "Asia/Shanghai";
-  # services.automatic-timezoned.enable = true; # based on IP location
+  time.timeZone = shared.time.timeZone;
+  services.automatic-timezoned.enable = shared.time.used-ip-timeZone; # based on IP location
 
   # Set I18n
   i18n = {

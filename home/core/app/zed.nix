@@ -4,6 +4,7 @@
 # @description: home::core::app::zed
 
 { inputs
+, shared
 , lib
 , config
 , pkgs

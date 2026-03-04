@@ -4,6 +4,7 @@
 # @description: home::core::app::music::mpd
 
 { inputs
+, shared
 , lib
 , config
 , pkgs

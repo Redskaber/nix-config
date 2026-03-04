@@ -4,12 +4,12 @@
 # @description: home::core::app::office::pandoc
 # - Conversion between documentation formats
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   home.packages = with pkgs; [

@@ -5,6 +5,7 @@
 
 
 { inputs
+, shared
 , config
 , lib
 , pkgs
@@ -12,8 +13,7 @@
 }:
 {
   networking = {
-    # TODO: Set your hostname
-    hostName = "nixos";
+    hostName = shared.hostName;
 
     # Use: 'nmcli' or 'nmtui'
     networkmanager.enable = true;

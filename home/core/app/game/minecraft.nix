@@ -5,13 +5,14 @@
 # - prismlauncher: free, open source
 
 
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
 
   home.packages = with pkgs; [ prismlauncher ];
 

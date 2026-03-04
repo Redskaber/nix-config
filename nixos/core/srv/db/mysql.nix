@@ -15,6 +15,7 @@
 # @note: 生产环境请使用 sops-nix 管理密码，开发环境可记录在 .env 文件
 
 { inputs
+, shared
 , lib
 , config
 , pkgs
@@ -64,7 +65,7 @@
     ensureDatabases = [ "dev" ];
     ensureUsers = [
       {
-        name = "kilig";
+        name = shared.user.username;
         ensurePermissions = {
           "dev.*" = "ALL PRIVILEGES";
         };
@@ -93,13 +94,13 @@
       done
 
       # 安全读取密码
-      kilig_pwd=$(tr -d '\n' < ${config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path})
+      safe_pwd=$(tr -d '\n' < ${config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path})
 
       # 安全设置密码
       mysql -u root <<SQL_EOF
-      ALTER USER 'kilig'@'localhost'
+      ALTER USER '${shared.user.username}'@'localhost'
         IDENTIFIED VIA mysql_native_password
-        USING PASSWORD('$kilig_pwd');
+        USING PASSWORD('$safe_pwd');
       FLUSH PRIVILEGES;
       SELECT '✅ Passwords secured' AS status;
       SQL_EOF

@@ -4,12 +4,12 @@
 # @description: home::core::app::office::unoconv
 # - Convert between any document format supported by LibreOffice/OpenOffice
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   home.packages = with pkgs; [ unoconv ];

@@ -9,6 +9,7 @@
 # - warining: nix-ld un-sup 32 bit app
 
 { inputs
+, shared
 , config
 , lib
 , pkgs

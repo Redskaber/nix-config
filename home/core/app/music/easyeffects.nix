@@ -4,6 +4,7 @@
 # @description: home::core::app::music::easyeffects
 
 { inputs
+, shared
 , lib
 , config
 , pkgs

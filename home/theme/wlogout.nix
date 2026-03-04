@@ -6,12 +6,12 @@
 #   Wayland desktop environments (such as Hyprland and Sway).
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
 

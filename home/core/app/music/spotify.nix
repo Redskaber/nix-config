@@ -4,6 +4,7 @@
 # @description: home::core::app::music::spotify
 
 { inputs
+, shared
 , lib
 , config
 , pkgs

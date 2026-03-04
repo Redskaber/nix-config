@@ -6,8 +6,9 @@
 # @depends: eza, zoxide, fzf, fisher, bat, ripgrep
 
 { inputs
-, config
+, shared
 , lib
+, config
 , pkgs
 , ...
 }:
@@ -23,8 +24,8 @@ in
 
     # session variables
     shellInit = ''
-      set -gx EDITOR nvim
-      set -gx VISUAL nvim
+      set -gx EDITOR ${shared.editor}
+      set -gx VISUAL ${shared.editor}
       set -gx PAGER less
     '';
 

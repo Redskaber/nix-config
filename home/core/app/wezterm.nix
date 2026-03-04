@@ -4,14 +4,14 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.wezterm.enable
 
 
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
-
   programs.wezterm = {
     enable = true;
     enableZshIntegration = true;  # auto (source wezterm.sh)

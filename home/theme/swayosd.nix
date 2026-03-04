@@ -6,12 +6,12 @@
 #   Wayland (wlroots-based synthesizers such as Hyprland and Sway).
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   home.packages = with pkgs; [ swayosd ];

@@ -4,14 +4,14 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-services.mako.enable
 
 
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
+}:
 {
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
-}: {
-
   services.mako = {
     # enable = true;
     settings = {

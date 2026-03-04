@@ -46,6 +46,7 @@
 
 
 { inputs
+, shared
 , lib
 , config
 , pkgs
@@ -101,7 +102,7 @@
       log_rotation_age = "1d";
       log_statement = "ddl";                    # 生产环境应为 "ddl"，调试环境可设为 "all"
       log_line_prefix = "%m [%p] %q%u@%d ";     # 丰富日志前缀
-      log_timezone = "Asia/Shanghai";
+      log_timezone = shared.time.timeZone;      # "Asia/Shanghai"
 
       # 本地化
       default_text_search_config = "pg_catalog.english";
@@ -164,10 +165,10 @@
     '';
 
     # 确保关键数据库存在（即使 initialScript 失败）
-    ensureDatabases = [ "kilig" ];
+    ensureDatabases = [ shared.user.username ];
     ensureUsers = [
       {
-        name = "kilig";
+        name = shared.user.username;
         ensureDBOwnership = true;
         ensureClauses = {
           login = true;
@@ -203,7 +204,7 @@
     identMap = ''
       # MapName       SystemUser      DBUser
       superuser_map    postgres        postgres
-      superuser_map    kilig           kilig      # 系统用户 kilig      → DB 用户 kilig
+      superuser_map    ${shared.user.username}           ${shared.user.username}      # 系统用户 kilig      → DB 用户 kilig
     '';
 
     # 系统调用过滤（增强安全性，生产环境必需）

@@ -6,8 +6,9 @@
 
 
 { inputs
-, config
+, shared
 , lib
+, config
 , pkgs
 , ...
 }:

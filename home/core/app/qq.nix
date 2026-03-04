@@ -3,12 +3,12 @@
 # @datetime: 2025-12-12
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 # let
   # qq = config.lib.nixGL.wrap pkgs.qq; # non-nixos

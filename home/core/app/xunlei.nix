@@ -4,12 +4,12 @@
 # @description: home::core::app::xunlei
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   home.packages = with pkgs; [ xunlei-uos ];

@@ -4,12 +4,12 @@
 # @description: home::core::app::office::wps
 # - Office suite, formerly Kingsoft Office
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   home.packages = with pkgs; [ wpsoffice ];

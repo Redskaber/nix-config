@@ -4,12 +4,12 @@
 # @description: Lightweight screen lock tool designed specifically for the Wayland display protocol
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   programs.swaylock = {

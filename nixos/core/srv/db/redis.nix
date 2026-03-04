@@ -7,6 +7,7 @@
 #   PONG
 
 { inputs
+, shared
 , lib
 , config
 , pkgs

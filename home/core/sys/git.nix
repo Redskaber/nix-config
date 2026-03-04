@@ -6,6 +6,7 @@
 
 
 { inputs
+, shared
 , lib
 , config
 , pkgs
@@ -16,13 +17,13 @@
     enable = true;
     settings = {
       init = {
-        defaultBranch = "main";
+        defaultBranch = shared.git.defaultBranch;
       };
       user = {
-        name = "redskaber";
-	      email = "redskaber@foxmail.com";
+        name = shared.git.name;
+	      email = shared.git.email;
       };
-      core.editor = "nvim";
+      core.editor = shared.editor;
       pull.rebase = true;
       push.autoSetupRemote = true;
     };
@@ -99,7 +100,7 @@
         editCommandTemplate = "";
       };
     };
-    shellWrapperName = "lg";  # 通过 `lg` 命令启动
+    shellWrapperName = shared.git.lazygit.name;  # 通过 `lg` 命令启动
     package = pkgs.lazygit;
   };
 

@@ -5,12 +5,12 @@
 # - Modern wallpaper and color scheme generator
 
 
-{
-  inputs,
-  lib,
-  config,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
 

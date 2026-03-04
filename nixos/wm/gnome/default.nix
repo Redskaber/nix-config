@@ -4,12 +4,12 @@
 # @description: nixos::wm::gnome
 
 
-{
-  inputs,
-  config,
-  lib,
-  pkgs,
-  ...
+{ inputs
+, shared
+, lib
+, config
+, pkgs
+, ...
 }:
 {
   # Enable Gnome
