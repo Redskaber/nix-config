@@ -135,12 +135,9 @@
       devShellsForSystem = system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-        in
-        import ./lib/dev/pdshells.nix {
-          inherit pkgs inputs;
           devDir = ./home/core/dev;
-          # suffix = ".nix"                     # default suffix
-        };
+        in
+        import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
     in
   {
     # debug information

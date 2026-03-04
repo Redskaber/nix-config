@@ -293,7 +293,7 @@ let
     #   • EXAMPLE: shell = "zsh";  # Enters zsh after all setup
     shell ? null,
     ...
-  } @args:
+  } @ args:
     # FULL DATAFLOW PIPELINE: Explicit, traceable, maintainable
     args
     |> pipeline.fn-initContext
