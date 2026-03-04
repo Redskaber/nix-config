@@ -68,66 +68,64 @@
   ];
 
   sops = {
-    # defaultSopsFormat = "yaml";
-    # defaultSopsFile = ../../../../secrets/secrets.yaml;         # relave path (current file)
     age = {
       generateKey = true;
-      keyFile = "/home/kilig/.config/sops/age/keys.txt";          # age publish key file position
-      sshKeyPaths = [ "/home/kilig/.ssh/id_ed25519_github" ];     # ssh key path
+      keyFile = "/var/lib/sops/age/key";                          # age publish key file position 600
+      sshKeyPaths = shared.secrets.sshKeyPaths;
     };
     secrets = {
-      "nixos/users/kilig/password" = {
+      ${shared.secrets.user-password} = {
         neededForUsers = true;                                    # user create before execute
         format = "yaml";
         sopsFile = ../../../../secrets/secrets.yaml;
         mode = "0400";
-        owner = config.users.users.kilig.name;
-        group = config.users.users.kilig.group;
-        path = "/run/secrets-for-users/nixos/users/kilig/password";     # symlink
+        owner = config.users.users.root.name;
+        group = config.users.users.root.group;
+        path = "/run/secrets-for-users/${shared.secrets.user-password}";     # symlink
       };
-      "nixos/srv/db/mongodb/password" = {
+      ${shared.secrets.srv.db.mongodb-password} = {
         format = "yaml";
         sopsFile = ../../../../secrets/db/mongodb.yaml;
         mode = "0400";
         owner = config.users.users.mongodb.name;
         group = config.users.users.mongodb.group;
-        path = "/run/secrets/nixos/srv/db/mongodb/password";            # symlink
+        path = "/run/secrets/${shared.secrets.srv.db.mongodb-password}";      # symlink
       };
-      "nixos/srv/db/mysql/users/root/password" = {
+      ${shared.secrets.srv.db.mysql-root-password} = {
         format = "yaml";
         sopsFile = ../../../../secrets/db/mysql.yaml;
         mode = "0400";
         owner = config.users.users.root.name;
         group = config.users.users.root.group;
-        path = "/run/secrets/nixos/srv/db/mysql/users/root/password";
+        path = "/run/secrets/${shared.secrets.srv.db.mysql-root-password}";
       };
-      "nixos/srv/db/mysql/users/kilig/password" = {
+      ${shared.secrets.srv.db.mysql-user-password} = {
         format = "yaml";
         sopsFile = ../../../../secrets/db/mysql.yaml;
         mode = "0440";
         owner = config.users.users.root.name;
         group = config.users.users.mysql.group;
-        path = "/run/secrets/nixos/srv/db/mysql/users/kilig/password";
+        path = "/run/secrets/${shared.secrets.srv.db.mysql-user-password}";
       };
-      "nixos/srv/db/postgresql/users/redskaber/password" = {
+      ${shared.secrets.srv.db.postgresql-appuser-password} = {
         format = "yaml";
         sopsFile = ../../../../secrets/db/postgresql.yaml;
         mode = "0440";
         owner = config.users.users.root.name;
         group = config.users.users.postgres.group;
-        path = "/run/secrets/nixos/srv/db/postgresql/users/redskaber/password";
+        path = "/run/secrets/${shared.secrets.srv.db.postgresql-appuser-password}";
       };
-      "nixos/srv/db/redis/users/redis-server/password" = {
+      ${shared.secrets.srv.db.redis-redis-server-password} = {
         format = "yaml";
         sopsFile = ../../../../secrets/db/redis.yaml;
         mode = "0440";
         owner = config.users.users.root.name;
         group = config.users.users.redis-server.group;
-        path = "/run/secrets/nixos/srv/db/redis/users/redis-server/password";
+        path = "/run/secrets/${shared.secrets.srv.db.redis-redis-server-password}";
       };
-
     };
   };
+
 
 }
 

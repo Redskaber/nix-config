@@ -52,7 +52,7 @@
         slow_query_log_file = "/var/lib/mysql/slow.log";
         log-error           = "/var/lib/mysql/error.log";
         long_query_time     = 2;                    # 记录超过 2 秒的查询
-        secure-file-priv    = config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path;
+        secure-file-priv    = config.sops.secrets.${shared.secrets.srv.db.mysql-root-password}.path;
       };
       client = {
         default-character-set = "utf8mb4";
@@ -75,7 +75,7 @@
 
 
   # 专用服务：仅处理密码（运行时安全注入）
-  systemd.services.mysql-set-passwords = {
+  systemd.services.mysql-set-user-passwords = {
     description = "Securely set MySQL user passwords from sops secrets";
     after = [ "mysql.service" ];
     requires = [ "mysql.service" ];
@@ -94,13 +94,13 @@
       done
 
       # 安全读取密码
-      safe_pwd=$(tr -d '\n' < ${config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path})
+      user_pwd=$(tr -d '\n' < ${config.sops.secrets.${shared.secrets.srv.db.mysql-user-password}.path})
 
       # 安全设置密码
       mysql -u root <<SQL_EOF
       ALTER USER '${shared.user.username}'@'localhost'
         IDENTIFIED VIA mysql_native_password
-        USING PASSWORD('$safe_pwd');
+        USING PASSWORD('$user_pwd');
       FLUSH PRIVILEGES;
       SELECT '✅ Passwords secured' AS status;
       SQL_EOF
@@ -124,9 +124,9 @@
         "/var/lib/mysql"
         "/run/mysqld"
       ];
-      ReadOnlyPaths = [ config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path ];
+      ReadOnlyPaths = [ config.sops.secrets.${shared.secrets.srv.db.mysql-user-password}.path ];
     };
-    unitConfig.RequiresMountsFor = [ config.sops.secrets."nixos/srv/db/mysql/users/kilig/password".path ];
+    unitConfig.RequiresMountsFor = [ config.sops.secrets.${shared.secrets.srv.db.mysql-user-password}.path ];
   };
 
 

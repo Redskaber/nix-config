@@ -13,14 +13,17 @@
 , ...
 }:
 {
+  programs.${shared.user.shell}.enable = true;
+
   # TODO: Configure your system-wide user settings (groups, etc), add more users as needed.
   users = {
     mutableUsers = false;
-    #defaultUserShell = pkgs.zsh;
+    defaultUserShell = pkgs.${shared.user.shell};
     users = {
       ${shared.user.username} = {
         homeMode = "755";
         isNormalUser = true;
+        useDefaultShell = true;
         description = shared.user.username;
         # TODO: Add your SSH public key(s) here, if you plan on using SSH to connect
         openssh.authorizedKeys.keys = shared.user.openssh-authKeys;
@@ -36,7 +39,6 @@
           "input"             # Inputer (Gaming Box ...)
           "audio"             # GPU (/dev/dri ...)
         ];
-        shell = pkgs.${shared.user.shell};
         packages = with pkgs; [  ];
         # TODO: You can set an initial password for your user.
         # If you do, you can skip setting a root password by passing '--no-root-passwd' to nixos-install.
@@ -45,13 +47,12 @@
         # initialPassword = "1024";
 
         # Used Sops-nix manager User pwd
-        hashedPasswordFile = config.sops.secrets."nixos/users/kilig/password".path;
+        hashedPasswordFile = config.sops.secrets.${shared.secrets.user-password}.path;
       };
     };
   };
 
   security.sudo.enable = true;    # wheel
-  programs.${shared.user.shell}.enable = true;
 
 
 }

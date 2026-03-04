@@ -36,10 +36,11 @@
         # openFirewall = true;
         slowLogMaxLen = 128;
         slowLogLogSlowerThan = 10000;
-        requirePassFile = config.sops.secrets."nixos/srv/db/redis/users/redis-server/password".path;
+        requirePassFile = config.sops.secrets.${shared.secrets.srv.db.redis-redis-server-password}.path;
       };
     };
   };
+
 
 }
 

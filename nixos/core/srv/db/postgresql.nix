@@ -229,7 +229,7 @@
     path = with pkgs; [ postgresql ];
     script = ''
       while ! pg_isready -q 2>/dev/null; do sleep 0.5; done
-      pwd=$(cat ${config.sops.secrets."nixos/srv/db/postgresql/users/redskaber/password".path})
+      pwd=$(cat ${config.sops.secrets.${shared.secrets.srv.db.postgresql-appuser-password}.path})
 
       psql -d postgres <<SQL_EOF
       ALTER USER redskaber WITH PASSWORD '$pwd';
@@ -241,7 +241,7 @@
       Type = "oneshot";
       User = "postgres";
       # 🌐 最小权限三重锁
-      ReadOnlyPaths = [ "${config.sops.secrets."nixos/srv/db/postgresql/users/redskaber/password".path}" ];
+      ReadOnlyPaths = [ "${config.sops.secrets.${shared.secrets.srv.db.postgresql-appuser-password}.path}" ];
       # 🛡️ 深度加固
       PrivateTmp = true;
       NoNewPrivileges = true;
@@ -253,7 +253,7 @@
       StandardError = "journal";
       UMask = "0077";  # 临时文件权限加固
     };
-    unitConfig.RequiresMountsFor = [ "${config.sops.secrets."nixos/srv/db/postgresql/users/redskaber/password".path}" ];
+    unitConfig.RequiresMountsFor = [ "${config.sops.secrets.${shared.secrets.srv.db.postgresql-appuser-password}.path}" ];
   };
 
 

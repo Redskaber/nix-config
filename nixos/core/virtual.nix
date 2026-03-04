@@ -2,6 +2,9 @@
 # @author: redskaber
 # @datetime: 2026-01-13
 # @description: nixos::core::virtual
+#
+# - echo "fd42:$(openssl rand -hex 2):$(openssl rand -hex 2):$(openssl rand -hex 2):$(openssl rand -hex 2)::1/64"
+#   fd42:8bdd:fa83:9703:95b2::1/64
 
 
 { inputs
@@ -26,6 +29,13 @@
   # GPU through
   boot.kernelModules = [ "vfio-pci" ];
 
+  # zfs sup
+  # generate hostId（terminal exec-once）：
+  #   $ head -c4 /dev/urandom | od -A none -t x4
+  #   output-example：a3f9c1e7
+  # networking.hostId = "372d3766";
+  # boot.supportedFilesystems = [ "zfs" ];
+
   # services.flatpak.enable = true;
 
   # Install necessary packages
@@ -49,7 +59,7 @@
     qemu      # 其他架构支持
 
     #Incus
-    zfs
+    # zfs
   ];
 
   # Manage the virtualisation services
@@ -129,22 +139,25 @@
       preseed = {
         config = {
           "core.https_address" = "[::]:8443";
+          "storage.backing_pool" = "default";
         };
         storage_pools = [
           {
             name = "default";
-            driver = "zfs";  # or dir
-            config.source = "/var/lib/incus";
+            driver = "dir";  # zfs
+            config = {
+              source = "/var/lib/incus/storage-pools/default";
+            };
           }
         ];
         networks = [
           {
-            name = "lxdbr0";
+            name = "incus-br0";
             type = "bridge";
             config = {
-              "ipv4.address" = "10.0.3.1/24";
+              "ipv4.address" = "10.217.144.1/24";
               "ipv4.nat" = "true";
-              "ipv6.address" = "fd42::1/64";
+              "ipv6.address" = "fd42:8bdd:fa83:9703:95b2::1/64";      # genrate from `openssl rand -hex 8`
               "ipv6.nat" = "true";
             };
           }

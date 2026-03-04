@@ -39,7 +39,7 @@
     quiet = false;
     enableAuth = true;
     dbpath = "/var/lib/mongodb";
-    initialRootPasswordFile = config.sops.secrets."nixos/srv/db/mongodb/password".path;
+    initialRootPasswordFile = config.sops.secrets.${shared.secrets.srv.db.mongodb-password}.path;
 
     # pidFile = "/run/mongodb.pid";
     # replSetName = "<name>";

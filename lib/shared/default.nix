@@ -38,6 +38,19 @@ in
     timeZone = "Asia/Shanghai";
   };
 
+  # sops age from root-dir/secrets/<dir|file>
+  secrets = {
+    sshKeyPaths = [ "/home/kilig/.ssh/id_ed25519_github" ];
+    user-password = "nixos/users/kilig/password";
+    srv.db = {
+      mongodb-password    = "nixos/srv/db/mongodb/password";
+      mysql-root-password = "nixos/srv/db/mysql/users/root/password";
+      mysql-user-password = "nixos/srv/db/mysql/users/kilig/password";
+      postgresql-appuser-password = "nixos/srv/db/postgresql/users/redskaber/password";
+      redis-redis-server-password = "nixos/srv/db/redis/users/redis-server/password";
+    };
+  };
+
   arch = "x86_64-linux";
   hostName =
     if      is_linux then "linux"
