@@ -184,8 +184,7 @@
     # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'
     # Available through: 'sudo nixos-rebuild --flake <flake_path>#your-hostname switch'
     nixosConfigurations = {
-      # FIXME: replace with your hostname
-      kilig-nixos = nixpkgs.lib.nixosSystem {
+      "${shared.user.username}-${shared.hostName}" = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs shared; };
         # > Our main nixos configuration file <
         modules = [ ./nixos/configuration.nix ];
@@ -197,21 +196,13 @@
     # First: through 'nix build .#homeConfigurations.your-username@hostname.activationPackage' && './result/activate'
     # Available through 'home-manager --flake .#your-username@your-hostname'
     homeConfigurations = {
-      # FIXME replace with your username@hostname
-      "kilig@linux" = home-manager.lib.homeManagerConfiguration {
-        # Home-manager requires 'pkgs' instance
-        # FIXME replace x86_64-linux with your architecure
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
+      "${shared.user.username}@${shared.hostName}" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages.${shared.arch};
         extraSpecialArgs = { inherit inputs shared; };
-        # > Out main home-manager configuration file <
-        modules = [ ./home/hosts/linux.nix ];
-      };
-      "kilig@nixos" = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.x86_64-linux;
-        extraSpecialArgs = { inherit inputs shared; };
-        modules = [ ./home/hosts/nixos.nix ];
+        modules = [ ./home/hosts/${shared.hostName}.nix ];
       };
     };
   };
 }
+
 

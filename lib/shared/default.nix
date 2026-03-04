@@ -5,7 +5,16 @@
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # - user informations configuration
 
+let
+  is_linux = false;
+  is_macos = false;
+  is_nixos = true;
+  is_wsl = false;
+in
 {
+  inherit is_linux is_macos is_nixos is_wsl;
+
+  editor = "nvim";
   user = {
     username = "kilig";
     shell = "fish";
@@ -29,8 +38,13 @@
     timeZone = "Asia/Shanghai";
   };
 
-  hostName = "nixos";
-  editor = "nvim";
+  arch = "x86_64-linux";
+  hostName =
+    if      is_linux then "linux"
+    else if is_macos then "macos"
+    else if is_nixos then "nixos"
+    else if is_wsl   then "wsl"
+    else throw "[ERROR] Non-sup ${builtins.currentSystem}, can't build, issues or waiting dev";
   version = "25.11";
 }
 
