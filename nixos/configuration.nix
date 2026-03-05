@@ -83,7 +83,7 @@
   # accidentally delete configuration.nix.
   # system.copySystemConfiguration = true;
 
-  system.stateVersion = shared.version; # Did you read the comment?
+  system.stateVersion = shared.version;
 
 
 }

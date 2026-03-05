@@ -3,7 +3,7 @@
 # @datetime: 2025-12-12
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # TODO: mutil-pal gl app transparent proxy choice version.
-
+# - Tips: formatter and devShells need arch-name for sub-keyname,(else cachk error)
 
 {
   description = "Kilig(Redskaber)'s declarative development environment";
@@ -122,6 +122,7 @@
     let
       # User-Shared Config
       shared = import ./lib/shared;
+      # TODO: nixpkgs handle and more platform
       pkgs = nixpkgs.legacyPackages.${shared.arch.second};
       devDir = ./home/core/dev;
     in
@@ -133,12 +134,10 @@
     # Your custom packages
     # Accessible through 'nix build', 'nix shell', etc
     packages = import ./pkgs pkgs;
-    # Formatter for your nix files, available through 'nix fmt'
-    # Other options beside 'alejandra' include 'nixpkgs-fmt'
-    formatter = pkgs.nixfmt;
-
     # Your custom packages and modifications, exported as overlays
     overlays = import ./overlays { inherit inputs; };
+    # Formatter choices
+    formatter.${shared.arch.second} = pkgs.nixfmt;
 
     # Reusable nixos modules you might want to export
     # These are usually stuff you would upstream into nixpkgs
@@ -160,7 +159,7 @@
     #     # or used profile
     #     nix develop <profile-path>         # from `nix develop <flake-path>#<fullname> --profile <profile-save-path>`
     # More: read ./lib/dev
-    devShells = import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
+    devShells.${shared.arch.second} = import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
 
     # NixOS configuration entrypoint
     # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'

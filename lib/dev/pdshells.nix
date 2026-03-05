@@ -135,7 +135,7 @@ let
 
     # AttrFile Params Protocol
     AttrFileParams = {
-      pkgs ? import <nixpkgs> {},
+      pkgs,
       inputs ? {},
       dev ? {},
     }: {

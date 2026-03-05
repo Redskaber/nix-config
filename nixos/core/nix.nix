@@ -18,6 +18,10 @@ in
 {
   nix = {
 
+    extraOptions = ''
+      !include ${config.sops.secrets.${shared.secrets.home.core.sys.git.github-token}.path}
+    '';
+
     gc = {
       automatic = true;
       dates = "weekly";

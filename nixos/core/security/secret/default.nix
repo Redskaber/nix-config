@@ -83,6 +83,14 @@
         group = config.users.users.root.group;
         path = "/run/secrets-for-users/${shared.secrets.user-password}";     # symlink
       };
+      ${shared.secrets.home.core.sys.git.github-token} = {
+        format = "yaml";
+        sopsFile = ../../../../secrets/github.yaml;
+        mode = "0400";
+        owner = config.users.users.root.name;
+        group = config.users.users.root.group;
+        path = "/run/secrets/${shared.secrets.home.core.sys.git.github-token}";
+      };
       ${shared.secrets.srv.db.mongodb-password} = {
         format = "yaml";
         sopsFile = ../../../../secrets/db/mongodb.yaml;

@@ -44,6 +44,7 @@ in
   secrets = {
     sshKeyPaths = [ "/home/kilig/.ssh/id_ed25519_github" ];
     user-password = "nixos/users/kilig/password";
+    home.core.sys.git.github-token = "home/core/sys/git/git";
     srv.db = {
       mongodb-password    = "nixos/srv/db/mongodb/password";
       mysql-root-password = "nixos/srv/db/mysql/users/root/password";
