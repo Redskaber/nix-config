@@ -33,10 +33,11 @@ let
     && platform.first <= enum.platform.max.first;
 
   fn-get_hostname = platform:
-    (fn-is_supported_platform platform)
-    |> (is_sup: if is_sup then platform.second else throw ''
-        [ERROR] Non-sup ${builtins.currentSystem}, can't build, issues or waiting dev''
-      );
+    if (fn-is_supported_platform platform) then platform.second
+    else throw ''
+      [ERROR] Unsupported platform: ${platform.second}
+      Supported platforms: ${builtins.concatStringsSep ", " (builtins.attrNames enum.platform)}
+    '';
 
   # enum.arch
   fn-is_supported_arch = arch:
@@ -44,10 +45,11 @@ let
     && arch.first <= enum.arch.max.first;
 
   fn-get_archname = arch:
-    (fn-is_supported_arch arch)
-    |> (is_sup: if is_sup then arch.second else throw ''
-        [ERROR] Non-sup ${builtins.currentSystem}, can't build, issues or waiting dev''
-      );
+    if (fn-is_supported_arch arch) then arch.second
+    else throw ''
+      [ERROR] Unsupported Arch: ${arch.second}
+      Supported arch: ${builtins.concatStringsSep ", " (builtins.attrNames enum.arch)}
+    '';
 
   arch = enum.arch;
   platform = enum.platform;
