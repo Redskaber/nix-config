@@ -119,41 +119,22 @@
     ...
   } @ inputs:
     let
-      # Supported systems for your flake packages, shell, etc.
-      systems = [
-        "aarch64-linux"
-        "i686-linux"
-        "x86_64-linux"
-        "aarch64-darwin"
-        "x86_64-darwin"
-      ];
-      # This is a function that generates an attribute by calling a function you
-      # pass to it, with each system as an argument
-      forAllSystems = nixpkgs.lib.genAttrs systems;
-
       # User-Shared Config
       shared = import ./lib/shared;
-
-      # Helper: load all dev modules for a system
-      devShellsForSystem = system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          devDir = ./home/core/dev;
-        in
-        import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
+      pkgs = nixpkgs.legacyPackages.${shared.arch.second};
+      devDir = ./home/core/dev;
     in
   {
     # debug information
-    # Available through 'nix eval .#debug.test_forAllSystems'
-    debug.test_forAllSystems = forAllSystems (system: "Hello from ${system}");
+    # Available through 'nix eval .#debug.test_shared'
     debug.test_shared = shared;
 
     # Your custom packages
     # Accessible through 'nix build', 'nix shell', etc
-    packages = forAllSystems (system: import ./pkgs nixpkgs.legacyPackages.${system});
+    packages = import ./pkgs pkgs;
     # Formatter for your nix files, available through 'nix fmt'
     # Other options beside 'alejandra' include 'nixpkgs-fmt'
-    formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
+    formatter = pkgs.nixfmt;
 
     # Your custom packages and modifications, exported as overlays
     overlays = import ./overlays { inherit inputs; };
@@ -178,15 +159,14 @@
     #     # or used profile
     #     nix develop <profile-path>         # from `nix develop <flake-path>#<fullname> --profile <profile-save-path>`
     # More: read ./lib/dev
-    devShells = forAllSystems devShellsForSystem;
+    devShells = import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
 
     # NixOS configuration entrypoint
     # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'
     # Available through: 'sudo nixos-rebuild --flake <flake_path>#your-hostname switch'
     nixosConfigurations = {
-      "${shared.user.username}-${shared.hostName}" = nixpkgs.lib.nixosSystem {
+      "${shared.user.username}-${shared.hostName.second}" = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs shared; };
-        # > Our main nixos configuration file <
         modules = [ ./nixos/configuration.nix ];
       };
     };
@@ -196,10 +176,10 @@
     # First: through 'nix build .#homeConfigurations.your-username@hostname.activationPackage' && './result/activate'
     # Available through 'home-manager --flake .#your-username@your-hostname'
     homeConfigurations = {
-      "${shared.user.username}@${shared.hostName}" = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages.${shared.arch};
+      "${shared.user.username}@${shared.hostName.second}" = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
         extraSpecialArgs = { inherit inputs shared; };
-        modules = [ ./home/hosts/${shared.hostName}.nix ];
+        modules = [ ./home/hosts/${shared.hostName.second}.nix ];
       };
     };
   };

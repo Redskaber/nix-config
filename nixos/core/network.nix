@@ -13,7 +13,7 @@
 }:
 {
   networking = {
-    hostName = shared.hostName;
+    hostName = shared.hostName.second;
 
     # Use: 'nmcli' or 'nmtui'
     networkmanager.enable = true;
