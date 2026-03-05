@@ -15,7 +15,8 @@
 {
 
   imports = [
-    ./hyprland
+    # ./hyprland
+    ./niri
   ];
 
 

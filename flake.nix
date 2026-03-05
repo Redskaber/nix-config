@@ -8,6 +8,7 @@
 {
   description = "Kilig(Redskaber)'s declarative development environment";
 
+  # TODO: waiting design flake-dep-manager handle inputs
   inputs = {
     # Nixpkgs (url version)
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";

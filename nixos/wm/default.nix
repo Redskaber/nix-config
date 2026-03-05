@@ -14,7 +14,8 @@
 {
   imports = [
     # ./gnome
-    ./hyprland
+    # ./hyprland
+    ./niri
   ];
 
 
