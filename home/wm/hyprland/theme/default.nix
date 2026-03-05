@@ -1,8 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/theme/default.nix
+# @path: ~/projects/configs/nix-config/home/wm/hyprland/theme/default.nix
 # @author: redskaber
-# @datetime: 2026-03-04
-# @description: home::theme::default
-
+# @datetime: 2025-12-12
+# @description: home::wm::hyprland::theme::default
 
 
 { inputs

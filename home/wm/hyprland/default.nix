@@ -17,6 +17,11 @@
 , ...
 }:
 {
+  # hyprland configs
+  imports = [
+    ./theme
+  ];
+
   # nixos manager
   # programs.hyprland.enable = true;
   home.packages = with pkgs; [

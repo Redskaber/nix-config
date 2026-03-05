@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/theme/qtct.nix
+# @path: ~/projects/configs/nix-config/home/wm/hyprland/theme/qtct.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @discription: home::core::sys::qtct
+# @discription: home::wm::hyprland::theme::qtct
 # - minix(optional mod): qt and gtk theme
 
 

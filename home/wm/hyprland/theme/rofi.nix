@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/theme/rofi.nix
+# @path: ~/projects/configs/nix-config/home/wm/hyprland/theme/rofi.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::theme::rofi
+# @description: home::wm::hyprland::theme::rofi
 # - Run-Dialog , window-swicher
 
 

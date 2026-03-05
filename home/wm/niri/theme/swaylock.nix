@@ -1,7 +1,8 @@
-# @path: ~/projects/configs/nix-config/home/theme/swaylock.nix
+# @path: ~/projects/configs/nix-config/home/wm/niri/theme/swaylock.nix
 # @author: redskaber
-# @datetime: 2025-12-12
-# @description: Lightweight screen lock tool designed specifically for the Wayland display protocol
+# @datetime: 2026-03-05
+# @description: home::wm::niri::theme::swaylock
+# - Lightweight screen lock tool designed specifically for the Wayland display protocol
 
 
 { inputs

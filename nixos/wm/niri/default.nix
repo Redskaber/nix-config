@@ -2,7 +2,8 @@
 # @author: redskaber
 # @datetime: 2026-01-13
 # @description: nixos::wm::niri
-
+# - tty: niri --session
+# - enable niri base
 
 { inputs
 , shared

@@ -13,6 +13,7 @@ in
   inherit core;
   arch = core.arch.x86_64-linux;
   hostName = core.platform.nixos;
+  window-manager = core.window-manager.hyprland;
   version = core.version;
 
   editor = "nvim";

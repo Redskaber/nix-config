@@ -25,6 +25,13 @@ let
       x86_64-linux    = enum.pair { first=4; second="x86_64-linux";   };
       max             = enum.pair { first=4; second="Unknown";        };
     };
+    window-manager = {
+      min       = enum.pair { first=0; second="Unknown";  };
+      gnome     = enum.pair { first=0; second="gnome";    };
+      hyprland  = enum.pair { first=1; second="hyprland"; };
+      niri      = enum.pair { first=2; second="niri";     };
+      max       = enum.pair { first=2; second="Unknown";  };
+    };
   };
 
   # enum.platform
@@ -51,14 +58,28 @@ let
       Supported arch: ${builtins.concatStringsSep ", " (builtins.attrNames enum.arch)}
     '';
 
+  # enum.arch
+  fn-is_supported_wm = wm:
+    wm.first >= enum.window-manager.min.first
+    && wm.first <= enum.window-manager.max.first;
+
+  fn-get_wm = wm:
+    if (fn-is_supported_wm wm) then wm.second
+    else throw ''
+      [ERROR] Unsupported Window-Manager: ${wm.second}
+      Supported Window-Manager: ${builtins.concatStringsSep ", " (builtins.attrNames enum.window-manager)}
+    '';
+
   arch = enum.arch;
+  window-manager = enum.window-manager;
   platform = enum.platform;
   version = "25.11";
 in {
   inherit
-    enum arch platform version
-    fn-is_supported_platform fn-get_hostname
-    fn-is_supported_arch fn-get_archname;
+    enum arch window-manager platform version
+    fn-is_supported_platform  fn-get_hostname
+    fn-is_supported_arch      fn-get_archname
+    fn-is_supported_wm        fn-get_wm;
 }
 
 

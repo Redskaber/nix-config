@@ -12,11 +12,7 @@
 , ...
 }:
 {
-  imports = [
-    # ./gnome
-    # ./hyprland
-    ./niri
-  ];
+  imports = [ ./${shared.window-manager.second} ];
 
 
 }
