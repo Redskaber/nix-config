@@ -125,15 +125,16 @@
   } @ inputs:
     let
       # User-Shared Config
-      shared = import ./lib/shared;
-      # TODO: nixpkgs handle and more platform
-      pkgs = nixpkgs.legacyPackages.${shared.arch.second};
-      devDir = ./home/core/dev;
+      shared = import ./lib/shared { inherit nixpkgs; };
+      pkgs = shared.pkgs;
+      devDir = shared.devDir;
     in
   {
     # debug information
     # Available through 'nix eval .#debug.test_shared'
-    debug.test_shared = shared;
+    debug.test_shared = shared._user_shared;
+    debug.test_system = pkgs.stdenv.hostPlatform.system;
+    debug.test_devDir = devDir;
 
     # Your custom packages
     # Accessible through 'nix build', 'nix shell', etc
@@ -152,16 +153,11 @@
 
     # devShells loader
     # USAGE: auto-read and lazy-load
-    #   default-dev-root:
-    #     ./home/core/dev/
-    #   mode:
-    #     dirmode | filemode
-    #   show:
-    #     nix falke show  -> devShells (existed fullnames)
-    #   used:
-    #     nix develop <flake.nix-path>#<fullname>
-    #     # or used profile
-    #     nix develop <profile-path>         # from `nix develop <flake-path>#<fullname> --profile <profile-save-path>`
+    #   default-dev-root: ./home/core/dev/
+    #   mode:             dirmode | filemode
+    #   show:             nix falke show  -> devShells (existed fullnames)
+    #   used:             nix develop <flake.nix-path>#<fullname> | nix develop <profile-path>
+    # from `nix develop <flake-path>#<fullname> --profile <profile-save-path>`
     # More: read ./lib/dev
     devShells.${shared.arch.second} = import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
 

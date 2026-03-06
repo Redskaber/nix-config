@@ -5,6 +5,7 @@
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # - nix core informations configuration
 
+{ nixpkgs, ... }:
 let
   enum = {
     pair = { first, second }: { inherit first second; };
@@ -73,10 +74,11 @@ let
   arch = enum.arch;
   window-manager = enum.window-manager;
   platform = enum.platform;
+  pkgs = nixpkgs.legacyPackages.${arch.x86_64-linux.second};  # jocker pkgs
   version = "25.11";
 in {
   inherit
-    enum arch window-manager platform version
+    enum arch window-manager platform version pkgs
     fn-is_supported_platform  fn-get_hostname
     fn-is_supported_arch      fn-get_archname
     fn-is_supported_wm        fn-get_wm;
