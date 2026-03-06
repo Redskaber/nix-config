@@ -125,7 +125,7 @@
   } @ inputs:
     let
       # User-Shared Config
-      shared = import ./lib/shared { inherit nixpkgs; };
+      shared = import ./lib/shared { inherit nixpkgs inputs; };
       pkgs = shared.pkgs;
       devDir = shared.devDir;
     in

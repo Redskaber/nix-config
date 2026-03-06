@@ -6,14 +6,20 @@
 # - shared configurations loader design
 
 
-{ nixpkgs, scfpath ? ../../shared.nix, ... }:
+{ nixpkgs, inputs, scfpath ? ../../shared.nix, ... }:
 let
-  jokerShared = import ./loader.nix { inherit nixpkgs scfpath; };
+  jokerShared = import ./loader.nix { inherit nixpkgs inputs scfpath; };
 
   core = import ./core.nix { inherit nixpkgs; };
-  core_pkgs = { pkgs = nixpkgs.legacyPackages.${jokerShared.arch.second}; };
+
+  pkgsAttrs = if jokerShared ? nixpkgs then
+    { system = jokerShared.arch.second; } // jokerShared.nixpkgs
+  else
+    { system = jokerShared.arch.second; };
+
+  core_pkgs = { pkgs = import nixpkgs pkgsAttrs; };
   shared = core // core_pkgs;
-  userShared = import scfpath { inherit shared; };
+  userShared = import scfpath { inherit shared inputs; };
 
   fullShared = shared // userShared // { _user_shared = userShared; };
 

@@ -6,9 +6,9 @@
 # - shared configurations loader design
 
 
-{ nixpkgs, scfpath, ... }:
+{ nixpkgs, inputs, scfpath, ... }:
 let
   shared = import ./core.nix { inherit nixpkgs; };
-in import scfpath { inherit shared; }
+in import scfpath { inherit shared inputs; }
 
 
