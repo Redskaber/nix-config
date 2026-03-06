@@ -15,7 +15,8 @@
 {
 
   home.packages = with pkgs; [
-    wl-clipboard
+    cliphist
+    wl-clipboard    # command-line
     wl-clip-persist
   ];
 }

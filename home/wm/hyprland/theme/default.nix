@@ -15,9 +15,9 @@
 
   imports = [
     ./qtct.nix
+    ./quickshell.nix
     ./rofi.nix
     ./satty.nix
-    ./swaylock.nix
     ./swaync.nix
     ./swayosd.nix
     ./wallust.nix

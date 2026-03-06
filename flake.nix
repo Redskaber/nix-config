@@ -110,6 +110,10 @@
     wlogout-config.url = "github:Redskaber/wlogout-config";
     wlogout-config.flake = false;
 
+    # QuickShell-config
+    quickshell-config.url = "github:Redskaber/quickshell-config";
+    quickshell-config.flake = false;
+
   };
 
   outputs =

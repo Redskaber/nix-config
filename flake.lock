@@ -262,6 +262,22 @@
         "type": "github"
       }
     },
+    "quickshell-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1768419862,
+        "narHash": "sha256-jGVVU3uN6FMi82YWzcRsNekVMc4j6Xz/M06qUfEHO4w=",
+        "owner": "Redskaber",
+        "repo": "quickshell-config",
+        "rev": "f3048a86b5cf88fea4253bc520da1abca7a2f609",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "quickshell-config",
+        "type": "github"
+      }
+    },
     "rofi-config": {
       "flake": false,
       "locked": {
@@ -292,6 +308,7 @@
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
         "nvim-config": "nvim-config",
+        "quickshell-config": "quickshell-config",
         "rofi-config": "rofi-config",
         "sops-nix": "sops-nix",
         "starship-config": "starship-config",
