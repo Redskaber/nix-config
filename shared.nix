@@ -75,6 +75,7 @@
     config = {
       # Disable if you don't want unfree packages
       allowUnfree = true;
+      # Unsafe pkgs
       permittedInsecurePackages = [
         "python3.12-ecdsa-0.19.1"
       ];

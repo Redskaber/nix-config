@@ -19,7 +19,7 @@
     ./img
     ./music
     ./office
-    ./ra
+    ./rev-eng
     ./yazi
 
     ./baidupcs-go.nix

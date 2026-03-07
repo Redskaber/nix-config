@@ -33,6 +33,7 @@
     ./fzf.nix
     ./git.nix
     ./htop.nix
+    ./i18n.nix
     ./jq.nix
     ./just.nix
     ./netutils.nix

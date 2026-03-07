@@ -37,31 +37,33 @@
       "zh_CN.UTF-8/UTF-8"
     ];
 
-    # TODO: (move ->? home) inputMethod
     inputMethod = {
       type = "fcitx5";
       enable = true;
+      enableGtk2 = true;
+      enableGtk3 = true;
       fcitx5 = {
         waylandFrontend = true;             # suppress warning
         addons = with pkgs; [
-          # fcitx5-rime                     # Traditional chinese
+          fcitx5-rime                       # Traditional chinese
           fcitx5-gtk
           qt6Packages.fcitx5-chinese-addons # Chinese
           qt6Packages.fcitx5-configtool     # Config GUI
           fcitx5-nord                       # Color-theme
         ];
       };
-
     };
 
   };
 
   # variables
-  environment.variables = {
-    GIK_IM_MODULE = "fcitx";
+  environment.sessionVariables = {
+    GTK_IM_MODULE = "fcitx";
     QT_IM_MODULE = "fcitx";
-    XMODIFIERS = "@im=fcitx";
-    SDL_IM_MODULE = "fcitx";
+    QT_IM_MODULES = "wayland;fcitx;ibus"; # Qt6.7+
+    XMODIFIERS = "@im=fcitx";             # xwayland
+    SDL_IM_MODULE = "fcitx";              # sdl
+    MOZ_ENABLE_WAYLAND = "1";             # wayland sup
   };
 
   # Fonts
@@ -76,6 +78,9 @@
   # Configure keymap in X11
   services.xserver.xkb.layout = "us,cn";
   # services.xserver.xkb.options = "caps:escape";
+
+  # 确保在无桌面管理器的环境中正确启动输入法
+  services.xserver.desktopManager.runXdgAutostartIfNone = true;
 
   # console = {
   #   font = "Lat2-Terminus16";
