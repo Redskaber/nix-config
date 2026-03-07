@@ -12,16 +12,16 @@
 , ...
 }:
 {
-  # enable bluetooth
+  # Enable Bluetooth
   hardware.bluetooth.enable = true;
-  hardware.bluetooth.poweronboot = false;
+  hardware.bluetooth.powerOnBoot = false;
   hardware.bluetooth.settings = {
-    general = {
-      enable = "source,sink,media,socket";
-      experimental = true;
+    General = {
+      Enable = "Source,Sink,Media,Socket";
+      Experimental = true;
     };
   };
-  environment.systempackages = with pkgs; [
+  environment.systemPackages = with pkgs; [
     overskride
   ];
 
