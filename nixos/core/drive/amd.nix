@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/nixos/core/driver/amd.nix
+# @path: ~/projects/configs/nix-config/nixos/core/drive/amd.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: nixos::core::driver::amd
+# @description: nixos::core::drive::amd
 
 
 { inputs

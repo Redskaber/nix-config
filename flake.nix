@@ -165,9 +165,9 @@
     # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'
     # Available through: 'sudo nixos-rebuild --flake <flake_path>#your-hostname switch'
     nixosConfigurations = {
-      "${shared.user.username}-${shared.hostName.second}" = nixpkgs.lib.nixosSystem {
+      "${shared.user.username}-${shared.platform.second}" = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs shared; };
-        modules = [ ./nixos/configuration.nix ];
+        modules = [ ./nixos ];
       };
     };
 
@@ -176,10 +176,10 @@
     # First: through 'nix build .#homeConfigurations.your-username@hostname.activationPackage' && './result/activate'
     # Available through 'home-manager --flake .#your-username@your-hostname'
     homeConfigurations = {
-      "${shared.user.username}@${shared.hostName.second}" = home-manager.lib.homeManagerConfiguration {
+      "${shared.user.username}@${shared.platform.second}" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = { inherit inputs shared; };
-        modules = [ ./home/hosts/${shared.hostName.second}.nix ];
+        modules = [ ./home/hosts/${shared.platform.second} ];
       };
     };
   };

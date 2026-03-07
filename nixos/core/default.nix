@@ -13,25 +13,11 @@
 }:
 {
   imports = [
+    ./base
     ./drive
-    ./security
+    ./exp
+    ./sec
     ./srv
-
-    ./bluetooth.nix
-    ./boot.nix
-    ./compat.nix
-    ./hardware.nix
-    ./i18n.nix
-    ./memory.nix
-    ./network.nix
-    ./nix.nix
-    ./obs.nix
-    ./portal.nix
-    ./sound.nix
-    ./steam.nix
-    ./systemd.nix
-    ./user.nix
-    ./virtual.nix
   ];
 
 

@@ -9,11 +9,13 @@
 { shared, inputs, ... }:
 {
   arch = shared.arch.x86_64-linux;
-  hostName = shared.platform.nixos;
+  drive = shared.drive.intel;
+  platform = shared.platform.nixos;
   window-manager = shared.window-manager.hyprland;
   version = shared.version;
   devDir = ./home/core/dev;
 
+  hostName = "nixos";
   editor = "nvim";
   user = {
     username = "kilig";

@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/nixos/core/driver.nix
+# @path: ~/projects/configs/nix-config/nixos/core/drive/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: nixos::core::driver
+# @description: nixos::core::drive::default
 
 
 { inputs
@@ -12,12 +12,8 @@
 , ...
 }:
 {
-  # TODO: waiting auto dispatch
   imports = [
-    ./amd.nix
-    ./intel.nix
-    ./nvidia.nix
-    ./nvidia-prime.nix
+    ./${shared.drive.second}.nix
   ];
 
 }

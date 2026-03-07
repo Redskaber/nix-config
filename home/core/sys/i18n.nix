@@ -27,10 +27,6 @@
         Behavior = {
           ActiveByDefault = true;
         };
-        Hotkey = {
-          TriggerKey = "Control+space";   # 切换输入法
-          TogglePreedit = "Shift+space";  # 切换中英文
-        };
       };
       settings.inputMethod = {
         "Groups/0" = {
