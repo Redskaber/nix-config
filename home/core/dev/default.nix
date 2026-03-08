@@ -26,6 +26,7 @@
       dev.lua
       dev.nix
       dev.python
+      dev.re
       dev.rust
       dev.typescript
       dev.zig

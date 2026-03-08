@@ -19,7 +19,6 @@
     ./img
     ./music
     ./office
-    ./rev-eng
     ./yazi
 
     ./baidupcs-go.nix
