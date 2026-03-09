@@ -12,7 +12,9 @@
 }:
 {
   imports = [
+    ./clash-verge.nix
     ./compat.nix
+    ./core.nix
     ./obs.nix
     ./steam.nix
   ];

@@ -43,14 +43,14 @@
   # sops age from root-dir/secrets/<dir|file>
   secrets = {
     sshKeyPaths = [ "/home/kilig/.ssh/id_ed25519_github" ];
-    user-password = "nixos/users/kilig/password";
-    home.core.sys.git.github-token = "home/core/sys/git/github-token";
-    srv.db = {
-      mongodb-password    = "nixos/srv/db/mongodb/password";
-      mysql-root-password = "nixos/srv/db/mysql/users/root/password";
-      mysql-user-password = "nixos/srv/db/mysql/users/kilig/password";
-      postgresql-appuser-password = "nixos/srv/db/postgresql/users/redskaber/password";
-      redis-redis-server-password = "nixos/srv/db/redis/users/redis-server/password";
+    nixos.core.base.user.password = "nixos/core/base/users/kilig/password";
+    nixos.core.base.nix.user.nixos-github-git-visited = "nixos/core/base/nix/kilig/nixos-github-git-visited";
+    nixos.core.srv.db = {
+      mongodb.user.password = "nixos/core/srv/db/mongodb/users/kilig/password";
+      mysql.root.password = "nixos/core/srv/db/mysql/users/root/password";
+      mysql.user.password = "nixos/core/srv/db/mysql/users/kilig/password";
+      postgresql.user.password = "nixos/core/srv/db/postgresql/users/kilig/password";
+      redis.user.password = "nixos/core/srv/db/redis/users/redis-kilig/password";
     };
   };
 

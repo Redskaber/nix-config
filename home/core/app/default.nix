@@ -23,7 +23,6 @@
 
     ./baidupcs-go.nix
     # ./cava.nix
-    ./clash-verge.nix
     ./discord.nix
     ./downloader.nix
     ./emacs.nix

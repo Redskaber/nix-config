@@ -21,12 +21,12 @@
     vmOverCommit = true;
     servers = {
       # full-name: redis + <-keyname>
-      "server" = {
+      ${shared.user.username} = {
         enable = true;
         port = 6379;
         bind = "127.0.0.1";
-        user =  "redis-server";
-        group = "redis-server";  # auto-created => full-name
+        user =  "redis-${shared.user.username}";
+        group = "redis-${shared.user.username}";  # auto-created => full-name
         syslog = true;
         # slaveOf = {ip=...,port=...};
         logfile = "/dev/null";
@@ -36,7 +36,7 @@
         # openFirewall = true;
         slowLogMaxLen = 128;
         slowLogLogSlowerThan = 10000;
-        requirePassFile = config.sops.secrets.${shared.secrets.srv.db.redis-redis-server-password}.path;
+        requirePassFile = config.sops.secrets.${shared.secrets.nixos.core.srv.db.redis.user.password}.path;
       };
     };
   };

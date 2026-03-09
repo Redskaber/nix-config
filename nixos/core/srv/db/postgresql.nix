@@ -36,8 +36,8 @@
 #
 # @verify: 验证部署:
 #   sudo -u postgres psql -U postgres -d postgres -c "\du"
-#   psql -U kilig -d kilig -c "SELECT current_user;"          # peer 认证（无密码）
-#   psql -h 127.0.0.1 -U redskaber -d dev -W                  # TCP + 密码认证(1024)
+#   psql -U kilig -d root -c "SELECT current_user;"           # peer 认证（无密码）
+#   psql -h 127.0.0.1 -U kilig -d dev -W                      # TCP + 密码认证(1024)
 #
 # @reset: 重置数据库（开发环境）:
 #   sudo systemctl stop postgresql
@@ -129,14 +129,14 @@
     initialScript = pkgs.writeText "app-init.sql" ''
       -- 创建应用用户
       DO $$ BEGIN
-        CREATE USER redskaber WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
+        CREATE USER ${shared.user.username} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
       EXCEPTION WHEN duplicate_object THEN
-        RAISE NOTICE 'User redskaber exists (password managed externally)';
+        RAISE NOTICE 'User ${shared.user.username} exists (password managed externally)';
       END $$;
 
       -- 创建数据库
       CREATE DATABASE dev
-        OWNER redskaber
+        OWNER ${shared.user.username}
         ENCODING 'UTF8'
         LC_COLLATE 'en_US.UTF-8'
         LC_CTYPE 'en_US.UTF-8'
@@ -150,7 +150,7 @@
       CREATE EXTENSION IF NOT EXISTS vector;      -- 向量搜索 (pgvector)
 
       -- 授予权限
-      GRANT ALL PRIVILEGES ON SCHEMA public TO redskaber;
+      GRANT ALL PRIVILEGES ON SCHEMA public TO ${shared.user.username};
 
       -- 创建示例表
       CREATE TABLE IF NOT EXISTS health_check (
@@ -175,14 +175,14 @@
           createdb = true;
         };
       }
-      {
-        name = "redskaber";
-        ensureDBOwnership = false;
-        ensureClauses = {
-          login = true;
-          createdb = true;
-        };
-      }
+      # {
+      #   name = "appuser";
+      #   ensureDBOwnership = false;
+      #   ensureClauses = {
+      #     login = true;
+      #     createdb = true;
+      #   };
+      # }
     ];
 
     # 第三方扩展
@@ -204,10 +204,10 @@
     identMap = ''
       # MapName       SystemUser      DBUser
       superuser_map    postgres        postgres
-      superuser_map    ${shared.user.username}           ${shared.user.username}      # 系统用户 kilig      → DB 用户 kilig
+      # superuser_map    ${shared.user.username}           ${shared.user.username}      # 系统用户 kilig      → DB 用户 kilig
     '';
 
-    # 系统调用过滤（增强安全性，生产环境必需）
+    # 系统调用过滤
     systemCallFilter = {
       default       = true;   # 启用默认过滤
       "@network-io" = true;   # 允许网络 IO
@@ -220,7 +220,7 @@
   };
 
   # 🔒 专用服务：安全注入密码（运行时）
-  systemd.services.postgresql-set-passwords = {
+  systemd.services.postgresql-set-user-passwords = {
     description = "Inject PostgreSQL user passwords from sops secrets";
     after = [ "postgresql.service" ];
     requires = [ "postgresql.service" ];
@@ -229,11 +229,11 @@
     path = with pkgs; [ postgresql ];
     script = ''
       while ! pg_isready -q 2>/dev/null; do sleep 0.5; done
-      pwd=$(cat ${config.sops.secrets.${shared.secrets.srv.db.postgresql-appuser-password}.path})
+      user_pwd=$(cat ${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path})
 
       psql -d postgres <<SQL_EOF
-      ALTER USER redskaber WITH PASSWORD '$pwd';
-      SELECT '✅ Password injected for redskaber' AS status;
+      ALTER USER ${shared.user.username} WITH PASSWORD '$user_pwd';
+      SELECT '✅ Password injected for ${shared.user.username}' AS status;
       SQL_EOF
     '';
 
@@ -241,7 +241,7 @@
       Type = "oneshot";
       User = "postgres";
       # 🌐 最小权限三重锁
-      ReadOnlyPaths = [ "${config.sops.secrets.${shared.secrets.srv.db.postgresql-appuser-password}.path}" ];
+      ReadOnlyPaths = [ "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}" ];
       # 🛡️ 深度加固
       PrivateTmp = true;
       NoNewPrivileges = true;
@@ -253,7 +253,7 @@
       StandardError = "journal";
       UMask = "0077";  # 临时文件权限加固
     };
-    unitConfig.RequiresMountsFor = [ "${config.sops.secrets.${shared.secrets.srv.db.postgresql-appuser-password}.path}" ];
+    unitConfig.RequiresMountsFor = [ "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}" ];
   };
 
 

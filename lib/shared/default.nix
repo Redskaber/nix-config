@@ -30,8 +30,8 @@ let
   shared = core // core_pkgs;
 
   # reload
-  userShared = import scfpath { inherit shared inputs; };
-  fullShared = shared // userShared // { _user_shared = userShared; };
+  _user_shared = import scfpath { inherit shared inputs; };
+  fullShared = shared // _user_shared // { inherit _user_shared; };
 
 in fullShared
 

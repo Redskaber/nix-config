@@ -43,6 +43,28 @@ let
     };
   };
 
+  struct = {
+    secrets = {
+      user-password             ? "nixos.core.base.users.kilig.password",
+      nixos-github-git-visited  ? "nixos.core.base.nix.kilig.nixos-github-git-visited",
+      mongodb-user-password     ? "nixos.core.srv.db.mongodb.users.kilig.password",
+      mysql-root-password       ? "nixos.core.srv.db.mysql.users.root.password",
+      mysql-user-password       ? "nixos.core.srv.db.mysql.users.kilig.password",
+      postgresql-user-password  ? "nixos.core.srv.db.postgresql.users.kilig.password",
+      redis-user-password       ? "nixos.core.srv.db.redis.users.redis-kilig.password",
+    }: {
+      inherit
+        user-password
+        nixos-github-git-visited
+        mongodb-user-password
+        mysql-root-password
+        mysql-user-password
+        postgresql-user-password
+        redis-user-password
+      ;
+    };
+  };
+
   # enum.platform
   fn-is_supported_platform = platform:
     platform.first >= enum.platform.min.first
@@ -91,19 +113,35 @@ let
       Supported drive: ${builtins.concatStringsSep ", " (builtins.attrNames enum.drive)}
     '';
 
+  fn-init-secrets = username:
+    struct.secrets {
+      user-password             = "nixos.core.base.users.${username}.password";
+      nixos-github-git-visited  = "nixos.core.base.nix.${username}.nixos-github-git-visited";
+      mongodb-user-password     = "nixos.core.srv.db.mongodb.users.${username}.password";
+      mysql-root-password       = "nixos.core.srv.db.mysql.users.root.password";
+      mysql-user-password       = "nixos.core.srv.db.mysql.users.${username}.password";
+      postgresql-user-password  = "nixos.core.srv.db.postgresql.users.${username}.password";
+      redis-user-password       = "nixos.core.srv.db.redis.users.redis-${username}.password";
+    };
+
+
   arch = enum.arch;
   drive = enum.drive;
   platform = enum.platform;
   window-manager = enum.window-manager;
+  secrets = struct.secrets;
   pkgs = nixpkgs.legacyPackages.${arch.x86_64-linux.second};  # jocker pkgs
   version = "25.11";
 in {
   inherit
-    enum arch drive platform window-manager version pkgs
+    enum arch drive platform window-manager
+    struct secrets
+    version pkgs
     fn-is_supported_platform  fn-get_platform_name
     fn-is_supported_arch      fn-get_arch_name
     fn-is_supported_wm        fn-get_wm_name
-    fn-is_supported_drive     fn-get_drive_name;
+    fn-is_supported_drive     fn-get_drive_name
+    fn-init-secrets;
 }
 
 

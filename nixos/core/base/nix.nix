@@ -19,7 +19,7 @@ in
   nix = {
 
     extraOptions = ''
-      !include ${config.sops.secrets.${shared.secrets.home.core.sys.git.github-token}.path}
+      !include ${config.sops.secrets.${shared.secrets.nixos.core.base.nix.user.nixos-github-git-visited}.path}
     '';
 
     gc = {
