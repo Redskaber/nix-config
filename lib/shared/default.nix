@@ -16,16 +16,18 @@ let
   core = import ./core.nix { inherit nixpkgs; };
 
   # checker
-  _vaild_paltform       = core.fn-get_platform_name jokerShared.paltform;
   _vaild_arch           = core.fn-get_arch_name jokerShared.arch;
   _vaild_drive          = core.fn-get_drive_name jokerShared.drive;
+  _vaild_editor         = core.fn-get_editor_name jokerShared.editor;
+  _vaild_paltform       = core.fn-get_platform_name jokerShared.paltform;
+  _vaild_version        = core.fn-get_version_name jokerShared.version;
   _vaild_window_manager = core.fn-get_wm_name jokerShared.window-manager;
 
   # fix-pkgs
   pkgsAttrs = if jokerShared ? nixpkgs then
-    { system = jokerShared.arch.second; } // jokerShared.nixpkgs
+    { system = jokerShared.arch.value; } // jokerShared.nixpkgs
   else
-    { system = jokerShared.arch.second; };
+    { system = jokerShared.arch.value; };
   core_pkgs = { pkgs = import nixpkgs pkgsAttrs; };
   shared = core // core_pkgs;
 

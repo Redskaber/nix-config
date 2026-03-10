@@ -13,7 +13,7 @@
 }:
 {
   imports = [
-    ./${shared.drive.second}.nix
+    ./${shared.drive.value}.nix
   ];
 
 }

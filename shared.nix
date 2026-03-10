@@ -12,11 +12,11 @@
   drive = shared.drive.intel;
   platform = shared.platform.nixos;
   window-manager = shared.window-manager.hyprland;
-  version = shared.version;
+  version = shared.version.v25_11;
+  editor = shared.editor.nvim;
   devDir = ./home/core/dev;
-
   hostName = "nixos";
-  editor = "nvim";
+
   user = {
     username = "kilig";
     shell = "fish";

@@ -132,7 +132,8 @@
   {
     # debug information
     # Available through 'nix eval .#debug.test_shared'
-    debug.test_shared = shared._user_shared;
+    debug.test_shared = shared;
+    debug.test_user_shared = shared._user_shared;
     debug.test_system = pkgs.stdenv.hostPlatform.system;
     debug.test_devDir = devDir;
 
@@ -142,7 +143,7 @@
     # Your custom packages and modifications, exported as overlays
     overlays = import ./overlays { inherit inputs; };
     # Formatter choices
-    formatter.${shared.arch.second} = pkgs.nixfmt;
+    formatter.${shared.arch.value} = pkgs.nixfmt;
 
     # Reusable nixos modules you might want to export
     # These are usually stuff you would upstream into nixpkgs
@@ -159,13 +160,13 @@
     #   used:             nix develop <flake.nix-path>#<fullname> | nix develop <profile-path>
     # from `nix develop <flake-path>#<fullname> --profile <profile-save-path>`
     # More: read ./lib/dev
-    devShells.${shared.arch.second} = import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
+    devShells.${shared.arch.value} = import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
 
     # NixOS configuration entrypoint
     # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'
     # Available through: 'sudo nixos-rebuild --flake <flake_path>#your-hostname switch'
     nixosConfigurations = {
-      "${shared.user.username}-${shared.platform.second}" = nixpkgs.lib.nixosSystem {
+      "${shared.user.username}-${shared.platform.value}" = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs shared; };
         modules = [ ./nixos ];
       };
@@ -176,10 +177,10 @@
     # First: through 'nix build .#homeConfigurations.your-username@hostname.activationPackage' && './result/activate'
     # Available through 'home-manager --flake .#your-username@your-hostname'
     homeConfigurations = {
-      "${shared.user.username}@${shared.platform.second}" = home-manager.lib.homeManagerConfiguration {
+      "${shared.user.username}@${shared.platform.value}" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = { inherit inputs shared; };
-        modules = [ ./home/hosts/${shared.platform.second} ];
+        modules = [ ./home/hosts/${shared.platform.value} ];
       };
     };
   };

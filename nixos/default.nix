@@ -46,7 +46,7 @@
   # accidentally delete configuration.nix.
   # system.copySystemConfiguration = true;
 
-  system.stateVersion = shared.version;
+  system.stateVersion = shared.version.value;
 
 
 }

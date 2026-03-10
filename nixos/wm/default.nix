@@ -12,7 +12,7 @@
 , ...
 }:
 {
-  imports = [ ./${shared.window-manager.second} ];
+  imports = [ ./${shared.window-manager.value} ];
 
 
 }

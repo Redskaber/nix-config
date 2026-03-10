@@ -23,7 +23,7 @@
         name = shared.git.name;
 	      email = shared.git.email;
       };
-      core.editor = shared.editor;
+      core.editor = shared.editor.value;
       pull.rebase = true;
       push.autoSetupRemote = true;
     };
