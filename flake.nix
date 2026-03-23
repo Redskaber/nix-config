@@ -42,6 +42,9 @@
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Nix types expend from my costum
+    nix-types.url = "github:Redskaber/nix-types";
+
     # Ren'Py
     # Unpryc
     unrpyc.url = "github:Redskaber/unrpyc";
@@ -136,6 +139,7 @@
     debug.test_user_shared = shared._user_shared;
     debug.test_system = pkgs.stdenv.hostPlatform.system;
     debug.test_devDir = devDir;
+    debug.test_nix-types = inputs.nix-types;
 
     # Your custom packages
     # Accessible through 'nix build', 'nix shell', etc

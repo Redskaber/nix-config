@@ -12,6 +12,10 @@
 , ...
 }:
 {
+  imports = [
+    ./plugins
+  ];
+
   environment.systemPackages = with pkgs; [
     openssl       # rain-border dep
     libqalculate  # clac allocate dep

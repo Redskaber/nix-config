@@ -20,6 +20,16 @@
     useNautilus = false;
   };
 
+  # login window
+  services.displayManager.gdm.enable = true;
+
+
+  # For Electron apps to use wayland
+  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+  # GTK app Wayland
+  environment.sessionVariables.GDK_BACKEND = "wayland";
+  # Electron app to wayland
+  environment.sessionVariables.ELECTRON_OZONE_PLATFORM_HINT = "auto";
 }
 
 
