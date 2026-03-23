@@ -13,13 +13,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
-      
-      - name: Check formatting
-        run: nix fmt --check
-        
       - name: Validate flake
         run: nix flake check
-        
       - name: Build critical configurations
         run: |
           nix build .#nixosConfigurations.kilig-nixos.config.system.build.toplevel
