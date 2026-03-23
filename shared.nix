@@ -8,13 +8,14 @@
 
 { shared, inputs, ... }:
 {
-  arch = shared.arch.x86_64-linux;
+  arch  = shared.arch.x86_64-linux;
   drive = shared.drive.intel;
   platform = shared.platform.nixos;
-  window-manager = shared.window-manager.hyprland;
+  window-manager  = shared.window-manager.hyprland;
+  display-manager = shared.display-manager.gdm;
   version = shared.version.v25_11;
-  editor = shared.editor.nvim;
-  devDir = ./home/core/dev;
+  editor  = shared.editor.nvim;
+  devDir  = ./home/core/dev;
   hostName = "nixos";
 
   user = {

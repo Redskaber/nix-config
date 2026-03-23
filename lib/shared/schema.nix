@@ -53,10 +53,11 @@ let
   version   = enum "version"  {
     v25_11  = "25.11";
   };
-  platform      = enum "platform"       [ "linux" "macos" "nixos" "wsl" ];
-  arch          = enum "arch"           [ "aarch64-darwin" "aarch64-linux" "i686-linux" "x86_64-darwin" "x86_64-linux" ];
-  window-manager= enum "windowManager"  [ "gnome" "hyprland" "niri" ];
-  drive         = enum "drive"          [ "amd" "intel" "nvidia" "nvidia-prime" ];
+  platform        = enum "platform"       [ "linux" "macos" "nixos" "wsl" ];
+  arch            = enum "arch"           [ "aarch64-darwin" "aarch64-linux" "i686-linux" "x86_64-darwin" "x86_64-linux" ];
+  window-manager  = enum "windowManager"  [ "gnome" "hyprland" "niri" ];
+  display-manager = enum "displayManager" [ "gdm" "ly" "sddm" ];
+  drive           = enum "drive"          [ "amd" "intel" "nvidia" "nvidia-prime" ];
 
   struct = {
     user = {
@@ -136,7 +137,7 @@ let
   pkgs = nixpkgs.legacyPackages.${arch.x86_64-linux.tag};  # jocker pkgs
 in {
   inherit
-    editor version platform arch window-manager drive
+    editor version platform arch window-manager display-manager drive
     struct secrets pkgs
     fn-init-secrets
   ;

@@ -21,15 +21,18 @@
   };
 
   # login window
-  services.displayManager.gdm.enable = true;
+  # services.displayManager.gdm.enable = true;
+
+  environment.sessionVariables = {
+    # For Electron apps to use wayland
+    NIXOS_OZONE_WL = "1";
+    # GTK app Wayland
+    GDK_BACKEND = "wayland";
+    # Electron app to wayland
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
+  };
 
 
-  # For Electron apps to use wayland
-  environment.sessionVariables.NIXOS_OZONE_WL = "1";
-  # GTK app Wayland
-  environment.sessionVariables.GDK_BACKEND = "wayland";
-  # Electron app to wayland
-  environment.sessionVariables.ELECTRON_OZONE_PLATFORM_HINT = "auto";
 }
 
 

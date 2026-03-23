@@ -25,19 +25,19 @@
   ];
 
   programs.hyprland.enable = true;
-  services.displayManager.gdm.enable = true;
+  environment.sessionVariables = {
+    # For Electron apps to use wayland
+    NIXOS_OZONE_WL = "1";
+    # Used Hyprland cursor
+    WLR_NO_HARDWARE_CURSORS = "1";
+    # For Hyprland QT Support (Optional)
+    QML_IMPORT_PATH = "${pkgs.hyprland-qt-support}/lib/qt-6/qml";
+    # GTK app Wayland
+    GDK_BACKEND = "wayland";
+    # Electron app to wayland
+    ELECTRON_OZONE_PLATFORM_HINT = "auto";
+  };
 
-
-  # For Electron apps to use wayland
-  environment.sessionVariables.NIXOS_OZONE_WL = "1";
-  # Used Hyprland cursor
-  environment.sessionVariables.WLR_NO_HARDWARE_CURSORS = "1";
-  # For Hyprland QT Support (Optional)
-  environment.sessionVariables.QML_IMPORT_PATH = "${pkgs.hyprland-qt-support}/lib/qt-6/qml";
-  # GTK app Wayland
-  environment.sessionVariables.GDK_BACKEND = "wayland";
-  # Electron app to wayland
-  environment.sessionVariables.ELECTRON_OZONE_PLATFORM_HINT = "auto";
 
 }
 

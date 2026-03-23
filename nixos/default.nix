@@ -31,6 +31,8 @@
     ./core
     # window manager
     ./wm
+    # dispaly manager
+    ./dm
 
   ];
 
