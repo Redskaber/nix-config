@@ -14,7 +14,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
       - name: Validate flake
-        run: nix flake check
+        run: nix flake check --extra-experimental-features pipe-operators
       - name: Build critical configurations
         run: |
           nix build .#nixosConfigurations.kilig-nixos.config.system.build.toplevel
