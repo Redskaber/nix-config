@@ -12,7 +12,7 @@
 , ...
 }:
 {
-  imports = [ ./${shared.window-manager.value} ];
+  imports = [ ./${shared.window-manager.tag} ];
 
 
 }

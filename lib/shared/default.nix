@@ -4,32 +4,19 @@
 # @discription: lib::shared::default
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # - shared configurations loader design
-# - checker:
-#   - enum::platform
-#   - enum::arch
-#   - enum::drive
-#   - enum::window-manager
 
 { nixpkgs, inputs, scfpath ? ../../shared.nix, ... }:
 let
-  jokerShared = import ./loader.nix { inherit nixpkgs inputs scfpath; };
-  core = import ./core.nix { inherit nixpkgs; };
-
-  # checker
-  _vaild_arch           = core.fn-get_arch_name jokerShared.arch;
-  _vaild_drive          = core.fn-get_drive_name jokerShared.drive;
-  _vaild_editor         = core.fn-get_editor_name jokerShared.editor;
-  _vaild_paltform       = core.fn-get_platform_name jokerShared.paltform;
-  _vaild_version        = core.fn-get_version_name jokerShared.version;
-  _vaild_window_manager = core.fn-get_wm_name jokerShared.window-manager;
+  schema = import ./schema.nix { inherit nixpkgs inputs; };
+  jokerShared = import scfpath { inherit shared inputs; };
 
   # fix-pkgs
   pkgsAttrs = if jokerShared ? nixpkgs then
-    { system = jokerShared.arch.value; } // jokerShared.nixpkgs
+    { system = jokerShared.arch.tag; } // jokerShared.nixpkgs
   else
-    { system = jokerShared.arch.value; };
+    { system = jokerShared.arch.tag; };
   core_pkgs = { pkgs = import nixpkgs pkgsAttrs; };
-  shared = core // core_pkgs;
+  shared = schema // core_pkgs;
 
   # reload
   _user_shared = import scfpath { inherit shared inputs; };

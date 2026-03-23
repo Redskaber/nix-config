@@ -147,7 +147,7 @@
     # Your custom packages and modifications, exported as overlays
     overlays = import ./overlays { inherit inputs; };
     # Formatter choices
-    formatter.${shared.arch.value} = pkgs.nixfmt;
+    formatter.${shared.arch.tag} = pkgs.nixfmt;
 
     # Reusable nixos modules you might want to export
     # These are usually stuff you would upstream into nixpkgs
@@ -164,13 +164,13 @@
     #   used:             nix develop <flake.nix-path>#<fullname> | nix develop <profile-path>
     # from `nix develop <flake-path>#<fullname> --profile <profile-save-path>`
     # More: read ./lib/dev
-    devShells.${shared.arch.value} = import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
+    devShells.${shared.arch.tag} = import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
 
     # NixOS configuration entrypoint
     # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'
     # Available through: 'sudo nixos-rebuild --flake <flake_path>#your-hostname switch'
     nixosConfigurations = {
-      "${shared.user.username}-${shared.platform.value}" = nixpkgs.lib.nixosSystem {
+      "${shared.user.username}-${shared.platform.tag}" = nixpkgs.lib.nixosSystem {
         specialArgs = { inherit inputs shared; };
         modules = [ ./nixos ];
       };
@@ -181,10 +181,10 @@
     # First: through 'nix build .#homeConfigurations.your-username@hostname.activationPackage' && './result/activate'
     # Available through 'home-manager --flake .#your-username@your-hostname'
     homeConfigurations = {
-      "${shared.user.username}@${shared.platform.value}" = home-manager.lib.homeManagerConfiguration {
+      "${shared.user.username}@${shared.platform.tag}" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = { inherit inputs shared; };
-        modules = [ ./home/hosts/${shared.platform.value} ];
+        modules = [ ./home/hosts/${shared.platform.tag} ];
       };
     };
   };

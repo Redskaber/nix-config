@@ -16,7 +16,7 @@
 }:
 {
   imports = [
-    ./${shared.arch.value}.nix
+    ./${shared.arch.tag}.nix
   ];
 
 

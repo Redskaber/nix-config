@@ -73,8 +73,8 @@ in
 
     # share session variable configured
     sessionVariables = {
-      EDITOR = shared.editor.value;
-      VISUAL = shared.editor.value;
+      EDITOR = shared.editor.tag;
+      VISUAL = shared.editor.tag;
     };
 
     # Login-time welcome message

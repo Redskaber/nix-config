@@ -24,8 +24,8 @@ in
 
     # session variables
     shellInit = ''
-      set -gx EDITOR ${shared.editor.value}
-      set -gx VISUAL ${shared.editor.value}
+      set -gx EDITOR ${shared.editor.tag}
+      set -gx VISUAL ${shared.editor.tag}
       set -gx PAGER less
     '';
 
