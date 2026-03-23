@@ -17,13 +17,13 @@ jobs:
         run: nix flake check --extra-experimental-features pipe-operators
       - name: Build critical configurations
         run: |
-          nix build .#nixosConfigurations.kilig-nixos.config.system.build.toplevel
-          nix build .#homeConfigurations.kilig@nixos.activationPackage
-          nix build .#homeConfigurations.kilig@linux.activationPackage
+          nix build .#nixosConfigurations.kilig-nixos.config.system.build.toplevel --extra-experimental-features pipe-operators
+          nix build .#homeConfigurations.kilig@nixos.activationPackage --extra-experimental-features pipe-operators
+          nix build .#homeConfigurations.kilig@linux.activationPackage --extra-experimental-features pipe-operators
           
       - name: Build essential dev shells
         run: |
-          nix build .#devShells.x86_64-linux.default
-          nix build .#devShells.x86_64-linux.python
-          nix build .#devShells.x86_64-linux.cpp
+          nix build .#devShells.x86_64-linux.default  --extra-experimental-features pipe-operators
+          nix build .#devShells.x86_64-linux.python --extra-experimental-features pipe-operators
+          nix build .#devShells.x86_64-linux.cpp --extra-experimental-features pipe-operators
 
