@@ -22,7 +22,7 @@ devenv-create-all:
 
 devenv-create lang:
   mkdir -p            $HOME/.local/state/nix/profiles/dev/{{lang}}
-  nix develop         .#{{lang}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
+  nix develop         .#{{lang}}  --profile $home/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
 
 devenv-create-from lang class:
   mkdir -p            $HOME/.local/state/nix/profiles/dev/{{lang}}
@@ -41,5 +41,16 @@ devenv-update-all:
   @just dev-delete-all
   @just dev-create-all
 
+devenv-show:
+  nix flake show | grep devShells -A21
+
+devenv-list:
+  eza --tree          $HOME/.local/state/nix/profiles/dev
+
+devenv-use lang:
+  nix develop .#{{lang}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
+
+devenv-use-from lang class:
+  nix develop .#{{lang}}-{{class}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}
 
 
