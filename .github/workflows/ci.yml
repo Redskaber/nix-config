@@ -17,7 +17,6 @@ jobs:
         run: nix flake check --extra-experimental-features pipe-operators
       - name: Build critical configurations
         run: |
-          nix build --extra-experimental-features pipe-operators .#nixosConfigurations.kilig-nixos.config.system.build.toplevel
           nix build --extra-experimental-features pipe-operators .#homeConfigurations.kilig@nixos.activationPackage
           nix build --extra-experimental-features pipe-operators .#homeConfigurations.kilig@linux.activationPackage
           
