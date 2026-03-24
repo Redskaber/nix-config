@@ -38,7 +38,7 @@
     ./tealdeer.nix
     ./tmux.nix
     ./vscode.nix
-    # ./wechat.nix
+    ./wechat.nix
     ./wezterm.nix
     ./xunlei.nix
     ./zed.nix

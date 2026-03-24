@@ -45,6 +45,10 @@
     # Nix types expend from my costum
     nix-types.url = "github:Redskaber/nix-types";
 
+    # Wechat
+    wechat.url = "github:Redskaber/wechat";
+    wechat.inputs.nixpkgs.follows = "nixpkgs";
+
     # Ren'Py
     # Unpryc
     unrpyc.url = "github:Redskaber/unrpyc";

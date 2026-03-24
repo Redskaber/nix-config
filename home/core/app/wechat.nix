@@ -12,7 +12,8 @@
 }:
 {
   home.packages = [
-    pkgs.wechat
+    # pkgs.wechat # network timeout
+    inputs.wechat.packages.${shared.arch.tag}.default
   ];
 
 }
