@@ -217,11 +217,8 @@ let
       flatShells ? {},
       variantsTree ? {},
       shellNames ? [],
-    }: {
-      flatShells = flatShells;
-      variantsTree = variantsTree;
-      shellNames = shellNames;
-    };
+    } @params: params;
+
    # Context attrs schema
     Context = {
       currentPath,
@@ -230,14 +227,7 @@ let
       subDirsAttrs ? layer.CommonAttrs {},
       commonAttrs ? layer.CommonAttrs {},
       defaultAttrs ? layer.CommonAttrs {},
-    }: {
-      currentPath = currentPath;
-      basePath = basePath;
-      suffix = suffix;
-      subDirsAttrs = subDirsAttrs;
-      commonAttrs = commonAttrs;
-      defaultAttrs = defaultAttrs;
-    };
+    } @params: params;
 
     # Initial Context Function Callable
     # @currentPath: string
@@ -256,12 +246,7 @@ let
       flatShells,
       variantsTree,
       shellNames
-    }: {
-      path = path;
-      flatShells = flatShells;
-      variantsTree = variantsTree;
-      shellNames = shellNames;
-    };
+    } @params: params;
 
     #Initial LayerResult Function Callable
     # @currentPath: string (current full path)
@@ -281,12 +266,7 @@ let
       flatShells,
       variantsTree,
       shellNames,
-    }: {
-      fileBase = fileBase;
-      flatShells = flatShells;
-      variantsTree = variantsTree;
-      shellNames = shellNames;
-    };
+    } @params: params;
 
     # File constract schema
     # @currentPath: string
@@ -306,16 +286,7 @@ let
       inputs,
       suffix ? fs.default-nixSuffix,
       pkgs ? import <nixpkgs> {},
-    }: {
-      currentPath = currentPath;
-      basePath = basePath;
-      attrType = attrType;
-      fileName = fileName;
-      subVariantsTree = subVariantsTree;
-      inputs = inputs;
-      suffix = suffix;
-      pkgs = pkgs;
-    };
+    } @params: params;
 
     # Initial FileResult Function Callsble
     # @fileCtx: FileContext
@@ -349,14 +320,7 @@ let
         fn-getSubVariantsTree,
         fn-aggregateVariantsTree,
         fn-validationContext,
-      }: {
-        attrType = attrType;
-        targetField = targetField;
-        fn-getFileList = fn-getFileList;
-        fn-getSubVariantsTree = fn-getSubVariantsTree;
-        fn-aggregateVariantsTree = fn-aggregateVariantsTree;
-        fn-validationContext = fn-validationContext;
-      };
+      } @params: params;
 
       CommonStrategy = layer.FileProcessStrategy.FileStrategy {
         attrType = fs.AttrType.Common;
