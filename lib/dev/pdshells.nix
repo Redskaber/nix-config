@@ -4,7 +4,7 @@
 # @description: lib::dev::pdshells - Dataflow-driven layered loader with pipeline architecture
 # - Pipeline and Dataflow and Currying and Strategy and Recursive
 
-{ pkgs, inputs, devDir, suffix ? ".nix", ... }:
+{ pkgs, inputs, shared, devDir, suffix ? ".nix", ... }:
 let
   inherit (import ./mk-pdshell.nix { inherit pkgs; }) mkDevShell;
 
@@ -137,12 +137,9 @@ let
     AttrFileParams = {
       pkgs,
       inputs ? {},
+      shared ? {},
       dev ? {},
-    }: {
-      pkgs = pkgs;
-      inputs = inputs;
-      dev = dev;
-    };
+    } @devParams: devParams;
 
     # Curried type checkers (pipeline-ready)
     fn-isPrivate = name: (pkgs.lib.hasPrefix fs.default-private-prefix name);
@@ -200,7 +197,7 @@ let
 
     # Read file attrsets
     fn-readFileAttrs = filePath: pkgs: inputs: variantsTree:
-      (fs.AttrFileParams { inherit pkgs inputs; dev = variantsTree; })
+      (fs.AttrFileParams { inherit pkgs inputs shared; dev = variantsTree; })
       |> (attrFileParams: import filePath attrFileParams )
       |> (vars: validate.fn-assertAttrSet "FILE CONTENT (${filePath})" vars);
   };

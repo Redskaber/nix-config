@@ -168,7 +168,7 @@
     #   used:             nix develop <flake.nix-path>#<fullname> | nix develop <profile-path>
     # from `nix develop <flake-path>#<fullname> --profile <profile-save-path>`
     # More: read ./lib/dev
-    devShells.${shared.arch.tag} = import ./lib/dev/pdshells.nix { inherit pkgs inputs devDir; };
+    devShells.${shared.arch.tag} = import ./lib/dev/pdshells.nix { inherit pkgs inputs shared devDir; };
 
     # NixOS configuration entrypoint
     # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'

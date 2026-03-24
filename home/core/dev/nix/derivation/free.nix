@@ -9,7 +9,7 @@
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, shared, ... }: {
 
   # nix-derivation custom shell attrset
   # === 开源项目构建环境 ===

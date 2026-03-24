@@ -9,7 +9,7 @@
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, shared, ... }: {
 
   # NIXPKGS_ALLOW_INSECURE=1 nix develop .#python-renpy --impure
   default = {
@@ -23,7 +23,7 @@
       renpy             # Visual Novel Engine
 
       unrpa             # github package nix
-      inputs.unrpyc.packages.x86_64-linux.default # github package nix
+      inputs.unrpyc.packages.${shared.arch.tag}.default # github package nix
       # pyright depands
       nodejs_24
     ];

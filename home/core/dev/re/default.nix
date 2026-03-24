@@ -16,7 +16,7 @@
 #
 # FIXME: clangd in NixOS header find is idiot, waiting fix Neovim lsp used non-nixos (mason false).
 
-{ pkgs, inputs, dev, ... }:
+{ pkgs, inputs, shared, dev, ... }:
 {
   default = {
     shell = "zsh";

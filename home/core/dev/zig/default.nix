@@ -9,7 +9,7 @@
 # - default   : (readonly   , global, default   ): Minimal Zig toolchain + essential dev utilities
 # - <variant> : (custom     , custom, optional  ): Version-specific or feature-rich configurations
 
-{ pkgs, inputs, dev, ... }: {
+{ pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
     # === Core Toolchain ===

@@ -12,7 +12,7 @@
 # dev.<lang> == dev.<lang>.default
 
 
-{ pkgs, inputs, dev, ... }: {
+{ pkgs, inputs, shared, dev, ... }: {
 
   # (readonly)
   default = {

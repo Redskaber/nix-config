@@ -7,7 +7,7 @@
 # - default   : (readonly   , global, default   ): Minimal base env with proxy resilience
 # - <variant> : (custom     , custom, optional  ): Project-specific overrides
 
-{ pkgs, inputs, dev, ... }: {
+{ pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
     # 🌐 核心工具链（Go 1.22+ 现代标准）

@@ -9,7 +9,7 @@
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
-{ pkgs, inputs, ... }: {
+{ pkgs, inputs, shared, ... }: {
 
   # === 闭源/专有软件构建环境 ===
   # 专注：二进制封装、许可证合规、非自由依赖处理、安全交付

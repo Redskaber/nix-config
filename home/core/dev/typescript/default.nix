@@ -9,7 +9,7 @@
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
 
-{ pkgs, inputs, dev, ... }: {
+{ pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
     buildInputs = with pkgs; [
