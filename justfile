@@ -1,6 +1,9 @@
 set shell := [ "bash", "-c" ]
 
 
+# ==============================================================================
+# devenv
+# ==============================================================================
 devenv-create-all:            # Create all development environments (including combined environments).
   @just devenv-create       c
   @just devenv-create       cpp
