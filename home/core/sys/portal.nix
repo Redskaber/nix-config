@@ -16,7 +16,7 @@
 {
   # base(wayland)
   xdg.portal = {
-    enable = true;
+    enable = if shared.platform.tag == "nixos" then false else true;
     xdgOpenUsePortal = true;
 
     config = {

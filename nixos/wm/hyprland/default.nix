@@ -13,7 +13,7 @@
 }:
 {
   imports = [
-    ./plugins
+    ./plugins     # plugins
   ];
 
   environment.systemPackages = with pkgs; [
@@ -24,7 +24,14 @@
     mpvpaper      # mp4 wallpaper dep
   ];
 
-  programs.hyprland.enable = true;
+  programs.hyprland = {
+    enable = true;
+    # package = pkgs.hyprland;
+    # portalPackage = pkgs.xdg-desktop-portal-hyprland;
+    package = inputs.hyprland.packages.${shared.arch.tag}.hyprland;
+    portalPackage = inputs.hyprland.packages.${shared.arch.tag}.xdg-desktop-portal-hyprland;
+    xwayland.enable = true;
+  };
   environment.sessionVariables = {
     # For Electron apps to use wayland
     NIXOS_OZONE_WL = "1";

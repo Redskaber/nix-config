@@ -71,12 +71,12 @@
   wayland.windowManager.hyprland = {
     enable = true;
     package = null;
+    portalPackage = null;
     xwayland.enable = true;
     systemd = {
       enable = true;
       enableXdgAutostart = true;    # auto-enable: ~/.config/autostart/
     };
-    portalPackage = pkgs.xdg-desktop-portal-hyprland;
   };
 
   # Used Hyprland config

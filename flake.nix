@@ -45,6 +45,13 @@
     # Nix types expend from my costum
     nix-types.url = "github:Redskaber/nix-types";
 
+    # hyprland config
+    hyprland.url = "github:hyprwm/Hyprland";
+    hyprland-plugins = {
+      url = "github:hyprwm/hyprland-plugins";
+      inputs.hyprland.follows = "hyprland";
+    };
+
     # Wechat
     wechat.url = "github:Redskaber/wechat";
     wechat.inputs.nixpkgs.follows = "nixpkgs";
