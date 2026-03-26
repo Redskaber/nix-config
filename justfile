@@ -26,25 +26,25 @@ devenv-create-all:
 
 # Create a specified locale (e.g., just devenv-create rust).
 devenv-create lang:
-  mkdir -p                      $HOME/.local/state/nix/profiles/dev/{{lang}}
-  nix develop                   .#{{lang}}  --profile $home/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
+  @mkdir -p                      $HOME/.local/state/nix/profiles/dev/{{lang}}
+  @nix develop                   .#{{lang}}  --profile $home/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
 
 # Create a compound environment (e.g., just devenv-create-from python renpy).
 devenv-create-from lang class:
-  mkdir -p                      $HOME/.local/state/nix/profiles/dev/{{lang}}
-  nix develop                   .#{{lang}}-{{class}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}
+  @mkdir -p                      $HOME/.local/state/nix/profiles/dev/{{lang}}
+  @nix develop                   .#{{lang}}-{{class}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}
 
 # Clear all environment configuration directories.
 devenv-delete-all:
-  rm -rf                        $HOME/.local/state/nix/profiles/dev/*
+  @rm -rf                        $HOME/.local/state/nix/profiles/dev/*
 
 # Delete the specified locale directory.
 devenv-delete lang:
-  rm -rf                        $HOME/.local/state/nix/profiles/dev/{{lang}}
+  @rm -rf                        $HOME/.local/state/nix/profiles/dev/{{lang}}
 
 # Delete the profile for the composite environment (keeping the parent directory).
 devenv-delete-from lang class:
-  rm -rf                        $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}*
+  @rm -rf                        $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}*
 
 # Delete and then rebuild all environments (force refresh).
 devenv-update-all:
@@ -53,19 +53,19 @@ devenv-update-all:
 
 # Display the output of all devShells in Flake.
 devenv-show:
-  nix flake show | grep devShells -A21
+  @nix flake show | grep devShells -A21
 
 # The created environment configurations are listed in a tree structure.
 devenv-list:
-  eza --tree                    $HOME/.local/state/nix/profiles/dev
+  @eza --tree                    $HOME/.local/state/nix/profiles/dev
 
 # Enter an existing profile environment (without creating a persistent profile).
 devenv-use lang:
-  nix develop                   .#{{lang}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
+  @nix develop                   .#{{lang}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
 
 # Enter an existing composite profile environment (without creating a persistent profile).
 devenv-use-from lang class:
-  nix develop                   .#{{lang}}-{{class}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}
+  @nix develop                   .#{{lang}}-{{class}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}
 
 
 
