@@ -80,6 +80,7 @@ SECRETS_KEYS_PATH   :=                      "$HOME/.config/sops/age"
 SECRETS_KEYFILENAME := SECRETS_KEYS_PATH  / "keys.txt"
 
 
+# Initialize sops environment: generate keys, create config, and prepare secret files.
 sops-init:
   @just _sops-create-secrets-structs
   @just _sops-create-agekeygen-file
@@ -97,33 +98,43 @@ sops-init:
   @just _sops-create-secrets-chipr-db-postgresql
   @just _sops-create-secrets-chipr-db-redis
 
+# Display the public key associated with the generated age identity.
 sops-read-pubkey:
   @age-keygen -y {{SECRETS_KEYFILENAME}}
 
+# Decrypt and display the user password secret.
 sops-decrypt-user:
   @just _sops-decrypt-secrets-chipr-base-userpwd
 
+# Decrypt and display the Nix/GitHub visited token secret.
 sops-decrypt-visited:
   @just _sops-decrypt-secrets-chipr-base-nix
 
+# Decrypt and display the MongoDB user secret.
 sops-decrypt-mongodb:
   @just _sops-decrypt-secrets-chipr-db-mongodb
 
+# Decrypt and display the MySQL user secret.
 sops-decrypt-mysql:
   @just _sops-decrypt-secrets-chipr-db-mysql
 
+# Decrypt and display the PostgreSQL user secret.
 sops-decrypt-postgresql:
   @just _sops-decrypt-secrets-chipr-db-postgresql
 
+# Decrypt and display the Redis user secret.
 sops-decrypt-redis:
   @just _sops-decrypt-secrets-chipr-db-redis
 
+# Remove the generated age identity key file.
 sops-destory-keys:
   @just _sops-delete-agekeygen-file
 
+# Remove the secret directory structure (plans and chipr).
 sops-destory-structs:
   @just _sops-delete-secrets-structs
 
+# Completely remove all sops configurations, keys, and secret files.
 sops-destory:
   @just _sops-delete-secrets-structs
   @just _sops-delete-agekeygen-file
