@@ -70,7 +70,7 @@
   sops = {
     age = {
       generateKey = true;
-      keyFile = /home/${shared.user.username}/.config/sops/age/keys.txt;  # age publish key file position 600
+      keyFile = "/home/${shared.user.username}/.config/sops/age/keys.txt";  # age publish key file position 600
       sshKeyPaths = shared.secrets.sshKeyPaths;
     };
     secrets = {
