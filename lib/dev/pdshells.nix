@@ -217,7 +217,11 @@ let
       flatShells ? {},
       variantsTree ? {},
       shellNames ? [],
-    } @params: params;
+    }: {
+      flatShells = flatShells;
+      variantsTree = variantsTree;
+      shellNames = shellNames;
+    };
 
    # Context attrs schema
     Context = {
@@ -227,7 +231,14 @@ let
       subDirsAttrs ? layer.CommonAttrs {},
       commonAttrs ? layer.CommonAttrs {},
       defaultAttrs ? layer.CommonAttrs {},
-    } @params: params;
+    }: {
+      currentPath = currentPath;
+      basePath = basePath;
+      suffix = suffix;
+      subDirsAttrs = subDirsAttrs;
+      commonAttrs = commonAttrs;
+      defaultAttrs = defaultAttrs;
+    };
 
     # Initial Context Function Callable
     # @currentPath: string
@@ -245,7 +256,7 @@ let
       path,
       flatShells,
       variantsTree,
-      shellNames
+      shellNames,
     } @params: params;
 
     #Initial LayerResult Function Callable
@@ -286,7 +297,16 @@ let
       inputs,
       suffix ? fs.default-nixSuffix,
       pkgs ? import <nixpkgs> {},
-    } @params: params;
+    }: {
+      currentPath = currentPath;
+      basePath = basePath;
+      attrType = attrType;
+      fileName = fileName;
+      subVariantsTree = subVariantsTree;
+      inputs = inputs;
+      suffix = suffix;
+      pkgs = pkgs;
+    };
 
     # Initial FileResult Function Callsble
     # @fileCtx: FileContext
