@@ -60,7 +60,7 @@
 }:
 {
   imports = [
-    inputs.sops-nix.nixosModules.sops                             # import sops-nix
+    inputs.sops-nix.nixosModules.sops                                     # import sops-nix
     ./cmd/age.nix
     ./cmd/sops.nix
     ./cmd/ssh-to-age.nix
@@ -70,14 +70,14 @@
   sops = {
     age = {
       generateKey = true;
-      keyFile = "/var/lib/sops/age/key";                          # age publish key file position 600
+      keyFile = /home/${shared.user.username}/.config/sops/age/keys.txt;  # age publish key file position 600
       sshKeyPaths = shared.secrets.sshKeyPaths;
     };
     secrets = {
       ${shared.secrets.nixos.core.base.user.password} = {
-        neededForUsers = true;                                    # user create before execute
+        neededForUsers = true;                                            # user create before execute
         format = "yaml";
-        sopsFile = ../../../../secrets/${shared.secrets.nixos.core.base.user.password}.yaml;
+        sopsFile = ../../../../secrets/chipr/${shared.secrets.nixos.core.base.user.password}.yaml;
         mode = "0400";
         owner = config.users.users.root.name;
         group = config.users.users.root.group;
@@ -85,7 +85,7 @@
       };
       ${shared.secrets.nixos.core.base.nix.user.nixos-github-git-visited} = {
         format = "yaml";
-        sopsFile = ../../../../secrets/${shared.secrets.nixos.core.base.nix.user.nixos-github-git-visited}.yaml;
+        sopsFile = ../../../../secrets/chipr/${shared.secrets.nixos.core.base.nix.user.nixos-github-git-visited}.yaml;
         mode = "0400";
         owner = config.users.users.root.name;
         group = config.users.users.root.group;
@@ -93,7 +93,7 @@
       };
       ${shared.secrets.nixos.core.srv.db.mongodb.user.password} = {
         format = "yaml";
-        sopsFile = ../../../../secrets/${shared.secrets.nixos.core.srv.db.mongodb.user.password}.yaml;
+        sopsFile = ../../../../secrets/chipr/${shared.secrets.nixos.core.srv.db.mongodb.user.password}.yaml;
         mode = "0400";
         owner = config.users.users.mongodb.name;
         group = config.users.users.mongodb.group;
@@ -101,7 +101,7 @@
       };
       ${shared.secrets.nixos.core.srv.db.mysql.root.password} = {
         format = "yaml";
-        sopsFile = ../../../../secrets/${shared.secrets.nixos.core.srv.db.mysql.root.password}.yaml;
+        sopsFile = ../../../../secrets/chipr/${shared.secrets.nixos.core.srv.db.mysql.root.password}.yaml;
         mode = "0400";
         owner = config.users.users.root.name;
         group = config.users.users.root.group;
@@ -109,7 +109,7 @@
       };
       ${shared.secrets.nixos.core.srv.db.mysql.user.password} = {
         format = "yaml";
-        sopsFile = ../../../../secrets/${shared.secrets.nixos.core.srv.db.mysql.user.password}.yaml;
+        sopsFile = ../../../../secrets/chipr/${shared.secrets.nixos.core.srv.db.mysql.user.password}.yaml;
         mode = "0440";
         owner = config.users.users.root.name;
         group = config.users.users.mysql.group;
@@ -117,7 +117,7 @@
       };
       ${shared.secrets.nixos.core.srv.db.postgresql.user.password} = {
         format = "yaml";
-        sopsFile = ../../../../secrets/${shared.secrets.nixos.core.srv.db.postgresql.user.password}.yaml;
+        sopsFile = ../../../../secrets/chipr/${shared.secrets.nixos.core.srv.db.postgresql.user.password}.yaml;
         mode = "0440";
         owner = config.users.users.root.name;
         group = config.users.users.postgres.group;
@@ -125,7 +125,7 @@
       };
       ${shared.secrets.nixos.core.srv.db.redis.user.password} = {
         format = "yaml";
-        sopsFile = ../../../../secrets/${shared.secrets.nixos.core.srv.db.redis.user.password}.yaml;
+        sopsFile = ../../../../secrets/chipr/${shared.secrets.nixos.core.srv.db.redis.user.password}.yaml;
         mode = "0440";
         owner = config.users.users.root.name;
         group = config.users.users."redis-${shared.user.username}".group;

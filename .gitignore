@@ -1,12 +1,18 @@
-# build
-tests
+# build about
+build
 result
+
+# tests about
+tests
+
+# logger about
 *.log
 \.*
 
-secrets/origin
+# custom libray old impl
 lib/old
 
+# plan designer and idea
 TODO
 todo
 
