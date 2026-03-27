@@ -69,15 +69,18 @@
       enable = true;
       verbose = false;
       kernelModules = [ ];
+      # FIXME: Replace your availableKernelModules
       availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
       systemd.enable = true;
     };
 
+    # FIXME: Replace your kernelModules
     kernelModules = [
-    "kvm-intel"         # intel
-    "v4l2loopback"      # OBS Virtual Cam
+      "kvm-intel"         # intel
+      "v4l2loopback"      # OBS Virtual Cam
     ];
     kernelPackages = pkgs.linuxPackages_latest;
+    # FIXME: Replace your kernelParams
     kernelParams = [
       "systemd.mask=systemd-vconsole-setup.service"
       "systemd.mask=dev-tpmrm0.device"    # this is to mask that stupid 1.5 mins systemd bug
@@ -115,6 +118,7 @@
 
 
   nixpkgs.hostPlatform = lib.mkDefault shared.arch.tag;
+  # FIXME: intel Exclusive
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
 }

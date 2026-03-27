@@ -17,6 +17,10 @@ let
 in
 {
   nix = {
+    enable = true;
+    package = pkgs.nix;
+    checkConfig = true;
+    channel.enable = false;
 
     extraOptions = ''
       !include ${config.sops.secrets.${shared.secrets.nixos.core.base.nix.user.nixos-github-git-visited}.path}
@@ -65,9 +69,6 @@ in
       # trusted useds
       trusted-users = [ "${shared.user.username}" ];
     };
-
-    # Opinionated: disable channels
-    channel.enable = false;
 
     # Opinionated: make flake registry and nix path match flake inputs
     registry = lib.mapAttrs (_: flake: {inherit flake;}) flakeInputs;
