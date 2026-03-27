@@ -6,6 +6,7 @@
 
 { pkgs, inputs, shared, devDir, suffix ? ".nix", ... }:
 let
+  inherit (inputs.nix-types.enum) enum;
   inherit (import ./mk-pdshell.nix { inherit pkgs; }) mkDevShell;
 
   # == VALIDATION MODULE (pipeline-optimized) ==
@@ -128,10 +129,10 @@ let
     # Since Nix lacks native support for data structures,
     # we utilize native datasets and employ a contract-based approach to simulate enums,
     # aiming for clearer semantic expression.
-    AttrType = {
-      Default = 0;
-      Common  = 1;
-    };
+    AttrType = enum "AttrType" [
+      "Default"
+      "Common"
+    ];
 
     # AttrFile Params Protocol
     AttrFileParams = {
