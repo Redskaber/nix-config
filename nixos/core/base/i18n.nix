@@ -79,7 +79,6 @@
   services.xserver.xkb.layout = "us,cn";
   # services.xserver.xkb.options = "caps:escape";
 
-  # 确保在无桌面管理器的环境中正确启动输入法
   services.xserver.desktopManager.runXdgAutostartIfNone = true;
 
   # console = {

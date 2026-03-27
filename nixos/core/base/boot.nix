@@ -31,6 +31,26 @@
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
+  fileSystems."/var/lib/lxcfs" =
+    { device = "lxcfs";
+      fsType = "fuse.lxcfs";
+    };
+
+  fileSystems."/var/lib/incus/devices" =
+    { device = "tmpfs";
+      fsType = "tmpfs";
+    };
+
+  fileSystems."/var/lib/incus/shmounts" =
+    { device = "tmpfs";
+      fsType = "tmpfs";
+    };
+
+  fileSystems."/var/lib/incus/guestapi" =
+    { device = "tmpfs";
+      fsType = "tmpfs";
+    };
+
   swapDevices =
     [ { device = "/dev/disk/by-uuid/50edded4-41e4-4f7e-8e97-fd803b1eb420"; }
     ];
@@ -53,10 +73,10 @@
       systemd.enable = true;
     };
 
-    # This is for OBS Virtual Cam Support
-    #kernelModules = [ "v4l2loopback" ];
-    #  extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
-    kernelModules = [ "kvm-intel" ];
+    kernelModules = [
+    "kvm-intel"         # intel
+    "v4l2loopback"      # OBS Virtual Cam
+    ];
     kernelPackages = pkgs.linuxPackages_latest;
     kernelParams = [
       "systemd.mask=systemd-vconsole-setup.service"
@@ -65,7 +85,9 @@
       "modprobe.blacklist=sp5100_tco"     # watchdog for AMD
       "modprobe.blacklist=iTCO_wdt"       # watchdog for Intel
     ];
-    extraModulePackages = [ ];
+    extraModulePackages = [
+      config.boot.kernelPackages.v4l2loopback   # OBS Virtual Cam
+    ];
 
     supportedFilesystems = [ "ntfs" ];
 
@@ -92,7 +114,7 @@
   };
 
 
-  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
+  nixpkgs.hostPlatform = lib.mkDefault shared.arch.tag;
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
 }
