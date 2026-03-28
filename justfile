@@ -1,5 +1,12 @@
 set shell := [ "bash", "-c" ]
 
+# ==============================================================================
+# MainFlow
+# ==============================================================================
+# NixOS this config build entry.
+init:
+  @just nixos-init
+  @just sops-init
 
 # ==============================================================================
 # Hardware
@@ -8,7 +15,7 @@ set shell := [ "bash", "-c" ]
 # nixos-generate-config --show-hardware-config
 NIXOS_HARDWARE_PATH := "./nixos/core/base/hardware.nix"
 # Create nixos generate config for user custom.(only first build need, base ['/' 'boot' 'swap'])
-nixos-hardware-generate:
+nixos-init:
   @nixos-generate-config --show-hardware-config >> {{NIXOS_HARDWARE_PATH}}
 
 
