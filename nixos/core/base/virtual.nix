@@ -139,7 +139,11 @@
       preseed = {
         config = {
           "core.https_address" = "[::]:8443";
-          "storage.backing_pool" = "default";
+          "core.trust_ca_certificates" = "false";   # 不自动信任CA签名的客户端
+          "images.auto_update_cached" = "true";
+          "images.auto_update_interval" = "168";    # 每24*7小时检查更新
+          "images.remote_cache_expiry" = "10";      # 10天后清理未使用缓存
+          "instances.nic.host_name" = "random";     # 随机生成主机接口名
         };
         storage_pools = [
           {
@@ -159,6 +163,28 @@
               "ipv4.nat" = "true";
               "ipv6.address" = "fd42:8bdd:fa83:9703:95b2::1/64";      # genrate from `openssl rand -hex 8`
               "ipv6.nat" = "true";
+              "dns.domain" = "incus";
+              "dns.mode" = "managed";
+            };
+          }
+        ];
+        profiles = [
+          {
+            name = "default";
+            devices = {
+              # 根磁盘设备
+              root = {
+                type = "disk";
+                pool = "default";     # 必须匹配存储池名称
+                path = "/";
+              };
+              # 网络设备
+              eth0 = {
+                type = "nic";
+                nictype = "bridged";
+                parent = "incus-br0";  # 必须匹配网络名称
+                name = "eth0";
+              };
             };
           }
         ];

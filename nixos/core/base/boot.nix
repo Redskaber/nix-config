@@ -1,3 +1,4 @@
+
 # @path: ~/projects/configs/nix-config/nixos/core/base/boot.nix
 # @author: redskaber
 # @datetime: 2026-01-13
@@ -31,26 +32,6 @@
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
-  fileSystems."/var/lib/lxcfs" =
-    { device = "lxcfs";
-      fsType = "fuse.lxcfs";
-    };
-
-  fileSystems."/var/lib/incus/devices" =
-    { device = "tmpfs";
-      fsType = "tmpfs";
-    };
-
-  fileSystems."/var/lib/incus/shmounts" =
-    { device = "tmpfs";
-      fsType = "tmpfs";
-    };
-
-  fileSystems."/var/lib/incus/guestapi" =
-    { device = "tmpfs";
-      fsType = "tmpfs";
-    };
-
   swapDevices =
     [ { device = "/dev/disk/by-uuid/50edded4-41e4-4f7e-8e97-fd803b1eb420"; }
     ];
@@ -69,18 +50,15 @@
       enable = true;
       verbose = false;
       kernelModules = [ ];
-      # FIXME: Replace your availableKernelModules
       availableKernelModules = [ "xhci_pci" "ahci" "nvme" "usbhid" "usb_storage" "sd_mod" ];
       systemd.enable = true;
     };
 
-    # FIXME: Replace your kernelModules
-    kernelModules = [
-      "kvm-intel"         # intel
-      "v4l2loopback"      # OBS Virtual Cam
-    ];
+    # This is for OBS Virtual Cam Support
+    #kernelModules = [ "v4l2loopback" ];
+    #  extraModulePackages = [ config.boot.kernelPackages.v4l2loopback ];
+    kernelModules = [ "kvm-intel" ];
     kernelPackages = pkgs.linuxPackages_latest;
-    # FIXME: Replace your kernelParams
     kernelParams = [
       "systemd.mask=systemd-vconsole-setup.service"
       "systemd.mask=dev-tpmrm0.device"    # this is to mask that stupid 1.5 mins systemd bug
@@ -88,9 +66,7 @@
       "modprobe.blacklist=sp5100_tco"     # watchdog for AMD
       "modprobe.blacklist=iTCO_wdt"       # watchdog for Intel
     ];
-    extraModulePackages = [
-      config.boot.kernelPackages.v4l2loopback   # OBS Virtual Cam
-    ];
+    extraModulePackages = [ ];
 
     supportedFilesystems = [ "ntfs" ];
 
@@ -117,8 +93,7 @@
   };
 
 
-  nixpkgs.hostPlatform = lib.mkDefault shared.arch.tag;
-  # FIXME: intel Exclusive
+  nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.intel.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
 
 }
