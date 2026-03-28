@@ -2,6 +2,17 @@ set shell := [ "bash", "-c" ]
 
 
 # ==============================================================================
+# Hardware
+# ==============================================================================
+# nixos-generate-config --root /mnt
+# nixos-generate-config --show-hardware-config
+NIXOS_HARDWARE_PATH := "./nixos/core/base/hardware.nix"
+# Create nixos generate config for user custom.(only first build need, base ['/' 'boot' 'swap'])
+nixos-hardware-generate:
+  @nixos-generate-config --show-hardware-config >> {{NIXOS_HARDWARE_PATH}}
+
+
+# ==============================================================================
 # devenv
 # ==============================================================================
 # Create all development environments (including combined environments).

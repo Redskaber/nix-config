@@ -15,6 +15,7 @@
   imports = [
     ./bluetooth.nix
     ./boot.nix
+    ./hardware.nix
     ./i18n.nix
     ./memory.nix
     ./network.nix
