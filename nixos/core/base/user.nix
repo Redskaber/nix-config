@@ -48,7 +48,7 @@
 
         # Used Sops-nix manager User pwd
         # WARN: pleace used mkpasswd build sops-base ppassword
-        # > echo "password" | mkpasswd -s
+        # > echo "password" | mkpasswd -s ...
         #   $y$j9T$WFoiErKnEnMcGq0ruQK4K.$4nJAY3LBeBsZBTYSkdTOejKU6KlDmhnfUV3Ll1K/1b.
         hashedPasswordFile = config.sops.secrets.${shared.secrets.nixos.core.base.user.password}.path;
       };
