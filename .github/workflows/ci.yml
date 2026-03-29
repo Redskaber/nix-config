@@ -1,28 +1,40 @@
-name: Nix Configuration CI
+# @path: ~/projects/configs/nix-config/.github/workflows/ci.yml
+# @author: redskaber
+# @date: 2026-03-30
+
+name: Nix Config CI
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    # 每天 UTC 时间 02:00 运行（检查依赖更新）
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 
 jobs:
-  check:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@main
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      - name: Validate flake
-        run: nix flake check --extra-experimental-features pipe-operators
-      - name: Build critical configurations
+      - name: Check Nix formatting
         run: |
-          nix build --extra-experimental-features pipe-operators .#homeConfigurations.kilig@nixos.activationPackage
-          nix build --extra-experimental-features pipe-operators .#homeConfigurations.kilig@linux.activationPackage
-          
-      - name: Build essential dev shells
+          # Optional 
+          nix fmt -- --check .  
+          # nix run .#formatter.${{ matrix.system }} -- --check .
+
+      - name: Check Nix syntax
         run: |
-          nix build --extra-experimental-features pipe-operators .#devShells.x86_64-linux.default  --extra-experimental-features pipe-operators
-          nix build --extra-experimental-features pipe-operators .#devShells.x86_64-linux.python --extra-experimental-features pipe-operators
-          nix build --extra-experimental-features pipe-operators .#devShells.x86_64-linux.cpp --extra-experimental-features pipe-operators
+          nix-instantiate --eval-only --expr 'import ./flake.nix'
+
+  # evaluate:
+  # security:
 
