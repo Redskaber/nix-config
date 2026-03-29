@@ -9,7 +9,7 @@
 { shared, inputs, ... }:
 {
   arch  = shared.arch.x86_64-linux;
-  drive = shared.drive-group.intel-nvidia-prime;
+  drive = shared.drive-group.intel;
   platform = shared.platform.nixos;
   window-manager  = shared.window-manager.hyprland;
   display-manager = shared.display-manager.gdm;
