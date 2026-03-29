@@ -12,9 +12,10 @@
 , ...
 }:
 {
-  imports = [
-    ./${shared.drive.tag}.nix
-  ];
+  # imports = [
+  #   ./${shared.drive.tag}.nix
+  # ];
+  imports = builtins.map (drive: ./${drive}.nix) shared.drive.value;
 
 }
 

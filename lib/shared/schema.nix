@@ -58,6 +58,16 @@ let
   window-manager  = enum "windowManager"  [ "gnome" "hyprland" "niri" ];
   display-manager = enum "displayManager" [ "gdm" "ly" "sddm" ];
   drive           = enum "drive"          [ "amd" "intel" "nvidia" "nvidia-prime" ];
+  drive-group     = enum "driveGroup"     {
+    amd               = [ "amd" ];
+    intel             = [ "intel" ];
+    nvidia            = [ "nvidia" ];
+    nvidia-prime      = [ "nvidia-prime" ];
+    amd-nvidia        = [ "amd" "nvidia" ];
+    amd-nvidia-prime  = [ "amd" "nvidia-prime" ];
+    intel-nvidia      = [ "intel" "nvidia" ];
+    intel-nvidia-prime= [ "intel" "nvidia-prime" ];
+  };
 
   struct = {
     user = {
@@ -137,7 +147,7 @@ let
   pkgs = nixpkgs.legacyPackages.${arch.x86_64-linux.tag};  # jocker pkgs
 in {
   inherit
-    editor version platform arch window-manager display-manager drive
+    editor version platform arch window-manager display-manager drive drive-group
     struct secrets pkgs
     fn-init-secrets
   ;
