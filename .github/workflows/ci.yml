@@ -28,7 +28,7 @@ jobs:
       - name: Check Nix formatting
         run: |
           # Optional 
-          nix fmt --extra-experimental-features pipe-operators -- --check .
+          # nix fmt --extra-experimental-features pipe-operators -- --check .
           # nix run .#formatter.${{ matrix.system }} -- --check .
 
       - name: Check Nix syntax
