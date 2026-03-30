@@ -45,6 +45,10 @@
     # Nix types expend from my costum
     nix-types.url = "github:Redskaber/nix-types";
 
+    # Nix dev Shell manager
+    pdshell.url = "github:Redskaber/pdshell";
+    pdshell.inputs.nixpkgs.follows = "nixpkgs";
+
     # hyprland config
     hyprland.url = "github:hyprwm/Hyprland";
     hyprland-plugins = {
@@ -151,6 +155,7 @@
     debug.test_system = pkgs.stdenv.hostPlatform.system;
     debug.test_devDir = devDir;
     debug.test_nix-types = inputs.nix-types;
+    debug.test_pdshell = inputs.pdshell;
 
     # Your custom packages
     # Accessible through 'nix build', 'nix shell', etc
@@ -168,14 +173,7 @@
     home = import ./export/home;
 
     # devShells loader
-    # USAGE: auto-read and lazy-load
-    #   default-dev-root: ./home/core/dev/
-    #   mode:             dirmode | filemode
-    #   show:             nix falke show  -> devShells (existed fullnames)
-    #   used:             nix develop <flake.nix-path>#<fullname> | nix develop <profile-path>
-    # from `nix develop <flake-path>#<fullname> --profile <profile-save-path>`
-    # More: read ./lib/dev
-    devShells.${shared.arch.tag} = import ./lib/dev/pdshells.nix { inherit pkgs inputs shared devDir; };
+    devShells.${shared.arch.tag} = import inputs.pdshell.pdshells { inherit pkgs inputs shared devDir; };
 
     # NixOS configuration entrypoint
     # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'

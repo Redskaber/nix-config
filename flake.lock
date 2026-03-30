@@ -591,6 +591,21 @@
         "type": "github"
       }
     },
+    "nix-types_2": {
+      "locked": {
+        "lastModified": 1774805688,
+        "narHash": "sha256-+rx2OtuPQI7A4SKot3M1j1GiiJzSWrkEB9V8s8zdEPA=",
+        "owner": "Redskaber",
+        "repo": "nix-types",
+        "rev": "439e85b219441d3d3475b6cffd78061217175c89",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "nix-types",
+        "type": "github"
+      }
+    },
     "nixgl": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -630,11 +645,11 @@
     },
     "nixpkgs-unstable": {
       "locked": {
-        "lastModified": 1774386573,
-        "narHash": "sha256-4hAV26quOxdC6iyG7kYaZcM3VOskcPUrdCQd/nx8obc=",
+        "lastModified": 1774709303,
+        "narHash": "sha256-D3Q07BbIA2KnTcSXIqqu9P586uWxN74zNoCH3h2ESHg=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "46db2e09e1d3f113a13c0d7b81e2f221c63b8ce9",
+        "rev": "8110df5ad7abf5d4c0f6fb0f8f978390e77f9685",
         "type": "github"
       },
       "original": {
@@ -684,11 +699,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774803137,
-        "narHash": "sha256-Tevm4k4U2/6SBdzMSp7TP0L+HSuhcJdZSbk2hoHfvN8=",
+        "lastModified": 1774873985,
+        "narHash": "sha256-jmQpro+fRBsGlNiVelA4o10Q6E2zC9kiStTf084xpMk=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "8d4a2c59ab7666082ed4aa0f91dbca6911a531da",
+        "rev": "657ec9518c1d28e88fa8c61569328fca24a07a25",
         "type": "github"
       },
       "original": {
@@ -710,6 +725,27 @@
       "original": {
         "owner": "Redskaber",
         "repo": "nvim-config",
+        "type": "github"
+      }
+    },
+    "pdshell": {
+      "inputs": {
+        "nix-types": "nix-types_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1774875117,
+        "narHash": "sha256-mFSSciE91dGBiH7OZIGOwGj6L0hqRe0z0V2as8+XNWk=",
+        "owner": "Redskaber",
+        "repo": "pdshell",
+        "rev": "ebbf46ebe997fd7a746a506a8c5bfb50fb21a5cd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "pdshell",
         "type": "github"
       }
     },
@@ -785,6 +821,7 @@
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
         "nvim-config": "nvim-config",
+        "pdshell": "pdshell",
         "quickshell-config": "quickshell-config",
         "rofi-config": "rofi-config",
         "sops-nix": "sops-nix",
@@ -1068,11 +1105,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774708879,
-        "narHash": "sha256-rTYvYkQL69/YkZB+MRA/IaX1qJ1lPx5KXoQS2/9+7Mw=",
+        "lastModified": 1774848370,
+        "narHash": "sha256-Esm+aiabP563BcUFfFUCIOlFaTxKUXPp6jw0LMAV7ik=",
         "owner": "0xc000022070",
         "repo": "zen-browser-flake",
-        "rev": "d01d23c798cceef42307d5789bfbce70515e8800",
+        "rev": "712c476500e96df74276be99bb3fa9631f494f3a",
         "type": "github"
       },
       "original": {
