@@ -11,7 +11,7 @@
   arch  = shared.arch.x86_64-linux;
   drive = shared.drive-group.intel;
   platform = shared.platform.nixos;
-  window-manager  = shared.window-manager.hyprland;
+  window-manager  = shared.window-manager.niri;
   display-manager = shared.display-manager.gdm;
   version = shared.version.v25_11;
   editor  = shared.editor.nvim;

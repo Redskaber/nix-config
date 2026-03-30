@@ -67,7 +67,7 @@ in
         "mic92.cachix.org-1:gi8IhgiT3CYZnJsaW7fxznzTkMUOn1RY4GmXdT/nXYQ="
       ];
       # trusted useds
-      trusted-users = [ "${shared.user.username}" ];
+      trusted-users = [ shared.user.username ];
     };
 
     # Opinionated: make flake registry and nix path match flake inputs

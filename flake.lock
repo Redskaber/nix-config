@@ -165,11 +165,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774559029,
-        "narHash": "sha256-deix7yg3j6AhjMPnFDCmWB3f83LsajaaULP5HH2j34k=",
+        "lastModified": 1774875830,
+        "narHash": "sha256-WPYlTmZvVa9dWlAziFkVjBdv1Z6giNIq40O1DxsBmiI=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "a0bb0d11514f92b639514220114ac8063c72d0a3",
+        "rev": "7afd8cebb99e25a64a745765920e663478eb8830",
         "type": "github"
       },
       "original": {
@@ -270,11 +270,11 @@
         "xdph": "xdph"
       },
       "locked": {
-        "lastModified": 1774794744,
-        "narHash": "sha256-BmOj1eJB9foUfl+XiANE8OPPlk90vz6Wx5wQ9MVV+dY=",
+        "lastModified": 1774877519,
+        "narHash": "sha256-EhmfOem7CiysXFLdVF2aTUaZOAQmtn/OxMQxAxUbCls=",
         "owner": "hyprwm",
         "repo": "Hyprland",
-        "rev": "bb84f4e91a3ac77706c4ef85e06e3bfaff487fc8",
+        "rev": "6474f46b7264c7086361b58ce2be98de732625ab",
         "type": "github"
       },
       "original": {
@@ -576,6 +576,22 @@
         "type": "github"
       }
     },
+    "niri-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1774905353,
+        "narHash": "sha256-pkIc82ASKR1U6n2ZOI5cshIEVEMw4lcGa0XZXoE0G/4=",
+        "owner": "Redskaber",
+        "repo": "niri-config",
+        "rev": "66bff8358c8d2a3e955dfcb8590d801bf07a48f2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "niri-config",
+        "type": "github"
+      }
+    },
     "nix-types": {
       "locked": {
         "lastModified": 1774805688,
@@ -699,11 +715,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1774873985,
-        "narHash": "sha256-jmQpro+fRBsGlNiVelA4o10Q6E2zC9kiStTf084xpMk=",
+        "lastModified": 1774903056,
+        "narHash": "sha256-I8iWF/TgXfooF/UGEhO98OyNSroQKA9hCBQ6+1B+uXM=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "657ec9518c1d28e88fa8c61569328fca24a07a25",
+        "rev": "b54a346c4b6ae98eba269dffb22dfe52897adfaf",
         "type": "github"
       },
       "original": {
@@ -815,6 +831,7 @@
         "hyprland-plugins": "hyprland-plugins",
         "kitty-config": "kitty-config",
         "mpv-config": "mpv-config",
+        "niri-config": "niri-config",
         "nix-types": "nix-types",
         "nixgl": "nixgl",
         "nixpkgs": "nixpkgs_2",

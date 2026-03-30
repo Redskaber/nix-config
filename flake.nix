@@ -132,6 +132,10 @@
     quickshell-config.url = "github:Redskaber/quickshell-config";
     quickshell-config.flake = false;
 
+    # Niri config
+    niri-config.url = "github:Redskaber/niri-config";
+    niri-config.flake = false;
+
   };
 
   outputs =
