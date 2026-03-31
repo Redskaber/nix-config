@@ -13,12 +13,12 @@
 , ...
 }:
 {
-  programs.${shared.user.shell}.enable = true;
+  programs.${shared.user.shell.tag}.enable = true;
 
   # TODO: Configure your system-wide user settings (groups, etc), add more users as needed.
   users = {
     mutableUsers = false;
-    defaultUserShell = pkgs.${shared.user.shell};
+    defaultUserShell = pkgs.${shared.user.shell.tag};
     users = {
       ${shared.user.username} = {
         homeMode = "755";

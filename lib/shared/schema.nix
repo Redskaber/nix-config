@@ -14,7 +14,7 @@ let
     hostName= "nixos";
     user    = {
       username          = "example";
-      shell             = "zsh";
+      shell             = shell.zsh;
       openssh-authKeys  = [ ];
     };
     git     = {
@@ -68,6 +68,7 @@ let
     intel-nvidia      = [ "intel" "nvidia" ];
     intel-nvidia-prime= [ "intel" "nvidia-prime" ];
   };
+  shell           = enum "shell"          [ "bash" "zsh" "fish" ];
 
   struct = {
     user = {
@@ -147,7 +148,7 @@ let
   pkgs = nixpkgs.legacyPackages.${arch.x86_64-linux.tag};  # jocker pkgs
 in {
   inherit
-    editor version platform arch window-manager display-manager drive drive-group
+    editor version platform arch window-manager display-manager drive drive-group shell
     struct secrets pkgs
     fn-init-secrets
   ;

@@ -20,11 +20,24 @@
   ];
 
   home.packages = with pkgs; [
-    alacritty       # niri default terminal
+    # alacritty     # niri default terminal
+    kitty           # terminal
     fuzzel          # niri default app nemu
-    # swaylock      # niri default window lock
+    # swaylock      # niri default window lock, this used swaylock-effetcs
     orca            # niri default window reader
     brightnessctl   # niri default light-changer
+
+    swww
+    swaybg
+    yad
+    hyprpicker
+    wf-recorder
+    swaynotificationcenter
+    wlr-which-key
+    wlogout
+    python312Packages.toggl-cli
+
+    xwayland-satellite
   ];
 
   # Used niri config
@@ -38,6 +51,23 @@
     GDK_BACKEND = "wayland,x11";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
     XDG_CURRENT_DESKTOP = "niri";
+  };
+
+  systemd.user.services.xwayland-satellite = {
+    Unit = {
+      Description = "Xwayland outside your Wayland";
+      BindsTo = "graphical-session.target";
+      PartOf = "graphical-session.target";
+      After = "graphical-session.target";
+      Requisite = "graphical-session.target";
+    };
+    Service = {
+      Type = "notify";
+      NotifyAccess = "all";
+      ExecStart = "${pkgs.xwayland-satellite}/bin/xwayland-satellite";
+      StandardOutput = "journal";
+    };
+    Install.WantedBy = ["niri.service"];
   };
 
 }

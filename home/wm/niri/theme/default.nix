@@ -13,8 +13,12 @@
 }:
 {
   imports = [
+    ./satty.nix
     ./swaylock.nix
+    ./swaync.nix
+    ./swayosd.nix
     ./waybar.nix
+    ./wlogout.nix
   ];
 
 

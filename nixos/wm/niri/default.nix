@@ -20,8 +20,13 @@
     useNautilus = false;
   };
 
-  # login window
-  # services.displayManager.gdm.enable = true;
+  environment.systemPackages = with pkgs; [
+    openssl       # rain-border dep
+    libqalculate  # clac allocate dep
+    libnotify     # notify dep
+    bc            # wallpaper select dep
+    mpvpaper      # mp4 wallpaper dep
+  ];
 
   environment.sessionVariables = {
     # For Electron apps to use wayland

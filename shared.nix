@@ -11,8 +11,8 @@
   arch  = shared.arch.x86_64-linux;
   drive = shared.drive-group.intel;
   platform = shared.platform.nixos;
-  window-manager  = shared.window-manager.niri;
-  display-manager = shared.display-manager.gdm;
+  window-manager  = shared.window-manager.hyprland;
+  display-manager = shared.display-manager.ly;
   version = shared.version.v25_11;
   editor  = shared.editor.nvim;
   devDir  = ./home/core/dev;
@@ -20,7 +20,7 @@
 
   user = {
     username = "kilig";
-    shell = "fish";
+    shell = shared.shell.zsh;
     openssh-authKeys = [  ];
   };
 
