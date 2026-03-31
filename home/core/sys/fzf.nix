@@ -15,28 +15,32 @@
 {
   programs.fzf = {
     enable = true;
-    enableZshIntegration = false;
-    enableBashIntegration = false;
-    enableFishIntegration = false;
+    enableZshIntegration = true;
+    enableBashIntegration = true;
+    enableFishIntegration = true;
 
     # Basic options for all fzf usage (including history search)
     defaultOptions = [
       "--margin=1"
       "--layout=reverse"
-      "--border=none"
-      "--info='hidden'"
+      "--border=rounded"
+      "--info=inline-right"
+      "--height=60%"
+      "--ansi"
+      "--cycle"
       "-i"
       "--no-bold"
     ];
 
     # File-specific options via environment variables
+    # Ctrl+T
     fileWidgetOptions = [
-      "--preview='bat --style=numbers --color=always --line-range :500 {}'"
       "--preview-window=right:60%:wrap"
-      "--preview 'if [ -d {} ]; then eza --tree --color=always {} | head -200; else bat -n --color=always --line-range :500 {}; fi'"
+      "--preview 'if [ -d {} ]; then eza --tree --level=2 --icons=always --color=always {} | head -200; else bat --style=numbers --color=always --line-range :300 {} 2>/dev/null; fi'"
     ];
 
-    # History-specific options (keep it simple for Ctrl+R)
+    # History-specific options
+    # Ctrl+R
     historyWidgetOptions = [
       "--prompt='history> '"
     ];
@@ -44,8 +48,7 @@
     defaultCommand = "fd --hidden --strip-cwd-prefix --exclude .git";
     changeDirWidgetCommand = "fd --type=d --hidden --strip-cwd-prefix --exclude .git";
     changeDirWidgetOptions = [
-      "--preview 'eza --tree --color=always {} | head -200'"
+      "--preview 'eza --tree --level=2 --icons=always --color=always {} | head -200'"
     ];
-
   };
 }
