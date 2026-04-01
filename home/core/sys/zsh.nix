@@ -217,22 +217,25 @@ in
       # fzf-tab styles
       # ------------------------------------------------------------
       # tmux，可改成 ftb-tmux-popup
-      # zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
-      # zstyle ':fzf-tab:*' popup-min-size 82 24
-      # zstyle ':fzf-tab:*' popup-smart-tab yes
       zstyle ':fzf-tab:*' fzf-command fzf
+      # zstyle ':fzf-tab:*' fzf-command ftb-tmux-popup
 
-      # 捕捉并展示 zsh completion
+      # popup 尺寸
+      zstyle ':fzf-tab:*' popup-min-size 0 0
+      zstyle ':fzf-tab:*' popup-pad 0 0
+      # 允许自定义 tab / shift-tab 行为
+      zstyle ':fzf-tab:*' popup-smart-tab no
+
+      # 全局启用
       zstyle ':fzf-tab:*' disabled-on none
 
-      # 分组显示：完整显示组名
-      zstyle ':fzf-tab:*' show-group full
-      zstyle ':fzf-tab:*' switch-group '<' '>'
-      # 也可以保留默认 F1/F2，二选一：
-      # zstyle ':fzf-tab:*' switch-group F1 F2
+      # 分组显示策略：保留分组，但尽量克制
+      zstyle ':fzf-tab:*' show-group brief
+      zstyle ':fzf-tab:*' single-group color
+      zstyle ':fzf-tab:*' switch-group ',' '.'
 
-      # 单组时也保留 header / color
-      zstyle ':fzf-tab:*' single-group color header
+      # 单组color
+      zstyle ':fzf-tab:*' single-group color
 
       # 查询策略：优先 prefix，再用 input
       zstyle ':fzf-tab:*' query-string prefix input first
@@ -247,80 +250,61 @@ in
       zstyle ':fzf-tab:*' use-fzf-default-opts no
 
       # fzf 面板高度修正
-      zstyle ':fzf-tab:*' fzf-pad 2
-      zstyle ':fzf-tab:*' fzf-min-height 12
+      zstyle ':fzf-tab:*' fzf-pad 0
+      zstyle ':fzf-tab:*' fzf-min-height 10
 
       # fzf-tab 专用 flags
       zstyle ':fzf-tab:*' fzf-flags \
-        --height=60% \
+        --height=55% \
         --layout=reverse \
-        --border=rounded \
+        --border=none \
         --info=inline-right \
         --prompt='❯ ' \
         --pointer='▶' \
         --marker='✓' \
         --ansi \
-        --cycle
+        --cycle \
+        --no-bold
 
       # 常用按键
       zstyle ':fzf-tab:*' fzf-bindings \
-        'tab:accept' \
-        'shift-tab:up' \
+        'tab:down' \
+        'btab:up' \
+        'enter:accept' \
         'ctrl-j:down' \
         'ctrl-k:up' \
-        'ctrl-space:toggle+down' \
-        'ctrl-a:select-all' \
         'ctrl-d:half-page-down' \
         'ctrl-u:half-page-up' \
-        'alt-j:preview-down' \
-        'alt-k:preview-up'
+        'ctrl-f:page-down' \
+        'ctrl-b:page-up' \
+        'alt-j:jump' \
+        'ctrl-space:toggle+down' \
+        'ctrl-a:select-all' \
+        'ctrl-l:clear-query' \
+        'ctrl-r:toggle-sort'
 
       # Space 接受并直接执行
       # 如果你想更激进可以启用：
       # zstyle ':fzf-tab:*' accept-line enter
 
       # ------------------------------------------------------------
-      # Smart previews
+      # command-specific tuning
       # ------------------------------------------------------------
-      # cd: 目录树预览
-      zstyle ':fzf-tab:complete:cd:*' fzf-preview \
-        'eza --tree --level=2 --icons=always --color=always $realpath 2>/dev/null | head -200'
-
-      # zoxide/z 跳转
+      # zoxide / z：补全时更依赖用户当前输入
       zstyle ':fzf-tab:complete:_zoxide_z:*' query-string input
-      zstyle ':fzf-tab:complete:_zoxide_z:*' fzf-preview \
-        'eza --tree --level=2 --icons=always --color=always $realpath 2>/dev/null | head -200'
+      zstyle ':fzf-tab:complete:_z:*' query-string input
+      zstyle ':fzf-tab:complete:_j:*' query-string input
 
-      # export / unset / typeset
-      zstyle ':fzf-tab:complete:(export|unset|typeset|declare|local):*' fzf-preview \
-        'print -r -- ''${(P)word} 2>/dev/null'
+      # git 分支类：通常不需要按路径连续补全
+      zstyle ':fzf-tab:complete:git-(checkout|switch|branch):*' continuous-trigger ""
 
-      # ssh known_hosts
-      zstyle ':fzf-tab:complete:ssh:*' fzf-preview \
-        'dig +short $word 2>/dev/null; getent hosts $word 2>/dev/null'
+      # scp / rsync 远程路径补全：避免 '/' 自动连击太激进（可选）
+      zstyle ':fzf-tab:complete:(scp|rsync):*' continuous-trigger ""
 
-      # kill 进程预览
-      zstyle ':fzf-tab:complete:kill:*' fzf-preview \
-        'ps -p $word -o pid,ppid,user,%cpu,%mem,etime,command -ww'
-
-      # man 章节 / 命令类
-      zstyle ':fzf-tab:complete:man:*' fzf-preview \
-        'MANWIDTH=$((COLUMNS/2)) man $word 2>/dev/null | col -bx | head -200'
-
-      # git checkout / switch 分支预览
-      zstyle ':fzf-tab:complete:git-(checkout|switch):*' fzf-preview \
-        'git log --oneline --decorate --color=always -n 30 $word 2>/dev/null'
-
-      # git add / restore / diff 文件预览
-      zstyle ':fzf-tab:complete:git-(add|restore|diff):*' fzf-preview \
-        'if [ -d $realpath ]; then eza --tree --icons=always --color=always $realpath | head -200; else bat --style=numbers --color=always --line-range :300 $realpath 2>/dev/null; fi'
-
-      # 通用文件预览（兜底）
-      zstyle ':fzf-tab:complete:*:*' fzf-preview \
-        'if [ -d $realpath ]; then eza --tree --level=2 --icons=always --color=always $realpath 2>/dev/null | head -200; elif [ -f $realpath ]; then bat --style=numbers --color=always --line-range :300 $realpath 2>/dev/null; fi'
+      # 环境变量 / shell 变量：分组可读性优先
+      zstyle ':fzf-tab:complete:(export|unset|typeset|declare|local):*' show-group full
     '';
 
-    # Main-config
     initContent = ''
       # ------------------------------------------------------------
       # Welcome message (MOTD) for interactive shells
