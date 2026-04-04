@@ -136,6 +136,9 @@
     niri-config.url = "github:Redskaber/niri-config";
     niri-config.flake = false;
 
+    # Emacs config
+    emacs-config.url = "github:Redskaber/emacs-config";
+    emacs-config.flake = false;
   };
 
   outputs =

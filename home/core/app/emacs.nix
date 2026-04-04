@@ -18,5 +18,13 @@
     package = pkgs.emacs;
   };
 
+  # Used user config:
+  xdg.configFile."emacs" = {
+    source = inputs.emacs-config;   # abs path
+    recursive = true;               # rec-link
+    force = true;
+  };
+
+
 }
 
