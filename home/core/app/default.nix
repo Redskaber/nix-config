@@ -15,6 +15,7 @@
 {
 
   imports = [
+    ./ai
     ./game
     ./img
     ./music
