@@ -22,6 +22,8 @@ nixos-init:
 # ==============================================================================
 # devenv
 # ==============================================================================
+DEV_PROFILE_HOME := "$HOME/.local/state/nix/profiles/dev"
+
 # Create all development environments (including combined environments).
 devenv-create-all:
   @just devenv-create       c
@@ -45,25 +47,25 @@ devenv-create-all:
 
 # Create a specified locale (e.g., just devenv-create rust).
 devenv-create lang:
-  @mkdir -p                      $HOME/.local/state/nix/profiles/dev/{{lang}}
-  @nix develop                   .#{{lang}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
+  @mkdir -p                      {{DEV_PROFILE_HOME}}/{{lang}}
+  @nix develop                   .#{{lang}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}
 
 # Create a compound environment (e.g., just devenv-create-from python renpy).
 devenv-create-from lang class:
-  @mkdir -p                      $HOME/.local/state/nix/profiles/dev/{{lang}}
-  @nix develop                   .#{{lang}}-{{class}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}
+  @mkdir -p                      {{DEV_PROFILE_HOME}}/{{lang}}
+  @nix develop                   .#{{lang}}-{{class}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}-{{class}}
 
 # Clear all environment configuration directories.
 devenv-delete-all:
-  @rm -rf                        $HOME/.local/state/nix/profiles/dev/*
+  @rm -rf                        {{DEV_PROFILE_HOME}}/*
 
 # Delete the specified locale directory.
 devenv-delete lang:
-  @rm -rf                        $HOME/.local/state/nix/profiles/dev/{{lang}}
+  @rm -rf                        {{DEV_PROFILE_HOME}}/{{lang}}
 
 # Delete the profile for the composite environment (keeping the parent directory).
 devenv-delete-from lang class:
-  @rm -rf                        $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}*
+  @rm -rf                        {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}-{{class}}*
 
 # Delete and then rebuild once environments (force refresh).
 devenv-update lang:
@@ -86,15 +88,15 @@ devenv-show:
 
 # The created environment configurations are listed in a tree structure.
 devenv-list:
-  @eza --tree                    $HOME/.local/state/nix/profiles/dev
+  @eza --tree                    {{DEV_PROFILE_HOME}}
 
 # Enter an existing profile environment (without creating a persistent profile).
 devenv-use lang:
-  @nix develop                   .#{{lang}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
+  @nix develop                   .#{{lang}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}
 
 # Enter an existing composite profile environment (without creating a persistent profile).
 devenv-use-from lang class:
-  @nix develop                   .#{{lang}}-{{class}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}
+  @nix develop                   .#{{lang}}-{{class}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}-{{class}}
 
 
 
