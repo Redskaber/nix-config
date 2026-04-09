@@ -23,6 +23,7 @@
       dev.go
       dev.java
       dev.javascript
+      dev.lisp
       dev.lua
       dev.nix
       dev.python

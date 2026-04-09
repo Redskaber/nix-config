@@ -68,7 +68,7 @@
       python312Packages.unicorn           # CPU 模拟
       python312Packages.lief              # ELF/PE/Mach-O 操作
       python312Packages.yara-python       # 规则引擎
-      python312Packages.uncompyle6        # Python 字节码反编译
+      # python312Packages.uncompyle6      # Python 字节码反编译 (py3.12 non-sup)
       python312Packages.apkinspector      # Android APK 分析
       python312Packages.scapy             # network packet manipulation program and library
 
@@ -94,7 +94,7 @@
       mitmproxy         # 10.3+ (HTTP/2, WebSocket)
 
       # --- 二进制工具 ---
-      imhex             # 现代十六进制编辑器 (Qt)
+      imhex             # 现代十六进制编辑器 (GUI,Qt)
       hexyl             # 命令行十六进制查看器
       bvi               # 二进制可视化编辑器
       ddrescue          # 损坏介质数据恢复

@@ -20,6 +20,7 @@
     ./img
     ./music
     ./office
+    ./re
     ./yazi
 
     ./baidupcs-go.nix

@@ -26,10 +26,10 @@ nixos-init:
 devenv-create-all:
   @just devenv-create       c
   @just devenv-create       cpp
-  @just devenv-create       default
   @just devenv-create       go
   @just devenv-create       java
   @just devenv-create       javascript
+  @just devenv-create       lisp
   @just devenv-create       lua
   @just devenv-create       nix
   @just devenv-create-from  nix derivation-free
@@ -41,11 +41,12 @@ devenv-create-all:
   @just devenv-create       rust
   @just devenv-create       typescript
   @just devenv-create       zig
+  @just devenv-create       default
 
 # Create a specified locale (e.g., just devenv-create rust).
 devenv-create lang:
   @mkdir -p                      $HOME/.local/state/nix/profiles/dev/{{lang}}
-  @nix develop                   .#{{lang}}  --profile $home/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
+  @nix develop                   .#{{lang}}  --profile $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}
 
 # Create a compound environment (e.g., just devenv-create-from python renpy).
 devenv-create-from lang class:
@@ -63,6 +64,16 @@ devenv-delete lang:
 # Delete the profile for the composite environment (keeping the parent directory).
 devenv-delete-from lang class:
   @rm -rf                        $HOME/.local/state/nix/profiles/dev/{{lang}}/kilig-{{lang}}-{{class}}*
+
+# Delete and then rebuild once environments (force refresh).
+devenv-update lang:
+  @just devenv-delete {{lang}}
+  @just devenv-create {{lang}}
+
+# Delete and then rebuild once from cls environments (force refresh).
+devenv-update-from lang class:
+  @just devenv-delete-from {{lang}} {{class}}
+  @just devenv-create-from {{lang}} {{class}}
 
 # Delete and then rebuild all environments (force refresh).
 devenv-update-all:
