@@ -29,6 +29,7 @@
     ./downloader.nix
     ./emacs.nix
     ./google-chrome.nix
+    ./kiro.nix
     ./kitty.nix
     ./lutris.nix
     ./mpv.nix

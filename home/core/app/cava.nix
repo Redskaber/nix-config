@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/home/core/app/cava.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @discription: home::core::app:cava
+# @discription: home::core::app::cava
 # - terminal visucalizer audio (Decorations, Optional)
 
 
