@@ -15,9 +15,12 @@
 {
 
   imports = [
+    ./ghostscript.nix
     ./gimp.nix
     ./imagemagick.nix
     ./imv.nix
+    ./mermaid-cli.nix
+    ./tectonic.nix
   ];
 
 

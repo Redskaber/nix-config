@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.neovide.enable
-
+# @discription: home::core::app::nvim
 
 { inputs
 , shared
@@ -12,6 +12,8 @@
 , ...
 }:
 {
+  home.packages = with pkgs; [ tree-sitter ast-grep ];
+
   programs.neovim = {
     enable = true;
     defaultEditor = true;
