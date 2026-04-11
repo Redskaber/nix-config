@@ -2,7 +2,9 @@
 # @author: redskaber
 # @datetime: 2026-04-10
 # @discription: home::core::app::kiro
-# - IDE for Agentic AI workflows based on VS Code
+# - kiro    : IDE for Agentic AI workflows based on VS Code
+# - kiro-fhs: Wrapped variant of kiro which launches in a FHS compatible environment,
+#             should allow for easy usage of extensions without nix-specific modifications
 
 { inputs
 , shared
@@ -12,7 +14,7 @@
 , ...
 }:
 {
-  home.packages = with pkgs; [ kiro ];
+  home.packages = with pkgs; [ kiro-fhs ];
 
 
 }
