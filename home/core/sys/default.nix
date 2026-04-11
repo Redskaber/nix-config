@@ -24,6 +24,7 @@
     ./debug.nix
     ./direnv.nix
     ./duf.nix
+    ./env.nix
     ./eza.nix
     ./fastfetch.nix
     ./fd.nix
