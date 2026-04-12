@@ -1,12 +1,71 @@
 set shell := [ "bash", "-c" ]
 
 # ==============================================================================
+# Global
+# ==============================================================================
+# The target NixOS username. This is the single source of truth.
+# Must be set explicitly — do NOT use `id -un` here, as this justfile
+# may be executed from a live ISO environment where the current user
+# is `nixos` or `root`, not the intended target user.
+USERNAME := env("NIXOS_USERNAME", "")
+SHARED_NIX_PATH := "./shared.nix"
+
+# ==============================================================================
 # MainFlow
 # ==============================================================================
 # NixOS this config build entry.
 init:
+  @just _assert-username
+  @just shared-init
   @just nixos-init
   @just sops-init
+
+# Guard: ensure NIXOS_USERNAME is set before any recipe that depends on it.
+_assert-username:
+  #!/usr/bin/env bash
+  if [[ -z "{{USERNAME}}" ]]; then
+    echo "Error: NIXOS_USERNAME is not set." >&2
+    echo "Usage: NIXOS_USERNAME=yourname just <recipe>" >&2
+    exit 1
+  fi
+
+# ==============================================================================
+# Shared
+# ==============================================================================
+# Patch shared.nix with the target username as the single source of truth.
+shared-init:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  USERNAME="{{USERNAME}}"
+  SHARED="{{SHARED_NIX_PATH}}"
+
+  # Detect current username already written in shared.nix (from user.username field)
+  CURRENT=$(grep -oP '(?<=username = ")[^"]+' "${SHARED}" || true)
+
+  if [[ -z "${CURRENT}" ]]; then
+    echo "Error: could not detect current username in ${SHARED}" >&2
+    exit 1
+  fi
+
+  if [[ "${CURRENT}" == "${USERNAME}" ]]; then
+    echo "shared.nix already uses username '${USERNAME}', skipping."
+    exit 0
+  fi
+
+  # Replace all occurrences that are username-derived:
+  # 1. user.username = "..."
+  # 2. /home/<user>/  paths
+  # 3. secret paths containing /<user>/
+  # 4. redis-<user> variant
+  sed -i \
+    -e "s|username = \"${CURRENT}\"|username = \"${USERNAME}\"|g" \
+    -e "s|/home/${CURRENT}/|/home/${USERNAME}/|g" \
+    -e "s|/users/${CURRENT}/|/users/${USERNAME}/|g" \
+    -e "s|/nix/${CURRENT}/|/nix/${USERNAME}/|g" \
+    -e "s|redis-${CURRENT}|redis-${USERNAME}|g" \
+    "${SHARED}"
+
+  echo "Updated ${SHARED}: '${CURRENT}' -> '${USERNAME}'"
 
 # ==============================================================================
 # Hardware
@@ -48,12 +107,12 @@ devenv-create-all:
 # Create a specified locale (e.g., just devenv-create rust).
 devenv-create lang:
   @mkdir -p                      {{DEV_PROFILE_HOME}}/{{lang}}
-  @nix develop                   .#{{lang}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}
+  @nix develop                   .#{{lang}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/{{USERNAME}}-{{lang}}
 
 # Create a compound environment (e.g., just devenv-create-from python renpy).
 devenv-create-from lang class:
   @mkdir -p                      {{DEV_PROFILE_HOME}}/{{lang}}
-  @nix develop                   .#{{lang}}-{{class}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}-{{class}}
+  @nix develop                   .#{{lang}}-{{class}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/{{USERNAME}}-{{lang}}-{{class}}
 
 # Clear all environment configuration directories.
 devenv-delete-all:
@@ -65,7 +124,7 @@ devenv-delete lang:
 
 # Delete the profile for the composite environment (keeping the parent directory).
 devenv-delete-from lang class:
-  @rm -rf                        {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}-{{class}}*
+  @rm -rf                        {{DEV_PROFILE_HOME}}/{{lang}}/{{USERNAME}}-{{lang}}-{{class}}*
 
 # Delete and then rebuild once environments (force refresh).
 devenv-update lang:
@@ -92,11 +151,11 @@ devenv-list:
 
 # Enter an existing profile environment (without creating a persistent profile).
 devenv-use lang:
-  @nix develop                   .#{{lang}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}
+  @nix develop                   .#{{lang}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/{{USERNAME}}-{{lang}}
 
 # Enter an existing composite profile environment (without creating a persistent profile).
 devenv-use-from lang class:
-  @nix develop                   .#{{lang}}-{{class}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/kilig-{{lang}}-{{class}}
+  @nix develop                   .#{{lang}}-{{class}}  --profile {{DEV_PROFILE_HOME}}/{{lang}}/{{USERNAME}}-{{lang}}-{{class}}
 
 
 
@@ -113,6 +172,7 @@ SECRETS_KEYFILENAME := SECRETS_KEYS_PATH  / "keys.txt"
 
 # Initialize sops environment: generate keys, create config, and prepare secret files.
 sops-init:
+  @just _assert-username
   @just _sops-create-secrets-structs
   @just _sops-create-agekeygen-file
   @just _sops-create-dotsopsfile
@@ -173,8 +233,8 @@ sops-destory:
 
 
 _sops-create-secrets-structs:
-  @mkdir -p      {{SECRETS_PLAN_PATH}}/nixos/core/{base/{nix,users}/kilig,srv/db/{mongodb,mysql,postgresql}/users/kilig,srv/db/mysql/users/root,srv/db/redis/users/redis-kilig}
-  @mkdir -p      {{SECRETS_CHIPR_PATH}}/nixos/core/{base/{nix,users}/kilig,srv/db/{mongodb,mysql,postgresql}/users/kilig,srv/db/mysql/users/root,srv/db/redis/users/redis-kilig}
+  @mkdir -p      {{SECRETS_PLAN_PATH}}/nixos/core/{base/{nix,users}/{{USERNAME}},srv/db/{mongodb,mysql,postgresql}/users/{{USERNAME}},srv/db/mysql/users/root,srv/db/redis/users/redis-{{USERNAME}}}
+  @mkdir -p      {{SECRETS_CHIPR_PATH}}/nixos/core/{base/{nix,users}/{{USERNAME}},srv/db/{mongodb,mysql,postgresql}/users/{{USERNAME}},srv/db/mysql/users/root,srv/db/redis/users/redis-{{USERNAME}}}
 
 _sops-delete-secrets-structs:
   @rm    -rf     {{SECRETS_PLAN_PATH}}
@@ -191,39 +251,40 @@ _sops-delete-agekeygen-file:
 _sops-create-dotsopsfile:
   #!/usr/bin/env bash
   set -euo pipefail
+  USERNAME="{{USERNAME}}"
   PUBLIC_KEY=$(age-keygen -y {{SECRETS_KEYFILENAME}})
-  cat > {{DOT_SOPS_FILENAME}} <<'EOF'
+  cat > {{DOT_SOPS_FILENAME}} <<EOF
   keys:
-  - &age_kilig_publish_key PLACEHOLDER_PUBLIC_KEY
+  - &age_${USERNAME}_publish_key PLACEHOLDER_PUBLIC_KEY
   creation_rules:
-  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/base/users/kilig/[^/]+\.(yaml|json|env|ini)$
+  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/base/users/${USERNAME}/[^/]+\.(yaml|json|env|ini)\$
     key_groups:
       - age:
-        - *age_kilig_publish_key
-  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/base/nix/kilig/[^/]+\.(yaml|json|env|ini)$
+        - *age_${USERNAME}_publish_key
+  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/base/nix/${USERNAME}/[^/]+\.(yaml|json|env|ini)\$
     key_groups:
       - age:
-        - *age_kilig_publish_key
-  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/mongodb/users/kilig/[^/]+\.(yaml|json|env|ini)$
+        - *age_${USERNAME}_publish_key
+  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/mongodb/users/${USERNAME}/[^/]+\.(yaml|json|env|ini)\$
     key_groups:
       - age:
-        - *age_kilig_publish_key
-  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/mysql/users/kilig/[^/]+\.(yaml|json|env|ini)$
+        - *age_${USERNAME}_publish_key
+  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/mysql/users/${USERNAME}/[^/]+\.(yaml|json|env|ini)\$
     key_groups:
       - age:
-        - *age_kilig_publish_key
-  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/mysql/users/root/[^/]+\.(yaml|json|env|ini)$
+        - *age_${USERNAME}_publish_key
+  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/mysql/users/root/[^/]+\.(yaml|json|env|ini)\$
     key_groups:
       - age:
-        - *age_kilig_publish_key
-  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/postgresql/users/kilig/[^/]+\.(yaml|json|env|ini)$
+        - *age_${USERNAME}_publish_key
+  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/postgresql/users/${USERNAME}/[^/]+\.(yaml|json|env|ini)\$
     key_groups:
       - age:
-        - *age_kilig_publish_key
-  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/redis/users/redis-kilig/[^/]+\.(yaml|json|env|ini)$
+        - *age_${USERNAME}_publish_key
+  - path_regex: {{SECRETS_PATH}}/chipr/nixos/core/srv/db/redis/users/redis-${USERNAME}/[^/]+\.(yaml|json|env|ini)\$
     key_groups:
       - age:
-        - *age_kilig_publish_key
+        - *age_${USERNAME}_publish_key
   EOF
   sed -i.bak "s|PLACEHOLDER_PUBLIC_KEY|${PUBLIC_KEY}|g" {{DOT_SOPS_FILENAME}} && \
     rm -f {{DOT_SOPS_FILENAME}}.bak
@@ -234,52 +295,56 @@ _sops-delete-dotsopsfile:
 _sops-create-secrets-plan-base-userpwd:
   #!/usr/bin/env bash
   set -euo pipefail
-  cat > {{SECRETS_PLAN_PATH}}/nixos/core/base/users/kilig/password.yaml << 'EOF'
+  USERNAME="{{USERNAME}}"
+  cat > {{SECRETS_PLAN_PATH}}/nixos/core/base/users/${USERNAME}/password.yaml << EOF
   nixos:
     core:
       base:
         users:
-          kilig:
+          ${USERNAME}:
             password: "<YOUR_USER_PASSWORD_FROM_MKPASSWD>"
   EOF
 
 _sops-create-secrets-plan-base-nix:
   #!/usr/bin/env bash
   set -euo pipefail
-  cat > {{SECRETS_PLAN_PATH}}/nixos/core/base/nix/kilig/nixos-github-git-visited.yaml << 'EOF'
+  USERNAME="{{USERNAME}}"
+  cat > {{SECRETS_PLAN_PATH}}/nixos/core/base/nix/${USERNAME}/nixos-github-git-visited.yaml << EOF
   nixos:
     core:
       base:
         nix:
-          kilig:
+          ${USERNAME}:
             nixos-github-git-visited: "access-tokens = github.com=<YOUR_GITHUB_VISITED_TOKEN>"
   EOF
 
 _sops-create-secrets-plan-db-mongodb:
   #!/usr/bin/env bash
   set -euo pipefail
-  cat > {{SECRETS_PLAN_PATH}}/nixos/core/srv/db/mongodb/users/kilig/password.yaml << 'EOF'
+  USERNAME="{{USERNAME}}"
+  cat > {{SECRETS_PLAN_PATH}}/nixos/core/srv/db/mongodb/users/${USERNAME}/password.yaml << EOF
   nixos:
     core:
       srv:
         db:
           mongodb:
             users:
-              kilig:
+              ${USERNAME}:
                 password: "<YOUR_MONGODB_USER_PASSWORD>"
   EOF
 
 _sops-create-secrets-plan-db-mysql:
   #!/usr/bin/env bash
   set -euo pipefail
-  cat > {{SECRETS_PLAN_PATH}}/nixos/core/srv/db/mysql/users/kilig/password.yaml << 'EOF'
+  USERNAME="{{USERNAME}}"
+  cat > {{SECRETS_PLAN_PATH}}/nixos/core/srv/db/mysql/users/${USERNAME}/password.yaml << EOF
   nixos:
     core:
       srv:
         db:
           mysql:
             users:
-              kilig:
+              ${USERNAME}:
                 password: "<YOUR_MYSQL_USER_PASSWORD>"
   EOF
   cat > {{SECRETS_PLAN_PATH}}/nixos/core/srv/db/mysql/users/root/password.yaml << 'EOF'
@@ -296,34 +361,37 @@ _sops-create-secrets-plan-db-mysql:
 _sops-create-secrets-plan-db-postgresql:
   #!/usr/bin/env bash
   set -euo pipefail
-  cat > {{SECRETS_PLAN_PATH}}/nixos/core/srv/db/postgresql/users/kilig/password.yaml << 'EOF'
+  USERNAME="{{USERNAME}}"
+  cat > {{SECRETS_PLAN_PATH}}/nixos/core/srv/db/postgresql/users/${USERNAME}/password.yaml << EOF
   nixos:
     core:
       srv:
         db:
           postgresql:
             users:
-              kilig:
+              ${USERNAME}:
                 password: "<YOUR_POSTGRESQL_USER_PASSWORD>"
   EOF
 
 _sops-create-secrets-plan-db-redis:
   #!/usr/bin/env bash
   set -euo pipefail
-  cat > {{SECRETS_PLAN_PATH}}/nixos/core/srv/db/redis/users/redis-kilig/password.yaml << 'EOF'
+  USERNAME="{{USERNAME}}"
+  cat > {{SECRETS_PLAN_PATH}}/nixos/core/srv/db/redis/users/redis-${USERNAME}/password.yaml << EOF
   nixos:
     core:
       srv:
         db:
           redis:
             users:
-              redis-kilig:
+              redis-${USERNAME}:
                 password: "<YOUR_REDIS_USER_PASSWORD>"
   EOF
 
 _sops-create-secrets-chipr-base-userpwd:
   #!/usr/bin/env bash
   set -euo pipefail
+  USERNAME="{{USERNAME}}"
   echo -n "Please input user password: "
   read -s user_pwd
   echo
@@ -341,21 +409,22 @@ _sops-create-secrets-chipr-base-userpwd:
     | sops encrypt        \
     --input-type yaml     \
     --filename-override   \
-    {{SECRETS_CHIPR_PATH}}/nixos/core/base/users/kilig/password.yaml  \
-    > {{SECRETS_CHIPR_PATH}}/nixos/core/base/users/kilig/password.yaml
+    {{SECRETS_CHIPR_PATH}}/nixos/core/base/users/${USERNAME}/password.yaml  \
+    > {{SECRETS_CHIPR_PATH}}/nixos/core/base/users/${USERNAME}/password.yaml
   nixos:
     core:
       base:
         users:
-          kilig:
+          ${USERNAME}:
             password: "${safe_pwd}"
   EOF
   unset -v safe_pwd
-  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/base/users/kilig/password.yaml"
+  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/base/users/${USERNAME}/password.yaml"
 
 _sops-create-secrets-chipr-base-nix:
   #!/usr/bin/env bash
   set -euo pipefail
+  USERNAME="{{USERNAME}}"
   echo -n "Please input your nix visited github token: "
   read -s nvg_token
   echo
@@ -371,21 +440,22 @@ _sops-create-secrets-chipr-base-nix:
     | sops encrypt        \
     --input-type yaml     \
     --filename-override   \
-    {{SECRETS_CHIPR_PATH}}/nixos/core/base/nix/kilig/nixos-github-git-visited.yaml  \
-    > {{SECRETS_CHIPR_PATH}}/nixos/core/base/nix/kilig/nixos-github-git-visited.yaml
+    {{SECRETS_CHIPR_PATH}}/nixos/core/base/nix/${USERNAME}/nixos-github-git-visited.yaml  \
+    > {{SECRETS_CHIPR_PATH}}/nixos/core/base/nix/${USERNAME}/nixos-github-git-visited.yaml
   nixos:
     core:
       base:
         nix:
-          kilig:
+          ${USERNAME}:
             nixos-github-git-visited: "access-tokens = github.com=${nvg_token}"
   EOF
   unset -v nvg_token confirm_nvg_token
-  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/base/nix/kilig/nixos-github-git-visited.yaml"
+  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/base/nix/${USERNAME}/nixos-github-git-visited.yaml"
 
 _sops-create-secrets-chipr-db-mongodb:
   #!/usr/bin/env bash
   set -euo pipefail
+  USERNAME="{{USERNAME}}"
   echo -n "Please input user mongodb password: "
   read -s user_pwd
   echo
@@ -401,23 +471,24 @@ _sops-create-secrets-chipr-db-mongodb:
     | sops encrypt        \
     --input-type yaml     \
     --filename-override   \
-    {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mongodb/users/kilig/password.yaml  \
-    > {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mongodb/users/kilig/password.yaml
+    {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mongodb/users/${USERNAME}/password.yaml  \
+    > {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mongodb/users/${USERNAME}/password.yaml
   nixos:
     core:
       srv:
         db:
           mongodb:
             users:
-              kilig:
+              ${USERNAME}:
                 password: "${user_pwd}"
   EOF
   unset -v user_pwd confirm_pwd
-  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mongodb/users/kilig/password.yaml"
+  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mongodb/users/${USERNAME}/password.yaml"
 
 _sops-create-secrets-chipr-db-mysql:
   #!/usr/bin/env bash
   set -euo pipefail
+  USERNAME="{{USERNAME}}"
   echo -n "Please input mysql root password: "
   read -s root_pwd
   echo
@@ -459,25 +530,26 @@ _sops-create-secrets-chipr-db-mysql:
     | sops encrypt        \
     --input-type yaml     \
     --filename-override   \
-    {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/kilig/password.yaml  \
-    > {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/kilig/password.yaml
+    {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/${USERNAME}/password.yaml  \
+    > {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/${USERNAME}/password.yaml
   nixos:
     core:
       srv:
         db:
           mysql:
             users:
-              kilig:
+              ${USERNAME}:
                 password: "${user_pwd}"
   EOF
   unset -v root_pwd confirm_root_pwd
   unset -v user_pwd confirm_user_pwd
   echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/root/password.yaml"
-  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/kilig/password.yaml"
+  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/${USERNAME}/password.yaml"
 
 _sops-create-secrets-chipr-db-postgresql:
   #!/usr/bin/env bash
   set -euo pipefail
+  USERNAME="{{USERNAME}}"
   echo -n "Please input postgresql user password: "
   read -s user_pwd
   echo
@@ -493,23 +565,24 @@ _sops-create-secrets-chipr-db-postgresql:
     | sops encrypt        \
     --input-type yaml     \
     --filename-override   \
-    {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/postgresql/users/kilig/password.yaml  \
-    > {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/postgresql/users/kilig/password.yaml
+    {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/postgresql/users/${USERNAME}/password.yaml  \
+    > {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/postgresql/users/${USERNAME}/password.yaml
   nixos:
     core:
       srv:
         db:
           postgresql:
             users:
-              kilig:
+              ${USERNAME}:
                 password: "${user_pwd}"
   EOF
   unset -v user_pwd confirm_pwd
-  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/postgresql/users/kilig/password.yaml"
+  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/postgresql/users/${USERNAME}/password.yaml"
 
 _sops-create-secrets-chipr-db-redis:
   #!/usr/bin/env bash
   set -euo pipefail
+  USERNAME="{{USERNAME}}"
   echo -n "Please input redis user password: "
   read -s user_pwd
   echo
@@ -525,49 +598,53 @@ _sops-create-secrets-chipr-db-redis:
     | sops encrypt        \
     --input-type yaml     \
     --filename-override   \
-    {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/redis/users/redis-kilig/password.yaml  \
-    > {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/redis/users/redis-kilig/password.yaml
+    {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/redis/users/redis-${USERNAME}/password.yaml  \
+    > {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/redis/users/redis-${USERNAME}/password.yaml
   nixos:
     core:
       srv:
         db:
           redis:
             users:
-              redis-kilig:
+              redis-${USERNAME}:
                 password: "${user_pwd}"
   EOF
   unset -v user_pwd confirm_pwd
-  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/redis/users/redis-kilig/password.yaml"
+  echo "Successfully created and encryted {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/redis/users/redis-${USERNAME}/password.yaml"
 
 _sops-decrypt-secrets-chipr-base-userpwd:
   #!/usr/bin/env bash
   set -euo pipefail
-  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/base/users/kilig/password.yaml
+  USERNAME="{{USERNAME}}"
+  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/base/users/${USERNAME}/password.yaml
 
 _sops-decrypt-secrets-chipr-base-nix:
   #!/usr/bin/env bash
   set -euo pipefail
-  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/base/nix/kilig/nixos-github-git-visited.yaml
+  USERNAME="{{USERNAME}}"
+  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/base/nix/${USERNAME}/nixos-github-git-visited.yaml
 
 _sops-decrypt-secrets-chipr-db-mongodb:
   #!/usr/bin/env bash
   set -euo pipefail
-  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mongodb/users/kilig/password.yaml
+  USERNAME="{{USERNAME}}"
+  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mongodb/users/${USERNAME}/password.yaml
 
 _sops-decrypt-secrets-chipr-db-mysql:
   #!/usr/bin/env bash
   set -euo pipefail
+  USERNAME="{{USERNAME}}"
   sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/root/password.yaml
-  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/kilig/password.yaml
+  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/mysql/users/${USERNAME}/password.yaml
 
 _sops-decrypt-secrets-chipr-db-postgresql:
   #!/usr/bin/env bash
   set -euo pipefail
-  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/postgresql/users/kilig/password.yaml
+  USERNAME="{{USERNAME}}"
+  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/postgresql/users/${USERNAME}/password.yaml
 
 _sops-decrypt-secrets-chipr-db-redis:
   #!/usr/bin/env bash
   set -euo pipefail
-  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/redis/users/redis-kilig/password.yaml
-
-
+  USERNAME="{{USERNAME}}"
+  sops decrypt {{SECRETS_CHIPR_PATH}}/nixos/core/srv/db/redis/users/redis-${USERNAME}/password.yaml
