@@ -87,8 +87,8 @@
         format = "yaml";
         sopsFile = ../../../../secrets/chipr/${shared.secrets.nixos.core.base.nix.user.nixos-github-git-visited}.yaml;
         mode = "0400";
-        owner = config.users.users.root.name;
-        group = config.users.users.root.group;
+        owner = config.users.users.${shared.user.username}.name;
+        group = config.users.users.${shared.user.username}.group;
         path = "/run/secrets/${shared.secrets.nixos.core.base.nix.user.nixos-github-git-visited}";
       };
       ${shared.secrets.nixos.core.srv.db.mongodb.user.password} = {

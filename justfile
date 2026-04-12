@@ -16,7 +16,7 @@ init:
 NIXOS_HARDWARE_PATH := "./nixos/core/base/hardware.nix"
 # Create nixos generate config for user custom.(only first build need, base ['/' 'boot' 'swap'])
 nixos-init:
-  @nixos-generate-config --show-hardware-config >> {{NIXOS_HARDWARE_PATH}}
+  @nixos-generate-config --show-hardware-config > {{NIXOS_HARDWARE_PATH}}
 
 
 # ==============================================================================
