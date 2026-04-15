@@ -29,7 +29,7 @@
     nativeBuildInputs = with pkgs; [
       pkg-config
       # Add system libraries if needed (e.g., openssl, libusb):
-      # openssl.dev
+      openssl.dev
     ];
 
     # Required for rust-analyzer to provide stdlib navigation and hover docs
