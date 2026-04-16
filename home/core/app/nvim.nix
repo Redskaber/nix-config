@@ -17,6 +17,9 @@
   programs.neovim = {
     enable = true;
     defaultEditor = true;
+    # img sup
+    extraLuaPackages = ps: [ ps.magick ];
+    extraPackages = [ pkgs.imagemagick pkgs.ueberzugpp ];
   };
 
   # Used user config:
