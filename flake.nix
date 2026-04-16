@@ -68,6 +68,14 @@
     nvim-config.url = "github:Redskaber/nvim-config";
     nvim-config.flake = false;
 
+    # Emacs config
+    emacs-config.url = "github:Redskaber/emacs-config";
+    emacs-config.flake = false;
+
+    # Vscode-config
+    vscode-config.url = "github:Redskaber/vscode-config";
+    vscode-config.flake = false;
+
     # Starship Config
     starship-config.url = "github:Redskaber/starship-config";
     starship-config.flake = false;
@@ -88,10 +96,6 @@
     tmux-config.url = "github:Redskaber/tmux-config";
     tmux-config.flake = false;
 
-    # Vscode-config
-    vscode-config.url = "github:Redskaber/vscode-config";
-    vscode-config.flake = false;
-
     # Mpv-config
     mpv-config.url = "github:Redskaber/mpv-config";
     mpv-config.flake = false;
@@ -103,6 +107,10 @@
     # Cava-config
     cava-config.url = "github:Redskaber/cava-config";
     cava-config.flake = false;
+
+    # Niri config
+    niri-config.url = "github:Redskaber/niri-config";
+    niri-config.flake = false;
 
     # Hypr-config
     hypr-config.url = "github:Redskaber/hypr-config";
@@ -131,14 +139,6 @@
     # QuickShell-config
     quickshell-config.url = "github:Redskaber/quickshell-config";
     quickshell-config.flake = false;
-
-    # Niri config
-    niri-config.url = "github:Redskaber/niri-config";
-    niri-config.flake = false;
-
-    # Emacs config
-    emacs-config.url = "github:Redskaber/emacs-config";
-    emacs-config.flake = false;
   };
 
   outputs =

@@ -77,6 +77,13 @@ NIXOS_HARDWARE_PATH := "./nixos/core/base/hardware.nix"
 nixos-init:
   @nixos-generate-config --show-hardware-config > {{NIXOS_HARDWARE_PATH}}
 
+# Flake update all dep pkgs.
+flake-update-all:
+  @nix flake update
+
+# Flake update once dep pkg.
+flake-update pkg:
+  @nix flake update {{pkg}}
 
 # ==============================================================================
 # devenv

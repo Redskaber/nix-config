@@ -13,7 +13,7 @@
 , ...
 }:
 {
-  home.packages = with pkgs; [ gimp ];
+  home.packages = with pkgs; [ imagemagick ];
 
 }
 
