@@ -21,13 +21,10 @@
 
     config = {
       common.default = [ "gtk" ];
-      hyprland.default = [ "gtk" "wlr" ];
+      ${shared.window-manager.tag}.default = shared.window-manager.value.default;
     };
 
-    extraPortals = with pkgs; [
-      xdg-desktop-portal-gtk
-      xdg-desktop-portal-wlr
-    ];
+    extraPortals = with pkgs; map (p: p.value) shared.window-manager.value.portals;
 
   };
 
