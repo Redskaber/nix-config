@@ -58,7 +58,7 @@ let
   window-manager  = enum "windowManager" {
     gnome         = { default = [ "gtk"            ]; portals = with pkgs; [ xdg-desktop-portal-gtk ]; };
     niri          = { default = [ "wlr" "gtk"      ]; portals = with pkgs; [ xdg-desktop-portal-gtk xdg-desktop-portal-wlr      ]; };
-    hyprland      = { default = [ "hyprland" "gtk" ]; portals = with pkgs; [ xdg-desktop-portal-gtk xdg-desktop-portal-hyprland ]; };
+    hyprland      = { default = [ "hyprland" "gtk" ]; portals = with pkgs; [ xdg-desktop-portal-gtk ]; }; # xdg-desktop-portal-hyprland used input new version
   };
 
   display-manager = enum "displayManager" [ "gdm" "ly" "sddm" ];
