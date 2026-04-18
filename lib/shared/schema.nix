@@ -55,16 +55,10 @@ let
   };
   platform        = enum "platform"       [ "linux" "macos" "nixos" "wsl" ];
   arch            = enum "arch"           [ "aarch64-darwin" "aarch64-linux" "i686-linux" "x86_64-darwin" "x86_64-linux" ];
-
-  portal          = enum "portal" {
-    gtk           = "xdg-desktop-portal-gtk";
-    wlr           = "xdg-desktop-portal-wlr";
-    hyprland      = "xdg-desktop-portal-hyprland";
-  };
   window-manager  = enum "windowManager" {
-    gnome         = { default = [ "gtk"           ]; portals = [ portal.gtk                 ]; };
-    niri          = { default = [ "wlr" "gtk"     ]; portals = [ portal.gtk portal.wlr      ]; };
-    hyprland      = { default = [ "hyprland" "gtk"]; portals = [ portal.gtk portal.hyprland ]; };
+    gnome         = { default = [ "gtk"            ]; portals = with pkgs; [ xdg-desktop-portal-gtk ]; };
+    niri          = { default = [ "wlr" "gtk"      ]; portals = with pkgs; [ xdg-desktop-portal-gtk xdg-desktop-portal-wlr      ]; };
+    hyprland      = { default = [ "hyprland" "gtk" ]; portals = with pkgs; [ xdg-desktop-portal-gtk xdg-desktop-portal-hyprland ]; };
   };
 
   display-manager = enum "displayManager" [ "gdm" "ly" "sddm" ];

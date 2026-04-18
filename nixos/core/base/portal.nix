@@ -24,7 +24,7 @@
       ${shared.window-manager.tag}.default = shared.window-manager.value.default;
     };
 
-    extraPortals = with pkgs; map (p: p.value) shared.window-manager.value.portals;
+    extraPortals = shared.window-manager.value.portals;
 
   };
 
