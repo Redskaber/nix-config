@@ -67,6 +67,7 @@ shared-init:
 
   echo "Updated ${SHARED}: '${CURRENT}' -> '${USERNAME}'"
 
+
 # ==============================================================================
 # Hardware
 # ==============================================================================
@@ -77,6 +78,10 @@ NIXOS_HARDWARE_PATH := "./nixos/core/base/hardware.nix"
 nixos-init:
   @nixos-generate-config --show-hardware-config > {{NIXOS_HARDWARE_PATH}}
 
+
+# ==============================================================================
+# Flake
+# ==============================================================================
 # Flake update all dep pkgs.
 flake-update-all:
   @nix flake update
@@ -84,6 +89,15 @@ flake-update-all:
 # Flake update once dep pkg.
 flake-update pkg:
   @nix flake update {{pkg}}
+
+# Flake update not sops nix pkgs.
+flake-update-not-sops:
+	@nix flake update $(nix eval .#api.inputs --json | jq -r 'keys - ["sops-nix"] | join(" ")')
+
+# Flake update dry run.
+flake-update-dry:
+	@nix flake update --dry-run
+
 
 # ==============================================================================
 # devenv

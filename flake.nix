@@ -155,6 +155,9 @@
       devDir = shared.devDir;
     in
   {
+    # api
+    api.inputs = inputs;
+
     # debug information
     # Available through 'nix eval .#debug.test_shared'
     debug.test_shared = shared;
