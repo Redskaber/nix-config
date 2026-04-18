@@ -21,10 +21,10 @@
 
     config = {
       common.default = [ "gtk" ];
-      ${shared.window-manager.tag}.default = shared.window-manager.value.default;
+      ${shared.window-manager.tag}.default = shared.window-manager.value.portal.value.default;
     };
 
-    extraPortals = shared.window-manager.value.portals;
+    extraPortals = shared.window-manager.value.portal.value.extraPortals;
 
   };
 

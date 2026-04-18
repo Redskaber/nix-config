@@ -16,20 +16,20 @@
 {
   # base(wayland)
   xdg.portal = {
-    enable = if shared.platform.tag == "nixos" then false else true;
+    enable = !shared.isNixOS;
     xdgOpenUsePortal = true;
 
     config = {
       common.default = [ "gtk" ];
-      ${shared.window-manager.tag}.default = shared.window-manager.value.default;
+      ${shared.window-manager.tag}.default = shared.window-manager.value.portal.value.default;
     };
 
-   extraPortals = shared.window-manager.value.portals;
+  extraPortals = shared.window-manager.value.portal.value.extraPortals;
 
   };
 
   # desktop portal
-  home.packages = shared.window-manager.value.portals;
+  home.packages = shared.window-manager.value.portal.value.extraPortals;
 
 }
 

@@ -55,10 +55,16 @@ let
   };
   platform        = enum "platform"       [ "linux" "macos" "nixos" "wsl" ];
   arch            = enum "arch"           [ "aarch64-darwin" "aarch64-linux" "i686-linux" "x86_64-darwin" "x86_64-linux" ];
+  # strategy
+  portal          = enum "portal"        {
+    gnome         = { default = [ "gtk"            ]; extraPortals = with pkgs; [ xdg-desktop-portal-gtk                        ]; wlr = false; };
+    niri          = { default = [ "wlr" "gtk"      ]; extraPortals = with pkgs; [ xdg-desktop-portal-gtk xdg-desktop-portal-wlr ]; wlr = true;  };
+    hyprland      = { default = [ "hyprland" "gtk" ]; extraPortals = with pkgs; [ xdg-desktop-portal-gtk                        ]; wlr = false; }; # xdg-desktop-portal-hyprland used input new version
+  };
   window-manager  = enum "windowManager" {
-    gnome         = { default = [ "gtk"            ]; portals = with pkgs; [ xdg-desktop-portal-gtk ]; };
-    niri          = { default = [ "wlr" "gtk"      ]; portals = with pkgs; [ xdg-desktop-portal-gtk xdg-desktop-portal-wlr      ]; };
-    hyprland      = { default = [ "hyprland" "gtk" ]; portals = with pkgs; [ xdg-desktop-portal-gtk ]; }; # xdg-desktop-portal-hyprland used input new version
+    gnome         = { portal = portal.gnome;    };
+    niri          = { portal = portal.niri;     };
+    hyprland      = { portal = portal.hyprland; };
   };
 
   display-manager = enum "displayManager" [ "gdm" "ly" "sddm" ];
@@ -152,10 +158,12 @@ let
 
   secrets = struct.secrets;
   pkgs = nixpkgs.legacyPackages.${arch.x86_64-linux.tag};  # jocker pkgs
+  isNixOS = false;
 in {
   inherit
     editor version platform arch window-manager display-manager drive drive-group shell
     struct secrets pkgs
+    isNixOS
     fn-init-secrets
   ;
 }

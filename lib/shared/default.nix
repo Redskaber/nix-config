@@ -10,12 +10,15 @@ let
   schema = import ./schema.nix { inherit nixpkgs inputs; };
   jokerShared = import scfpath { inherit shared inputs; };
 
-  # fix-pkgs
+  # FIX: fix-pkgs and platfrom const
   pkgsAttrs = if jokerShared ? nixpkgs then
     { system = jokerShared.arch.tag; } // jokerShared.nixpkgs
   else
     { system = jokerShared.arch.tag; };
-  core_pkgs = { pkgs = import nixpkgs pkgsAttrs; };
+  core_pkgs = {
+    pkgs = import nixpkgs pkgsAttrs;
+    isNixOS = jokerShared.platform.tag == "nixos";
+  };
   shared = schema // core_pkgs;
 
   # reload
