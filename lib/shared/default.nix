@@ -17,7 +17,7 @@ let
     { system = jokerShared.arch.tag; };
   core_pkgs = {
     pkgs = import nixpkgs pkgsAttrs;
-    isNixOS = jokerShared.platform.tag == "nixos";
+    isNixOS = jokerShared.platform == schema.platform.nixos;
   };
   shared = schema // core_pkgs;
 

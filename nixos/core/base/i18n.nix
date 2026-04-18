@@ -20,21 +20,21 @@
 
   # Set I18n
   i18n = {
-    defaultLocale       = "en_US.UTF-8";
+    defaultLocale       = shared.i18n.defaultLocale;
     extraLocaleSettings = {
-      LC_ADDRESS        = "zh_CN.UTF-8";
-      LC_IDENTIFICATION = "zh_CN.UTF-8";
-      LC_MEASUREMENT    = "zh_CN.UTF-8";
-      LC_MONETARY       = "zh_CN.UTF-8";
-      LC_NAME           = "zh_CN.UTF-8";
-      LC_NUMERIC        = "zh_CN.UTF-8";
-      LC_PAPER          = "zh_CN.UTF-8";
-      LC_TELEPHONE      = "zh_CN.UTF-8";
-      LC_TIME           = "zh_CN.UTF-8";
+      LC_ADDRESS        = shared.i18n.extraLocale;
+      LC_IDENTIFICATION = shared.i18n.extraLocale;
+      LC_MEASUREMENT    = shared.i18n.extraLocale;
+      LC_MONETARY       = shared.i18n.extraLocale;
+      LC_NAME           = shared.i18n.extraLocale;
+      LC_NUMERIC        = shared.i18n.extraLocale;
+      LC_PAPER          = shared.i18n.extraLocale;
+      LC_TELEPHONE      = shared.i18n.extraLocale;
+      LC_TIME           = shared.i18n.extraLocale;
     };
     supportedLocales = [
-      "en_US.UTF-8/UTF-8"
-      "zh_CN.UTF-8/UTF-8"
+      shared.i18n.defaultLocale
+      shared.i18n.extraLocale
     ];
 
     inputMethod = {
@@ -59,9 +59,9 @@
   # variables
   environment.sessionVariables = {
     GTK_IM_MODULE = "fcitx";
-    QT_IM_MODULE = "fcitx";
+    QT_IM_MODULE  = "fcitx";
     QT_IM_MODULES = "wayland;fcitx;ibus"; # Qt6.7+
-    XMODIFIERS = "@im=fcitx";             # xwayland
+    XMODIFIERS    = "@im=fcitx";          # xwayland
     SDL_IM_MODULE = "fcitx";              # sdl
     MOZ_ENABLE_WAYLAND = "1";             # wayland sup
   };

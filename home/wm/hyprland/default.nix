@@ -70,8 +70,12 @@
   # hyprland through system enable
   wayland.windowManager.hyprland = {
     enable = true;
-    package = if shared.platform.tag == "nixos" then null else inputs.hyprland.packages.${shared.arch.tag}.hyprland;
-    portalPackage = if shared.platform.tag == "nixos" then null else inputs.hyprland.packages.${shared.arch.tag}.xdg-desktop-portal-hyprland;
+    package = if shared.isNixOS
+      then null
+      else inputs.hyprland.packages.${shared.arch.tag}.hyprland;
+    portalPackage = if shared.isNixOS
+      then null
+      else inputs.hyprland.packages.${shared.arch.tag}.xdg-desktop-portal-hyprland;
     xwayland.enable = true;
     systemd = {
       enable = true;

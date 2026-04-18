@@ -31,6 +31,10 @@ let
       used-ip-timeZone  = false;
       timeZone          = "Asia/Shanghai";
     };
+    i18n = {
+      defaultLocale = "en_US.UTF-8";
+      extraLocale   = "zh_CN.UTF-8";
+    };
     secrets = {
       user-password             = "nixos.core.base.users.kilig.password";
       nixos-github-git-visited  = "nixos.core.base.nix.kilig.nixos-github-git-visited";
@@ -106,6 +110,11 @@ let
       timeZone          ? const.time.timeZone,
     } @return_time: return_time;
 
+    i18n = {
+      defaultLocale     ? const.i18n.defaultLocale,
+      extraLocale       ? const.i18n.extraLocale,
+    } @return_i18n: return_i18n;
+
     secrets = {
       user-password             ? const.secrets.user-password,
       nixos-github-git-visited  ? const.secrets.nixos-github-git-visited,
@@ -139,32 +148,21 @@ let
       git             ? struct.git,
       rbw             ? struct.rbw,
       time            ? struct.time,
+      i18n            ? struct.i18n,
       secrets         ? struct.secrets,
       nixpkgs         ? struct.nixpkgs,
       ...
     } @return_shared: return_shared;
   };
 
-  fn-init-secrets = username:
-    struct.secrets {
-      user-password             = "nixos.core.base.users.${username}.password";
-      nixos-github-git-visited  = "nixos.core.base.nix.${username}.nixos-github-git-visited";
-      mongodb-user-password     = "nixos.core.srv.db.mongodb.users.${username}.password";
-      mysql-root-password       = "nixos.core.srv.db.mysql.users.root.password";
-      mysql-user-password       = "nixos.core.srv.db.mysql.users.${username}.password";
-      postgresql-user-password  = "nixos.core.srv.db.postgresql.users.${username}.password";
-      redis-user-password       = "nixos.core.srv.db.redis.users.redis-${username}.password";
-    };
-
   secrets = struct.secrets;
-  pkgs = nixpkgs.legacyPackages.${arch.x86_64-linux.tag};  # jocker pkgs
+  pkgs    = nixpkgs.legacyPackages.${arch.x86_64-linux.tag};  # jocker pkgs
   isNixOS = false;
 in {
   inherit
     editor version platform arch window-manager display-manager drive drive-group shell
     struct secrets pkgs
     isNixOS
-    fn-init-secrets
   ;
 }
 
