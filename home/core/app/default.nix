@@ -16,6 +16,7 @@
 
   imports = [
     ./ai
+    ./browser
     ./game
     ./img
     ./music
@@ -28,7 +29,6 @@
     ./discord.nix
     ./downloader.nix
     ./emacs.nix
-    ./google-chrome.nix
     ./kiro.nix
     ./kitty.nix
     ./lutris.nix
@@ -45,7 +45,6 @@
     ./wezterm.nix
     ./xunlei.nix
     ./zed.nix
-    # ./zen-browser.nix
   ];
 
 

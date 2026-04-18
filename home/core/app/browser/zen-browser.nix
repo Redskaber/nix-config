@@ -1,8 +1,8 @@
-# @path: ~/projects/configs/nix-config/home/core/app/zen-browser.nix
+# @path: ~/projects/configs/nix-config/home/core/app/browser/zen-browser.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @depends: https://github:0xc000022070/zen-browser-flake
-# @description: home::core::app::zen-browser
+# @description: home::core::app::browser::zen-browser
 # - Optional: browser
 # - default used google-chrome
 
