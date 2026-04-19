@@ -957,11 +957,11 @@
     "tmux-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1776333304,
-        "narHash": "sha256-aUCL2z0d17hcIEWQHrC8AGCZeTrGvdedjALPEenxWp4=",
+        "lastModified": 1776548372,
+        "narHash": "sha256-/iIMbGZV9ymQ6npZhtQrNF7044N+iYIPD/55TgsrD2g=",
         "owner": "Redskaber",
         "repo": "tmux-config",
-        "rev": "6000e74167162884a72eb451b4ab13f4861ec8d2",
+        "rev": "b16a3db7b94260e0a651a45c2ed1f1661bddaebc",
         "type": "github"
       },
       "original": {

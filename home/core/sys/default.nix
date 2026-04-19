@@ -43,6 +43,7 @@
     ./security.nix
     ./starship.nix
     ./wl-clipboard.nix
+    ./yq.nix
     ./zoxide.nix
     ./zsh.nix
   ];
