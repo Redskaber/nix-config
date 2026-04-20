@@ -14,7 +14,7 @@
 }:
 {
 
-  home.packages = with pkgs; [ waybar ];
+  home.packages = with shared.upkgs; [ waybar ];
 
   xdg.configFile."waybar" = {
     source = inputs.waybar-config;  # abs path

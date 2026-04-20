@@ -5,7 +5,7 @@
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # - nix core informations configuration
 
-{ inputs, nixpkgs, ... }:
+{ inputs, nixpkgs, nixpkgs-unstable, ... }:
 let
   inherit (inputs.nix-types.enum) enum;
 
@@ -156,12 +156,13 @@ let
   };
 
   secrets = struct.secrets;
-  pkgs    = nixpkgs.legacyPackages.${arch.x86_64-linux.tag};  # jocker pkgs
+  pkgs    = nixpkgs.legacyPackages.${arch.x86_64-linux.tag};            # jocker pkgs
+  upkgs   = nixpkgs-unstable.legacyPackages.${arch.x86_64-linux.tag};   # jocker upkgs
   isNixOS = false;
 in {
   inherit
     editor version platform arch window-manager display-manager drive drive-group shell
-    struct secrets pkgs
+    struct secrets pkgs upkgs
     isNixOS
   ;
 }

@@ -145,12 +145,13 @@
   {
     self,
     nixpkgs,
+    nixpkgs-unstable,
     home-manager,
     ...
   } @ inputs:
     let
       # User-Shared Config
-      shared = import ./lib/shared { inherit nixpkgs inputs; };
+      shared = import ./lib/shared { inherit nixpkgs nixpkgs-unstable inputs; };
       pkgs = shared.pkgs;
       devDir = shared.devDir;
     in
