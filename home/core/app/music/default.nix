@@ -79,6 +79,7 @@ in
   ];
 
   imports = [
+    ./cnmplayer.nix
     ./easyeffects.nix
     ./mpd.nix
     ./playerctld.nix

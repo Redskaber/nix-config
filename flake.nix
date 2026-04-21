@@ -60,9 +60,13 @@
     wechat.url = "github:Redskaber/wechat";
     wechat.inputs.nixpkgs.follows = "nixpkgs";
 
-    # Ren'Py
     # Unpryc
     unrpyc.url = "github:Redskaber/unrpyc";
+    unrpyc.inputs.nixpkgs.follows = "nixpkgs";
+    
+    # CNMPlayer (china area use)
+    cnmplayer.url = "github:Redskaber/cnmplayer";
+    cnmplayer.inputs.nixpkgs.follows = "nixpkgs";
 
     # Neovim Config
     nvim-config.url = "github:Redskaber/nvim-config";
