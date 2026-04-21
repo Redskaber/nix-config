@@ -80,7 +80,6 @@ in
 
   imports = [
     ./easyeffects.nix
-    ./listen1.nix
     ./mpd.nix
     ./playerctld.nix
     ./spotify.nix
