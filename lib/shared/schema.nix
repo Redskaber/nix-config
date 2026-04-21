@@ -156,8 +156,8 @@ let
   };
 
   secrets = struct.secrets;
-  pkgs    = nixpkgs.legacyPackages.${arch.x86_64-linux.tag};            # jocker pkgs
-  upkgs   = nixpkgs-unstable.legacyPackages.${arch.x86_64-linux.tag};   # jocker upkgs
+  pkgs    = null;     # jocker pkgs
+  upkgs   = null;     # jocker upkgs
   isNixOS = false;
 in {
   inherit

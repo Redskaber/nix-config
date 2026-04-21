@@ -65,6 +65,26 @@
         "type": "github"
       }
     },
+    "cnmplayer": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1776802436,
+        "narHash": "sha256-OIDSbHvM3CrF6eqNJsnpdPUKC4rgoo0KCST9OYcrJzs=",
+        "owner": "Redskaber",
+        "repo": "cnmplayer",
+        "rev": "33f560552c61edab7e633e55ee3eaacbaa8fce4a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "cnmplayer",
+        "type": "github"
+      }
+    },
     "emacs-config": {
       "flake": false,
       "locked": {
@@ -707,22 +727,6 @@
         "type": "github"
       }
     },
-    "nixpkgs_3": {
-      "locked": {
-        "lastModified": 1771369470,
-        "narHash": "sha256-0NBlEBKkN3lufyvFegY4TYv5mCNHbi5OmBDrzihbBMQ=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "0182a361324364ae3f436a63005877674cf45efb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nur": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -840,6 +844,7 @@
       "inputs": {
         "btop-config": "btop-config",
         "cava-config": "cava-config",
+        "cnmplayer": "cnmplayer",
         "emacs-config": "emacs-config",
         "fastfetch-config": "fastfetch-config",
         "home-manager": "home-manager",
@@ -972,7 +977,9 @@
     },
     "unrpyc": {
       "inputs": {
-        "nixpkgs": "nixpkgs_3"
+        "nixpkgs": [
+          "nixpkgs"
+        ]
       },
       "locked": {
         "lastModified": 1771794580,
