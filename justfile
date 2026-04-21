@@ -94,6 +94,10 @@ flake-update pkg:
 flake-update-not-sops:
 	@nix flake update $(nix eval .#api.inputs --json | jq -r 'keys - ["sops-nix"] | join(" ")')
 
+# Flake update configs pgks
+flake-update-configs:
+  @nix flake update $(nix eval .#api.inputs --json | jq -r 'keys[] | select(endswith("-config"))')
+
 # Flake update dry run.
 flake-update-dry:
 	@nix flake update --dry-run
