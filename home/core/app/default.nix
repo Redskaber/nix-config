@@ -38,6 +38,7 @@
     ./obsidian.nix
     ./qq.nix
     ./rbw.nix
+    ./showmethekey.nix
     ./tealdeer.nix
     ./tmux.nix
     ./vscode.nix
