@@ -21,21 +21,18 @@
   # Set I18n
   i18n = {
     defaultLocale       = shared.i18n.defaultLocale;
+    extraLocales        = shared.i18n.extraLocales;
     extraLocaleSettings = {
-      LC_ADDRESS        = shared.i18n.extraLocale;
-      LC_IDENTIFICATION = shared.i18n.extraLocale;
-      LC_MEASUREMENT    = shared.i18n.extraLocale;
-      LC_MONETARY       = shared.i18n.extraLocale;
-      LC_NAME           = shared.i18n.extraLocale;
-      LC_NUMERIC        = shared.i18n.extraLocale;
-      LC_PAPER          = shared.i18n.extraLocale;
-      LC_TELEPHONE      = shared.i18n.extraLocale;
-      LC_TIME           = shared.i18n.extraLocale;
+      LC_ADDRESS        = shared.i18n.extraLocalSetting;
+      LC_IDENTIFICATION = shared.i18n.extraLocalSetting;
+      LC_MEASUREMENT    = shared.i18n.extraLocalSetting;
+      LC_MONETARY       = shared.i18n.extraLocalSetting;
+      LC_NAME           = shared.i18n.extraLocalSetting;
+      LC_NUMERIC        = shared.i18n.extraLocalSetting;
+      LC_PAPER          = shared.i18n.extraLocalSetting;
+      LC_TELEPHONE      = shared.i18n.extraLocalSetting;
+      LC_TIME           = shared.i18n.extraLocalSetting;
     };
-    supportedLocales = [
-      shared.i18n.defaultLocale
-      shared.i18n.extraLocale
-    ];
 
     inputMethod = {
       type = "fcitx5";

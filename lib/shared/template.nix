@@ -43,8 +43,9 @@
       timeZone = "Asia/Shanghai";
     };
     i18n = {
-      defaultLocale = "en_US.UTF-8";
-      extraLocale   = "zh_CN.UTF-8";
+      defaultLocale     = "en_US.UTF-8";
+      extraLocalSetting = "zh_CN.UTF-8";
+      extraLocales      = [ "zh_CN.UTF-8/UTF-8" ];
     };
 
     # sops age from root-dir/secrets/<dir|file>

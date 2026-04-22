@@ -31,7 +31,8 @@ let
 
   i18n = {
     defaultLocale     ,
-    extraLocale       ,
+    extraLocalSetting ,
+    extraLocales      ,
   } @return_i18n: return_i18n;
 
   secrets = {
