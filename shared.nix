@@ -12,7 +12,7 @@
   drive = shared.enum.drive-group.intel;
   platform = shared.enum.platform.nixos;
   window-manager  = shared.enum.window-manager.hyprland;
-  display-manager = shared.enum.display-manager.lemurs;
+  display-manager = shared.enum.display-manager.ly;
   version = shared.enum.version.v25_11;
   editor  = shared.enum.editor.nvim;
   devDir  = ./home/core/dev;
