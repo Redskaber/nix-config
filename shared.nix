@@ -6,7 +6,7 @@
 # - user informations configuration
 
 
-{ shared, inputs, ... }:
+{ shared, inputs, ... }: shared.schema.shared
 {
   arch  = shared.enum.arch.x86_64-linux;
   drive = shared.enum.drive-group.intel;
