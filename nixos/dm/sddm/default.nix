@@ -12,19 +12,22 @@
 , ...
 }:
 {
-  services.displayManager.sddm = {
+  services.displayManager = {
     enable = true;
-    package = pkgs.kdePackages.sddm;
-    extraPackages = [];
-    enableHidpi = true;
-    autoNumlock = false;
-    autoLogin = {
-      relogin = false;
-      minimumUid = 1000;
-    };
-    wayland = {
+    sddm = {
       enable = true;
-      compositor = "weston";
+      package = pkgs.kdePackages.sddm;
+      extraPackages = [];
+      enableHidpi = true;
+      autoNumlock = false;
+      autoLogin = {
+        relogin = false;
+        minimumUid = 1000;
+      };
+      wayland = {
+        enable = true;
+        compositor = "weston";
+      };
     };
   };
 

@@ -29,7 +29,7 @@ let
     hyprland      = { portal = portal.hyprland; };
   };
 
-  display-manager = enum "displayManager" [ "gdm" "ly" "sddm" ];
+  display-manager = enum "displayManager" [ "gdm" "lemurs" "ly" "sddm" ];
   # drive           = enum "drive"          [ "amd" "intel" "nvidia" "nvidia-prime" ];
   drive-group     = enum "driveGroup"     {
     amd               = [ "amd" ];
