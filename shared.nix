@@ -8,19 +8,19 @@
 
 { shared, inputs, ... }:
 {
-  arch  = shared.arch.x86_64-linux;
-  drive = shared.drive-group.intel;
-  platform = shared.platform.nixos;
-  window-manager  = shared.window-manager.hyprland;
-  display-manager = shared.display-manager.ly;
-  version = shared.version.v25_11;
-  editor  = shared.editor.nvim;
+  arch  = shared.enum.arch.x86_64-linux;
+  drive = shared.enum.drive-group.intel;
+  platform = shared.enum.platform.nixos;
+  window-manager  = shared.enum.window-manager.hyprland;
+  display-manager = shared.enum.display-manager.ly;
+  version = shared.enum.version.v25_11;
+  editor  = shared.enum.editor.nvim;
   devDir  = ./home/core/dev;
   hostName = "nixos";
 
   user = {
     username = "kilig";
-    shell = shared.shell.zsh;
+    shell = shared.enum.shell.zsh;
     openssh-authKeys = [  ];
   };
 

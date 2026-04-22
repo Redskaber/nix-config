@@ -7,25 +7,9 @@
 
 { nixpkgs, nixpkgs-unstable, inputs, scfpath ? ../../shared.nix, ... }:
 let
-  schema = import ./schema.nix { inherit nixpkgs nixpkgs-unstable inputs; };
-  jokerShared = import scfpath { inherit shared inputs; };
-
-  # FIX: fix pkgs|upkgs and platfrom const
-  pkgsAttrs = if jokerShared ? nixpkgs then
-    { system = jokerShared.arch.tag; } // jokerShared.nixpkgs
-  else
-    { system = jokerShared.arch.tag; };
-  core_pkgs = {
-    pkgs  = import nixpkgs pkgsAttrs;
-    upkgs = nixpkgs-unstable.legacyPackages.${jokerShared.arch.tag};
-    isNixOS = jokerShared.platform == schema.platform.nixos;
-  };
-  shared = schema // core_pkgs;
-
-  # reload
-  _user_shared = import scfpath { inherit shared inputs; };
-  fullShared = shared // _user_shared // { inherit _user_shared; };
-
-in fullShared
+  shared        = import ./shared   { inherit inputs; };
+  user_shared   = import   scfpath  { inherit shared inputs; };
+  runtime_shared= import ./runtime  { inherit shared user_shared nixpkgs nixpkgs-unstable; };
+in runtime_shared
 
 

@@ -24,12 +24,12 @@
       ${shared.window-manager.tag}.default = shared.window-manager.value.portal.value.default;
     };
 
-  extraPortals = shared.window-manager.value.portal.value.extraPortals;
+  extraPortals = shared.window-manager.value.portal.value.extraPortals pkgs;
 
   };
 
   # desktop portal
-  home.packages = shared.window-manager.value.portal.value.extraPortals;
+  home.packages = shared.window-manager.value.portal.value.extraPortals pkgs;
 
 }
 
