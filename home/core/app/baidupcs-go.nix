@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @discription: home::core::app:baidupcs-go
-# - baidu-networkdisk
+# - baidu-networkdisk => upkgs
 
 
 { inputs
@@ -13,7 +13,7 @@
 , ...
 }:
 {
-  home.packages = with pkgs; [ baidupcs-go ];
+  home.packages = with shared.upkgs; [ baidupcs-go ];
 
 }
 
