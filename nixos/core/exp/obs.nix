@@ -4,17 +4,15 @@
 # @description: nixos::core::exp::obs
 # - obs in nixos core, if you need vitural camera, else can home-manager impl.
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
-
-  environment.systemPackages = with pkgs; [ obs-studio ];
 
   programs.obs-studio = {
     enable = true;
@@ -52,8 +50,4 @@
     ];
   };
 
-
 }
-
-
-
