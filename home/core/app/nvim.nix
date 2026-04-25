@@ -4,30 +4,36 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.neovide.enable
 # @discription: home::core::app::nvim
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
-  home.packages = with pkgs; [ tree-sitter ast-grep ];
+  home.packages = with pkgs; [
+    tree-sitter
+    ast-grep
+  ];
 
   programs.neovim = {
     enable = true;
+    package = shared.upkgs.neovim-unwrapped;
     defaultEditor = true;
     # img sup
     extraLuaPackages = ps: [ ps.magick ];
-    extraPackages = [ pkgs.imagemagick pkgs.ueberzugpp ];
+    extraPackages = [
+      pkgs.imagemagick
+      pkgs.ueberzugpp
+    ];
   };
 
   # Used user config:
   xdg.configFile."nvim" = {
-    source = inputs.nvim-config;   # abs path
-    recursive = true;              # rec-link
+    source = inputs.nvim-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
 }
-
-
