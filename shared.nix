@@ -1,9 +1,9 @@
 # @path: ~/projects/configs/nix-config/shared.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @discription: self::shared
+# @description: self::shared
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
-# - user informations configuration
+# - user information configuration
 
 
 { shared, inputs, ... }: shared.schema.shared
@@ -86,6 +86,7 @@
       # Unsafe pkgs
       permittedInsecurePackages = [
         "python3.12-ecdsa-0.19.1"  # python-renpy
+        # "intel-media-sdk-23.2.2" # obs screen -> vaapi
       ];
     };
   };

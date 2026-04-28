@@ -13,7 +13,8 @@
   ...
 }:
 {
-
+  hardware.graphics.extraPackages = with pkgs; [ vpl-gpu-rt ];
+  # environment.systemPackages = with pkgs; [ intel-media-sdk ];
   programs.obs-studio = {
     enable = true;
     package = pkgs.obs-studio;
