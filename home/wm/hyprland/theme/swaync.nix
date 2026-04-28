@@ -13,6 +13,15 @@
 , pkgs
 , ...
 }:
+let
+  swayncResult = shared.orc.mergeHomeFiles (
+    shared.orc.listFilesRecursive inputs.swaync-config ""
+  ) [
+    { include = [ "wallust/colors-wallust.css" ];
+      emitter = "copy";
+      destPrefix = ".config/swaync"; }
+  ];
+in
 {
 
   home.packages = with pkgs; [
@@ -24,6 +33,7 @@
     recursive = true;               # rec-link
     force = true;
   };
+  home.activation.swayncWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] swayncResult.activation;
 
 }
 

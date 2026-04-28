@@ -4,6 +4,7 @@
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # TODO: mutil-pal gl app transparent proxy choice version.
 # - Tips: formatter and devShells need arch-name for sub-keyname,(else cachk error)
+# FIXME: configs { immutable, mutable } handle home manager imoprt.
 
 {
   description = "Kilig(Redskaber)'s declarative development environment";
@@ -55,6 +56,9 @@
       url = "github:hyprwm/hyprland-plugins";
       inputs.hyprland.follows = "hyprland";
     };
+
+    # configuration-orchestrator
+    configuration-orchestrator.url = "github:Redskaber/ConfigurationOrchestrator";
 
     # Wechat
     wechat.url = "github:Redskaber/wechat";

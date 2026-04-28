@@ -12,6 +12,15 @@
 , pkgs
 , ...
 }:
+let
+  rofiResult = shared.orc.mergeHomeFiles (
+    shared.orc.listFilesRecursive inputs.rofi-config ""
+  ) [
+    { include = [ "wallust/colors-rofi.rasi" ];
+      emitter = "copy";
+      destPrefix = ".config/rofi"; }
+  ];
+in
 {
   home.packages = with pkgs; [ rofi ];
 
@@ -20,6 +29,7 @@
     recursive = true;               # rec-link
     force = true;
   };
+  home.activation.rofiWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] rofiResult.activation;
 
 }
 

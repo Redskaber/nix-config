@@ -13,6 +13,15 @@
 , pkgs
 , ...
 }:
+let
+  quickResult = shared.orc.mergeHomeFiles (
+    shared.orc.listFilesRecursive inputs.quickshell-config ""
+  ) [
+    { include = [ "qml_color.json" ];
+      emitter = "copy";
+      destPrefix = ".config/quickshell"; }
+  ];
+in
 {
   home.packages = with pkgs; [ quickshell ];
 
@@ -21,6 +30,7 @@
     recursive = true;                     # rec-link
     force = true;
   };
+  home.activation.quickWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] quickResult.activation;
 
 }
 

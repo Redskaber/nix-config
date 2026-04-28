@@ -42,6 +42,15 @@
 , pkgs
 , ...
 }:
+let
+  hyprResult = shared.orc.mergeHomeFiles (
+    shared.orc.listFilesRecursive inputs.hypr-config ""
+  ) [
+    { include = [ "sys/policy/wallust/wallust-hyprland.conf" ];
+      emitter = "copy";
+      destPrefix = ".config/hypr"; }
+  ];
+in
 {
   # hyprland configs
   imports = [
@@ -89,8 +98,8 @@
     recursive = true;               # rec-link
     force = true;
   };
+  home.activation.hyprWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] hyprResult.activation;
 
-  # Env Variables
   home.sessionVariables = {
     GDK_BACKEND = "wayland,x11";
     ELECTRON_OZONE_PLATFORM_HINT = "auto";

@@ -85,6 +85,24 @@
         "type": "github"
       }
     },
+    "configuration-orchestrator": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1777334210,
+        "narHash": "sha256-FuRvdkRtyJ3/A2inQbsLrCe0gug9/ab/MXVstKHt9xo=",
+        "owner": "Redskaber",
+        "repo": "ConfigurationOrchestrator",
+        "rev": "d4c50dcc0932b9a28ca1ad7b774a9c0270a8c92c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "ConfigurationOrchestrator",
+        "type": "github"
+      }
+    },
     "emacs-config": {
       "flake": false,
       "locked": {
@@ -300,7 +318,7 @@
         "hyprutils": "hyprutils",
         "hyprwayland-scanner": "hyprwayland-scanner",
         "hyprwire": "hyprwire",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "pre-commit-hooks": "pre-commit-hooks",
         "systems": "systems",
         "xdph": "xdph"
@@ -681,11 +699,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1775423009,
-        "narHash": "sha256-vPKLpjhIVWdDrfiUM8atW6YkIggCEKdSAlJPzzhkQlw=",
+        "lastModified": 1776877367,
+        "narHash": "sha256-EHq1/OX139R1RvBzOJ0aMRT3xnWyqtHBRUBuO1gFzjI=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+        "rev": "0726a0ecb6d4e08f6adced58726b95db924cef57",
         "type": "github"
       },
       "original": {
@@ -712,6 +730,22 @@
       }
     },
     "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1775423009,
+        "narHash": "sha256-vPKLpjhIVWdDrfiUM8atW6YkIggCEKdSAlJPzzhkQlw=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "68d8aa3d661f0e6bd5862291b5bb263b2a6595c9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
       "locked": {
         "lastModified": 1776434932,
         "narHash": "sha256-gyqXNMgk3sh+ogY5svd2eNLJ6oEwzbAeaoBrrxD0lKk=",
@@ -751,11 +785,11 @@
     "nvim-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1776682433,
-        "narHash": "sha256-UnD4JjxlwOwlsVJdCQ6Qz+SF+QxJWGF2GCW0wnBbfUk=",
+        "lastModified": 1777135485,
+        "narHash": "sha256-Mf7lUjg+X56tRdVHch8ppU5hICG3CXlII3wvX0OlC3Y=",
         "owner": "Redskaber",
         "repo": "nvim-config",
-        "rev": "05ca39b3adc9ec667598c6f56ee6e57f3851994f",
+        "rev": "997cc40331ffbc40cb34033aad26ba4369bf81e6",
         "type": "github"
       },
       "original": {
@@ -845,6 +879,7 @@
         "btop-config": "btop-config",
         "cava-config": "cava-config",
         "cnmplayer": "cnmplayer",
+        "configuration-orchestrator": "configuration-orchestrator",
         "emacs-config": "emacs-config",
         "fastfetch-config": "fastfetch-config",
         "home-manager": "home-manager",
@@ -856,7 +891,7 @@
         "niri-config": "niri-config",
         "nix-types": "nix-types",
         "nixgl": "nixgl",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs_3",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "nur": "nur",
         "nvim-config": "nvim-config",

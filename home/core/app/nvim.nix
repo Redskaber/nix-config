@@ -20,7 +20,7 @@
 
   programs.neovim = {
     enable = true;
-    package = shared.upkgs.neovim-unwrapped;
+    # package = shared.upkgs.neovim-unwrapped;
     defaultEditor = true;
     # img sup
     extraLuaPackages = ps: [ ps.magick ];
