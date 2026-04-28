@@ -35,6 +35,7 @@
     ./mpv.nix
     ./nemo.nix
     ./nvim.nix
+    ./obs.nix
     ./obsidian.nix
     ./qq.nix
     ./rbw.nix

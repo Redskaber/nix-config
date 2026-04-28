@@ -236,11 +236,11 @@
     "hypr-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1776452579,
-        "narHash": "sha256-qittGeOmLImvsB6LMksJtqhoTdE8Fs944rmCZeZFgic=",
+        "lastModified": 1777372429,
+        "narHash": "sha256-AmDzOKr/RIl8Bn9kaOHlR4BSZRQhpivsQEJVhANe/I4=",
         "owner": "Redskaber",
         "repo": "hypr-config",
-        "rev": "ac8b4d8f3774b57d6002ebdd22fb846261c730bd",
+        "rev": "5684862b0204b1dfe0a8400e2c06f1b67f4883ad",
         "type": "github"
       },
       "original": {
@@ -598,6 +598,22 @@
         "type": "github"
       }
     },
+    "input-overlay-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777376205,
+        "narHash": "sha256-rqa5EBXKfuYa7K1uGrcbK+SKLprezkMtMpCaDNuqc9w=",
+        "owner": "Redskaber",
+        "repo": "input-overlay-config",
+        "rev": "a2128c9a06c1f1b2fa7a37ea16a267d5c2c6c549",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "input-overlay-config",
+        "type": "github"
+      }
+    },
     "kitty-config": {
       "flake": false,
       "locked": {
@@ -886,6 +902,7 @@
         "hypr-config": "hypr-config",
         "hyprland": "hyprland",
         "hyprland-plugins": "hyprland-plugins",
+        "input-overlay-config": "input-overlay-config",
         "kitty-config": "kitty-config",
         "mpv-config": "mpv-config",
         "niri-config": "niri-config",

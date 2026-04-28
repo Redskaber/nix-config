@@ -147,6 +147,10 @@
     # QuickShell-config
     quickshell-config.url = "github:Redskaber/quickshell-config";
     quickshell-config.flake = false;
+
+    # input-overlay preview 
+    input-overlay-config.url = "github:Redskaber/input-overlay-config";
+    input-overlay-config.flake = false;
   };
 
   outputs =
