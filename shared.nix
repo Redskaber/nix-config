@@ -1,6 +1,14 @@
 # @path: ~/projects/configs/nix-config/docs/tmpl/shared.nix.tmpl
 # @author: redskaber
-# @description: self::shared
+# @description: self::shared — policy layer template
+#
+# NOTE: This is a template. Do not import it directly into Nix.
+#       Run `just shared-generate <username>` to substitute kilig
+#       and overwrite shared.nix. Edit this file, not shared.nix.
+#
+# Single source of truth:
+#   username appears only here; propagated to shared.nix via generation,
+#   never via sed in-place patch (mutation breaks declarative invariant).
 
 { shared, inputs, ... }: shared.schema.shared
 {
@@ -43,7 +51,7 @@
     extraLocales      = [ "zh_CN.UTF-8/UTF-8" ];
   };
 
-  # sops age 密钥路径绑定到生成后的用户名（secrets 路径随用户名派生）
+  # sops age key paths derived from username (secrets paths follow username)
   secrets = {
     sshKeyPaths = [ "/home/kilig/.ssh/id_ed25519_github" ];
     nixos.core.base.user.password                 = "nixos/core/base/user/kilig/password";
