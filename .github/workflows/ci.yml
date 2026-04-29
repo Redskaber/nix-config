@@ -75,11 +75,12 @@ jobs:
           nix eval .#debug.test_system
           nix eval .#debug.test_devDir
 
+      # NOTE: my used self format
       # Format check (RFC 109 aligned)
-      - name: nixfmt check
-        run: |
-          nix run nixpkgs#nixfmt-rfc-style -- --check \
-            flake.nix shared.nix lib/ nixos/ home/ overlays/ pkgs/
+      # - name: nixfmt check
+      #   run: |
+      #     nix run nixpkgs#nixfmt-rfc-style -- --check \
+      #       flake.nix shared.nix lib/ nixos/ home/ overlays/ pkgs/
 
       # Static analysis
       - name: statix lint
