@@ -163,7 +163,7 @@
     }@inputs:
     let
       # User-Shared Config
-      shared = import ./lib/shared { inherit nixpkgs nixpkgs-unstable inputs; };
+      shared = import ./lib/shared { inherit self nixpkgs nixpkgs-unstable inputs; };
       pkgs = shared.pkgs;
       devDir = shared.devDir;
     in

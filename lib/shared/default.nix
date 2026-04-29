@@ -5,9 +5,9 @@
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # - shared configurations loader design
 
-{ nixpkgs, nixpkgs-unstable, inputs, scfpath ? ../../shared.nix, ... }:
+{ self, nixpkgs, nixpkgs-unstable, inputs, scfpath ? ../../shared.nix, ... }:
 let
-  shared        = import ./shared   { inherit inputs; };
+  shared        = import ./shared   { inherit self inputs; };
   user_shared   = import   scfpath  { inherit shared inputs; };
   runtime_shared= import ./runtime  { inherit shared user_shared nixpkgs nixpkgs-unstable inputs; };
 in runtime_shared
