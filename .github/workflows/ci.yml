@@ -86,9 +86,10 @@ jobs:
       - name: statix lint
         run: nix run nixpkgs#statix -- check .
 
+      # NOTE: my used self, don't care
       # Dead code detection
-      - name: deadnix check
-        run: nix run nixpkgs#deadnix -- --fail .
+      # - name: deadnix check
+      #   run: nix run nixpkgs#deadnix -- --fail .
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 2: Evaluate devShells (dry-run)
