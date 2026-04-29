@@ -7,9 +7,9 @@ tests
 
 # logger about
 *.log
-\.*
-
-# custom libray old impl
+.*
+!.sops.yaml
+# custom library old impl
 lib/old
 
 # plan designer and idea

@@ -1,0 +1,31 @@
+keys:
+  - &age_kilig_key age12jctu8vuta9h5zwhjjle8uqdyjuwt760536y32hu32w6ap3ljswqvcajvt
+creation_rules:
+  - path_regex: secrets/chipr/nixos/core/base/user/kilig/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age_kilig_key
+  - path_regex: secrets/chipr/nixos/core/base/nix/users/kilig/github/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age_kilig_key
+  - path_regex: secrets/chipr/nixos/core/srv/db/mongodb/users/kilig/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age_kilig_key
+  - path_regex: secrets/chipr/nixos/core/srv/db/mysql/users/kilig/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age_kilig_key
+  - path_regex: secrets/chipr/nixos/core/srv/db/mysql/users/root/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age_kilig_key
+  - path_regex: secrets/chipr/nixos/core/srv/db/postgresql/users/kilig/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age_kilig_key
+  - path_regex: secrets/chipr/nixos/core/srv/db/redis/users/redis-kilig/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age_kilig_key
