@@ -10,26 +10,26 @@
 系统采用严格的层级化管道架构，每层职责单一、边界明确，依赖方向自上而下单向流动。
 
 ```
-┌──────────────────────────────────────────────────────────────┐
-│  ENTRY LAYER  ·  flake.nix                                   │
-│  统一入口 · 输入声明 · 输出路由 · 多平台分发                      │
-└────────────────────┬─────────────────────┬───────────────────┘
-                     │                     │
-        ┌────────────▼──────────┐ ┌────────▼──────────────────┐
-        │  SYSTEM LAYER         │ │  USER LAYER               │
-        │  nixos/               │ │  home/                    │
-        │  硬件·驱动·安全·服务    │ │  应用·开发环境·窗口管理器    │
-        └────────────┬──────────┘ └────────┬──────────────────┘
-                     │                     │
-        ┌────────────▼─────────────────────▼───────────────────┐
-        │  SHARED LAYER  ·  lib/shared/                        │
-        │  Schema 定义 · 枚举类型 · 结构验证 · 跨层共享状态         │
-        └──────────────────────────────────────────────────────┘
-                     │
-        ┌────────────▼──────────────────────────────────────────┐
-        │  SECRET LAYER  ·  secrets/ + .sops.yaml               │
-        │  Age 加密 · SOPS 管理 · 最小权限 · 运行时注入            │
-        └───────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│  ENTRY LAYER  ·  flake.nix                             │
+│  统一入口 · 输入声明 · 输出路由 · 多平台分发           │
+└──────────────┬─────────────────────┬───────────────────┘
+               │                     │
+  ┌────────────▼──────────┐ ┌────────▼──────────────────┐
+  │  SYSTEM LAYER         │ │  USER LAYER               │
+  │  nixos/               │ │  home/                    │
+  │  硬件·驱动·安全·服务  │ │  应用·开发环境·窗口管理器 │
+  └────────────┬──────────┘ └────────┬──────────────────┘
+               │                     │
+  ┌────────────▼─────────────────────▼───────────────────┐
+  │  SHARED LAYER  ·  lib/shared/                        │
+  │  Schema 定义 · 枚举类型 · 结构验证 · 跨层共享状      │
+  └──────────────────────────────────────────────────────┘
+               │
+  ┌────────────▼──────────────────────────────────────────┐
+  │  SECRET LAYER  ·  secrets/ + .sops.yaml               │
+  │  Age 加密 · SOPS 管理 · 最小权限 · 运行时注入         │
+  └───────────────────────────────────────────────────────┘
 ```
 
 ### 设计原则
@@ -44,6 +44,7 @@
 | 状态机   | `lib/shared/schema.nix` 通过 enum 约束合法状态集合                          |
 | 生命周期 | devShell 的 `preInputsHook / postInputsHook / preShellHook / postShellHook` |
 | 边界明确 | system layer 不感知用户配置，user layer 不直接操作硬件                      |
+| 生成不变 | `shared.nix` 由模板生成（覆盖写入），不可 sed 原地 patch                    |
 
 ---
 
@@ -51,8 +52,8 @@
 
 ```
 nix-config/
-├── flake.nix               # 入口层：输入声明、输出路由
-├── shared.nix              # 策略层：当前主机的全局配置（单一真相源）
+├── flake.nix               # entry layer: input declarations, output routing
+├── shared.nix              # generated policy layer: produced by just shared-generate; do not edit username manually
 │
 ├── lib/
 │   └── shared/
@@ -93,7 +94,21 @@ nix-config/
 │
 ├── overlays/               # nixpkgs overlay：additions · modifications · unstable
 ├── pkgs/                   # 自定义 derivation
-└── justfile                # 任务自动化：init · devenv · sops
+│
+├── scripts/
+│   └── just/               # justfile 子模块（按职责单一职责分层）
+│       ├── shared.just     # shared.nix 生成（tmpl → generate → overwrite）
+│       ├── hardware.just   # NixOS 硬件配置生成
+│       ├── flake.just      # flake inputs 依赖管理
+│       ├── devenv.just     # 开发环境 profile 管理（pdshell）
+│       └── sops.just       # Age 密钥 + SOPS 加密生命周期（plan/chipr 分层）
+│
+├── docs/
+│   └── tmpl/
+│       ├── shared.nix.tmpl # policy layer template (__USERNAME__ placeholder)
+│       └── sops/           # SOPS secret YAML templates
+│
+└── justfile                # 任务自动化入口（全局变量 + import 子模块）
 ```
 
 ---
@@ -106,30 +121,32 @@ nix-config/
 
 ```
 阶段一: schema (枚举/结构定义) + joker_pkgs (临时 pkgs)
-         ↓
+↓
 阶段二: 用户 shared.nix 读取 schema，填充真实配置
-         ↓
+↓
 fullShared = schema ∪ core_pkgs ∪ user_shared
 ```
 
 `schema.nix` 通过 `nix-types` 的 `enum` 构造器约束合法值，任何非法的 platform / arch / drive 在求值阶段即报错，而非运行时失败。
 
-### 2. 策略层 — shared.nix
+### 2. 策略层 — shared.nix 生成机制
 
-`shared.nix` 是整个系统的单一真相源，所有平台相关决策集中于此：
+`shared.nix` 是整个系统的单一真相源，所有平台相关决策集中于此。
 
-```nix
-{
-  arch            = shared.arch.x86_64-linux;
-  platform        = shared.platform.nixos;
-  drive           = shared.drive-group.intel;
-  window-manager  = shared.window-manager.hyprland;
-  display-manager = shared.display-manager.ly;
-  editor          = shared.editor.nvim;
-}
+**关键设计：生成不变（Generate, Don't Mutate）**
+
+```
+docs/tmpl/shared.nix.tmpl   手动维护，含 __USERNAME__ 占位符
+    ↓  just shared-generate
+shared.nix             生成产物，覆盖写入，不可 sed patch
+    ↓
+flake.nix / nixos / home   通过 specialArgs 消费
 ```
 
-切换平台只需修改这一个文件，下游所有模块通过 `specialArgs` / `extraSpecialArgs` 接收 `shared`，不直接依赖具体值。
+`sed` 原地 patch 是运行时 mutation，破坏了"文件内容完全由声明决定"的不变式。  
+正确做法是 **模板 → 生成 → 覆盖**，`shared.nix` 的用户名字段只有一个合法写入路径：`just shared-generate`。
+
+切换平台只需修改 `shared.nix.tmpl`，下游所有模块通过 `specialArgs` / `extraSpecialArgs` 接收 `shared`，不直接依赖具体值。
 
 ### 3. 开发环境管道 — pdshell
 
@@ -166,24 +183,145 @@ fullShared = schema ∪ core_pkgs ∪ user_shared
 }
 ```
 
-### 4. 安全层 — SOPS + Age
+### 4. 安全层 — SOPS + Age（分层管理）
 
 ```
-密钥生成  age-keygen → ~/.config/sops/age/keys.txt
+TMPL LAYER    docs/tmpl/sops/**  static YAML templates (__USERNAME__ placeholder)
+    ↓  sed(username/pubkey) → overwrite
+KEY LAYER     age-keygen → ~/.config/sops/age/keys.txt
     ↓
-加密规则  .sops.yaml (path_regex → key_groups)
+RULE LAYER    .sops.yaml (tmpl → sed → overwrite，非原地 patch)
     ↓
-加密写入  secrets/chipr/**/*.yaml  (提交 Git)
+PLAIN LAYER   secrets/plan/**   明文实例（不提交 Git，bootstrap 参考）
+              BOOTSTRAP: shared.nix.username → sops-plan-create-all
     ↓
-运行时    initrd 阶段 sops-nix 解密 → /run/secrets/
+CIPHER LAYER  secrets/chipr/**  SOPS 加密（提交 Git，运行时解密）
+              BOOTSTRAP:      shared.nix.username → sops-chipr-create-*（首次写入）
+              POST-BOOTSTRAP: shared.nix.secrets.* → sops-chipr-create-*（重写）
+              POST-BOOTSTRAP: shared.nix.secrets.* → sops-chipr-read-*（读取）
     ↓
-服务访问  mode=0440 · owner=root · group=<service>
+RUNTIME       initrd 阶段 sops-nix 解密 → /run/secrets/
+    ↓
+SERVICE       mode=0440 · owner=root · group=<service>
 ```
 
-secrets 目录分为两层：
+**分层设计原则：**
 
-- `secrets/plan/` — 明文模板，说明每个 secret 的结构，不提交
-- `secrets/chipr/` — SOPS 加密后的实际文件，提交到 Git
+- `plan`（明文）与 `chipr`（密文）命令集完全分离 —— 不同生命周期、不同受众、不同安全级别
+- `sops-init` 只负责基础设施（目录结构、密钥、规则），不自动执行任何交互式加密
+- 加密写入（`sops-chipr-create-*`）均为独立命令，需要显式执行
+- 销毁操作细粒度分级（key / rules / plan / chipr / all），防止误操作
+
+**统一信息源：**
+
+所有阶段均从 `shared.nix` 读取用户名，`NIXOS_USERNAME` 环境变量不再需要。`just init <username>` 会先通过 `just shared-generate` 生成 `shared.nix`，后续所有 sops 操作均从该文件读取，流程完全自洽。
+
+| 阶段           | 信息源            | 前置条件                      | 命令集                                                  |
+| -------------- | ----------------- | ----------------------------- | ------------------------------------------------------- |
+| BOOTSTRAP      | `shared.nix` 文件 | `just shared-generate` 已执行 | `sops-init`, `sops-rules-regen`, `sops-plan-create-all` |
+| POST-BOOTSTRAP | `shared.nix` 文件 | `just shared-generate` 已执行 | `sops-chipr-create-*`, `sops-chipr-read-*`              |
+
+POST-BOOTSTRAP 操作从 `shared.nix` 的 `secrets.*` 字段直接读取 secret 文件路径，路径已由 shared.nix 唯一确定，无需任何外部环境变量。
+
+---
+
+## justfile 命令参考
+
+### 全局
+
+```bash
+# 完整初始化（新机器），<username> 是唯一需要提供的参数
+just init yourname              # shared-generate → hardware-generate → sops-init
+just sops-init                  # init sops infra only (requires just shared-generate first)
+just sops-plan-create-all       # generate plaintext templates (requires just shared-generate first)
+just sops-rules-regen           # rebuild .sops.yaml rules (requires just shared-generate first)
+
+# POST-BOOTSTRAP 阶段（shared.nix 已存在，路径从文件读取）
+just sops-chipr-create-userpwd             # 无需 NIXOS_USERNAME
+just sops-chipr-read-mongodb               # 无需 NIXOS_USERNAME
+```
+
+### shared — 策略层生成
+
+```bash
+just shared-generate <username>  # generate shared.nix from template (overwrite)
+just shared-show-username         # print username from shared.nix (diagnostic)
+just shared-validate              # verify template has __USERNAME__ placeholders
+```
+
+### hardware — 硬件配置
+
+```bash
+just hardware-generate     # 生成 nixos/core/base/hardware.nix（首次或硬件变更后）
+just hardware-show         # 显示当前 hardware.nix 内容
+```
+
+### flake — 依赖管理
+
+```bash
+just flake-update-all      # 更新所有 inputs
+just flake-update <pkg>    # 更新单个 input
+just flake-update-not-sops # update all inputs except sops-nix
+just flake-update-configs  # update only *-config inputs
+just flake-update-dry      # dry-run: show what would change (no file writes)
+just flake-show            # show all flake outputs
+just flake-lock-show       # show current locked versions (read-only)
+```
+
+### devenv — 开发环境
+
+```bash
+just devenv-create rust                    # 创建单语言 profile
+just devenv-create-from python machine     # 创建复合变体 profile
+just devenv-use rust                       # 进入已有单语言环境
+just devenv-use-from python machine        # 进入已有复合变体环境
+just devenv-update rust                    # 强制重建单语言环境
+just devenv-create-all                     # 创建所有已知环境
+just devenv-delete-all                     # 删除所有 profile
+just devenv-show                           # 列出所有可用 devShell
+just devenv-list                           # 树状显示已创建 profile
+```
+
+### sops — 密钥与加密
+
+```bash
+# ── BOOTSTRAP（需要先执行 just shared-generate <username>）──────────────────
+# 初始化
+just sops-init             # 目录 + 密钥 + 规则（从 shared.nix 读取用户名）
+just sops-init-with-plan   # 同上 + 生成所有明文模板
+
+# RULE 层（bootstrap 操作）
+just sops-rules-regen      # 重新生成 .sops.yaml（密钥轮转后）
+
+# PLAIN 层（bootstrap 操作）
+just sops-plan-create-all  # 生成所有明文模板实例
+
+# ── POST-BOOTSTRAP（从 shared.nix 读取路径，无需 NIXOS_USERNAME）───────────
+# CIPHER 层 — 加密写入（交互式，路径由 shared.nix 提供）
+just sops-chipr-create-userpwd             # 加密用户系统密码
+just sops-chipr-create-nix                 # 加密 GitHub token
+just sops-chipr-create-mongodb             # 加密 MongoDB 密码
+just sops-chipr-create-mysql               # 加密 MySQL root + 用户密码
+just sops-chipr-create-postgresql          # 加密 PostgreSQL 密码
+just sops-chipr-create-redis               # 加密 Redis 密码
+just sops-chipr-create-all                 # 交互式加密所有 secret
+
+# CIPHER 层 — 解密读取（路径由 shared.nix 提供）
+just sops-chipr-read-userpwd               # 解密显示用户密码
+just sops-chipr-read-nix                   # 解密显示 GitHub token
+just sops-chipr-read-mongodb               # 解密显示 MongoDB 密码
+just sops-chipr-read-mysql                 # 解密显示 MySQL 密码
+just sops-chipr-read-postgresql            # 解密显示 PostgreSQL 密码
+just sops-chipr-read-redis                 # 解密显示 Redis 密码
+
+# ── 无阶段限制（固定路径，无需 USERNAME）────────────────────────────────────
+just sops-key-show                         # 显示 age 公钥
+just sops-key-destroy                      # 销毁密钥（不可逆）
+just sops-rules-destroy                    # 删除 .sops.yaml
+just sops-plan-destroy                     # 删除所有明文模板
+just sops-chipr-destroy                    # 删除所有加密文件（不可逆）
+just sops-destroy-all                      # 销毁全部 sops 相关内容（不可逆）
+```
 
 ---
 
@@ -191,22 +329,31 @@ secrets 目录分为两层：
 
 ### 前置条件
 
-- Nix 2.22+ (启用 `nix-command` 和 `flakes` experimental features, `pipe-operators`)
+- Nix 2.22+（启用 `nix-command`、`flakes`、`pipe-operators` experimental features）
 - 目标平台: NixOS · Linux · macOS · WSL2
 
 ### 初始化（新机器）
 
-> 注意：nixos 在首次build 之后，非存在 `/` 下的子目录 会被清空，如果需要保存配置，请在 `/` 下的子目录。
+> 注意：nixos 在首次 build 之后，非存在 `/` 下的子目录会被清空，如果需要保存配置，请在 `/` 下的子目录。
 
 ```bash
 git clone https://github.com/Redskaber/nix-config ~/.config/nix-config
 cd ~/.config/nix-config
 
-# 设置用户名（单一真相源）
-export NIXOS_USERNAME=yourname
+# 完整初始化（<username> 是唯一需要提供的参数）：
+#   1. 从 shared.nix.tmpl 生成 shared.nix（覆盖写入，非 sed patch）
+#   2. 生成 hardware.nix
+#   3. 初始化 sops 目录 + 密钥 + 规则文件（从 shared.nix 读取用户名）
+just init yourname
 
-# 完整初始化：shared.nix 替换用户名 + 生成 hardware.nix + sops 密钥与加密文件
-just init
+# 可选：生成明文模板参考（从 shared.nix 读取，无需额外参数）
+just sops-plan-create-all
+
+# 加密写入各 secret（交互式，按需执行）
+# 注: chipr-create-* 从 shared.nix 读取路径，无需 NIXOS_USERNAME
+just sops-chipr-create-userpwd
+just sops-chipr-create-nix
+# … 其余 sops-chipr-create-* 命令
 ```
 
 ### 部署
@@ -228,18 +375,14 @@ home-manager switch --flake .#kilig@linux
 # 进入单语言环境
 nix develop .#rust
 nix develop .#python
-nix develop .#go
 # or
 just devenv-use rust
 just devenv-use python
-just devenv-use go
 
 # 进入复合环境
-nix develop .#python-machine    # Python + ML 依赖
-nix develop .#nix-derivation-free
+nix develop .#python-machine
 # or
 just devenv-use-from python machine
-just devenv-use-from nix derivation-free
 
 # 持久化 profile（离线可用）
 just devenv-create rust
@@ -293,7 +436,13 @@ mkdir home/core/dev/<lang>
 
 ### 修改平台策略
 
-编辑 `shared.nix`，修改 `platform` / `drive` / `window-manager` 等字段即可，无需改动任何模块内部。
+编辑 `docs/tmpl/shared.nix.tmpl`，修改 `platform` / `drive` / `window-manager` 等字段，然后运行 `just shared-generate <username>` 重新生成 `shared.nix`。
+
+### 修改用户名
+
+```bash
+just shared-generate newname   # regenerate shared.nix from template with new username
+```
 
 ---
 
@@ -330,5 +479,5 @@ flake.nix
 
 ---
 
-> 每个目录是一个模块，每个模块是一个函数，每次重建是一次纯函数推导。
+> 每个目录是一个模块，每个模块是一个函数，每次重建是一次纯函数推导。  
 > 系统状态完全由 Git 中的声明决定，机器是声明的投影。

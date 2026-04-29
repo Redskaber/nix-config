@@ -1,0 +1,31 @@
+keys:
+  - &age___USERNAME___key __AGE_PUBLIC_KEY__
+creation_rules:
+  - path_regex: secrets/chipr/nixos/core/base/user/__USERNAME__/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age___USERNAME___key
+  - path_regex: secrets/chipr/nixos/core/base/nix/users/__USERNAME__/github/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age___USERNAME___key
+  - path_regex: secrets/chipr/nixos/core/srv/db/mongodb/users/__USERNAME__/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age___USERNAME___key
+  - path_regex: secrets/chipr/nixos/core/srv/db/mysql/users/__USERNAME__/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age___USERNAME___key
+  - path_regex: secrets/chipr/nixos/core/srv/db/mysql/users/root/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age___USERNAME___key
+  - path_regex: secrets/chipr/nixos/core/srv/db/postgresql/users/__USERNAME__/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age___USERNAME___key
+  - path_regex: secrets/chipr/nixos/core/srv/db/redis/users/redis-__USERNAME__/[^/]+\.(yaml|json|env|ini)$
+    key_groups:
+      - age:
+          - *age___USERNAME___key
