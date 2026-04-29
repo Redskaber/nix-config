@@ -5,4 +5,4 @@ nixos:
         users:
           __USERNAME__:
             github:
-              access-tokens: "access-tokens = github.com=<YOUR_GITHUB_TOKEN>"
+              access-token: "access-tokens = github.com=<YOUR_GITHUB_TOKEN>"

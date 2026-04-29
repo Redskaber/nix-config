@@ -24,7 +24,7 @@ in
     
     # nix access token to github dy imp
     extraOptions = ''
-      !include ${config.sops.secrets.${shared.secrets.nixos.core.base.nix.user.nixos-github-git-visited}.path}
+      !include ${config.sops.secrets.${shared.secrets.nixos.core.base.nix.user.github.access-token}.path}
     '';
 
     gc = {
