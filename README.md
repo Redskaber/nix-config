@@ -85,8 +85,8 @@ nix-config/
 │       └── wsl/            # WSL2
 │
 ├── secrets/
-│   ├── chipr/              # 加密文件（SOPS + Age，提交到 Git）
-│   └── plan/               # 明文模板（仅本地，不提交）
+│   ├── chipr/              # 加密文件（SOPS + Age，提交到 Git；.sops.yaml 管控解密权限）
+│   └── plan/               # 明文模板实例（明文！仅本地，必须在 .gitignore 中，不可提交）
 │
 ├── export/
 │   ├── nixos/              # 可复用 NixOS 模块（供外部 flake 引用）
@@ -187,6 +187,7 @@ flake.nix / nixos / home   通过 specialArgs 消费
 
 ```
 TMPL LAYER    docs/tmpl/sops/**  static YAML templates (__USERNAME__ placeholder)
+              path = SECRETS_TMPL_PATH / (REL | reverse_username) + .yaml
     ↓  sed(username/pubkey) → overwrite
 KEY LAYER     age-keygen → ~/.config/sops/age/keys.txt
     ↓
@@ -211,6 +212,35 @@ SERVICE       mode=0440 · owner=root · group=<service>
 - `sops-init` 只负责基础设施（目录结构、密钥、规则），不自动执行任何交互式加密
 - 加密写入（`sops-chipr-create-*`）均为独立命令，需要显式执行
 - 销毁操作细粒度分级（key / rules / plan / chipr / all），防止误操作
+
+**数据驱动设计（零硬编码路径）：**
+
+`sops.just` 中没有任何路径字符串写死。所有 secret 路径在运行时从 `shared.nix` 读取：
+
+- `_sops-mkdir` — 遍历 `shared.nix` 中所有 `nixos.*` secret 值，对每条 `dirname(REL)` 执行 `mkdir -p`，自动适应任意数量的 secret
+- `sops-plan-create-all` / `_sops-plan-gen` — 只需 dotted key，路径自动从 `shared.nix` 解析
+- `_sops-chipr-write` — 单一通用加密写入器，所有 `sops-chipr-create-*` 均为 4 行薄封装
+
+**单一推导规则（template path ↔ secret REL）：**
+
+`shared.nix` 中 secret 的值（如 `"nixos/core/srv/db/mongodb/users/kilig/password"`）本身就是模板文件的相对路径，只需将真实用户名反向替换回 `__USERNAME__` 即可得到模板路径：
+
+```
+TMPL_REL = REL | sed "s|/${U}/|/__USERNAME__/|g; s|redis-${U}|redis-__USERNAME__|g"
+TMPL     = SECRETS_TMPL_PATH / TMPL_REL + ".yaml"
+```
+
+此规则在 `_sops-plan-gen` 和 `_sops-chipr-write` 中完全一致，保证 plan 和 chipr 层始终引用同一模板文件。
+
+**`.gitignore` 要求：**
+
+`secrets/plan/` 目录包含明文 secret 模板，**必须**加入 `.gitignore`，绝不能提交到 Git。
+`secrets/chipr/` 包含 SOPS 加密文件，可以安全提交。推荐 `.gitignore` 配置：
+
+```gitignore
+# plaintext secret instances (never commit)
+secrets/plan/
+```
 
 **统一信息源：**
 
@@ -359,14 +389,14 @@ just sops-chipr-create-nix
 ### 部署
 
 ```bash
-# NixOS 系统 + Home Manager
-sudo nixos-rebuild switch --flake .#kilig-nixos
+# NixOS 系统 + Home Manager（将 <username> 替换为实际用户名，与 shared.nix 保持一致）
+sudo nixos-rebuild switch --flake .#<username>-nixos
 
 # Home Manager（NixOS 内）
-home-manager switch --flake .#kilig@nixos
+home-manager switch --flake .#<username>@nixos
 
 # 独立 Home Manager（非 NixOS Linux）
-home-manager switch --flake .#kilig@linux
+home-manager switch --flake .#<username>@linux
 ```
 
 ### 开发环境
@@ -434,15 +464,77 @@ mkdir home/core/dev/<lang>
 # 敏感配置通过 sops.secrets 注入，不硬编码
 ```
 
+### 添加新 Secret（三步，零代码改动）
+
+`sops.just` 是数据驱动的。新增一个 secret 只需：
+
+**Step 1** — 在 `docs/tmpl/shared.nix.tmpl` 的 `secrets` 块中添加一行：
+
+```nix
+nixos.core.srv.db.newdb.user.password = "nixos/core/srv/db/newdb/users/__USERNAME__/password";
+```
+
+**Step 2** — 按路径创建 YAML 模板文件 `docs/tmpl/sops/nixos/core/srv/db/newdb/users/__USERNAME__/password.yaml`，内容遵循层级镜像约定：
+
+```yaml
+nixos:
+  core:
+    srv:
+      db:
+        newdb:
+          users:
+            __USERNAME__:
+              password: "<YOUR_NEWDB_PASSWORD>"
+              # ↑ 叶子键名 = 路径最后一段，sops-nix 按此查找
+```
+
+**Step 3** — 在 `sops.just` 中添加两处（各 4 行）：
+
+```just
+# sops-plan-create-all 中添加：
+@just _sops-plan-gen "nixos.core.srv.db.newdb.user.password"
+
+# 新增加密命令：
+sops-chipr-create-newdb:
+    @just _assert-shared
+    @just _sops-chipr-write         "nixos.core.srv.db.newdb.user.password"         "NewDB password"         "<YOUR_NEWDB_PASSWORD>"
+```
+
+`_sops-mkdir`、路径解析、模板定位、加密逻辑 ——**全部零改动**，由推导规则自动处理。
+
+> **YAML 叶子键名约定**：sops-nix 将 secret key（如 `nixos/core/base/nix/users/kilig/github/access-token`）
+> 按 `/` 分割后逐层查找 YAML 键。叶子键名必须与路径最后一段完全一致（`access-token`，单数），
+> 而 nix.conf 格式的完整行（`access-tokens = github.com=TOKEN`，复数）放在**值**中。
+
 ### 修改平台策略
 
 编辑 `docs/tmpl/shared.nix.tmpl`，修改 `platform` / `drive` / `window-manager` 等字段，然后运行 `just shared-generate <username>` 重新生成 `shared.nix`。
 
 ### 修改用户名
 
+修改用户名会导致所有 secret 路径发生变化（路径中含用户名），必须按以下完整流程操作：
+
 ```bash
-just shared-generate newname   # regenerate shared.nix from template with new username
+# 1. 重新生成 shared.nix（新用户名）
+just shared-generate newname
+
+# 2. 销毁旧 secret 文件（旧路径已失效，无法解密）
+#    ⚠️  此操作不可逆，确保已备份或不再需要旧 secret
+just sops-destroy-all          # 销毁密钥 + 规则 + plan + chipr 全部内容
+
+# 3. 重新初始化 sops 基础设施（新路径 + 新密钥）
+just sops-init                 # 生成新 age key + 新目录结构 + 新 .sops.yaml
+
+# 4. 重新加密所有 secret（交互式，需重新输入所有密码）
+just sops-chipr-create-all
+
+# 5. 可选：重新生成明文模板参考
+just sops-plan-create-all
 ```
+
+> **注意**：如果只想复用旧密钥（age key），可以跳过步骤 2 中的密钥销毁，
+> 改用 `just sops-plan-destroy && just sops-chipr-destroy && just sops-rules-destroy`，
+> 然后 `just sops-rules-regen` 重新生成规则，再重新加密所有 secret。
 
 ---
 

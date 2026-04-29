@@ -26,6 +26,8 @@ import "scripts/just/sops.just"
 # Private guards
 # ==============================================================================
 # Assert shared.nix exists and username is parseable (pre-condition for POST-BOOTSTRAP ops).
+# NOTE: SHARED_NIX_PATH is defined in scripts/just/sops.just and is available
+#       here because just merges variables from all imported modules globally.
 _assert-shared:
     #!/usr/bin/env bash
     set -euo pipefail
