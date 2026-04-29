@@ -172,9 +172,7 @@
       api.inputs = inputs;
 
       # debug information
-      # Available through 'nix eval .#debug.test_shared'
-      debug.test_shared = shared;
-      debug.test_user_shared = shared._user_shared;
+      # Available through 'nix eval .#debug.test_system'
       debug.test_system = pkgs.stdenv.hostPlatform.system;
       debug.test_devDir = devDir;
       debug.test_nix-types = inputs.nix-types;
