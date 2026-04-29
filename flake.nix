@@ -175,8 +175,6 @@
       # Available through 'nix eval .#debug.test_system'
       debug.test_system = pkgs.stdenv.hostPlatform.system;
       debug.test_devDir = devDir;
-      debug.test_nix-types = inputs.nix-types;
-      debug.test_pdshell = inputs.pdshell;
 
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
