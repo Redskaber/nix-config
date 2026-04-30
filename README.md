@@ -331,7 +331,7 @@ TMPL     = SECRETS_TMPL_PATH / TMPL_REL + ".yaml"
 secrets/plan/
 ```
 
-**统一信息源：** 所有阶段均从 `shared.nix` 读取用户名，`NIXOS_USERNAME` 环境变量不再需要。
+**统一信息源：** 所有阶段均从 `shared.nix` 读取用户名.
 
 | 阶段           | 信息源       | 前置条件                      | 命令集                                                  |
 | -------------- | ------------ | ----------------------------- | ------------------------------------------------------- |
@@ -340,7 +340,7 @@ secrets/plan/
 
 ### 5. 配置编排器 — orc（ConfigurationOrchestrator）
 
-`shared.orc` 提供了 wallust 主题动态注入的核心机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出）复制到相应的配置目录：
+`shared.orc` 是针对纯粹 config lib 的操作库, 提供了 wallust 主题动态注入的核心机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出）复制到相应的配置目录：
 
 ```nix
 # 典型用法（以 waybar 为例）
@@ -432,12 +432,11 @@ nix run nixpkgs#nixfmt-rfc-style -- flake.nix shared.nix lib/ nixos/ home/
 nix flake check --no-build
 
 # 3. 求值关键输出（快速验证）
-nix eval .#debug.test_shared --json > /dev/null && echo "shared OK"
 nix eval .#nixosConfigurations.kilig-nixos.config.system.stateVersion
 
 # 4. dry-run 构建
 nix build .#nixosConfigurations.kilig-nixos.config.system.build.toplevel \
-  --dry-run --no-link 2>&1 | tail -5
+  --dry-run --no-link 2>&1
 
 # 5. 验证 secret 文件
 find secrets/chipr -name "*.yaml" -exec grep -q "sops:" {} \; -print
@@ -457,23 +456,23 @@ sops decrypt secrets/chipr/nixos/core/base/user/kilig/password.yaml
     │       └── lint + build dry-run       │
     │           + security audit           │
     │                                      │
-    └── [CI 通过后]                         │
-        ├── SSH 到目标机                    │
-        │   或在目标机上执行：              │
+    └── [CI 通过后]                        │
+        ├── SSH 到目标机                   │
+        │   或在目标机上执行：             │
         │                                  │
-        │   # 拉取最新配置                  │
+        │   # 拉取最新配置                 │
         │   cd ~/.config/nix-config        │
         │   git pull                       │
         │                                  │
-        │   # 重建系统                      │
+        │   # 重建系统                     │
         │   sudo nixos-rebuild switch \    │
         │     --flake .#kilig-nixos        │
         │                                  │
-        │   # 重建用户环境                  │
+        │   # 重建用户环境                 │
         │   home-manager switch \          │
         │     --flake .#kilig@nixos        │
         │                                  │
-        └── 验证服务状态                    │
+        └── 验证服务状态                   │
             systemctl status sops-*        │
             just sops-chipr-read-mongodb   │
 ```
@@ -500,7 +499,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 ```bash
 # 完整初始化（新机器），<username> 是唯一需要提供的参数
-just init <username>            # shared-generate → hardware-generate → sops-init
+just init <username>            # shared-generate → hardware-generate → sops-init; 后续执行 just sops-*
 
 # POST-BOOTSTRAP（shared.nix 已存在）
 just sops-init                  # 仅初始化 sops 基础设施
@@ -600,13 +599,17 @@ mkdir -p ~/.config/nix
 echo "experimental-features = nix-command flakes pipe-operators" >> ~/.config/nix/nix.conf
 ```
 
+如果直接使用本仓库，那么配置已符合。
+
 ### 初始化（新机器）
 
 > **注意：** NixOS 首次 build 后，非 `/` 挂载点下的目录会被 NixOS 管理，请将配置放在合适路径。
+> 首次 build 如果不是在系统别目录下，由于用户身份未创建等原因，会将其余的 ～/\* 清除。(nixos 本身)
+> 后续再次构建不会有此问题
 
 ```bash
-git clone https://github.com/Redskaber/nix-config ~/.config/nix-config
-cd ~/.config/nix-config
+git clone https://github.com/Redskaber/nix-config /etc/nix-config
+cd /etc/nix-config
 
 # 完整初始化（<username> 是唯一需要提供的参数）：
 #   1. 从 docs/tmpl/shared.nix.tmpl 生成 shared.nix
@@ -627,6 +630,9 @@ just sops-chipr-create-all
 ```
 
 ### 部署
+
+> 在部署之前，如果你了解一些内容或者想自己diy, 可以更新 shared.nix 文件中的配置项。
+> 此后所有的修改都对此文件进行
 
 ```bash
 # NixOS 系统（将 <username> 替换为实际用户名）
@@ -696,6 +702,8 @@ mkdir home/core/dev/<lang>
 ```
 
 ### 添加新 Secret（三步，核心逻辑零改动）
+
+**Step 0** - `nixos/core/srv/db/newdb.nix` impl + `nixos/core/srv/db/default.nix` import
 
 **Step 1** — `docs/tmpl/shared.nix.tmpl` 中添加：
 

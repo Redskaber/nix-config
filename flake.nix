@@ -3,8 +3,6 @@
 # @datetime: 2025-12-12
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # TODO: mutil-pal gl app transparent proxy choice version.
-# - Tips: formatter and devShells need arch-name for sub-keyname,(else cachk error)
-# FIXME: configs { immutable, mutable } handle home manager imoprt.
 
 {
   description = "Kilig(Redskaber)'s declarative development environment";
@@ -192,14 +190,7 @@
       home = import ./export/home;
 
       # devShells loader
-      devShells.${shared.arch.tag} = import inputs.pdshell.pdshells {
-        inherit
-          pkgs
-          inputs
-          shared
-          devDir
-          ;
-      };
+      devShells.${shared.arch.tag} = import inputs.pdshell.pdshells { inherit pkgs inputs shared devDir; };
 
       # NixOS configuration entrypoint
       # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'

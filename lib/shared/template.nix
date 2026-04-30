@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/lib/shared/const.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @discription: lib::shared::const
+# @description: lib::shared::const
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 
 { inputs
@@ -51,15 +51,13 @@
     # sops age from root-dir/secrets/<dir|file>
     secrets = {
       sshKeyPaths = [ "/home/kilig/.ssh/id_ed25519_github" ];
-      nixos.core.base.user.password = "nixos/core/base/users/kilig/password";
-      nixos.core.base.nix.user.nixos-github-git-visited = "nixos/core/base/nix/kilig/nixos-github-git-visited";
-      nixos.core.srv.db = {
-        mongodb.user.password = "nixos/core/srv/db/mongodb/users/kilig/password";
-        mysql.root.password = "nixos/core/srv/db/mysql/users/root/password";
-        mysql.user.password = "nixos/core/srv/db/mysql/users/kilig/password";
-        postgresql.user.password = "nixos/core/srv/db/postgresql/users/kilig/password";
-        redis.user.password = "nixos/core/srv/db/redis/users/redis-kilig/password";
-      };
+      nixos.core.base.user.password                 = "nixos/core/base/user/kilig/password";
+      nixos.core.base.nix.user.github.access-token  = "nixos/core/base/nix/users/kilig/github/access-token";
+      nixos.core.srv.db.mongodb.user.password       = "nixos/core/srv/db/mongodb/users/kilig/password";
+      nixos.core.srv.db.mysql.root.password         = "nixos/core/srv/db/mysql/users/root/password";
+      nixos.core.srv.db.mysql.user.password         = "nixos/core/srv/db/mysql/users/kilig/password";
+      nixos.core.srv.db.postgresql.user.password    = "nixos/core/srv/db/postgresql/users/kilig/password";
+      nixos.core.srv.db.redis.user.password         = "nixos/core/srv/db/redis/users/redis-kilig/password";
     };
 
     # nixpkgs
