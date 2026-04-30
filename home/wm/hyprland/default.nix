@@ -71,6 +71,7 @@ in
     nwg-look
     waypaper
     swww
+    swappy
     yad
     hyprpicker
     wf-recorder
