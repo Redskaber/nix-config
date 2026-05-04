@@ -37,6 +37,7 @@
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
     ../../core
+    ../../env
     ../../wm
     # devShells: import dev/lang.nix from flake.nix
   ];
