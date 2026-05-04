@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/hosts/linux/x86_64-linux.nix
+# @path: ~/projects/configs/nix-config/host/linux/x86_64-linux.nix
 # @author: redskaber
 # @datetime: 2026-03-07
-# @description: home::hosts::linux::x86_64-linux
+# @description: host::linux::x86_64-linux
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
 
 

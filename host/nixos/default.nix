@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/hosts/nixos/default.nix
+# @path: ~/projects/configs/nix-config/host/nixos/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::hosts::nixos::default
+# @description: host::nixos::default
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
 
 

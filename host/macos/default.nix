@@ -1,4 +1,4 @@
-# @path: ~/projects/configs/nix-config/home/hosts/macos/default.nix
+# @path: ~/projects/configs/nix-config/host/macos/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: home::hosts::macos::default

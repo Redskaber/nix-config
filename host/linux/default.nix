@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/hosts/linux/default.nix
+# @path: ~/projects/configs/nix-config/host/linux/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::hosts::linux::default
+# @description: host::linux::default
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml
 
 
