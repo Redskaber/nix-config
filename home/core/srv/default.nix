@@ -1,8 +1,7 @@
 # @path: ~/projects/configs/nix-config/home/core/srv/default.nix
 # @author: redskaber
-# @datetime: 2026-03-04
+# @datetime: 2026-05-05
 # @description: home::core::srv::default
-
 
 
 { inputs
@@ -15,7 +14,9 @@
 {
 
   imports = [
-    # ./mako.nix
+    ./db
+    ./notify
+    ./security
   ];
 
 

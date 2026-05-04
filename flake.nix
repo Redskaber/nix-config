@@ -70,6 +70,10 @@
     cnmplayer.url = "github:Redskaber/cnmplayer";
     cnmplayer.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Qutebrowser config
+    qutebrowser-config.url = "github:Redskaber/qutebrowser-config";
+    qutebrowser-config.flake = false;
+
     # Neovim Config
     nvim-config.url = "github:Redskaber/nvim-config";
     nvim-config.flake = false;

@@ -236,11 +236,11 @@
     "hypr-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1777372429,
-        "narHash": "sha256-AmDzOKr/RIl8Bn9kaOHlR4BSZRQhpivsQEJVhANe/I4=",
+        "lastModified": 1777565795,
+        "narHash": "sha256-fNxnup3uVfN+jei0/v7rvJftusZicvOvfm40jDuxqpE=",
         "owner": "Redskaber",
         "repo": "hypr-config",
-        "rev": "5684862b0204b1dfe0a8400e2c06f1b67f4883ad",
+        "rev": "a4228c708888ec54b82ac730b98d118028255e7e",
         "type": "github"
       },
       "original": {
@@ -874,6 +874,22 @@
         "type": "github"
       }
     },
+    "qutebrowser-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1777668050,
+        "narHash": "sha256-Qg2nVdN/jpBNoy40ZJqH6OOptyrluFDR5KvWdteAHsA=",
+        "owner": "Redskaber",
+        "repo": "qutebrowser-config",
+        "rev": "0831d8d6829b13ef9207bc6b3eba9771b1bce762",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "qutebrowser-config",
+        "type": "github"
+      }
+    },
     "rofi-config": {
       "flake": false,
       "locked": {
@@ -914,6 +930,7 @@
         "nvim-config": "nvim-config",
         "pdshell": "pdshell",
         "quickshell-config": "quickshell-config",
+        "qutebrowser-config": "qutebrowser-config",
         "rofi-config": "rofi-config",
         "sops-nix": "sops-nix",
         "starship-config": "starship-config",

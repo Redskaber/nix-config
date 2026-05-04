@@ -1,0 +1,103 @@
+# @path: ~/projects/configs/nix-config/home/env/dev/default.nix
+# @author: redskaber
+# @datetime: 2026-05-05
+# @description: home::env::dev::default
+#
+# Modern, fast C development environment with clangd + bear
+# @Tips: Only this file combinFrom base dev shell
+# - Attrset   : (Permission , Scope , Load      )
+# - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
+# - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
+#
+# dev.<lang> == dev.<lang>.default
+
+
+{ pkgs, inputs, shared, dev, ... }: {
+
+  # (readonly)
+  default = {
+    shell = "zsh";
+    combinFrom = [
+      dev.c
+      dev.cpp
+      dev.go
+      dev.java
+      dev.javascript
+      dev.lisp
+      dev.lua
+      dev.nix
+      dev.python
+      dev.re
+      dev.rust
+      dev.typescript
+      dev.zig
+    ];
+    # buildInputs = with pkgs; [];
+    # nativeBuildInputs = with pkgs; [];
+    preInputsHook = ''
+      echo "[preInputsHook]: default shell!"
+    '';
+    postInputsHook = ''
+      echo "[postInputsHook]: default shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: default shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: default shell!"
+    '';
+  };
+
+  # (custom)
+  cpython = {
+    shell = "zsh";
+    combinFrom = [
+      dev.c
+      dev.cpp
+      dev.python
+    ];
+    # buildInputs = with pkgs; [];
+    # nativeBuildInputs = with pkgs; [];
+    preInputsHook = ''
+      echo "[preInputsHook]: cpython shell!"
+    '';
+    postInputsHook = ''
+      echo "[postInputsHook]: cpython shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: cpython shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: cpython shell!"
+    '';
+  };
+
+  godot = {
+    shell = "zsh";
+    combinFrom = [
+      dev.c
+      dev.cpp
+      dev.python
+    ];
+    buildInputs = with pkgs; [ godot ];
+    nativeBuildInputs = with pkgs; [ ];
+
+    preInputsHook = ''
+      echo "[preInputsHook]: godot shell!"
+    '';
+    postInputsHook = ''
+      echo "[postInputsHook]: godot shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: godot shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: godot shell!"
+    '';
+
+  };
+
+
+}
+
+
