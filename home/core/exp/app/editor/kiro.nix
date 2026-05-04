@@ -14,7 +14,7 @@
 , ...
 }:
 {
-  home.packages = with pkgs; [ kiro-fhs ];
+  home.packages = with shared.upkgs; [ kiro-fhs ];
 
 
 }

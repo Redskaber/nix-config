@@ -13,11 +13,11 @@
 }:
 let
   isNixOS = user_shared.platform == shared.enum.platform.nixos;
-  upkgs   = nixpkgs-unstable.legacyPackages.${user_shared.arch.tag};
   pattrs  = if user_shared ? nixpkgs
             then { system = user_shared.arch.tag; } // user_shared.nixpkgs
             else { system  = user_shared.arch.tag; };
   pkgs    = import nixpkgs pattrs;
+  upkgs   = import nixpkgs-unstable pattrs;
   orc     = inputs.configuration-orchestrator.lib.${user_shared.arch.tag};
   runtime_shared = shared // user_shared //
   {
