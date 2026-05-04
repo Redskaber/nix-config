@@ -17,7 +17,7 @@
     display-manager = shared_enum.display-manager.ly;
     version = shared_enum.version.v25_11;
     editor  = shared_enum.editor.nvim;
-    devDir  = ./home/core/dev;
+    devDir  = "${inputs.self}./home/env/dev";
     hostName = "nixos";
 
     user = {
