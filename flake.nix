@@ -214,7 +214,7 @@
         "${shared.user.username}@${shared.platform.tag}" = home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           extraSpecialArgs = { inherit inputs shared; };
-          modules = [ ./home/hosts/${shared.platform.tag} ];
+          modules = [ ./host/${shared.platform.tag} ];
         };
       };
     };

@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/hosts/macos/default.nix
+# @path: ~/projects/configs/nix-config/home/hosts/linux/x86_64-linux.nix
 # @author: redskaber
-# @datetime: 2025-12-12
-# @description: home::hosts::macos::default
+# @datetime: 2026-03-07
+# @description: home::hosts::linux::x86_64-linux
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
 
 
@@ -15,7 +15,6 @@
 , ...
 }:
 {
-
   # linux non-nixos environment inject
   targets.genericLinux = {
     enable = true;
@@ -37,9 +36,9 @@
   imports = [
     # If you import other home-manager modules from other flakes (such as nix-colors):
     # You can also split up your configuration and import pieces of it here:
-    ../../core
-    ../../env
-    ../../wm
+    ../../home/core
+    ../../home/env
+    ../../home/wm
     # devShells: import dev/lang.nix from flake.nix
   ];
 
@@ -48,6 +47,7 @@
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
+
 
 }
 
