@@ -1,6 +1,6 @@
 # nix-config
 
-> 声明式、可复现、多平台的系统与开发环境管理。  
+> 声明式、可复现、多平台的系统与开发环境管理。
 > 作者: [@Redskaber](https://github.com/Redskaber) · 构建于 Nix Flakes + Home Manager + SOPS-Nix
 
 ---
@@ -155,7 +155,8 @@ nix-config/
 │       ├── hardware.just   # NixOS 硬件配置生成
 │       ├── flake.just      # flake inputs 依赖管理
 │       ├── devenv.just     # 开发环境 profile 管理（pdshell）
-│       └── sops.just       # Age 密钥 + SOPS 加密生命周期（plan/chipr 数据驱动分层）
+│       ├── sops.just       # Age 密钥 + SOPS 加密生命周期（plan/chipr 数据驱动分层）
+│       └── commit.just     # 数据驱动的提交规范部署（基于 commit-config）
 │
 ├── docs/
 │   └── tmpl/
@@ -401,6 +402,26 @@ secrets/plan/
 | BOOTSTRAP      | `shared.nix` | `just shared-generate` 已执行 | `sops-init`, `sops-rules-regen`, `sops-plan-create-all` |
 | POST-BOOTSTRAP | `shared.nix` | `just shared-generate` 已执行 | `sops-chipr-create-*`, `sops-chipr-read-*`              |
 
+### 5. 配置编排器 — orc（ConfigurationOrchestrator）
+
+`shared.orc` 是针对纯粹 config lib 的操作库, 提供了 wallust 主题动态注入的核心机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出, ...） 复制到相应的配置目录：
+
+```nix
+# 典型用法（以 waybar 为例）
+waybarResult = shared.orc.mergeHomeFiles (
+  shared.orc.listFilesRecursive inputs.waybar-config ""
+) [
+  { include = [ "wallust/colors-waybar.css" ];
+    emitter = "copy";
+    destPrefix = ".config/waybar"; }
+];
+
+# activation hook 中注入
+home.activation.waybarWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] waybarResult.activation;
+```
+
+受 orc 管理的组件：waybar · rofi · swaync · kitty · cava · quickshell · hyprland
+
 ### 6. 用户环境层 — home/env
 
 `home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的 `host/*/` 入口中与 `home/core` 并列导入：
@@ -446,50 +467,57 @@ host/<platform>/default.nix
 
 `combinFrom` 字段由 pdshell 引擎处理，将多个语言环境的 `buildInputs`、`nativeBuildInputs` 和所有钩子合并为单一 `mkShell`。
 
-### 5. 配置编排器 — orc（ConfigurationOrchestrator）
-
-`shared.orc` 是针对纯粹 config lib 的操作库, 提供了 wallust 主题动态注入的核心机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出）复制到相应的配置目录：
-
-```nix
-# 典型用法（以 waybar 为例）
-waybarResult = shared.orc.mergeHomeFiles (
-  shared.orc.listFilesRecursive inputs.waybar-config ""
-) [
-  { include = [ "wallust/colors-waybar.css" ];
-    emitter = "copy";
-    destPrefix = ".config/waybar"; }
-];
-
-# activation hook 中注入
-home.activation.waybarWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] waybarResult.activation;
-```
-
-受 orc 管理的组件：waybar · rofi · swaync · kitty · cava · quickshell · hyprland
-
 ### 7. 外部配置仓库（flake=false inputs）
 
 所有工具配置以独立 Git 仓库形式引入，由 Home Manager 在激活时写入 `~/.config/<app>/`：
 
-| flake input            | 目标路径                                            |
-| ---------------------- | --------------------------------------------------- |
-| `nvim-config`          | `~/.config/nvim/`                                   |
-| `emacs-config`         | `~/.config/emacs/`                                  |
-| `vscode-config`        | `~/.config/Code/User/`                              |
-| `starship-config`      | `~/.config/starship.toml`                           |
-| `fastfetch-config`     | `~/.config/fastfetch/`                              |
-| `wezterm-config`       | `~/.config/wezterm/`                                |
-| `kitty-config`         | `~/.config/kitty/`                                  |
-| `tmux-config`          | `~/.config/tmux/`                                   |
-| `mpv-config`           | `~/.config/mpv/`                                    |
-| `hypr-config`          | `~/.config/hypr/`                                   |
-| `niri-config`          | `~/.config/niri/`                                   |
-| `rofi-config`          | `~/.config/rofi/`                                   |
-| `swaync-config`        | `~/.config/swaync/`                                 |
-| `wallust-config`       | `~/.config/wallust/`                                |
-| `waybar-config`        | `~/.config/waybar/`                                 |
-| `wlogout-config`       | `~/.config/wlogout/`                                |
-| `quickshell-config`    | `~/.config/quickshell/`                             |
-| `input-overlay-config` | `~/.config/obs-studio/plugin_config/input-overlay/` |
+| flake input            | 目标路径                                                                    |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `nvim-config`          | `~/.config/nvim/`                                                           |
+| `emacs-config`         | `~/.config/emacs/`                                                          |
+| `vscode-config`        | `~/.config/Code/User/`                                                      |
+| `starship-config`      | `~/.config/starship.toml`                                                   |
+| `fastfetch-config`     | `~/.config/fastfetch/`                                                      |
+| `wezterm-config`       | `~/.config/wezterm/`                                                        |
+| `kitty-config`         | `~/.config/kitty/`                                                          |
+| `tmux-config`          | `~/.config/tmux/`                                                           |
+| `mpv-config`           | `~/.config/mpv/`                                                            |
+| `hypr-config`          | `~/.config/hypr/`                                                           |
+| `niri-config`          | `~/.config/niri/`                                                           |
+| `rofi-config`          | `~/.config/rofi/`                                                           |
+| `swaync-config`        | `~/.config/swaync/`                                                         |
+| `wallust-config`       | `~/.config/wallust/`                                                        |
+| `waybar-config`        | `~/.config/waybar/`                                                         |
+| `wlogout-config`       | `~/.config/wlogout/`                                                        |
+| `quickshell-config`    | `~/.config/quickshell/`                                                     |
+| `input-overlay-config` | `~/.config/obs-studio/plugin_config/input-overlay/`                         |
+| `commit-config`        | `<project>/.cz.toml`、`<project>/commitlint.config.js`、`<project>/.husky/` |
+
+### 8. 提交规范 — Husky + Commitlint + Commitizen（零 node_modules）
+
+提交规范也作为外部配置仓库 `commit-config` 引入（`flake = false`），通过 `scripts/just/commit.just` 实现数据驱动部署，**无需任何 `node_modules`**。主要组件：
+
+- **全局工具**（由 Home Manager 通过 `home.packages` 安装）：`commitlint`、`husky`、`commitizen`。
+- **规则与交互配置**：`commitlint.config.js`（定义允许的提交类型）和 `.cz.toml`（供 `cz commit` 使用，类型与 commitlint 完全对齐）。
+- **Git 钩子**：`husky/commit-msg` 直接调用全局 `commitlint` 命令，在每次提交时验证信息格式。
+
+**快速部署（适用于任意 Git 仓库）：**
+
+```bash
+# 为 nix-config 项目部署规则 + 钩子
+just commit-setup
+
+# 为其他项目安装钩子（不复制配置文件）
+just commit-husky-install /path/to/repo
+
+# 仅复制 commitlint 和 commitizen 配置到项目
+just commit-project-rules /path/to/repo
+
+# 可选：部署全局兜底规则到 ~/.commitlintrc.js ~/.cz.toml
+just commit-global-rules
+```
+
+所有命令都从 `flake.nix` 的 `api.inputs` 动态获取 `commit-config` 在 Nix store 中的路径，确保完全可复现。修改规则时，更新 `commit-config` 仓库后只需重新运行 `just commit-setup` 即可同步。
 
 ---
 
@@ -691,6 +719,22 @@ just sops-chipr-destroy     # 删除所有加密文件（不可逆）
 just sops-destroy-all       # 销毁全部 sops 相关内容（不可逆）
 ```
 
+### commit — 提交规范部署
+
+```bash
+# 为 nix-config 仓库部署规则文件与钩子
+just commit-setup
+
+# 为任意 Git 仓库安装 husky 钩子（不复制配置文件）
+just commit-husky-install <path>
+
+# 单独复制 commitlint 和 commitizen 配置文件到项目
+just commit-project-rules <path>
+
+# 部署全局兜底规则到 ~/.commitlintrc.js , ~/.cz.toml（可选）
+just commit-global-rules
+```
+
 ---
 
 ## 快速开始
@@ -793,19 +837,19 @@ direnv allow
 
 ```bash
 # GUI 应用
-vim home/core/app/<name>.nix
-# 在 home/core/app/default.nix 的 imports 中添加引用
+vim home/core/exp/app/<class>/<name>.nix
+# 在 home/core/exp/app/<class>/default.nix 的 imports 中添加引用
 
 # CLI 工具
-vim home/core/sys/<name>.nix
-# 在 home/core/sys/default.nix 的 imports 中添加引用
+vim home/core/sys/<class>/<name>.nix
+# 在 home/core/exp/sys/<class>/default.nix 的 imports 中添加引用
 ```
 
 ### 添加开发语言环境
 
 ```bash
-mkdir home/core/dev/<lang>
-# 参考 home/core/dev/python/ 的结构实现 default.nix
+mkdir home/env/dev/<lang>
+# 参考 home/env/dev/python/ 的结构实现 default.nix
 # pdshell 会自动发现并注册到 devShells.<arch>.<lang>
 ```
 
@@ -915,6 +959,7 @@ flake.nix
 ├── wechat                       # 微信（自建 flake）
 ├── unrpyc                       # RenPy 反编译（自建 flake）
 ├── cnmplayer                    # 网易云音乐 TUI（自建 flake）
+├── commit-config                # 提交规范（commitlint + commitizen + husky 规则）
 └── *-config (flake=false)       # 各工具配置仓库（外部 Git 源）
     nvim · emacs · vscode · starship · fastfetch · wezterm
     kitty · tmux · mpv · btop · cava · niri · hypr · rofi
@@ -935,5 +980,5 @@ flake.nix
 
 ---
 
-> 每个目录是一个模块，每个模块是一个函数，每次重建是一次纯函数推导。  
+> 每个目录是一个模块，每个模块是一个函数，每次重建是一次纯函数推导。
 > 系统状态完全由 Git 中的声明决定，机器是声明的投影。
