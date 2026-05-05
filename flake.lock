@@ -85,6 +85,22 @@
         "type": "github"
       }
     },
+    "commit-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778012435,
+        "narHash": "sha256-J40mEVMxIHHMHmFHG1nR7NzyXFgF0fmInEJ22ZCLCVQ=",
+        "owner": "Redskaber",
+        "repo": "commit-config",
+        "rev": "2703c336a456281709360a2c8c12a7661ad2aef4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "commit-config",
+        "type": "github"
+      }
+    },
     "configuration-orchestrator": {
       "inputs": {
         "nixpkgs": "nixpkgs"
@@ -911,6 +927,7 @@
         "btop-config": "btop-config",
         "cava-config": "cava-config",
         "cnmplayer": "cnmplayer",
+        "commit-config": "commit-config",
         "configuration-orchestrator": "configuration-orchestrator",
         "emacs-config": "emacs-config",
         "fastfetch-config": "fastfetch-config",

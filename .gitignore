@@ -9,6 +9,9 @@ tests
 *.log
 .*
 !.sops.yaml
+!.husky
+!.cz.toml
+
 # custom library old impl
 lib/old
 

@@ -17,6 +17,8 @@
     ./atuin.nix
     ./bat.nix
     ./cliphist.nix
+    ./commitizen.nix
+    ./commitlint.nix
     ./curl.nix
     ./direnv.nix
     ./eza.nix
@@ -24,6 +26,7 @@
     ./fd.nix
     ./fzf.nix
     ./git.nix
+    ./husky.nix
     ./jq.nix
     ./just.nix
     ./rbw.nix

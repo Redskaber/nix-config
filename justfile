@@ -15,6 +15,7 @@ ROOT := justfile_directory()
 # ==============================================================================
 # Sub-module imports
 # ==============================================================================
+import "scripts/just/commit.just"
 import "scripts/just/shared.just"
 import "scripts/just/hardware.just"
 import "scripts/just/flake.just"

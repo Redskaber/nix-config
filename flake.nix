@@ -70,6 +70,10 @@
     cnmplayer.url = "github:Redskaber/cnmplayer";
     cnmplayer.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Commit Checker (husky, commitlint, commitizen)
+    commit-config.url = "github:Redskaber/commit-config";
+    commit-config.flake = false;
+
     # Qutebrowser config
     qutebrowser-config.url = "github:Redskaber/qutebrowser-config";
     qutebrowser-config.flake = false;
