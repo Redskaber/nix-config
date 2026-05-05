@@ -11,9 +11,8 @@
 let
   const   = import ./const.nix;
   schema  = import ./schema.nix;
-  fn      = import ./fn.nix;
   enum    = import ./enum.nix { inherit inputs; };
-
+  fn      = import ./fn.nix { inherit inputs enum const schema; };
 in {
   inherit
   const

@@ -70,71 +70,69 @@
   sops = {
     age = {
       generateKey = true;
-      keyFile = "/home/${shared.user.username}/.config/sops/age/keys.txt";  # age publish key file position 600
+      keyFile     = "/home/${shared.user.username}/.config/sops/age/keys.txt";  # age publish key file position 600
       sshKeyPaths = shared.secrets.sshKeyPaths;
     };
     secrets = {
       ${shared.secrets.nixos.core.base.user.password} = {
         neededForUsers = true;                                            # user create before execute
-        format = "yaml";
-        sopsFile = "${shared.self}/secrets/chipr/${shared.secrets.nixos.core.base.user.password}.yaml";
-        mode = "0400";
-        owner = config.users.users.root.name;
-        group = config.users.users.root.group;
-        path = "/run/secrets-for-users/${shared.secrets.nixos.core.base.user.password}";         # symlink
+        format    = "yaml";
+        sopsFile  = shared.sopsFile shared.secrets.nixos.core.base.user.password;
+        mode      = shared.const.mode.ownerOnly; # 0400
+        owner     = config.users.users.root.name;
+        group     = config.users.users.root.group;
+        path      = shared.sopsUserPath shared.secrets.nixos.core.base.user.password;
       };
       ${shared.secrets.nixos.core.base.nix.user.github.access-token} = {
-        format = "yaml";
-        sopsFile = "${shared.self}/secrets/chipr/${shared.secrets.nixos.core.base.nix.user.github.access-token}.yaml";
-        mode = "0400";
-        owner = config.users.users.${shared.user.username}.name;
-        group = config.users.users.${shared.user.username}.group;
-        path = "/run/secrets/${shared.secrets.nixos.core.base.nix.user.github.access-token}";
+        format    = "yaml";
+        sopsFile  = shared.sopsFile shared.secrets.nixos.core.base.nix.user.github.access-token;
+        mode      = shared.const.mode.ownerOnly;
+        owner     = config.users.users.${shared.user.username}.name;
+        group     = config.users.users.${shared.user.username}.group;
+        path      = shared.sopsPath shared.secrets.nixos.core.base.nix.user.github.access-token;
       };
       ${shared.secrets.nixos.core.srv.db.mongodb.user.password} = {
-        format = "yaml";
-        sopsFile = "${shared.self}/secrets/chipr/${shared.secrets.nixos.core.srv.db.mongodb.user.password}.yaml";
-        mode = "0400";
-        owner = config.users.users.mongodb.name;
-        group = config.users.users.mongodb.group;
-        path = "/run/secrets/${shared.secrets.nixos.core.srv.db.mongodb.user.password}";           # symlink
+        format    = "yaml";
+        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.mongodb.user.password;
+        mode      = shared.const.mode.ownerOnly;
+        owner     = config.users.users.mongodb.name;
+        group     = config.users.users.mongodb.group;
+        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.mongodb.user.password;
       };
       ${shared.secrets.nixos.core.srv.db.mysql.root.password} = {
-        format = "yaml";
-        sopsFile = "${shared.self}/secrets/chipr/${shared.secrets.nixos.core.srv.db.mysql.root.password}.yaml";
-        mode = "0400";
-        owner = config.users.users.root.name;
-        group = config.users.users.root.group;
-        path = "/run/secrets/${shared.secrets.nixos.core.srv.db.mysql.root.password}";
+        format    = "yaml";
+        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.mysql.root.password;
+        mode      = shared.const.mode.ownerOnly;
+        owner     = config.users.users.root.name;
+        group     = config.users.users.root.group;
+        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.mysql.root.password;
       };
       ${shared.secrets.nixos.core.srv.db.mysql.user.password} = {
-        format = "yaml";
-        sopsFile = "${shared.self}/secrets/chipr/${shared.secrets.nixos.core.srv.db.mysql.user.password}.yaml";
-        mode = "0440";
-        owner = config.users.users.root.name;
-        group = config.users.users.mysql.group;
-        path = "/run/secrets/${shared.secrets.nixos.core.srv.db.mysql.user.password}";
+        format    = "yaml";
+        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.mysql.user.password;
+        mode      = shared.const.mode.groupRead; # 0440
+        owner     = config.users.users.root.name;
+        group     = config.users.users.mysql.group;
+        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.mysql.user.password;
       };
       ${shared.secrets.nixos.core.srv.db.postgresql.user.password} = {
-        format = "yaml";
-        sopsFile = "${shared.self}/secrets/chipr/${shared.secrets.nixos.core.srv.db.postgresql.user.password}.yaml";
-        mode = "0440";
-        owner = config.users.users.root.name;
-        group = config.users.users.postgres.group;
-        path = "/run/secrets/${shared.secrets.nixos.core.srv.db.postgresql.user.password}";
+        format    = "yaml";
+        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.postgresql.user.password;
+        mode      = shared.const.mode.groupRead;
+        owner     = config.users.users.root.name;
+        group     = config.users.users.postgres.group;
+        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.postgresql.user.password;
       };
       ${shared.secrets.nixos.core.srv.db.redis.user.password} = {
-        format = "yaml";
-        sopsFile = "${shared.self}/secrets/chipr/${shared.secrets.nixos.core.srv.db.redis.user.password}.yaml";
-        mode = "0440";
-        owner = config.users.users.root.name;
-        group = config.users.users."redis-${shared.user.username}".group;
-        path = "/run/secrets/${shared.secrets.nixos.core.srv.db.redis.user.password}";
+        format    = "yaml";
+        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.redis.user.password;
+        mode      = shared.const.mode.groupRead;
+        owner     = config.users.users.root.name;
+        group     = config.users.users."redis-${shared.user.username}".group;
+        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.redis.user.password;
       };
     };
   };
-
-
 }
 
 

@@ -27,7 +27,7 @@
 
   home = {
     username = shared.user.username;
-    homeDirectory = "/home/${shared.user.username}";
+    homeDirectory = shared.homeDir;
     stateVersion = shared.version.value;
   };
   programs.home-manager.enable = true;

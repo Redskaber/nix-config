@@ -16,6 +16,8 @@
 }:
 {
   # Add user to libvirtd incus-admin waydroid group
+  # NOTE: These groups are created by their respective virtualisation services.
+  #       They are safe to declare here because the services are enabled below.
   users.users.${shared.user.username}.extraGroups = [ "libvirtd" "incus-admin" "waydroid" ];
 
   ## For AMD CPU, add "kvm-amd" to kernelModules.
@@ -161,7 +163,7 @@
             config = {
               "ipv4.address" = "10.217.144.1/24";
               "ipv4.nat" = "true";
-              "ipv6.address" = "fd42:8bdd:fa83:9703:95b2::1/64";      # genrate from `openssl rand -hex 8`
+              "ipv6.address" = "fd42:8bdd:fa83:9703:95b2::1/64";      # generate from `openssl rand -hex 8`
               "ipv6.nat" = "true";
               "dns.domain" = "incus";
               "dns.mode" = "managed";

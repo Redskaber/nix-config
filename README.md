@@ -62,10 +62,10 @@ nix-config/
 │       ├── shared/
 │       │   ├── enum.nix    # 枚举类型：arch / platform / wm / shell / drive-group 等
 │       │   ├── schema.nix  # 结构验证：user / git / rbw / secrets / shared 的类型约束
-│       │   ├── fn.nix      # 工具函数
-│       │   └── const.nix   # 常量定义
+│       │   ├── fn.nix      # 工具函数：isNixOS · isMacOS · homeDir · sopsFile · sopsRuntimePath
+│       │   └── const.nix   # 常量定义：secrets 路径 · 权限模式 · XDG 目录名
 │       ├── runtime/
-│       │   └── default.nix # 运行时合成：pkgs / upkgs / isNixOS / orc 注入
+│       │   └── default.nix # 运行时合成：pkgs / upkgs / isNixOS / homeDir / orc / sopsFile / sopsUserPath / sopsPath 注入
 │       └── template.nix    # 配置模板参考（不直接导入）
 │
 ├── nixos/                  # 系统层（NixOS only）
@@ -135,7 +135,7 @@ nix-config/
 ├── host/                   # 平台入口（Home Manager 激活点）
 │   ├── nixos/              # NixOS 主机入口（x86_64-linux）
 │   ├── linux/              # 通用 Linux（standalone HM + nixGL）
-│   ├── macos/              # macOS（standalone HM + nixGL）
+│   ├── macos/              # macOS（standalone HM；homeDirectory=/Users/<u>；无 nixGL）
 │   └── wsl/                # WSL2（standalone HM + nixGL）
 │
 ├── secrets/
@@ -174,11 +174,11 @@ nix-config/
 `lib/shared` 解决了 Nix 中"配置依赖 pkgs，pkgs 依赖配置"的循环问题：
 
 ```
-阶段一 (shared/):  schema(枚举/结构定义) + enum(合法状态集合)
+阶段一 (shared/):  schema(枚举/结构定义) + enum(合法状态集合) + fn(工具函数) + const(常量)
                    ↓ 提供类型约束，不依赖 pkgs
 阶段二 (runtime/): user_shared(shared.nix 用户填充) → runtime_shared
-                   ↓ 注入: pkgs · upkgs · isNixOS · orc
-fullShared = schema ∪ enum ∪ user_shared ∪ runtime
+                   ↓ 注入: pkgs · upkgs · isNixOS · homeDir · orc  · sopsUserPath  · sopsPath
+fullShared = schema ∪ enum ∪ fn ∪ const ∪ user_shared ∪ runtime
 ```
 
 `lib/shared/default.nix` 接受可选参数 `scfpath`（默认 `../../shared.nix`），允许在测试或多机器场景中指向不同的策略文件：
@@ -198,13 +198,38 @@ shared = import ./lib/shared {
 
 `runtime/default.nix` 合成后的 `fullShared` 包含以下运行时字段：
 
-| 字段           | 来源          | 说明                                          |
-| -------------- | ------------- | --------------------------------------------- |
-| `pkgs`         | runtime 注入  | 稳定版 nixpkgs（含 overlays + config）        |
-| `upkgs`        | runtime 注入  | unstable nixpkgs（含 allowUnfree）            |
-| `isNixOS`      | runtime 计算  | `platform == nixos`，用于条件模块加载         |
-| `orc`          | runtime 注入  | configuration-orchestrator lib（wallust 注入）|
-| `_user_shared` | runtime 保留  | 原始 user_shared 快照（调试/内省用）          |
+| 字段           | 来源         | 说明                                                             |
+| -------------- | ------------ | ---------------------------------------------------------------- |
+| `pkgs`         | runtime 注入 | 稳定版 nixpkgs（含 overlays + config）                           |
+| `upkgs`        | runtime 注入 | unstable nixpkgs（含 allowUnfree）                               |
+| `isNixOS`      | runtime 计算 | `platform == nixos`，用于条件模块加载                            |
+| `homeDir`      | runtime 计算 | 平台感知的 home 目录（Linux: `/home/<u>`，macOS: `/Users/<u>`）  |
+| `orc`          | runtime 注入 | configuration-orchestrator lib（wallust 注入）                   |
+| `sopsFile`     | runtime 注入 | `rel → store path`，从 secret REL 推导加密文件路径               |
+| `sopsPath`     | runtime 注入 | `rel → /run/secrets/<rel>`，普通 secret 运行时路径               |
+| `sopsUserPath` | runtime 注入 | `rel → /run/secrets-for-users/<rel>`，neededForUsers secret 路径 |
+| `_user_shared` | runtime 保留 | 原始 user_shared 快照（调试/内省用）                             |
+
+**工具函数（`shared.fn`）：**
+
+```nix
+shared.fn.isNixOS  shared.platform   # → bool
+shared.fn.isMacOS  shared.platform   # → bool
+shared.fn.homeDir  shared.platform shared.user.username  # → "/home/kilig" 或 "/Users/kilig"
+shared.fn.sopsFile shared.self shared.const.secrets.chipr "nixos/core/base/user/kilig/password"  # → store path
+shared.fn.sopsRuntimePath shared.const.secrets.forUsersPath "nixos/core/base/user/kilig/password"  # → "/run/secrets-for-users/nixos/..."
+shared.fn.sopsRuntimePath shared.const.secrets.runtimePath "nixos/core/base/nix/users/kilig/github/access-token"  # → "/run/secrets/nixos/..."
+```
+
+**系统常量（`shared.const`）：**
+
+```nix
+shared.const.secrets.forUsersPath  # "/run/secrets-for-users"
+shared.const.secrets.runtimePath   # "/run/secrets"
+shared.const.secrets.chipr         # "secrets/chipr"
+shared.const.mode.ownerOnly        # "0400"
+shared.const.mode.groupRead        # "0440"
+```
 
 随后 `shared` 作为 `specialArgs`/`extraSpecialArgs` 传递给所有 NixOS/Home Manager 模块。
 
@@ -233,16 +258,16 @@ nixos/ · home/              通过 { shared, ... } 消费
 
 **可配置枚举（lib/shared/shared/enum.nix）：**
 
-| 字段              | 合法值                                                                                                    |
-| ----------------- | --------------------------------------------------------------------------------------------------------- |
-| `arch`            | `x86_64-linux` · `aarch64-linux` · `x86_64-darwin` · `aarch64-darwin` · `i686-linux`                    |
-| `platform`        | `nixos` · `linux` · `macos` · `wsl`                                                                      |
-| `window-manager`  | `hyprland` · `niri` · `gnome`（每个值携带 `portal` 策略）                                                |
-| `display-manager` | `ly` · `gdm` · `sddm` · `lemurs`                                                                         |
+| 字段              | 合法值                                                                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `arch`            | `x86_64-linux` · `aarch64-linux` · `x86_64-darwin` · `aarch64-darwin` · `i686-linux`                                    |
+| `platform`        | `nixos` · `linux` · `macos` · `wsl`                                                                                     |
+| `window-manager`  | `hyprland` · `niri` · `gnome`（每个值携带 `portal` 策略）                                                               |
+| `display-manager` | `ly` · `gdm` · `sddm` · `lemurs`                                                                                        |
 | `drive-group`     | `intel` · `amd` · `nvidia` · `nvidia-prime` · `amd-nvidia` · `amd-nvidia-prime` · `intel-nvidia` · `intel-nvidia-prime` |
-| `shell`           | `zsh` · `fish` · `bash`                                                                                   |
-| `editor`          | `nvim` · `vim` · `code` · `zeditor`                                                                      |
-| `version`         | `v25_11`（值 `"25.11"`，用于 `system.stateVersion`）                                                     |
+| `shell`           | `zsh` · `fish` · `bash`                                                                                                 |
+| `editor`          | `nvim` · `vim` · `code` · `zeditor`                                                                                     |
+| `version`         | `v25_11`（值 `"25.11"`，用于 `system.stateVersion`）                                                                    |
 
 `window-manager` 枚举值内嵌 `portal` 策略，`nixos/core/base/portal.nix` 直接消费：
 
@@ -250,7 +275,7 @@ nixos/ · home/              通过 { shared, ... } 消费
 # 枚举值结构示例
 hyprland = { portal = { default = [ "hyprland" "gtk" ]; extraPortals = ...; wlr = false; }; };
 niri     = { portal = { default = [ "wlr" "gtk" ];      extraPortals = ...; wlr = true;  }; };
-gnome    = { portal = { default = [ "gtk" ];             extraPortals = ...; wlr = false; }; };
+gnome    = { portal = { default = [ "gtk" ];            extraPortals = ...; wlr = false; }; };
 ```
 
 ### 3. 开发环境管道 — pdshell
@@ -376,7 +401,7 @@ secrets/plan/
 | BOOTSTRAP      | `shared.nix` | `just shared-generate` 已执行 | `sops-init`, `sops-rules-regen`, `sops-plan-create-all` |
 | POST-BOOTSTRAP | `shared.nix` | `just shared-generate` 已执行 | `sops-chipr-create-*`, `sops-chipr-read-*`              |
 
-### 7. 用户环境层 — home/env
+### 6. 用户环境层 — home/env
 
 `home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的 `host/*/` 入口中与 `home/core` 并列导入：
 
@@ -387,10 +412,10 @@ host/<platform>/default.nix
 
 **子层职责：**
 
-| 子层         | 路径              | 说明                                                                 |
-| ------------ | ----------------- | -------------------------------------------------------------------- |
-| `env/base`   | `home/env/base/`  | 全局基础包：编译器(clang/rustc/cargo)、运行时(python312/nodejs_24)、调试工具(valgrind/strace/ltrace)、硬件工具(pciutils/vulkan-tools) |
-| `env/dev`    | `home/env/dev/`   | pdshell devShell 定义文件（每语言一目录，由 `flake.nix` 的 `devShells` 输出加载） |
+| 子层       | 路径             | 说明                                                                                                                                  |
+| ---------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `env/base` | `home/env/base/` | 全局基础包：编译器(clang/rustc/cargo)、运行时(python312/nodejs_24)、调试工具(valgrind/strace/ltrace)、硬件工具(pciutils/vulkan-tools) |
+| `env/dev`  | `home/env/dev/`  | pdshell devShell 定义文件（每语言一目录，由 `flake.nix` 的 `devShells` 输出加载）                                                     |
 
 `env/base` 提供的是**始终可用**的全局工具，不依赖 devShell 激活。`env/dev` 中的定义仅在 `nix develop` 或 `just devenv-*` 时生效。
 
@@ -421,7 +446,7 @@ host/<platform>/default.nix
 
 `combinFrom` 字段由 pdshell 引擎处理，将多个语言环境的 `buildInputs`、`nativeBuildInputs` 和所有钩子合并为单一 `mkShell`。
 
-
+### 5. 配置编排器 — orc（ConfigurationOrchestrator）
 
 `shared.orc` 是针对纯粹 config lib 的操作库, 提供了 wallust 主题动态注入的核心机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出）复制到相应的配置目录：
 
@@ -441,7 +466,7 @@ home.activation.waybarWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] waybar
 
 受 orc 管理的组件：waybar · rofi · swaync · kitty · cava · quickshell · hyprland
 
-### 6. 外部配置仓库（flake=false inputs）
+### 7. 外部配置仓库（flake=false inputs）
 
 所有工具配置以独立 Git 仓库形式引入，由 Home Manager 在激活时写入 `~/.config/<app>/`：
 
@@ -533,29 +558,29 @@ sops decrypt secrets/chipr/nixos/core/base/user/kilig/password.yaml
 ```
 开发机 (本地)                        生产机 (NixOS)
     │                                      │
-    ├── 编辑 *.nix                          │
+    ├── 编辑 *.nix                         │
     ├── nix flake check --no-build         │
     ├── git push → CI (GitHub Actions)     │
     │       └── lint + build dry-run       │
     │           + security audit           │
     │                                      │
-    └── [CI 通过后]                         │
-        ├── SSH 到目标机                    │
-        │   或在目标机上执行：                │
+    └── [CI 通过后]                        │
+        ├── SSH 到目标机                   │
+        │   或在目标机上执行：             │
         │                                  │
-        │   # 拉取最新配置                   │
+        │   # 拉取最新配置                 │
         │   cd ~/.config/nix-config        │
         │   git pull                       │
         │                                  │
-        │   # 重建系统                      │
+        │   # 重建系统                     │
         │   sudo nixos-rebuild switch \    │
         │     --flake .#kilig-nixos        │
         │                                  │
-        │   # 重建用户环境                   │
+        │   # 重建用户环境                 │
         │   home-manager switch \          │
         │     --flake .#kilig@nixos        │
         │                                  │
-        └── 验证服务状态                     │
+        └── 验证服务状态                   │
             systemctl status sops-*        │
             just sops-chipr-read-mongodb   │
 ```

@@ -1,9 +1,17 @@
-# @path: ~/projects/configs/nix-config/home/core/sys/portal.nix
+# @path: ~/projects/configs/nix-config/home/core/base/portal.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @diractory: https://search.nixos.org/options?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=hyprland
-# @description: home::core::sys::portal
-# - user portal config
+# @description: home::core::base::portal
+# @directory: https://nix-community.github.io/home-manager/options.xhtml#opt-xdg.portal.enable
+#
+# User-level XDG portal configuration (standalone HM only).
+# On NixOS, portal is managed by nixos/core/base/portal.nix via system config.
+# xdg.portal.enable is gated on !shared.isNixOS to avoid double-configuration.
+#
+# Portal strategy is data-driven from shared.window-manager enum:
+#   hyprland → [ "hyprland" "gtk" ]  (xdg-desktop-portal-hyprland + gtk)
+#   niri     → [ "wlr" "gtk" ]       (xdg-desktop-portal-wlr + gtk)
+#   gnome    → [ "gtk" ]             (xdg-desktop-portal-gtk)
 
 
 { inputs
@@ -14,7 +22,6 @@
 , ...
 }:
 {
-  # base(wayland)
   xdg.portal = {
     enable = !shared.isNixOS;
     xdgOpenUsePortal = true;
@@ -24,13 +31,7 @@
       ${shared.window-manager.tag}.default = shared.window-manager.value.portal.value.default;
     };
 
-  extraPortals = shared.window-manager.value.portal.value.extraPortals pkgs;
-
+    # extraPortals installs the portal packages — no need to duplicate in home.packages
+    extraPortals = shared.window-manager.value.portal.value.extraPortals pkgs;
   };
-
-  # desktop portal
-  home.packages = shared.window-manager.value.portal.value.extraPortals pkgs;
-
 }
-
-
