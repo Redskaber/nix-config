@@ -88,11 +88,11 @@
     "commit-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1778012435,
-        "narHash": "sha256-J40mEVMxIHHMHmFHG1nR7NzyXFgF0fmInEJ22ZCLCVQ=",
+        "lastModified": 1778013590,
+        "narHash": "sha256-zPffvY2dtSQ0I3DylrOSAGirbNTofbvdJTHMhvZKqiY=",
         "owner": "Redskaber",
         "repo": "commit-config",
-        "rev": "2703c336a456281709360a2c8c12a7661ad2aef4",
+        "rev": "2d1c49ee96f430e101631547aa54e5f1a3a16c9d",
         "type": "github"
       },
       "original": {
