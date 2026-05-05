@@ -85,54 +85,58 @@ nix-config/
 │
 ├── home/                   # 用户层（Home Manager）
 │   ├── core/
-│   │   ├── app/            # 应用：
-│   │   │   ├── ai/         #   AI 工具：claude-code · opencode · gemini-cli
-│   │   │   ├── browser/    #   浏览器：google-chrome · qutebrowser · w3m · zen-browser(opt)
-│   │   │   ├── game/       #   游戏：prismlauncher(Minecraft)
-│   │   │   ├── img/        #   图像：gimp · imagemagick · imv · ghostscript · mermaid-cli · tectonic
-│   │   │   ├── music/      #   音乐：mpd + ncmpcpp · easyeffects · spotifyd + ncspot · playerctld · cnmplayer
-│   │   │   ├── office/     #   办公：pandoc · pdf(poppler/qpdf/ocrmypdf) · wpsoffice · unoconv
-│   │   │   ├── re/         #   逆向：ghidra · imhex · cutter
-│   │   │   └── yazi/       #   文件管理器：yazi（含完整键位/主题/插件配置）
-│   │   │   # 单文件应用：nvim · wezterm · kitty · tmux · vscode · zed · kiro · emacs
-│   │   │   # mpv · obsidian · discord(vesktop) · qq · wechat · obs · lutris · rbw
-│   │   │   # baidupcs-go · xunlei · tealdeer · showmethekey
-│   │   ├── dev/            # 开发环境（pdshell devShells）：
-│   │   │   ├── c/          #   C: clang + clangd + lld + bear + ccache
-│   │   │   ├── cpp/        #   C++: pure LLVM (libc++ + clang++ + lld + lldb)
-│   │   │   ├── go/         #   Go: go + gopls + delve + golangci-lint（中国镜像优化）
-│   │   │   ├── java/       #   Java: temurin-bin-21 + maven + gradle + jdt-ls
-│   │   │   ├── javascript/ #   JS: node24 + pnpm + biome + typescript-language-server
-│   │   │   ├── typescript/ #   TS: node24 + tsc + tsx + typescript-language-server
-│   │   │   ├── lisp/       #   Lisp: sbcl + rlwrap + pkg-config
-│   │   │   ├── lua/        #   Lua: lua54 + luajit + luarocks + lua-language-server + stylua
-│   │   │   ├── nix/        #   Nix: nix + nixfmt-rfc-style + statix + nil + nvd（含 derivation-free/unfree/security 变体）
-│   │   │   ├── python/     #   Python: python312 + uv + ruff + pyright（含 machine/renpy 变体）
-│   │   │   ├── re/         #   逆向工程：完整 RE 工具链（radare2/ghidra/gdb/pwntools/frida 等）
-│   │   │   ├── rust/       #   Rust: rustc + cargo + rust-analyzer + clippy
-│   │   │   └── zig/        #   Zig: zig + zls
-│   │   ├── srv/            # 用户服务：mako（通知守护进程，可选）
-│   │   └── sys/            # 系统工具：
-│   │       # shell: zsh(fzf-tab + atuin) · fish(fzf-fish + autopair)
-│   │       # editor: neovim · emacs
-│   │       # git: git + delta + lazygit
-│   │       # modern-cli: eza · fd · ripgrep · fzf · bat · zoxide · starship · direnv
-│   │       # monitor: btop · htop · bottom
-│   │       # data: jq · yq · ffmpeg · compress(zip/unzip/p7zip/zstd 等)
-│   │       # i18n: fcitx5(rhyme + chinese-addons + nord 主题)
-│   │       # wl: wl-clipboard · cliphist · wl-clip-persist
-│   │       # fonts: JetBrainsMono Nerd · Maple Mono NF · Noto CJK · Fira Code 等
+│   │   ├── base/           # 基础：字体 · i18n(fcitx5) · portal · XDG
+│   │   ├── exp/            # 扩展功能（可选模块）
+│   │   │   ├── app/        # GUI 应用：
+│   │   │   │   ├── browser/    #   浏览器：google-chrome · qutebrowser · w3m · zen-browser
+│   │   │   │   ├── dl/         #   下载：baidupcs-go · xunlei · downloader
+│   │   │   │   ├── editor/     #   编辑器：nvim · emacs · vscode · zed · kiro
+│   │   │   │   ├── fm/         #   文件管理：nemo
+│   │   │   │   ├── game/       #   游戏：lutris · minecraft(prismlauncher)
+│   │   │   │   ├── im/         #   即时通讯：discord(vesktop) · qq · wechat
+│   │   │   │   ├── image/      #   图像：gimp · imagemagick · imv · ghostscript · mermaid-cli · tectonic
+│   │   │   │   ├── misc/       #   杂项：showmethekey
+│   │   │   │   ├── music/      #   音乐：mpd · easyeffects · spotify · playerctld · cnmplayer
+│   │   │   │   ├── note/       #   笔记：obsidian
+│   │   │   │   ├── office/     #   办公：pandoc · pdf · wpsoffice · unoconv
+│   │   │   │   ├── re/         #   逆向：ghidra · imhex · cutter
+│   │   │   │   ├── terminal/   #   终端：wezterm · kitty
+│   │   │   │   └── video/      #   视频：obs-studio
+│   │   │   └── sys/        # 系统工具：
+│   │   │       ├── ai/         #   AI：claude-code · opencode · gemini-cli
+│   │   │       ├── base/       #   基础 CLI：git · fzf · bat · eza · fd · ripgrep · zoxide
+│   │   │       │               #   atuin · starship · direnv · tmux · rbw · just · jq · yq
+│   │   │       │               #   wl-clipboard · cliphist · wl-clip-persist · tealdeer
+│   │   │       ├── compat/     #   兼容：appimage-run
+│   │   │       ├── fs/         #   文件系统：compress(zip/p7zip/zstd) · duf
+│   │   │       ├── media/      #   媒体：ffmpeg · mpv
+│   │   │       ├── misc/       #   杂项：cava
+│   │   │       ├── monitor/    #   监控：btop · htop · bottom
+│   │   │       └── shell/      #   Shell：zsh(fzf-tab+atuin) · fish(fzf-fish+autopair)
+│   │   ├── sec/            # 用户安全：rbw(bitwarden CLI)
+│   │   └── srv/            # 用户服务：
+│   │       ├── db/         #   数据库客户端工具
+│   │       ├── notify/     #   通知：mako
+│   │       └── security/   #   安全：gnupg keyring
 │   ├── wm/
 │   │   ├── hyprland/       # Wayland WM（主力）：hyprland + 完整主题栈
 │   │   │   └── theme/      # quickshell · rofi · swaync · satty · swayosd · wallust · waybar · wlogout · qtct
 │   │   ├── niri/           # Wayland WM（备选）：niri + 主题栈
 │   │   │   └── theme/      # satty · swaylock · swaync · swayosd · waybar · wlogout
 │   │   └── gnome/          # GNOME（骨架）
-│   └── hosts/
-│       ├── nixos/          # NixOS 主机入口（x86_64-linux）
-│       ├── linux/          # 通用 Linux（standalone HM + nixGL）
-│       ├── macos/          # macOS（standalone HM + nixGL）
-│       └── wsl/            # WSL2（standalone HM + nixGL）
+│   └── env/
+│       ├── base/           # 全局基础包：clang · cmake · rustc · cargo · python312 · nodejs_24
+│       │                   # 调试工具：valgrind · strace · ltrace · pciutils · vulkan-tools
+│       └── dev/            # pdshell devShell 定义（每语言一目录）
+│           ├── c/ cpp/ go/ java/ javascript/ typescript/
+│           ├── lisp/ lua/ nix/ python/ re/ rust/ zig/
+│           └── default.nix # 复合环境：default(全语言) · cpython(C+C++Python) · godot
+│
+├── host/                   # 平台入口（Home Manager 激活点）
+│   ├── nixos/              # NixOS 主机入口（x86_64-linux）
+│   ├── linux/              # 通用 Linux（standalone HM + nixGL）
+│   ├── macos/              # macOS（standalone HM + nixGL）
+│   └── wsl/                # WSL2（standalone HM + nixGL）
 │
 ├── secrets/
 │   ├── chipr/              # SOPS 加密文件（提交到 Git；.sops.yaml 管控解密权限）
@@ -177,15 +181,39 @@ nix-config/
 fullShared = schema ∪ enum ∪ user_shared ∪ runtime
 ```
 
-`schema.nix` 通过 `nix-types` 的 `enum` 构造器约束合法值，任何非法的 platform / arch / drive 在求值阶段即报错。
-
-`flake.nix` 中：
+`lib/shared/default.nix` 接受可选参数 `scfpath`（默认 `../../shared.nix`），允许在测试或多机器场景中指向不同的策略文件：
 
 ```nix
-shared = import ./lib/shared { inherit nixpkgs nixpkgs-unstable inputs; };
+# 默认用法（flake.nix 中）
+shared = import ./lib/shared { inherit self nixpkgs nixpkgs-unstable inputs; };
+
+# 自定义策略文件路径（多机器场景）
+shared = import ./lib/shared {
+  inherit self nixpkgs nixpkgs-unstable inputs;
+  scfpath = ./machines/server.nix;
+};
 ```
 
+`schema.nix` 通过 `nix-types` 的 `enum` 构造器约束合法值，任何非法的 platform / arch / drive 在求值阶段即报错。
+
+`runtime/default.nix` 合成后的 `fullShared` 包含以下运行时字段：
+
+| 字段           | 来源          | 说明                                          |
+| -------------- | ------------- | --------------------------------------------- |
+| `pkgs`         | runtime 注入  | 稳定版 nixpkgs（含 overlays + config）        |
+| `upkgs`        | runtime 注入  | unstable nixpkgs（含 allowUnfree）            |
+| `isNixOS`      | runtime 计算  | `platform == nixos`，用于条件模块加载         |
+| `orc`          | runtime 注入  | configuration-orchestrator lib（wallust 注入）|
+| `_user_shared` | runtime 保留  | 原始 user_shared 快照（调试/内省用）          |
+
 随后 `shared` 作为 `specialArgs`/`extraSpecialArgs` 传递给所有 NixOS/Home Manager 模块。
+
+`flake.nix` 还暴露了 `api.inputs` 输出，供 `flake-update-not-sops` 等 just 命令动态枚举 inputs：
+
+```nix
+# flake.nix
+api.inputs = inputs;  # 允许: nix eval .#api.inputs --json | jq -r 'keys'
+```
 
 ### 2. 策略层 — shared.nix 生成机制
 
@@ -205,15 +233,25 @@ nixos/ · home/              通过 { shared, ... } 消费
 
 **可配置枚举（lib/shared/shared/enum.nix）：**
 
-| 字段              | 合法值                                                   |
-| ----------------- | -------------------------------------------------------- |
-| `arch`            | `x86_64-linux` · `aarch64-linux` · `x86_64-darwin` · ... |
-| `platform`        | `nixos` · `linux` · `macos` · `wsl`                      |
-| `window-manager`  | `hyprland` · `niri` · `gnome`                            |
-| `display-manager` | `ly` · `gdm` · `sddm` · `lemurs`                         |
-| `drive-group`     | `intel` · `amd` · `nvidia` · `nvidia-prime` · 组合形式   |
-| `shell`           | `zsh` · `fish` · `bash`                                  |
-| `editor`          | `nvim` · `vim` · `code` · `zeditor`                      |
+| 字段              | 合法值                                                                                                    |
+| ----------------- | --------------------------------------------------------------------------------------------------------- |
+| `arch`            | `x86_64-linux` · `aarch64-linux` · `x86_64-darwin` · `aarch64-darwin` · `i686-linux`                    |
+| `platform`        | `nixos` · `linux` · `macos` · `wsl`                                                                      |
+| `window-manager`  | `hyprland` · `niri` · `gnome`（每个值携带 `portal` 策略）                                                |
+| `display-manager` | `ly` · `gdm` · `sddm` · `lemurs`                                                                         |
+| `drive-group`     | `intel` · `amd` · `nvidia` · `nvidia-prime` · `amd-nvidia` · `amd-nvidia-prime` · `intel-nvidia` · `intel-nvidia-prime` |
+| `shell`           | `zsh` · `fish` · `bash`                                                                                   |
+| `editor`          | `nvim` · `vim` · `code` · `zeditor`                                                                      |
+| `version`         | `v25_11`（值 `"25.11"`，用于 `system.stateVersion`）                                                     |
+
+`window-manager` 枚举值内嵌 `portal` 策略，`nixos/core/base/portal.nix` 直接消费：
+
+```nix
+# 枚举值结构示例
+hyprland = { portal = { default = [ "hyprland" "gtk" ]; extraPortals = ...; wlr = false; }; };
+niri     = { portal = { default = [ "wlr" "gtk" ];      extraPortals = ...; wlr = true;  }; };
+gnome    = { portal = { default = [ "gtk" ];             extraPortals = ...; wlr = false; }; };
+```
 
 ### 3. 开发环境管道 — pdshell
 
@@ -338,7 +376,52 @@ secrets/plan/
 | BOOTSTRAP      | `shared.nix` | `just shared-generate` 已执行 | `sops-init`, `sops-rules-regen`, `sops-plan-create-all` |
 | POST-BOOTSTRAP | `shared.nix` | `just shared-generate` 已执行 | `sops-chipr-create-*`, `sops-chipr-read-*`              |
 
-### 5. 配置编排器 — orc（ConfigurationOrchestrator）
+### 7. 用户环境层 — home/env
+
+`home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的 `host/*/` 入口中与 `home/core` 并列导入：
+
+```
+host/<platform>/default.nix
+    imports = [ ../../home/core  ../../home/env  ../../home/wm ]
+```
+
+**子层职责：**
+
+| 子层         | 路径              | 说明                                                                 |
+| ------------ | ----------------- | -------------------------------------------------------------------- |
+| `env/base`   | `home/env/base/`  | 全局基础包：编译器(clang/rustc/cargo)、运行时(python312/nodejs_24)、调试工具(valgrind/strace/ltrace)、硬件工具(pciutils/vulkan-tools) |
+| `env/dev`    | `home/env/dev/`   | pdshell devShell 定义文件（每语言一目录，由 `flake.nix` 的 `devShells` 输出加载） |
+
+`env/base` 提供的是**始终可用**的全局工具，不依赖 devShell 激活。`env/dev` 中的定义仅在 `nix develop` 或 `just devenv-*` 时生效。
+
+**devShell 定义约定（env/dev/<lang>/default.nix）：**
+
+```nix
+# 每个文件返回一个 attrset，key 为 shell 名称
+{ pkgs, inputs, shared, dev, ... }: {
+  # (readonly) 默认变体 — 对应 devShells.<arch>.<lang>
+  default = {
+    shell = "zsh";                    # 进入时使用的 shell
+    buildInputs = with pkgs; [ ... ]; # 运行时依赖
+    nativeBuildInputs = with pkgs; [ ... ]; # 构建时依赖
+    preInputsHook  = '' ... '';       # 依赖注入前
+    postInputsHook = '' ... '';       # 依赖注入后（导出 CC/CXX/GOPROXY 等）
+    preShellHook   = '' ... '';       # 进入 shell 时（最先）
+    postShellHook  = '' ... '';       # 进入 shell 时（最后，欢迎信息）
+  };
+
+  # (custom) 可选变体 — 对应 devShells.<arch>.<lang>-<variant>
+  machine = {
+    shell = "zsh";
+    combinFrom = [ dev.c dev.python ]; # 合并其他语言环境
+    postInputsHook = '' export LD_LIBRARY_PATH="..."; '';
+  };
+}
+```
+
+`combinFrom` 字段由 pdshell 引擎处理，将多个语言环境的 `buildInputs`、`nativeBuildInputs` 和所有钩子合并为单一 `mkShell`。
+
+
 
 `shared.orc` 是针对纯粹 config lib 的操作库, 提供了 wallust 主题动态注入的核心机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出）复制到相应的配置目录：
 
@@ -450,29 +533,29 @@ sops decrypt secrets/chipr/nixos/core/base/user/kilig/password.yaml
 ```
 开发机 (本地)                        生产机 (NixOS)
     │                                      │
-    ├── 编辑 *.nix                         │
+    ├── 编辑 *.nix                          │
     ├── nix flake check --no-build         │
     ├── git push → CI (GitHub Actions)     │
     │       └── lint + build dry-run       │
     │           + security audit           │
     │                                      │
-    └── [CI 通过后]                        │
-        ├── SSH 到目标机                   │
-        │   或在目标机上执行：             │
+    └── [CI 通过后]                         │
+        ├── SSH 到目标机                    │
+        │   或在目标机上执行：                │
         │                                  │
-        │   # 拉取最新配置                 │
+        │   # 拉取最新配置                   │
         │   cd ~/.config/nix-config        │
         │   git pull                       │
         │                                  │
-        │   # 重建系统                     │
+        │   # 重建系统                      │
         │   sudo nixos-rebuild switch \    │
         │     --flake .#kilig-nixos        │
         │                                  │
-        │   # 重建用户环境                 │
+        │   # 重建用户环境                   │
         │   home-manager switch \          │
         │     --flake .#kilig@nixos        │
         │                                  │
-        └── 验证服务状态                   │
+        └── 验证服务状态                     │
             systemctl status sops-*        │
             just sops-chipr-read-mongodb   │
 ```

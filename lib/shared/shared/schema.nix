@@ -36,13 +36,9 @@ let
   } @return_i18n: return_i18n;
 
   secrets = {
-    user-password             ,
-    nixos-github-git-visited  ,
-    mongodb-user-password     ,
-    mysql-root-password       ,
-    mysql-user-password       ,
-    postgresql-user-password  ,
-    redis-user-password       ,
+    sshKeyPaths                                   ,
+    nixos                                         ,
+    ...
   } @return_secrets: return_secrets;
 
   nixpkgs_config = {
@@ -60,6 +56,7 @@ let
     drive           ,
     platform        ,
     window-manager  ,
+    display-manager ,
     version         ,
     editor          ,
     devDir          ,
