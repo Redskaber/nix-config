@@ -1,6 +1,6 @@
 # nix-config
 
-> 声明式、可复现、多平台的系统与开发环境管理。
+> 声明式、可复现、多平台的系统与开发环境管理
 > 作者: [@Redskaber](https://github.com/Redskaber) · 构建于 Nix Flakes + Home Manager + SOPS-Nix
 
 ---
@@ -490,6 +490,8 @@ host/<platform>/default.nix
 | `waybar-config`        | `~/.config/waybar/`                                                         |
 | `wlogout-config`       | `~/.config/wlogout/`                                                        |
 | `quickshell-config`    | `~/.config/quickshell/`                                                     |
+| `qutebrowserl-config`  | `~/.config/qutebrowser/`                                                    |
+| `fcitx5-config`        | `~/.config/fcitx5/`                                                         |
 | `input-overlay-config` | `~/.config/obs-studio/plugin_config/input-overlay/`                         |
 | `commit-config`        | `<project>/.cz.toml`、`<project>/commitlint.config.js`、`<project>/.husky/` |
 
@@ -963,8 +965,8 @@ flake.nix
 └── *-config (flake=false)       # 各工具配置仓库（外部 Git 源）
     nvim · emacs · vscode · starship · fastfetch · wezterm
     kitty · tmux · mpv · btop · cava · niri · hypr · rofi
-    swaync · wallust · waybar · wlogout · quickshell
-    input-overlay
+    swaync · wallust · waybar · wlogout · quickshell · qutebrowser
+    input-overlay · fcitx5
 ```
 
 ---
