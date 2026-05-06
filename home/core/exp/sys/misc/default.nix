@@ -13,7 +13,7 @@
 }:
 {
   imports = [
-    ./cava.nix
+    # ./cava.nix
   ];
 
 }

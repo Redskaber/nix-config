@@ -5,6 +5,27 @@
 
 ---
 
+## 预览
+
+<details>
+<summary>part tools summary</summary>
+
+![preciew_0](./docs/preview/preview_0.png)
+
+![preciew_2](./docs/preview/preview_2.png)
+
+![preciew_5](./docs/preview/preview_5.png)
+
+![preciew_3](./docs/preview/preview_3.png)
+
+![preciew_1](./docs/preview/preview_1.png)
+
+![preciew_4](./docs/preview/preview_4.png)
+
+![preciew_6](./docs/preview/preview_6.png)
+
+</details>
+
 ## 架构总览
 
 系统采用严格的层级化管道架构，每层职责单一、边界明确，依赖方向自上而下单向流动。
