@@ -16,7 +16,10 @@
     commitizen
   ];
 
-  home.file.".cz.toml".source = "${inputs.commit-config}/.cz.toml";
+  home.file.".cz.toml" = {
+    source = "${inputs.commit-config}/.cz.toml";
+    force = true;
+  };
 
 }
 

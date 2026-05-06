@@ -25,6 +25,7 @@
     ./fastfetch.nix
     ./fd.nix
     ./fzf.nix
+    ./git-filter-repo.nix
     ./git.nix
     ./husky.nix
     ./jq.nix

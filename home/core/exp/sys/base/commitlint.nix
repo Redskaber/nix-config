@@ -16,7 +16,10 @@
     commitlint
   ];
 
-  home.file.".commitlintrc.js".source = "${inputs.commit-config}/commitlint.config.js";
+  home.file.".commitlintrc.js" = {
+    source = "${inputs.commit-config}/commitlint.config.js";
+    force = true;
+  };
 
 }
 
