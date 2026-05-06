@@ -12,6 +12,13 @@
 , ...
 }:
 {
+
+  # icon
+  environment.systemPackages = with pkgs; [
+    hicolor-icon-theme
+    gnome-icon-theme
+  ];
+
   # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   # Set TimeZone
   time.hardwareClockInLocalTime = false;
@@ -41,12 +48,13 @@
       enableGtk3 = true;
       fcitx5 = {
         waylandFrontend = true;             # suppress warning
-        addons = with pkgs; [
-          fcitx5-rime                       # Traditional chinese
-          fcitx5-gtk
-          qt6Packages.fcitx5-chinese-addons # Chinese
-          qt6Packages.fcitx5-configtool     # Config GUI
-          fcitx5-nord                       # Color-theme
+        addons = with shared.upkgs; [
+          fcitx5-rime                       # Rhyme 输入引擎（支持中日韩）
+          fcitx5-gtk                        # GTK 应用支持
+          qt6Packages.fcitx5-qt             # QT 应用支持
+          qt6Packages.fcitx5-chinese-addons # 中文扩展
+          qt6Packages.fcitx5-configtool     # 图形化配置工具
+          fcitx5-nord                       # Nord 主题
         ];
       };
     };
@@ -55,11 +63,7 @@
 
   # variables
   environment.sessionVariables = {
-    GTK_IM_MODULE = "fcitx";
-    QT_IM_MODULE  = "fcitx";
     QT_IM_MODULES = "wayland;fcitx;ibus"; # Qt6.7+
-    XMODIFIERS    = "@im=fcitx";          # xwayland
-    SDL_IM_MODULE = "fcitx";              # sdl
     MOZ_ENABLE_WAYLAND = "1";             # wayland sup
   };
 
@@ -73,7 +77,7 @@
   ];
 
   # Configure keymap in X11
-  services.xserver.xkb.layout = "us,cn";
+  services.xserver.xkb.layout = "us";
   # services.xserver.xkb.options = "caps:escape";
 
   services.xserver.desktopManager.runXdgAutostartIfNone = true;
