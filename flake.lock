@@ -151,6 +151,22 @@
         "type": "github"
       }
     },
+    "fcitx5-config": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778104627,
+        "narHash": "sha256-BbgfFy96sQQiXTFeCHW7pxYzCZ+Cpo46CP/fKM3tB4U=",
+        "owner": "Redskaber",
+        "repo": "fcitx5-config",
+        "rev": "3959ab3c298074dd8061dc7ccce56aa376221ca4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "fcitx5-config",
+        "type": "github"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -931,6 +947,7 @@
         "configuration-orchestrator": "configuration-orchestrator",
         "emacs-config": "emacs-config",
         "fastfetch-config": "fastfetch-config",
+        "fcitx5-config": "fcitx5-config",
         "home-manager": "home-manager",
         "hypr-config": "hypr-config",
         "hyprland": "hyprland",

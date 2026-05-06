@@ -74,6 +74,10 @@
     commit-config.url = "github:Redskaber/commit-config";
     commit-config.flake = false;
 
+    # Fcitx5 config
+    fcitx5-config.url = "github:Redskaber/fcitx5-config";
+    fcitx5-config.flake = false;
+
     # Qutebrowser config
     qutebrowser-config.url = "github:Redskaber/qutebrowser-config";
     qutebrowser-config.flake = false;

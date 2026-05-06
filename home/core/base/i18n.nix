@@ -43,6 +43,12 @@
     LC_TIME           = shared.i18n.extraLocalSetting;
   };
 
+  # Used user config:
+  xdg.configFile."fcitx5" = {
+    source = inputs.fcitx5-config; # abs path
+    recursive = true; # rec-link
+    force = true;
+  };
 
 }
 
