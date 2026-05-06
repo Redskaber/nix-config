@@ -2,6 +2,10 @@
 # @author: redskaber
 # @datetime: 2026-01-13
 # @description: nixos::core::base::i18n
+# fcitx5:
+#   1.terminal run fcitx5
+#   2.terminal run fcitx5-configtool
+# to set your input method
 
 
 { inputs
@@ -12,12 +16,6 @@
 , ...
 }:
 {
-
-  # icon
-  environment.systemPackages = with pkgs; [
-    hicolor-icon-theme
-    gnome-icon-theme
-  ];
 
   # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
   # Set TimeZone
@@ -48,14 +46,19 @@
       enableGtk3 = true;
       fcitx5 = {
         waylandFrontend = true;             # suppress warning
+        ignoreUserConfig = false;
         addons = with shared.upkgs; [
           fcitx5-rime                       # Rhyme 输入引擎（支持中日韩）
           fcitx5-gtk                        # GTK 应用支持
           qt6Packages.fcitx5-qt             # QT 应用支持
           qt6Packages.fcitx5-chinese-addons # 中文扩展
           qt6Packages.fcitx5-configtool     # 图形化配置工具
-          fcitx5-nord                       # Nord 主题
+                                            # theme
+          fcitx5-nord
+          catppuccin-fcitx5
         ];
+        # quickPhrase = {};
+        # quickPhraseFiles = {};
       };
     };
 
@@ -63,8 +66,7 @@
 
   # variables
   environment.sessionVariables = {
-    QT_IM_MODULES = "wayland;fcitx;ibus"; # Qt6.7+
-    MOZ_ENABLE_WAYLAND = "1";             # wayland sup
+    MOZ_ENABLE_WAYLAND = "1";               # wayland sup
   };
 
   # Fonts
@@ -77,7 +79,9 @@
   ];
 
   # Configure keymap in X11
-  services.xserver.xkb.layout = "us";
+  services.xserver.xkb.layout = "us,cn";
+  # services.xserver.xkb.extraLayouts = {};
+  # services.xserver.xkb.variant = "";
   # services.xserver.xkb.options = "caps:escape";
 
   services.xserver.desktopManager.runXdgAutostartIfNone = true;

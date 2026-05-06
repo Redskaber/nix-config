@@ -17,7 +17,7 @@
     type = "fcitx5";
     fcitx5 = {
       waylandFrontend = true;             # Wayland 支持
-      ignoreUserConfig = false;           # 保留用户配置（默认 false）
+      ignoreUserConfig = false;
       addons = with shared.upkgs; [
         fcitx5-rime                       # Rhyme 输入引擎（支持中日韩）
         fcitx5-gtk                        # GTK 应用支持
@@ -31,10 +31,16 @@
 
   # Variables
   home.sessionVariables = {
-    QT_IM_MODULES = "wayland;fcitx;ibus";
-    LANG = "en_US.UTF-8";
-    LC_TIME = "zh_CN.UTF-8";
-    LC_MONETARY = "zh_CN.UTF-8";
+    LANG = shared.i18n.defaultLocale;
+    LC_ADDRESS        = shared.i18n.extraLocalSetting;
+    LC_IDENTIFICATION = shared.i18n.extraLocalSetting;
+    LC_MEASUREMENT    = shared.i18n.extraLocalSetting;
+    LC_MONETARY       = shared.i18n.extraLocalSetting;
+    LC_NAME           = shared.i18n.extraLocalSetting;
+    LC_NUMERIC        = shared.i18n.extraLocalSetting;
+    LC_PAPER          = shared.i18n.extraLocalSetting;
+    LC_TELEPHONE      = shared.i18n.extraLocalSetting;
+    LC_TIME           = shared.i18n.extraLocalSetting;
   };
 
 
