@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/lib/shared/enum.nix
 # @author: redskaber
 # @datetime: 2026-04-23
-# @discription: lib::shared::enum
+# @description: lib::shared::enum
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 
 
@@ -43,6 +43,21 @@ let
   };
   shell           = enum "shell"          [ "bash" "zsh" "fish" ];
 
+  pointer-cursor  = enum "pointerCursor" [
+    "Bibata-Modern-Amber"
+    "Bibata-Modern-Amber-Right"
+    "Bibata-Modern-Classic"
+    "Bibata-Modern-Classic-Right"
+    "Bibata-Modern-Ice"
+    "Bibata-Modern-Ice-Right"
+    "Bibata-Original-Amber"
+    "Bibata-Original-Amber-Right"
+    "Bibata-Original-Classic"
+    "Bibata-Original-Classic-Right"
+    "Bibata-Original-Ice"
+    "Bibata-Original-Ice-Right"
+  ];
+
 in {
   inherit
     editor
@@ -52,6 +67,8 @@ in {
     window-manager
     display-manager
     drive-group
-    shell;
+    shell
+    pointer-cursor
+  ;
 }
 

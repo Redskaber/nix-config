@@ -14,6 +14,7 @@
 {
   imports = [
     # ./cava.nix
+    ./cursor.nix
   ];
 
 }

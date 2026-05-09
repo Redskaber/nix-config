@@ -1,9 +1,9 @@
 # @path: ~/projects/configs/nix-config/lib/shared/shared/schema.nix
 # @author: redskaber
 # @datetime: 2026-04-23
-# @discription: lib::shared::shared::schema
+# @description: lib::shared::shared::schema
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
-# - nix core informations configuration
+# - nix core information configuration
 
 let
   user = {
@@ -57,6 +57,7 @@ let
     platform        ,
     window-manager  ,
     display-manager ,
+    pointer-cursor  ,
     version         ,
     editor          ,
     devDir          ,
