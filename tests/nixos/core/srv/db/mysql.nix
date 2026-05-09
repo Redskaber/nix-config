@@ -41,11 +41,13 @@ in
       ];
 
       initialScript = pkgs.writeText "mysql-init.sql" ''
-        CREATE TABLE IF NOT EXISTS ${testDb}.health_check (
+        CREATE DATABASE IF NOT EXISTS ${testDb};
+        USE ${testDb};
+        CREATE TABLE IF NOT EXISTS health_check (
           id     INT AUTO_INCREMENT PRIMARY KEY,
           status VARCHAR(64) NOT NULL DEFAULT 'ok'
         );
-        INSERT INTO ${testDb}.health_check (status) VALUES ('nixos-mysql-test-ok');
+        INSERT INTO health_check (status) VALUES ('nixos-mysql-test-ok');
       '';
     };
 
@@ -79,7 +81,7 @@ in
             "sudo -u mysql mysql -e"
             " \"SELECT User FROM mysql.user WHERE User='${testUser}';\" 2>&1"
         ).strip()
-        assert "${testUser}" in users, f"User ${testUser} not found"
+        assert "${testUser}" in users, "User ${testUser} not found"
 
     with subtest("mysql: health_check table queryable"):
         out = machine.succeed(

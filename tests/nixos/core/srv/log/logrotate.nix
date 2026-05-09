@@ -11,6 +11,7 @@
 
   nodes.machine = {
     virtualisation.memorySize = 512;
+    environment.systemPackages = with pkgs; [ logrotate ];
 
     services.logrotate = {
       enable = true;
@@ -49,7 +50,6 @@
     with subtest("logrotate: timer or service unit exists"):
         rc_timer   = machine.execute("systemctl list-unit-files logrotate.timer 2>/dev/null")[0]
         rc_service = machine.execute("systemctl list-unit-files logrotate.service 2>/dev/null")[0]
-        assert rc_timer == 0 or rc_service == 0, \
-            "Neither logrotate.timer nor logrotate.service found"
+        assert rc_timer == 0 or rc_service == 0, "Neither logrotate.timer nor logrotate.service found"
   '';
 }

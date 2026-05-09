@@ -94,7 +94,7 @@ in
         users = machine.succeed(
             "sudo -u postgres psql -c '\\du' 2>&1"
         ).strip()
-        assert "${testUser}" in users, f"User ${testUser} not found"
+        assert "${testUser}" in users, "User ${testUser} not found"
 
     with subtest("postgresql: health_check table queryable"):
         out = machine.succeed(

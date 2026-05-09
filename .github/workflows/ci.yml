@@ -198,11 +198,6 @@ jobs:
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
-      - name: Cache Nix store
-        uses: DeterminateSystems/magic-nix-cache-action@v7
-        with:
-          use-gha-cache: false
-
       - name: Run all checks (with SOPS if key available)
         env:
           SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}

@@ -25,6 +25,7 @@
       rust-analyzer
       pkg-config
       openssl.dev
+      gcc # cc linker
     ];
   };
 

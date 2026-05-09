@@ -40,9 +40,14 @@
         rc = machine.execute("systemctl is-active pulseaudio.service")[0]
         assert rc != 0, "pulseaudio should be inactive when pipewire replaces it"
 
-    with subtest("sound: rtkit-daemon active"):
+    with subtest("sound: rtkit-daemon enabled and startable"):
+        # 服务单元必须存在
+        machine.succeed("systemctl list-unit-files rtkit-daemon.service")
+        # 显式启动（Type=dbus 不会自动常驻）
+        machine.succeed("systemctl start rtkit-daemon.service")
+        # 等待服务变为 active
         machine.wait_for_unit("rtkit-daemon.service")
-        st = machine.succeed("systemctl is-active rtkit-daemon").strip()
+        st = machine.succeed("systemctl is-active rtkit-daemon.service").strip()
         assert st == "active", f"rtkit-daemon not active: {st}"
 
     with subtest("sound: pamixer binary present"):

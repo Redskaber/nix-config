@@ -26,12 +26,13 @@
   };
 
   testScript = ''
-    start_all()
-    machine.wait_for_unit("nix-daemon.service")
+    machine.wait_for_unit("multi-user.target")
 
-    with subtest("nix: daemon active"):
-        st = machine.succeed("systemctl is-active nix-daemon").strip()
-        assert st == "active", f"nix-daemon not active: {st}"
+    with subtest("nix: daemon socket active and functional"):
+        st = machine.succeed("systemctl is-active nix-daemon.socket").strip()
+        assert st == "active", f"nix-daemon.socket not active: {st}"
+        # 通过 socket 触发 daemon 通信，确保功能正常
+        machine.succeed("nix store info")
 
     with subtest("nix: experimental-features contain flakes + nix-command"):
         cfg = machine.succeed("nix show-config | grep experimental-features").strip()

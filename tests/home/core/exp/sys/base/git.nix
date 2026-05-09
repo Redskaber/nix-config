@@ -51,7 +51,7 @@
         out = machine.succeed("""
           tmp=$(mktemp -d)
           cd "$tmp"
-          git -c init.defaultBranch=main init
+          git -c init.defaultBranch=main init >&2
           git symbolic-ref --short HEAD
         """).strip()
         assert out == "main", f"Expected 'main', got: {out}"

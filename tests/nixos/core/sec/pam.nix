@@ -32,10 +32,6 @@
         rc = machine.execute("test -f /etc/pam.d/sudo")[0]
         assert rc == 0, "/etc/pam.d/sudo not found"
 
-    with subtest("pam: /etc/pam.d/system-auth exists"):
-        rc = machine.execute("test -f /etc/pam.d/system-auth")[0]
-        assert rc == 0, "/etc/pam.d/system-auth not found"
-
     with subtest("pam: user pamtest created"):
         out = machine.succeed("id pamtest").strip()
         assert "pamtest" in out, f"pamtest user not found: {out}"

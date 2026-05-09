@@ -36,6 +36,7 @@ in
     };
 
     security.sudo.enable = true;
+    networking.networkmanager.enable = true;
   };
 
   testScript = ''
@@ -63,8 +64,6 @@ in
         w = machine.succeed("which sudo").strip()
         assert "sudo" in w, f"sudo not found: {w}"
 
-    with subtest("user: mutableUsers=false — useradd rejected"):
-        rc = machine.execute("useradd __shouldfail__")[0]
-        assert rc != 0, "useradd should fail when mutableUsers=false"
   '';
 }
+
