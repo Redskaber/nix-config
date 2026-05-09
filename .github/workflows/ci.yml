@@ -201,20 +201,21 @@ jobs:
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@v7
 
-      - name: Get system arch
-        id: system
-        run: |
-          SYS=$(nix eval --raw .#debug.test_system)
-          echo "system=$SYS" >> $GITHUB_OUTPUT
-
       - name: Run all checks (with SOPS if key available)
         env:
           SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}
         run: |
-          # Prevent accidental log exposure of the key
           echo "::add-mask::$SOPS_AGE_KEY"
-          nix build .#checks.${{ steps.system.outputs.system }}.* \
-            --no-link --print-build-logs --keep-going
+
+          # Get system architecture
+          SYS=$(nix eval --raw .#debug.test_system)
+
+          # Generate installable list: ".#checks.x86_64-linux.test_0 .#checks... test_1 ..."
+          INSTALLABLES=$(nix eval --raw ".#checks.${SYS}" \
+            --apply "xs: builtins.concatStringsSep \" \" (map (x: \".#checks.${SYS}.\" + x) (builtins.attrNames xs))")
+
+          echo "Will run checks: $INSTALLABLES"
+          nix build $INSTALLABLES --no-link --print-build-logs --keep-going
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 5: Report summary
