@@ -186,6 +186,9 @@
       debug.test_system = pkgs.stdenv.hostPlatform.system;
       debug.test_devDir = devDir;
 
+      # checks
+      checks.${shared.arch.tag} = import ./tests { inherit inputs shared; };
+
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
       packages = import ./pkgs pkgs;

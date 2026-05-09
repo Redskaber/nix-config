@@ -1,6 +1,7 @@
 # nix-config
 
 > 声明式、可复现、多平台的系统与开发环境管理
+>
 > 作者: [@Redskaber](https://github.com/Redskaber) · 构建于 Nix Flakes + Home Manager + SOPS-Nix
 
 ---
@@ -989,6 +990,13 @@ flake.nix
     swaync · wallust · waybar · wlogout · quickshell · qutebrowser
     input-overlay · fcitx5
 ```
+
+---
+
+## Tests
+
+- [nixosTest](https://nixos.org/manual/nixos/stable/#sec-nixos-tests)
+- [nmt](https://deepwiki.com/nix-community/home-manager/5.1-nmt-testing-framework)
 
 ---
 

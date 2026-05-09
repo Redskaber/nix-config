@@ -2,9 +2,6 @@
 build
 result
 
-# tests about
-tests
-
 # logger about
 *.log
 .*

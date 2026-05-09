@@ -182,12 +182,47 @@ jobs:
           echo "OK: No obvious hardcoded credentials found"
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 4: Report summary
+  # STAGE 4: Integration Tests (checks)
+  # ─────────────────────────────────────────────────────────────
+  tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v13
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            accept-flake-config = true
+
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@v7
+
+      - name: Get system arch
+        id: system
+        run: |
+          SYS=$(nix eval --raw .#debug.test_system)
+          echo "system=$SYS" >> $GITHUB_OUTPUT
+
+      - name: Run all checks (with SOPS if key available)
+        env:
+          SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}
+        run: |
+          # Prevent accidental log exposure of the key
+          echo "::add-mask::$SOPS_AGE_KEY"
+          nix build .#checks.${{ steps.system.outputs.system }}.* \
+            --no-link --print-build-logs --keep-going
+
+  # ─────────────────────────────────────────────────────────────
+  # STAGE 5: Report summary
   # ─────────────────────────────────────────────────────────────
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [lint, evaluate-devshells, security]
+    needs: [lint, evaluate-devshells, security, tests]
     if: always()
     steps:
       - name: Write summary
@@ -195,9 +230,10 @@ jobs:
           cat >> $GITHUB_STEP_SUMMARY << EOF
           ## CI Results
 
-          | Stage           | Status |
-          |-----------------|--------|
-          | Lint & Evaluate | ${{ needs.lint.result }} |
-          | devShells       | ${{ needs.evaluate-devshells.result }} |
-          | Security        | ${{ needs.security.result }} |
+          | Stage               | Status |
+          |---------------------|--------|
+          | Lint & Evaluate     | ${{ needs.lint.result }} |
+          | devShells           | ${{ needs.evaluate-devshells.result }} |
+          | Security            | ${{ needs.security.result }} |
+          | Integration Tests   | ${{ needs.tests.result }} |
           EOF
