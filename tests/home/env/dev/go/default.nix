@@ -56,10 +56,10 @@
           set -e
           mkdir -p /tmp/go_hello
           cat > /tmp/go_hello/main.go << 'GOEOF'
-package main
-import "fmt"
-func main() { fmt.Println("go_hello_ok") }
-GOEOF
+    package main
+    import "fmt"
+    func main() { fmt.Println("go_hello_ok") }
+    GOEOF
           cd /tmp/go_hello
           go run main.go 2>&1 | grep -q 'go_hello_ok'
         """)
