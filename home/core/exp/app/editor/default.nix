@@ -14,6 +14,7 @@
 {
 
   imports = [
+    ./cursor.nix
     ./emacs.nix
     ./kiro.nix
     ./nvim.nix
