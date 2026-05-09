@@ -200,6 +200,8 @@ jobs:
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@v7
+        with:
+          use-gha-cache: false
 
       - name: Run all checks (with SOPS if key available)
         env:
