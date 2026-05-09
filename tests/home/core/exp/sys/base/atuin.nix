@@ -34,13 +34,13 @@
         assert "atuin" in ver.lower(), f"Unexpected output: {ver}"
 
     with subtest("atuin: init bash produces output"):
-        out = machine.succeed("atuin init bash 2>&1 | head -3").strip()
-        print(f"init bash: {out}")
+        out = machine.succeed("ATUIN_UPDATE_CHECK=0 atuin init bash").strip()
+        print(f"init bash: {out[:200]}")
         assert out != "", "atuin init bash empty"
 
     with subtest("atuin: init zsh produces output"):
-        out = machine.succeed("atuin init zsh 2>&1 | head -3").strip()
-        print(f"init zsh: {out}")
+        out = machine.succeed("ATUIN_UPDATE_CHECK=0 atuin init zsh").strip()
+        print(f"init zsh: {out[:200]}")
         assert out != "", "atuin init zsh empty"
   '';
 }
