@@ -1019,11 +1019,11 @@
     "swaync-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1776269598,
-        "narHash": "sha256-0JjbBVk1kirTgdc/A+UiW1rf6VmJlqZqkMkv+VmChrc=",
+        "lastModified": 1778399493,
+        "narHash": "sha256-WHBg9BeeCc/y8+cy94svki2lfRL7eSNlv5vMBeArA3Q=",
         "owner": "Redskaber",
         "repo": "swaync-config",
-        "rev": "4e4165d882a11ee3c87521428a9c25802a10dda3",
+        "rev": "bec6d3dc691d4bcbeea44796990a5ffa477d9e83",
         "type": "github"
       },
       "original": {
