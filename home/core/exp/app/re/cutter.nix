@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/re/cutter.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/re/cutter.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @discription: home::core::app::re::cutter
+# @description: home::core::exp::app::re::cutter
 
 { inputs
 , shared
@@ -11,7 +11,7 @@
 , ...
 }:
 {
-  home.packages = with pkgs; [ cutter ];
+  home.packages = with shared.upkgs; [ cutter ];
 
 
 }

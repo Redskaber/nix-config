@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/re/imhex.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/re/imhex.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @discription: home::core::app::re::imhex
+# @description: home::core::exp::app::re::imhex
 
 { inputs
 , shared
@@ -11,7 +11,7 @@
 , ...
 }:
 {
-  home.packages = with pkgs; [ imhex ];
+  home.packages = with shared.upkgs; [ imhex ];
 
 
 }

@@ -13,7 +13,11 @@
 {
   home.packages = with pkgs; [
     clang
+    clang-tools
     cmake
+    gdb
+    lld
+
     rustc
     cargo
     python312

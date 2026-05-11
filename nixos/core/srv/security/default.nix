@@ -13,7 +13,10 @@
 }:
 {
   imports = [
+    ./wrappers
+
     ./keyring.nix
+    ./ptrace.nix
     ./ssh.nix
   ];
 

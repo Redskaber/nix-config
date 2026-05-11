@@ -28,6 +28,13 @@
     home-manager.url = "github:nix-community/home-manager/release-25.11";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    # NMT — Nix Module Test framework (Plane 5 nmt-Plane)
+    # Mirror of git@git.sr.ht:~rycee/nmt (sourcehut returns HTTP 403 to Nix
+    # fetchers due to bot-protection; github.com/Redskaber/nmt is accessible).
+    # Used exclusively by tests/nmt/default.nix.
+    nmt.url = "github:Redskaber/nmt";
+    nmt.flake = false;
+
     # Zen-browser
     zen-browser = {
       url = "github:0xc000022070/zen-browser-flake";
@@ -158,7 +165,7 @@
     quickshell-config.url = "github:Redskaber/quickshell-config";
     quickshell-config.flake = false;
 
-    # input-overlay preview 
+    # input-overlay preview
     input-overlay-config.url = "github:Redskaber/input-overlay-config";
     input-overlay-config.flake = false;
   };

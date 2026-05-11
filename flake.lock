@@ -809,6 +809,22 @@
         "type": "github"
       }
     },
+    "nmt": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778458957,
+        "narHash": "sha256-0tGk2GagNqDUkC7xtQhE4+QoCgWYZY7h4TPhoxelgkI=",
+        "owner": "Redskaber",
+        "repo": "nmt",
+        "rev": "0aa46990a30d46127909e04c30be5ff0b914bed1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "nmt",
+        "type": "github"
+      }
+    },
     "nur": {
       "inputs": {
         "flake-parts": "flake-parts",
@@ -960,6 +976,7 @@
         "nixgl": "nixgl",
         "nixpkgs": "nixpkgs_3",
         "nixpkgs-unstable": "nixpkgs-unstable",
+        "nmt": "nmt",
         "nur": "nur",
         "nvim-config": "nvim-config",
         "pdshell": "pdshell",

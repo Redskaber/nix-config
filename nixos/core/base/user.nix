@@ -30,14 +30,15 @@
         # TODO: Be sure to add any other groups you need
         # (such as networkmanager, audio, docker, etc)
         extraGroups = [
-          "wheel"             # Sudo
-          "networkmanager"    # Network
-          "video"             # GPU (hardware)
-          "libvirtd"          # Virtual
-          "scanner"           # Scanner
-          "lp"                # Printer
-          "input"             # Inputer (Gaming Box ...)
-          "audio"             # GPU (/dev/dri ...)
+          "wheel"             # Sudo / administrative access
+          "networkmanager"    # Manage network connections without root
+          "video"             # GPU & framebuffer devices (/dev/dri, /dev/fb)
+          "audio"             # Sound devices (/dev/snd)
+          "input"             # Input devices: keyboard, mouse, gamepad (/dev/input)
+          "tty"               # Virtual consoles & keyboard maps (required by dumpkeys)
+          "libvirtd"          # Libvirt virtual machine management
+          "scanner"           # Scanners
+          "lp"                # Printers
         ];
         packages = with pkgs; [  ];
         # TODO: You can set an initial password for your user.
