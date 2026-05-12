@@ -1,7 +1,7 @@
 # NixOS Config — Test Matrix
 
 > `docs/tests/test-matrix.md`
-> Updated: 2026-05-12
+> Updated: 2026-05-13
 
 ---
 
@@ -130,7 +130,7 @@ home/core/exp/sys/base/git.nix
 | ----------- | --------------- | ----------------------- |
 | `test_calc` | `test_calc.nix` | echo, 1+1=2, screenshot |
 
-### 3.1 NixOS-Plane (21 tests)
+### 3.1 NixOS-Plane (23 tests)
 
 | check                                                        | 验证点                                                      |
 | ------------------------------------------------------------ | ----------------------------------------------------------- |
@@ -143,19 +143,23 @@ home/core/exp/sys/base/git.nix
 | `nixos_core_srv_log_logrotate`                               | binary + timer                                              |
 | `nixos_core_srv_security_{ssh,keyring}`                      | sshd :22 / gnome-keyring                                    |
 
-### 3.2 HM-Plane (35 tests)
+> 合计：base(6) + drive(3) + sec(4) + db(4) + flatpak(1) + hardware(2) + log(1) + security(2) = **23**
+
+### 3.2 HM-Plane (36 tests)
 
 | check                                                                                           | 验证点                           |
 | ----------------------------------------------------------------------------------------------- | -------------------------------- |
 | `home_core_base_{fonts,i18n,portal}`                                                            | fc-list / fcitx5 / xdg-portal    |
+| `home_core_exp_app_editor_nvim`                                                                 | nvim headless Lua                |
 | `home_core_exp_sys_base_{atuin,bat,direnv,eza,fd,fzf,git,jq,ripgrep,starship,tmux,yazi,zoxide}` | binary + version + workflow      |
 | `home_core_exp_sys_shell_{zsh,fish}`                                                            | binary / compinit / abbr         |
 | `home_core_exp_sys_{monitor,media,fs}`                                                          | btop+htop / mpv+ffmpeg / duf+tar |
 | `home_core_sec`                                                                                 | module parses                    |
 | `home_core_srv_notify_mako`                                                                     | mako + makoctl                   |
 | `home_core_srv_security_gnupg`                                                                  | gpg + gpg-agent                  |
-| `home_core_exp_app_editor_nvim`                                                                 | nvim headless Lua                |
 | `home_env_dev_{c,cpp,rust,go,python,typescript,java,lua,zig,nix,re}`                            | toolchain binary + hello-world   |
+
+> 合计：base(3) + editor(1) + sys/base(13) + shell(2) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(11) = **36**
 
 ### 3.3 Lib-Plane (3 tests)
 
@@ -169,27 +173,27 @@ home/core/exp/sys/base/git.nix
 | --------------------------- | ------------------------------------------------- |
 | `integration_hm_activation` | HM NixOS module wiring, user home, zsh/git/direnv |
 
-### 3.5 nmt-Plane (17 tests, 零 VM)
+### 3.5 nmt-Plane (15 tests, 零 VM)
 
-| check                                | 文件                                     | 验证点                                       | 断言类型              |
-| ------------------------------------ | ---------------------------------------- | -------------------------------------------- | --------------------- |
-| `nmt_home_core_base_git`             | `nmt/home/core/base/git.nix`             | .config/git/config: user/branch/delta        | exists+contains       |
-| `nmt_home_core_base_starship`        | `nmt/home/core/base/starship.nix`        | .config/starship.toml: exists (scrubbed)     | exists                |
-| `nmt_home_core_base_direnv`          | `nmt/home/core/base/direnv.nix`          | .config/direnv/direnvrc: nix-direnv          | exists+contains       |
-| `nmt_home_core_base_atuin`           | `nmt/home/core/base/atuin.nix`           | .config/atuin/config.toml: exists (scrubbed) | exists                |
-| `nmt_home_core_base_zoxide`          | `nmt/home/core/base/zoxide.nix`          | .zshrc: zoxide init                          | contains              |
-| `nmt_home_core_base_tmux`            | `nmt/home/core/base/tmux.nix`            | .config/tmux/tmux.conf: history-limit        | exists+contains       |
-| `nmt_home_core_base_bat`             | `nmt/home/core/base/bat.nix`             | .config/bat/config: --theme/--pager          | exists+contains       |
-| `nmt_home_core_exp_sys_base_fd`      | `nmt/home/core/exp/sys/base/fd.nix`      | .config/fd/ignore: .git/ / \*.bak            | exists+contains       |
-| `nmt_home_core_exp_sys_base_fzf`     | `nmt/home/core/exp/sys/base/fzf.nix`     | .zshrc: fzf sourced / layout=reverse         | exists+regex+contains |
-| `nmt_home_core_exp_sys_base_jq`      | `nmt/home/core/exp/sys/base/jq.nix`      | .config/jq/jq: null/strings colors           | exists+contains       |
-| `nmt_home_core_exp_sys_base_ripgrep` | `nmt/home/core/exp/sys/base/ripgrep.nix` | .config/ripgrep/ripgreprc: smart-case/follow | exists+contains       |
-| `nmt_home_core_exp_sys_base_yazi`    | `nmt/home/core/exp/sys/base/yazi.nix`    | yazi.toml exists / init.lua: full-border     | exists+contains       |
-| `nmt_home_core_exp_sys_shell_zsh`    | `nmt/…/shell/zsh.nix`                    | .zshrc: compinit/HISTSIZE                    | exists+contains       |
-| `nmt_home_core_exp_sys_shell_fish`   | `nmt/…/shell/fish.nix`                   | config.fish: greeting/abbr                   | exists+contains       |
-| `nmt_home_core_exp_app_nvim`         | `nmt/home/core/exp/app/nvim.nix`         | .config/nvim/init-test.vim: nocompatible     | exists+contains       |
-| `nmt_home_core_srv_gnupg`            | `nmt/home/core/srv/gnupg.nix`            | .gnupg/gpg.conf: use-agent                   | exists+contains       |
-| `nmt_home_core_srv_mako`             | `nmt/home/core/srv/mako.nix`             | .config/mako/config: font/colors             | exists+contains       |
+| check                               | 文件                                    | 验证点                                       | 断言类型              |
+| ----------------------------------- | --------------------------------------- | -------------------------------------------- | --------------------- |
+| `nmt_home_core_base_git`            | `nmt/home/core/base/git.nix`            | .config/git/config: user/branch/delta        | exists+contains       |
+| `nmt_home_core_base_starship`       | `nmt/home/core/base/starship.nix`       | .config/starship.toml: exists (scrubbed)     | exists                |
+| `nmt_home_core_base_direnv`         | `nmt/home/core/base/direnv.nix`         | .config/direnv/direnvrc: nix-direnv          | exists+contains       |
+| `nmt_home_core_base_atuin`          | `nmt/home/core/base/atuin.nix`          | .config/atuin/config.toml: exists (scrubbed) | exists                |
+| `nmt_home_core_base_zoxide`         | `nmt/home/core/base/zoxide.nix`         | .zshrc: zoxide init                          | contains              |
+| `nmt_home_core_base_tmux`           | `nmt/home/core/base/tmux.nix`           | .config/tmux/tmux.conf: history-limit        | exists+contains       |
+| `nmt_home_core_base_bat`            | `nmt/home/core/base/bat.nix`            | .config/bat/config: --theme/--pager          | exists+contains       |
+| `nmt_home_core_exp_sys_base_fd`     | `nmt/home/core/exp/sys/base/fd.nix`     | .config/fd/ignore: .git/ / \*.bak            | exists+contains       |
+| `nmt_home_core_exp_sys_base_fzf`    | `nmt/home/core/exp/sys/base/fzf.nix`    | .zshrc: fzf sourced / layout=reverse         | exists+regex+contains |
+| `nmt_home_core_exp_sys_base_yazi`   | `nmt/home/core/exp/sys/base/yazi.nix`   | yazi.toml exists / init.lua: full-border     | exists+contains       |
+| `nmt_home_core_exp_sys_shell_zsh`   | `nmt/home/core/exp/sys/shell/zsh.nix`   | .zshrc: compinit/HISTSIZE                    | exists+contains       |
+| `nmt_home_core_exp_sys_shell_fish`  | `nmt/home/core/exp/sys/shell/fish.nix`  | config.fish: greeting/abbr                   | exists+contains       |
+| `nmt_home_core_exp_app_editor_nvim` | `nmt/home/core/exp/app/editor/nvim.nix` | .config/nvim/init-test.vim: nocompatible     | exists+contains       |
+| `nmt_home_core_srv_security_gnupg`  | `nmt/home/core/srv/security/gnupg.nix`  | .gnupg/gpg.conf: use-agent                   | exists+contains       |
+| `nmt_home_core_srv_notify_mako`     | `nmt/home/core/srv/notify/mako.nix`     | .config/mako/config: font/colors             | exists+contains       |
+
+> 合计：base(7) + sys/base(3) + shell(2) + app/editor(1) + srv/security(1) + srv/notify(1) = **15**
 
 ---
 
@@ -200,22 +204,41 @@ tests/
 ├── default.nix
 ├── test_calc.nix
 ├── nixos/core/{base,drive,sec,srv}/…
-├── home/{core,env}/…
+├── home/
+│   ├── core/
+│   │   ├── base/{fonts,i18n,portal}.nix
+│   │   ├── exp/
+│   │   │   ├── app/editor/nvim.nix
+│   │   │   └── sys/
+│   │   │       ├── base/{atuin,bat,direnv,eza,fd,fzf,git,jq,ripgrep,starship,tmux,yazi,zoxide}.nix
+│   │   │       ├── fs/default.nix
+│   │   │       ├── media/default.nix
+│   │   │       ├── monitor/default.nix
+│   │   │       └── shell/{fish,zsh}.nix
+│   │   ├── sec/default.nix
+│   │   └── srv/
+│   │       ├── notify/mako.nix
+│   │       └── security/gnupg.nix
+│   └── env/dev/{c,cpp,go,java,lua,nix,python,re,rust,typescript,zig}/default.nix
 ├── lib/shared/shared/{enum,fn,schema}.nix
 ├── integration/hm_activation.nix
 └── nmt/
     ├── default.nix                        ← buildHomeManagerTest impl + registry
     └── home/
-        ├── core/
-        │   ├── base/{atuin,bat,direnv,git,starship,tmux,zoxide}.nix
-        │   ├── exp/
-        │   │   ├── app/nvim.nix
-        │   │   └── sys/
-        │   │       ├── base/{fd,fzf,jq,ripgrep,yazi}.nix
-        │   │       └── shell/{zsh,fish}.nix
-        │   └── srv/{gnupg,mako}.nix
-        └── (env/dev/* — 纯 home.packages 安装，无 dotfile → Plane 2 覆盖)
+        └── core/
+            ├── exp/
+            │   ├── app/editor/nvim.nix
+            │   └── sys/
+            │       ├── base/{fd,fzf,yazi}.nix
+            │       └── shell/{zsh,fish}.nix
+            ├── base/{atuin,bat,direnv,git,starship,tmux,zoxide}.nix  (via nmt/ structure)
+            └── srv/
+                ├── notify/mako.nix
+                └── security/gnupg.nix
 ```
+
+> **注意：** nmt/ 中 `base/` 的 7 个工具文件实际位于 `nmt/home/core/exp/sys/base/` 下（
+> atuin/bat/direnv/git/starship/tmux/zoxide），路径与 `home/core/exp/sys/base/` 对称。
 
 ---
 
@@ -236,12 +259,19 @@ nix eval .#checks.x86_64-linux --apply \
 nix build .#checks.x86_64-linux.nmt_home_core_base_git -L
 nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_fd -L
 nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_fzf -L
-nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_ripgrep -L
 nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_yazi -L
+nix build .#checks.x86_64-linux.nmt_home_core_exp_app_editor_nvim -L
 
 # NixOS plane (需要 KVM)
 nix build .#checks.x86_64-linux.nixos_core_srv_db_postgresql -L
 nix build .#checks.x86_64-linux.nixos_core_base_user -L
+
+# HM plane 单个
+nix build .#checks.x86_64-linux.home_core_exp_sys_base_fd -L
+nix build .#checks.x86_64-linux.home_env_dev_rust -L
+
+# Integration
+nix build .#checks.x86_64-linux.integration_hm_activation -L
 
 # 按平面过滤
 SYS=x86_64-linux
@@ -295,6 +325,15 @@ contains = [ "smart-case" ];
 regex = "smart.case";
 ```
 
+### 平面隔离约束
+
+| 约束                           | 原因                                |
+| ------------------------------ | ----------------------------------- |
+| NixOS-Plane 不导入 HM 模块     | 系统层/用户层边界明确，防止交叉依赖 |
+| HM-Plane 不导入 NixOS 系统配置 | 同上                                |
+| secrets/sops 不进入单元测试    | 测试环境无真实 age 密钥             |
+| nmt 测试文件路径镜像源路径     | 路径语义：test 路径 = source 路径   |
+
 ### test 文件格式
 
 ```nix
@@ -322,8 +361,8 @@ lib.nmt.buildHomeManagerTest {
 #    - programs.foo → generates ~/.config/foo/config (plain text)? → YES
 #    - home.packages = [ foo ]? → NO, 用 Plane 2
 
-# 2. 创建测试文件
-# tests/nmt/home/core/base/new-tool.nix
+# 2. 创建测试文件 (路径镜像源路径)
+# tests/nmt/home/core/exp/sys/base/new-tool.nix
 { lib, ... }:
 lib.nmt.buildHomeManagerTest {
   description = "new-tool: config written";
@@ -341,12 +380,12 @@ lib.nmt.buildHomeManagerTest {
 }
 
 # 3. 注册到 tests/nmt/default.nix
-nmt_home_core_base_new_tool = buildTest ./home/core/base/new-tool.nix;
+nmt_home_core_exp_sys_base_new_tool = buildTest ./home/core/exp/sys/base/new-tool.nix;
 
 # 4. tests/default.nix 无需修改 — 自动合并 (import ./nmt { ... })
 
 # 5. 验证
-nix build .#checks.x86_64-linux.nmt_home_core_base_new_tool -L
+nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_new_tool -L
 ```
 
 ### scrubbing 问题排查
@@ -377,6 +416,28 @@ nix build .#checks.x86_64-linux.nmt_home_core_base_new_tool -L
 
 # 注册到 tests/default.nix
 nixos_core_srv_db_newdb = nixosTest ./nixos/core/srv/db/newdb.nix;
+```
+
+### 新增 HM-Plane 测试
+
+```nix
+# tests/home/core/exp/sys/base/new-tool.nix
+{ pkgs, shared, ... }:
+{
+  name = "home_core_exp_sys_base_new_tool";
+  nodes.machine = { ... }: {
+    home-manager.users.testuser = { pkgs, ... }: {
+      programs.new-tool.enable = true;
+    };
+  };
+  testScript = ''
+    machine.wait_for_unit("home-manager-testuser.service")
+    machine.succeed("new-tool --version")
+  '';
+}
+
+# 注册到 tests/default.nix
+home_core_exp_sys_base_new_tool = nixosTest ./home/core/exp/sys/base/new-tool.nix;
 ```
 
 ---
@@ -440,14 +501,14 @@ nix eval .#homeConfigurations  --apply builtins.attrNames --json
 nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 ```
 
-### 测试计数 (2026-05-12)
+### 测试计数 (2026-05-13)
 
-| 平面        | 数量   | KVM   | 备注                            |
-| ----------- | ------ | ----- | ------------------------------- |
-| Smoke       | 1      | ✓     |                                 |
-| NixOS       | 21     | ✓     |                                 |
-| HM          | 35     | ✓     |                                 |
-| Lib         | 3      | ✓     |                                 |
-| Integration | 1      | ✓     |                                 |
-| **nmt**     | **17** | **✗** | +5 (fd, fzf, jq, ripgrep, yazi) |
-| **Total**   | **78** |       |                                 |
+| 平面        | 数量   | KVM   | 备注                                                                    |
+| ----------- | ------ | ----- | ----------------------------------------------------------------------- |
+| Smoke       | 1      | ✓     |                                                                         |
+| NixOS       | 23     | ✓     | base(6)+drive(3)+sec(4)+db(4)+desktop(1)+hardware(2)+log(1)+security(2) |
+| HM          | 36     | ✓     | base(3)+editor(1)+sys/base(13)+shell(2)+sys(3)+sec(1)+srv(2)+dev(11)    |
+| Lib         | 3      | ✓     |                                                                         |
+| Integration | 1      | ✓     |                                                                         |
+| **nmt**     | **15** | **✗** | base(7)+sys/base(3)+shell(2)+app/editor(1)+srv(2)                       |
+| **Total**   | **79** |       |                                                                         |

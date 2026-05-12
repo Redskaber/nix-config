@@ -14,8 +14,9 @@
   imports = [
     ./claude-code.nix
     ./cursor-cli.nix
-    ./opencode.nix
     ./gemini-cli.nix
+    ./kiro-cli.nix
+    ./opencode.nix
   ];
 
 

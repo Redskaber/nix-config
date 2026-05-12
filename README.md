@@ -6,6 +6,32 @@
 
 ---
 
+## 目录
+
+1. [预览](#预览)
+2. [架构总览](#架构总览)
+3. [设计原则](#设计原则)
+4. [目录结构](#目录结构)
+5. [核心机制](#核心机制)
+   - [1. 共享层 — 两阶段初始化](#1-共享层--两阶段初始化)
+   - [2. 策略层 — shared.nix 生成机制](#2-策略层--sharednix-生成机制)
+   - [3. 开发环境管道 — pdshell](#3-开发环境管道--pdshell)
+   - [4. 安全层 — SOPS + Age](#4-安全层--sops--age分层管理)
+   - [5. 配置编排器 — orc](#5-配置编排器--orcconfigurationorchestrator)
+   - [6. 用户环境层 — home/env](#6-用户环境层--homeenv)
+   - [7. 外部配置仓库](#7-外部配置仓库flakefalse-inputs)
+   - [8. 提交规范](#8-提交规范--husky--commitlint--commitizen零-node_modules)
+6. [CI/CD 完整执行流](#cicd-完整执行流)
+7. [测试体系](#测试体系)
+8. [justfile 命令参考](#justfile-命令参考)
+9. [快速开始](#快速开始)
+10. [跨平台支持](#跨平台支持)
+11. [扩展指南](#扩展指南)
+12. [依赖图](#依赖图)
+13. [路线图](#路线图)
+
+---
+
 ## 预览
 
 <details>
@@ -32,42 +58,73 @@
 系统采用严格的层级化管道架构，每层职责单一、边界明确，依赖方向自上而下单向流动。
 
 ```
-┌────────────────────────────────────────────────────────┐
-│  ENTRY LAYER  ·  flake.nix                             │
-│  统一入口 · 输入声明 · 输出路由 · 多平台分发           │
-└──────────────┬─────────────────────┬───────────────────┘
-               │                     │
-  ┌────────────▼──────────┐ ┌────────▼──────────────────┐
-  │  SYSTEM LAYER         │ │  USER LAYER               │
-  │  nixos/               │ │  home/                    │
-  │  硬件·驱动·安全·服务  │ │  应用·开发环境·窗口管理器 │
-  └────────────┬──────────┘ └────────┬──────────────────┘
-               │                     │
-  ┌────────────▼─────────────────────▼───────────────────┐
-  │  SHARED LAYER  ·  lib/shared/                        │
-  │  Schema 定义 · 枚举类型 · 结构验证 · 跨层共享状态    │
-  └──────────────────────────────────────────────────────┘
-               │
-  ┌────────────▼──────────────────────────────────────────┐
-  │  SECRET LAYER  ·  secrets/ + .sops.yaml               │
-  │  Age 加密 · SOPS 管理 · 最小权限 · 运行时注入         │
-  └───────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  ENTRY LAYER  ·  flake.nix                                   │
+│  统一入口 · 输入声明 · 输出路由 · 多平台分发 · api.inputs    │
+└──────────┬──────────────────────────────┬────────────────────┘
+           │                              │
+┌──────────▼──────────┐       ┌───────────▼──────────────────┐
+│  SYSTEM LAYER       │       │  USER LAYER                  │
+│  nixos/             │       │  home/ + host/               │
+│  硬件·驱动·安全·服务│       │  应用·开发环境·窗口管理器    │
+│  dm/ · wm/          │       │  core/ · env/ · wm/          │
+└──────────┬──────────┘       └───────────┬──────────────────┘
+           │                              │
+           │         ┌────────────────────▼──────────────────┐
+           │         │  HOST DISPATCH LAYER  ·  host/        │
+           │         │  平台入口：nixos · linux · macos · wsl│
+           │         │  arch 路由 · nixGL 注入 · HM 激活点   │
+           │         └────────────────────┬──────────────────┘
+           │                              │
+┌──────────▼──────────────────────────────▼───────────────────┐
+│  SHARED LAYER  ·  lib/shared/                               │
+│  两阶段初始化：schema/enum/fn/const → runtime 合成          │
+│  pkgs · upkgs · isNixOS · homeDir · orc · sopsFile          │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│  SECRET LAYER  ·  secrets/ + .sops.yaml                     │
+│  Age 加密 · SOPS 管理 · 最小权限 · 运行时注入               │
+│  TMPL → KEY → RULE → PLAIN → CIPHER → /run/secrets/         │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+┌──────────────────────────────▼──────────────────────────────┐
+│  TEST LAYER  ·  tests/                                      │
+│  6 平面 · 79 checks · nmt(零VM) + QEMU · CI 自动发现        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 设计原则
+**数据流向（管道）：**
 
-| 原则     | 体现                                                                        |
-| -------- | --------------------------------------------------------------------------- |
-| 依赖倒置 | `lib/shared` 定义抽象 schema，上层模块依赖抽象而非具体实现                  |
-| 管道式   | `flake.nix → shared → nixos/home → modules` 单向数据流                      |
-| 层级化   | entry / system / user / shared / secret 五层，职责不交叉                    |
-| 增量模式 | 每个子目录均为独立模块，可单独启用/禁用，不影响其他模块                     |
-| 策略管理 | `shared.nix` 集中声明平台、驱动、WM、Shell 等策略选项                       |
-| 状态机   | `lib/shared/schema.nix` 通过 enum 约束合法状态集合，求值期即报错            |
-| 生命周期 | devShell 的 `preInputsHook / postInputsHook / preShellHook / postShellHook` |
-| 边界明确 | system layer 不感知用户配置，user layer 不直接操作硬件                      |
-| 生成不变 | `shared.nix` 由模板生成（覆盖写入），不可 sed 原地 patch                    |
-| 数据驱动 | sops.just 零硬编码路径，所有 secret 路径运行时从 shared.nix 读取            |
+```
+shared.nix (策略)
+    ↓ just shared-generate
+lib/shared (两阶段初始化)
+    ↓ specialArgs / extraSpecialArgs
+flake.nix → nixosConfigurations / homeConfigurations
+    ↓ host/<platform>/<arch>.nix (平台分发)
+nixos/ + home/ + home/wm/ (模块树)
+    ↓ sops-nix (initrd 阶段)
+/run/secrets/ (运行时 secret 挂载)
+    ↓ systemd services
+运行中的系统
+```
+
+## 设计原则
+
+| 原则         | 体现                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------- |
+| **依赖倒置** | `lib/shared` 定义抽象 schema/enum，上层模块依赖抽象接口而非具体实现；`shared` 作为 specialArgs 注入           |
+| **管道流**   | `shared.nix → lib/shared → flake → host → nixos/home → modules` 单向数据流，无反向依赖                        |
+| **层级化**   | entry / host-dispatch / system / user / shared / secret / test 七层，职责不交叉，层间通过 `shared` 通信       |
+| **增量模式** | 每个子目录均为独立模块，可单独启用/禁用；`imports` 列表即模块注册表                                           |
+| **策略管理** | `shared.nix` 集中声明 platform · drive · wm · dm · shell · editor 等所有策略选项，单一真相源                  |
+| **状态机**   | `lib/shared/enum.nix` 通过 `nix-types` enum 约束合法状态集合，非法值在求值阶段即报错                          |
+| **生命周期** | devShell 四阶段钩子：`preInputsHook → postInputsHook → preShellHook → postShellHook`                          |
+| **边界明确** | system layer 不感知用户配置；user layer 不直接操作硬件；host layer 是唯一的平台感知点                         |
+| **生成不变** | `shared.nix` 由模板生成（覆盖写入），不可 sed 原地 patch；`.sops.yaml` 同理                                   |
+| **数据驱动** | `sops.just` 零硬编码路径，所有 secret 路径运行时从 `shared.nix` 读取；CI checks 按前缀动态发现                |
+| **通信协议** | 层间通过 `shared` attrset 传递（`specialArgs`/`extraSpecialArgs`）；`api.inputs` 暴露 flake inputs 供脚本查询 |
 
 ---
 
@@ -75,44 +132,46 @@
 
 ```
 nix-config/
-├── flake.nix               # entry layer: 输入声明、输出路由、多平台分发
-├── shared.nix              # 生成的策略层：由 just shared-generate 生成，禁止手动编辑用户名
+├── flake.nix               # entry layer: 输入声明、输出路由、多平台分发、api.inputs 暴露
+├── shared.nix              # 策略层（由 just shared-generate 生成，禁止手动编辑用户名）
 │
 ├── lib/
 │   └── shared/
-│       ├── default.nix     # 共享加载器：两阶段初始化（schema + runtime）
+│       ├── default.nix     # 共享加载器：两阶段初始化（scfpath 可覆盖，支持多机器）
 │       ├── shared/
-│       │   ├── enum.nix    # 枚举类型：arch / platform / wm / shell / drive-group 等
-│       │   ├── schema.nix  # 结构验证：user / git / rbw / secrets / shared 的类型约束
-│       │   ├── fn.nix      # 工具函数：isNixOS · isMacOS · homeDir · sopsFile · sopsRuntimePath
-│       │   └── const.nix   # 常量定义：secrets 路径 · 权限模式 · XDG 目录名
+│       │   ├── default.nix # 阶段一聚合：const + schema + enum + fn
+│       │   ├── enum.nix    # 枚举类型：arch / platform / wm / dm / shell / drive-group 等
+│       │   ├── schema.nix  # 结构验证：user / git / rbw / time / i18n / secrets / shared
+│       │   ├── fn.nix      # 工具函数：isNixOS · isMacOS · isLinux · isWSL · homeDir · sopsFile · sopsRuntimePath
+│       │   └── const.nix   # 常量：secrets 路径 · 权限模式(0400/0440/0600) · XDG 目录名
 │       ├── runtime/
-│       │   └── default.nix # 运行时合成：pkgs / upkgs / isNixOS / homeDir / orc / sopsFile / sopsUserPath / sopsPath 注入
+│       │   └── default.nix # 阶段二合成：pkgs/upkgs/isNixOS/homeDir/orc/sopsFile/sopsPath/sopsUserPath 注入
 │       └── template.nix    # 配置模板参考（不直接导入）
 │
 ├── nixos/                  # 系统层（NixOS only）
+│   ├── default.nix         # 顶层：imports core + wm + dm；nixpkgs = shared.nixpkgs
 │   ├── core/
-│   │   ├── base/           # 基础：boot · network · user · i18n · sound · bluetooth · memory · portal
-│   │   ├── drive/          # 驱动：AMD · Intel · NVIDIA · nvidia-prime（多驱动组合支持）
-│   │   ├── exp/            # 实验：steam · clash-verge · obs · compat · xwayland
-│   │   ├── sec/            # 安全：PAM · polkit · SOPS secret 注入（age/sops/ssh-to-age）
+│   │   ├── base/           # 基础：boot · network · user · i18n · sound · bluetooth · memory · portal · nix · systemd · virtual
+│   │   ├── drive/          # 驱动：AMD · Intel · NVIDIA · nvidia-prime（drive-group 枚举多驱动组合）
+│   │   ├── exp/            # 实验：steam · clash-verge · obs · compat · xwayland · core
+│   │   ├── sec/            # 安全：PAM · polkit · secret/（sops-nix 注入 + age/sops/ssh-to-age 工具）
 │   │   └── srv/            # 服务：
 │   │       ├── db/         #   数据库：PostgreSQL · MySQL(MariaDB) · MongoDB · Redis
 │   │       ├── desktop/    #   桌面：flatpak · gvfs · tumbler
 │   │       ├── hardware/   #   硬件：bluetooth · firmware · power · printing · storage
 │   │       ├── log/        #   日志：logrotate（MySQL/PostgreSQL 日志轮转）
-│   │       └── security/   #   安全服务：SSH · gnupg keyring
-│   ├── dm/                 # 显示管理器：gdm · ly · sddm · lemurs（由 shared.display-manager 选择）
-│   └── wm/                 # 窗口管理器：hyprland（含插件）· niri · gnome
+│   │       └── security/   #   安全服务：SSH · gnupg keyring · ptrace · wrappers(dumpkeys/gdb)
+│   ├── dm/                 # 显示管理器：gdm · ly · sddm · lemurs（shared.display-manager 路由）
+│   └── wm/                 # 窗口管理器：hyprland(+plugins) · niri · gnome（shared.window-manager 路由）
 │
 ├── home/                   # 用户层（Home Manager）
 │   ├── core/
-│   │   ├── base/           # 基础：字体 · i18n(fcitx5) · portal · XDG
+│   │   ├── base/           # 基础：字体 · i18n(fcitx5) · portal(wm 策略驱动) · XDG
 │   │   ├── exp/            # 扩展功能（可选模块）
 │   │   │   ├── app/        # GUI 应用：
 │   │   │   │   ├── browser/    #   浏览器：google-chrome · qutebrowser · w3m · zen-browser
 │   │   │   │   ├── dl/         #   下载：baidupcs-go · xunlei · downloader
-│   │   │   │   ├── editor/     #   编辑器：nvim · emacs · vscode · zed · kiro
+│   │   │   │   ├── editor/     #   编辑器：nvim · emacs · vscode · zed · kiro · cursor
 │   │   │   │   ├── fm/         #   文件管理：nemo
 │   │   │   │   ├── game/       #   游戏：lutris · minecraft(prismlauncher)
 │   │   │   │   ├── im/         #   即时通讯：discord(vesktop) · qq · wechat
@@ -121,18 +180,18 @@ nix-config/
 │   │   │   │   ├── music/      #   音乐：mpd · easyeffects · spotify · playerctld · cnmplayer
 │   │   │   │   ├── note/       #   笔记：obsidian
 │   │   │   │   ├── office/     #   办公：pandoc · pdf · wpsoffice · unoconv
-│   │   │   │   ├── re/         #   逆向：ghidra · imhex · cutter
+│   │   │   │   ├── re/         #   逆向：ghidra · imhex · cutter · pince · scanmem
 │   │   │   │   ├── terminal/   #   终端：wezterm · kitty
 │   │   │   │   └── video/      #   视频：obs-studio
 │   │   │   └── sys/        # 系统工具：
-│   │   │       ├── ai/         #   AI：claude-code · opencode · gemini-cli
-│   │   │       ├── base/       #   基础 CLI：git · fzf · bat · eza · fd · ripgrep · zoxide
+│   │   │       ├── ai/         #   AI CLI：claude-code · opencode · gemini-cli · kiro-cli · cursor-cli
+│   │   │       ├── base/       #   基础 CLI：git · fzf · bat · eza · fd · ripgrep · zoxide · yazi
 │   │   │       │               #   atuin · starship · direnv · tmux · rbw · just · jq · yq
-│   │   │       │               #   wl-clipboard · cliphist · wl-clip-persist · tealdeer
+│   │   │       │               #   wl-clipboard · cliphist · wl-clip-persist · tealdeer · curl · wget
 │   │   │       ├── compat/     #   兼容：appimage-run
 │   │   │       ├── fs/         #   文件系统：compress(zip/p7zip/zstd) · duf
 │   │   │       ├── media/      #   媒体：ffmpeg · mpv
-│   │   │       ├── misc/       #   杂项：cava
+│   │   │       ├── misc/       #   杂项：cava · cursor(指针主题)
 │   │   │       ├── monitor/    #   监控：btop · htop · bottom
 │   │   │       └── shell/      #   Shell：zsh(fzf-tab+atuin) · fish(fzf-fish+autopair)
 │   │   ├── sec/            # 用户安全：rbw(bitwarden CLI)
@@ -141,12 +200,13 @@ nix-config/
 │   │       ├── notify/     #   通知：mako
 │   │       └── security/   #   安全：gnupg keyring
 │   ├── wm/
-│   │   ├── hyprland/       # Wayland WM（主力）：hyprland + 完整主题栈
+│   │   ├── hyprland/       # Wayland WM（主力）：hyprland + orc wallust 注入 + 完整主题栈
 │   │   │   └── theme/      # quickshell · rofi · swaync · satty · swayosd · wallust · waybar · wlogout · qtct
 │   │   ├── niri/           # Wayland WM（备选）：niri + 主题栈
 │   │   │   └── theme/      # satty · swaylock · swaync · swayosd · waybar · wlogout
 │   │   └── gnome/          # GNOME（骨架）
 │   └── env/
+│       ├── default.nix     # 仅导入 base（dev 由 flake.nix devShells 加载）
 │       ├── base/           # 全局基础包：clang · cmake · rustc · cargo · python312 · nodejs_24
 │       │                   # 调试工具：valgrind · strace · ltrace · pciutils · vulkan-tools
 │       └── dev/            # pdshell devShell 定义（每语言一目录）
@@ -154,38 +214,58 @@ nix-config/
 │           ├── lisp/ lua/ nix/ python/ re/ rust/ zig/
 │           └── default.nix # 复合环境：default(全语言) · cpython(C+C++Python) · godot
 │
-├── host/                   # 平台入口（Home Manager 激活点）
-│   ├── nixos/              # NixOS 主机入口（x86_64-linux）
-│   ├── linux/              # 通用 Linux（standalone HM + nixGL）
-│   ├── macos/              # macOS（standalone HM；homeDirectory=/Users/<u>；无 nixGL）
-│   └── wsl/                # WSL2（standalone HM + nixGL）
+├── host/                   # 平台分发层（Home Manager 激活点）
+│   ├── nixos/              # NixOS：imports home/core + home/env + home/wm；arch 路由
+│   ├── linux/              # 通用 Linux：standalone HM + nixGL(mesa) + genericLinux
+│   ├── macos/              # macOS：standalone HM；homeDirectory=/Users/<u>；无 nixGL
+│   └── wsl/                # WSL2：standalone HM + nixGL + genericLinux + systemd
 │
 ├── secrets/
 │   ├── chipr/              # SOPS 加密文件（提交到 Git；.sops.yaml 管控解密权限）
-│   └── plan/               # 明文模板实例（明文！必须在 .gitignore 中，禁止提交）
+│   └── plan/               # 明文模板实例（⚠️ 禁止提交 Git，.gitignore 已排除）
 │
 ├── export/
-│   ├── nixos/              # 可复用 NixOS 模块（供外部 flake 引用）
-│   └── home/               # 可复用 Home Manager 模块
+│   ├── nixos/              # 可复用 NixOS 模块（供外部 flake 引用，当前为占位符）
+│   └── home/               # 可复用 Home Manager 模块（供外部 flake 引用，当前为占位符）
 │
-├── overlays/               # nixpkgs overlay：additions · modifications · unstable-packages
-├── pkgs/                   # 自定义 derivation
+├── overlays/               # nixpkgs overlay：additions(pkgs/) · modifications · unstable-packages
+├── pkgs/                   # 自定义 derivation（当前为占位符）
+│
+├── tests/                  # 测试层（6 平面，79 checks）
+│   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks；nixosTest/nmtTest runner
+│   ├── test_calc.nix       # Plane 0: Smoke 基线
+│   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM）
+│   ├── home/               # Plane 2: HM-Plane（QEMU VM + packages）
+│   ├── lib/                # Plane 3: Lib-Plane（纯 Nix eval，QEMU 256 MB minimal）
+│   ├── integration/        # Plane 4: Integration-Plane（NixOS + HM 联合）
+│   └── nmt/                # Plane 5: nmt-Plane（零 VM，纯 eval，dotfile 断言）
+│       ├── default.nix     # buildHomeManagerTest 实现 + 注册表
+│       └── home/…          # 测试文件（lib.nmt.buildHomeManagerTest）
 │
 ├── scripts/
 │   └── just/               # justfile 子模块（单一职责分层）
 │       ├── shared.just     # shared.nix 生成（tmpl → generate → overwrite）
 │       ├── hardware.just   # NixOS 硬件配置生成
-│       ├── flake.just      # flake inputs 依赖管理
-│       ├── devenv.just     # 开发环境 profile 管理（pdshell）
+│       ├── flake.just      # flake inputs 依赖管理（含 api.inputs 动态枚举）
+│       ├── devenv.just     # 开发环境 profile 管理（pdshell，username 从 shared.nix 读取）
 │       ├── sops.just       # Age 密钥 + SOPS 加密生命周期（plan/chipr 数据驱动分层）
-│       └── commit.just     # 数据驱动的提交规范部署（基于 commit-config）
+│       └── commit.just     # 数据驱动的提交规范部署（基于 commit-config flake input）
 │
 ├── docs/
+│   ├── preview/            # 截图预览
+│   ├── tests/              # 测试文档：test-matrix.md · nixosTest.md · nmt.md
 │   └── tmpl/
 │       ├── shared.nix.tmpl # 策略层模板（__USERNAME__ 占位符；提交到 Git）
 │       └── sops/           # SOPS secret YAML 模板（镜像路径层级结构）
+│           ├── sops-rules.yaml.tmpl
+│           └── nixos/…     # 模板 YAML 文件（__USERNAME__ 占位符）
 │
-└── justfile                # 任务自动化入口（全局变量 + import 子模块）
+├── .github/
+│   └── workflows/
+│       ├── ci.yml          # 6 阶段 CI 流水线（lint → nmt → devshells → security → vm-tests → summary）
+│       └── update-flake.yml# 每周日自动更新 flake inputs 并开 PR
+│
+└── justfile                # 任务自动化入口（ROOT 变量 + import 子模块）
 ```
 
 ---
@@ -197,11 +277,21 @@ nix-config/
 `lib/shared` 解决了 Nix 中"配置依赖 pkgs，pkgs 依赖配置"的循环问题：
 
 ```
-阶段一 (shared/):  schema(枚举/结构定义) + enum(合法状态集合) + fn(工具函数) + const(常量)
-                   ↓ 提供类型约束，不依赖 pkgs
+阶段一 (shared/):  const(常量) + schema(结构定义) + enum(合法状态集合) + fn(工具函数)
+                   ↓ 纯 Nix 表达式，不依赖 pkgs，可在求值阶段完整验证
 阶段二 (runtime/): user_shared(shared.nix 用户填充) → runtime_shared
-                   ↓ 注入: pkgs · upkgs · isNixOS · homeDir · orc  · sopsUserPath  · sopsPath
-fullShared = schema ∪ enum ∪ fn ∪ const ∪ user_shared ∪ runtime
+                   ↓ 注入: pkgs · upkgs · isNixOS · homeDir · orc · sopsFile · sopsUserPath · sopsPath
+fullShared = shared(阶段一) ∪ user_shared ∪ runtime(阶段二注入字段)
+```
+
+**合并顺序（后者覆盖前者）：**
+
+```nix
+# lib/shared/runtime/default.nix
+runtime_shared = shared // user_shared // {
+  inherit homeDir pkgs upkgs orc isNixOS sopsFile sopsPath sopsUserPath;
+  _user_shared = user_shared;  # 原始快照，调试用
+};
 ```
 
 `lib/shared/default.nix` 接受可选参数 `scfpath`（默认 `../../shared.nix`），允许在测试或多机器场景中指向不同的策略文件：
@@ -217,8 +307,6 @@ shared = import ./lib/shared {
 };
 ```
 
-`schema.nix` 通过 `nix-types` 的 `enum` 构造器约束合法值，任何非法的 platform / arch / drive 在求值阶段即报错。
-
 `runtime/default.nix` 合成后的 `fullShared` 包含以下运行时字段：
 
 | 字段           | 来源         | 说明                                                             |
@@ -227,7 +315,7 @@ shared = import ./lib/shared {
 | `upkgs`        | runtime 注入 | unstable nixpkgs（含 allowUnfree）                               |
 | `isNixOS`      | runtime 计算 | `platform == nixos`，用于条件模块加载                            |
 | `homeDir`      | runtime 计算 | 平台感知的 home 目录（Linux: `/home/<u>`，macOS: `/Users/<u>`）  |
-| `orc`          | runtime 注入 | configuration-orchestrator lib（wallust 注入）                   |
+| `orc`          | runtime 注入 | configuration-orchestrator lib（wallust 主题注入）               |
 | `sopsFile`     | runtime 注入 | `rel → store path`，从 secret REL 推导加密文件路径               |
 | `sopsPath`     | runtime 注入 | `rel → /run/secrets/<rel>`，普通 secret 运行时路径               |
 | `sopsUserPath` | runtime 注入 | `rel → /run/secrets-for-users/<rel>`，neededForUsers secret 路径 |
@@ -238,10 +326,12 @@ shared = import ./lib/shared {
 ```nix
 shared.fn.isNixOS  shared.platform   # → bool
 shared.fn.isMacOS  shared.platform   # → bool
+shared.fn.isLinux  shared.platform   # → bool
+shared.fn.isWSL    shared.platform   # → bool
 shared.fn.homeDir  shared.platform shared.user.username  # → "/home/kilig" 或 "/Users/kilig"
-shared.fn.sopsFile shared.self shared.const.secrets.chipr "nixos/core/base/user/kilig/password"  # → store path
-shared.fn.sopsRuntimePath shared.const.secrets.forUsersPath "nixos/core/base/user/kilig/password"  # → "/run/secrets-for-users/nixos/..."
-shared.fn.sopsRuntimePath shared.const.secrets.runtimePath "nixos/core/base/nix/users/kilig/github/access-token"  # → "/run/secrets/nixos/..."
+shared.fn.sopsFile shared.self shared.const.secrets.chipr "nixos/core/base/user/kilig/password"
+shared.fn.sopsRuntimePath shared.const.secrets.forUsersPath "nixos/core/base/user/kilig/password"
+shared.fn.sopsRuntimePath shared.const.secrets.runtimePath  "nixos/core/base/nix/users/kilig/github/access-token"
 ```
 
 **系统常量（`shared.const`）：**
@@ -250,17 +340,27 @@ shared.fn.sopsRuntimePath shared.const.secrets.runtimePath "nixos/core/base/nix/
 shared.const.secrets.forUsersPath  # "/run/secrets-for-users"
 shared.const.secrets.runtimePath   # "/run/secrets"
 shared.const.secrets.chipr         # "secrets/chipr"
-shared.const.mode.ownerOnly        # "0400"
-shared.const.mode.groupRead        # "0440"
+shared.const.mode.ownerOnly        # "0400"  r--------
+shared.const.mode.groupRead        # "0440"  r--r-----
+shared.const.mode.ownerWrite       # "0600"  rw-------
+shared.const.xdg.config            # ".config"
+shared.const.xdg.data              # ".local/share"
 ```
 
-随后 `shared` 作为 `specialArgs`/`extraSpecialArgs` 传递给所有 NixOS/Home Manager 模块。
+随后 `shared` 作为 `specialArgs`/`extraSpecialArgs` 传递给所有 NixOS/Home Manager 模块，模块通过 `{ shared, ... }` 消费。
 
-`flake.nix` 还暴露了 `api.inputs` 输出，供 `flake-update-not-sops` 等 just 命令动态枚举 inputs：
+**`api.inputs` — 脚本可查询的 flake inputs 索引：**
 
 ```nix
 # flake.nix
-api.inputs = inputs;  # 允许: nix eval .#api.inputs --json | jq -r 'keys'
+api.inputs = inputs;
+# 用途：just 脚本动态枚举 inputs，无需硬编码列表
+# 示例：
+nix eval .#api.inputs --json | jq -r 'keys'
+# → ["commit-config", "cnmplayer", "home-manager", "hyprland", ...]
+
+# flake-update-not-sops 利用此接口排除 sops-nix：
+nix eval .#api.inputs --json | jq -r 'keys - ["sops-nix"] | join(" ")'
 ```
 
 ### 2. 策略层 — shared.nix 生成机制
@@ -271,9 +371,9 @@ api.inputs = inputs;  # 允许: nix eval .#api.inputs --json | jq -r 'keys'
 
 ```
 docs/tmpl/shared.nix.tmpl   手动维护，含 __USERNAME__ 占位符（提交 Git）
-    ↓  just shared-generate <username>
+    ↓  just shared-generate <username>   (sed 替换 → 覆盖写入)
 shared.nix                  生成产物，覆盖写入，不可 sed patch（提交 Git）
-    ↓  flake.nix import lib/shared
+    ↓  flake.nix: shared = import ./lib/shared { ... }
 fullShared                  运行时合成（pkgs + user_shared + runtime）
     ↓  specialArgs / extraSpecialArgs
 nixos/ · home/              通过 { shared, ... } 消费
@@ -293,13 +393,36 @@ nixos/ · home/              通过 { shared, ... } 消费
 | `pointer-cursor`  | `Bibata-Modern-Amber` · `Bibata-Modern-Amber-Right` · `Bibata-Modern-Classic` · `Bibata-Modern-Classic-Right` · `Bibata-Modern-Ice` · `Bibata-Modern-Ice-Right` · `Bibata-Original-Amber` · `Bibata-Original-Amber-Right` · `Bibata-Original-Classic` · `Bibata-Original-Classic-Right` · `Bibata-Original-Ice` · `Bibata-Original-Ice-Right` |
 | `version`         | `v25_11`（值 `"25.11"`，用于 `system.stateVersion`）                                                                                                                                                                                                                                                                                          |
 
-`window-manager` 枚举值内嵌 `portal` 策略，`nixos/core/base/portal.nix` 直接消费：
+`window-manager` 枚举值内嵌 `portal` 策略，`nixos/core/base/portal.nix` 和 `home/core/base/portal.nix` 直接消费：
 
 ```nix
-# 枚举值结构示例
-hyprland = { portal = { default = [ "hyprland" "gtk" ]; extraPortals = ...; wlr = false; }; };
-niri     = { portal = { default = [ "wlr" "gtk" ];      extraPortals = ...; wlr = true;  }; };
-gnome    = { portal = { default = [ "gtk" ];            extraPortals = ...; wlr = false; }; };
+# enum.nix 中的结构
+hyprland = { portal = { default = [ "hyprland" "gtk" ]; extraPortals = (pkgs: ...); wlr = false; }; };
+niri     = { portal = { default = [ "wlr" "gtk" ];      extraPortals = (pkgs: ...); wlr = true;  }; };
+gnome    = { portal = { default = [ "gtk" ];            extraPortals = (pkgs: ...); wlr = false; }; };
+
+# 消费侧（portal.nix）
+xdg.portal.extraPortals = shared.window-manager.portal.extraPortals pkgs;
+xdg.portal.config.common.default = shared.window-manager.portal.default;
+```
+
+**`drive-group` 枚举 — 多驱动组合：**
+
+```nix
+# nixos/core/drive/default.nix 路由逻辑
+imports = map (d: ./${d}.nix) shared.drive.value;
+# shared.drive.value = [ "intel" "nvidia" ]  → imports [ ./intel.nix ./nvidia.nix ]
+```
+
+**`host/` 平台分发层 — arch 路由：**
+
+```nix
+# host/nixos/default.nix
+imports = [ ./${shared.arch.tag}.nix ];
+# shared.arch.tag = "x86_64-linux" → imports ./x86_64-linux.nix
+
+# host/nixos/x86_64-linux.nix 完整激活点
+{ imports = [ ../../home/core ../../home/env ../../home/wm ]; ... }
 ```
 
 ### 3. 开发环境管道 — pdshell
@@ -418,7 +541,7 @@ TMPL     = SECRETS_TMPL_PATH / TMPL_REL + ".yaml"
 secrets/plan/
 ```
 
-**统一信息源：** 所有阶段均从 `shared.nix` 读取用户名.
+**统一信息源：** 所有阶段均从 `shared.nix` 读取用户名。
 
 | 阶段           | 信息源       | 前置条件                      | 命令集                                                  |
 | -------------- | ------------ | ----------------------------- | ------------------------------------------------------- |
@@ -427,7 +550,7 @@ secrets/plan/
 
 ### 5. 配置编排器 — orc（ConfigurationOrchestrator）
 
-`shared.orc` 是针对纯粹 config lib 的操作库, 提供了 wallust 主题动态注入的核心机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出, ...） 复制到相应的配置目录：
+`shared.orc` 是针对纯粹 config lib 的操作库，提供了 wallust 主题动态注入的核心机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出等）复制到相应的配置目录：
 
 ```nix
 # 典型用法（以 waybar 为例）
@@ -460,6 +583,18 @@ host/<platform>/default.nix
 | ---------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `env/base` | `home/env/base/` | 全局基础包：编译器(clang/rustc/cargo)、运行时(python312/nodejs_24)、调试工具(valgrind/strace/ltrace)、硬件工具(pciutils/vulkan-tools) |
 | `env/dev`  | `home/env/dev/`  | pdshell devShell 定义文件（每语言一目录，由 `flake.nix` 的 `devShells` 输出加载）                                                     |
+
+**`sys/ai/` — AI CLI 子层：**
+
+`home/core/exp/sys/ai/` 是独立于 `sys/base/` 的 AI 工具子层，仅在 `home/core/exp/sys/` 中导入，包含：
+
+| 工具          | 包名          | 说明                         |
+| ------------- | ------------- | ---------------------------- |
+| `claude-code` | `claude-code` | Anthropic Claude CLI（代码） |
+| `opencode`    | `opencode`    | 开源 AI 编码助手             |
+| `gemini-cli`  | `gemini-cli`  | Google Gemini CLI            |
+| `kiro-cli`    | `kiro-cli`    | AWS Kiro CLI                 |
+| `cursor-cli`  | `cursor-cli`  | Cursor AI 编辑器 CLI         |
 
 `env/base` 提供的是**始终可用**的全局工具，不依赖 devShell 激活。`env/dev` 中的定义仅在 `nix develop` 或 `just devenv-*` 时生效。
 
@@ -513,7 +648,7 @@ host/<platform>/default.nix
 | `waybar-config`        | `~/.config/waybar/`                                                         |
 | `wlogout-config`       | `~/.config/wlogout/`                                                        |
 | `quickshell-config`    | `~/.config/quickshell/`                                                     |
-| `qutebrowserl-config`  | `~/.config/qutebrowser/`                                                    |
+| `qutebrowser-config`   | `~/.config/qutebrowser/`                                                    |
 | `fcitx5-config`        | `~/.config/fcitx5/`                                                         |
 | `input-overlay-config` | `~/.config/obs-studio/plugin_config/input-overlay/`                         |
 | `commit-config`        | `<project>/.cz.toml`、`<project>/commitlint.config.js`、`<project>/.husky/` |
@@ -548,62 +683,77 @@ just commit-global-rules
 
 ## CI/CD 完整执行流
 
-### 概念：为什么 Nix 配置需要 CI/CD
+### 为什么 Nix 配置需要 CI/CD
 
-每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值是：
+每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
-1. **求值检查** — 捕获 Nix 语法错误和类型错误（早于 nixos-rebuild 失败）
-2. **构建验证** — 确认所有 derivation 可以成功构建
-3. **Secret 完整性** — 验证加密文件结构正确、sops-nix 能成功挂载
-4. **跨平台一致性** — 验证 NixOS / Linux / macOS / WSL 配置的求值正确性
+1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
+2. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
+3. **测试覆盖** — 79 个 checks 覆盖 nixos/home/lib/integration/nmt 五个平面
+4. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
-### Pipeline 总览
+### 实际 Pipeline（6 阶段，最大并行）
 
 ```
-Push / PR
+push / PR
     │
-    ├─► [STAGE 1: Lint & Evaluate]     快速反馈（< 2 min）
-    │       ├── nix flake check
-    │       ├── nixfmt --check
-    │       ├── statix check
-    │       └── deadnix check
+    ├─► [STAGE 1: Lint & Evaluate]     静态分析 + 浅层 eval（< 2 min）
+    │       ├── nix eval .#formatter.*.name          (formatter 可求值)
+    │       ├── nix eval .#devShells.* attrNames     (devShells 非空)
+    │       ├── nix eval .#nixosConfigurations attrNames  (结构验证，不触发 sopsFile)
+    │       ├── nix eval .#homeConfigurations attrNames
+    │       ├── nix eval .#checks.* attrNames + 平面计数
+    │       └── statix check .                       (Nix 反模式检查)
     │
-    ├─► [STAGE 2: Build]               构建验证（10–30 min）
-    │       ├── nixos-rebuild dry-run .#<username>-nixos
-    │       ├── home-manager dry-run .#<username>@nixos
-    │       └── nix build .#devShells.x86_64-linux.*  (key shells)
+    ├─► [STAGE 2: nmt-Plane]           HM dotfile 断言，纯 eval，无 KVM（< 1 min）
+    │       └── 动态发现 nmt_* checks → nix build 逐个验证
     │
-    ├─► [STAGE 3: Security]            安全审计（5 min）
-    │       ├── sops secrets validate
-    │       ├── deadnix (dead code)
-    │       └── vulnix (CVE scan, optional)
+    ├─► [STAGE 3: devShells dry-run]   devShell 矩阵（并行，与 STAGE 2 同时）
+    │       └── rust · python · python-machine · nix · go · cpp · c · typescript · re
     │
-    └─► [STAGE 4: Deploy] (main only)  部署（手动触发 / auto on tag）
-            ├── nixos-rebuild switch
-            └── home-manager switch
+    ├─► [STAGE 4: Security Audit]      SOPS 完整性审计（并行，与 STAGE 2 同时）
+    │       ├── secrets/chipr/*.yaml 必须含 sops: 元数据
+    │       ├── secrets/plan/ 不得被 git 追踪
+    │       ├── .sops.yaml 含 age: + creation_rules:
+    │       └── .nix 文件扫描硬编码 token/password
+    │
+    └─► [STAGE 5: VM Tests]            QEMU 测试，按平面并行子矩阵（需 KVM）
+            ├── smoke        (test_*)        — 基线
+            ├── nixos        (nixos_*)       — 系统模块
+            ├── home-lib     (home_* lib_*)  — HM 模块 + lib 纯表达式
+            └── integration  (integration_*) — NixOS + HM 联合激活
+
+    └─► [STAGE 6: Summary]             汇总报告（always，即使前序失败）
 ```
 
-### 本地预检清单（push 前执行）
+> **注意：** CI 不运行 `nix flake check` 对 nixosConfigurations 做深层求值，因为
+> `sopsFile` 路径（`secrets/chipr/**.yaml`）在 CI 环境中是独立 store source，
+> `--no-build` 下不会被物化，导致 "path is not valid" 错误。
+> 改用 `nix eval .#nixosConfigurations --apply builtins.attrNames` 做结构验证。
+
+### 本地预检清单（push 前）
 
 ```bash
-# 1. 格式化
-nix run nixpkgs#nixfmt-rfc-style -- flake.nix shared.nix lib/ nixos/ home/
+# 1. 静态检查
+nix run nixpkgs#statix -- check .
 
-# 2. 全量静态检查
-nix flake check --no-build
+# 2. 结构验证（无构建，无 sopsFile 触发）
+nix eval .#nixosConfigurations --apply builtins.attrNames --json
+nix eval .#homeConfigurations  --apply builtins.attrNames --json
+nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 
-# 3. 求值关键输出（快速验证）
-nix eval .#nixosConfigurations.kilig-nixos.config.system.stateVersion
+# 3. nmt 平面（最快，< 30s，无 QEMU）
+nix eval .#checks.x86_64-linux --apply \
+  'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
+  --json | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]" \
+  | xargs -I{} nix build ".#checks.x86_64-linux.{}" --no-link
 
-# 4. dry-run 构建
-nix build .#nixosConfigurations.kilig-nixos.config.system.build.toplevel \
-  --dry-run --no-link 2>&1
+# 4. devShell dry-run
+nix build .#devShells.x86_64-linux.rust --dry-run --no-link
 
-# 5. 验证 secret 文件
-find secrets/chipr -name "*.yaml" -exec grep -q "sops:" {} \; -print
-
-# 6. 本地 sops 验证（需要 age 私钥）
-sops decrypt secrets/chipr/nixos/core/base/user/kilig/password.yaml
+# 5. secret 文件验证
+find secrets/chipr -name "*.yaml" | xargs grep -L "^sops:" 2>/dev/null \
+  && echo "ERROR: plaintext files found" || echo "OK"
 ```
 
 ### 部署工作流
@@ -612,33 +762,25 @@ sops decrypt secrets/chipr/nixos/core/base/user/kilig/password.yaml
 开发机 (本地)                        生产机 (NixOS)
     │                                      │
     ├── edit *.nix                         │
-    ├── nix flake check --no-build         │
+    ├── nix eval ... (structure check)     │
     ├── git push → CI (GitHub Actions)     │
-    │       └── lint + build dry-run       │
-    │           + security audit           │
+    │       └── 6 stage passes             │
     │                                      │
     └── [CI Pass]                          │
-        ├── SSH to dest machine            │
-        │   or running in dest machine     │
-        │                                  │
-        │   # pull new config              │
         │   cd ~/.config/nix-config        │
         │   git pull                       │
         │                                  │
-        │   # rebuild system               │
         │   sudo nixos-rebuild switch \    │
         │     --flake .#kilig-nixos        │
         │                                  │
-        │   # rebuild user env             │
         │   home-manager switch \          │
         │     --flake .#kilig@nixos        │
         │                                  │
-        └── Validate service               │
-            systemctl status sops-*        │
+        └── systemctl status sops-*        │
             just sops-chipr-read-mongodb   │
 ```
 
-### 回滚策略
+### 世代管理与回滚
 
 ```bash
 # 列出可用系统世代
@@ -651,6 +793,74 @@ sudo nixos-rebuild switch --rollback
 sudo nix-env --profile /nix/var/nix/profiles/system --switch-generation <N>
 sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 ```
+
+### 自动化更新
+
+每周日 UTC 03:00，`.github/workflows/update-flake.yml` 自动：
+
+1. `nix flake update` 更新所有 inputs
+2. 生成 `flake.lock` diff 摘要
+3. 开 PR（branch: `automation/update-flake-inputs`，label: `dependencies automated`）
+
+---
+
+## 测试体系
+
+测试套件覆盖 6 个平面，总计 **79 个 checks**（2026-05-13）：
+
+| 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
+| ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
+| Smoke       | `test_`        | 1      | QEMU           | 基本系统完整性                 | ~1 min   |
+| NixOS       | `nixos_`       | 23     | QEMU           | nixos/\* 模块 + 系统服务       | 2–10 min |
+| HM          | `home_`        | 36     | QEMU           | home/\* 包安装 + 运行时行为    | 2–8 min  |
+| Lib         | `lib_`         | 3      | QEMU 256MB min | lib/shared 纯 Nix 表达式       | <1 min   |
+| Integration | `integration_` | 1      | QEMU full      | NixOS + HM 联合激活            | 5–15 min |
+| **nmt**     | `nmt_`         | **15** | **✗ 零 VM**    | HM dotfile 内容断言（纯 eval） | <10 s    |
+
+**nmt-Plane 特点：** 纯 Nix eval，无 QEMU，无 KVM，利用 `scrubDerivations` 将包替换为 `@pkg-name@` 占位符，避免触发真实构建。适合 CI 最快反馈路径。
+
+**nmt vs HM-Plane 互补：**
+
+```
+home/core/exp/sys/base/fd.nix
+  ├─ nmt_home_core_exp_sys_base_fd     dotfile 内容断言（纯 eval，<10s）
+  │    tests/nmt/home/core/exp/sys/base/fd.nix
+  │    .config/fd/ignore: .git/ / *.bak 条目
+  └─ home_core_exp_sys_base_fd         运行时行为（QEMU VM，~2min）
+       tests/home/core/exp/sys/base/fd.nix
+       fd --version, fd finds files by pattern
+```
+
+**CI 动态发现（无需手动维护列表）：**
+
+```bash
+# 按前缀过滤 checks，新增测试自动被 CI 发现
+nix eval ".#checks.x86_64-linux" \
+  --apply 'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
+  --json
+```
+
+**运行命令：**
+
+```bash
+# 全量（需要 KVM）
+nix flake check
+
+# nmt only（最快，无 QEMU）
+nix eval .#checks.x86_64-linux --apply \
+  'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
+  --json | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]" \
+  | xargs -I{} nix build ".#checks.x86_64-linux.{}" --no-link
+
+# 单个
+nix build .#checks.x86_64-linux.nmt_home_core_base_git -L
+nix build .#checks.x86_64-linux.nixos_core_srv_db_postgresql -L
+nix build .#checks.x86_64-linux.integration_hm_activation -L
+```
+
+**nmt 获取机制：** sourcehut 对 Nix fetcher UA 返回 HTTP 403，因此使用 `github:Redskaber/nmt`（mirror）+ `flake = false`，通过 store path 直接引用。`buildHomeManagerTest` 包装器在 `tests/nmt/default.nix` 中自行实现（nmt 原生不提供此函数）。
+
+详见 [`docs/tests/test-matrix.md`](docs/tests/test-matrix.md) · [`docs/tests/nixosTest.md`](docs/tests/nixosTest.md) · [`docs/tests/nmt.md`](docs/tests/nmt.md)
 
 ---
 
@@ -703,11 +913,17 @@ just devenv-create-from python renpy        # 创建复合变体 profile
 just devenv-use rust                        # 进入已有单语言环境
 just devenv-use-from python machine         # 进入已有复合变体环境
 just devenv-update rust                     # 强制重建单语言环境
+just devenv-update-from python machine      # 强制重建复合变体环境
+just devenv-delete rust                     # 删除单语言 profile
+just devenv-delete-from python renpy        # 删除复合变体 profile
 just devenv-create-all                      # 创建所有已知环境（含复合变体）
 just devenv-delete-all                      # 删除所有 profile（强制重建用）
+just devenv-update-all                      # 删除并重建所有环境
 just devenv-show                            # 列出 flake 中所有可用 devShell
 just devenv-list                            # 树状显示已创建 profile
 ```
+
+**profile 命名规则：** `<username>-<lang>[-<class>]`，存储于 `~/.local/state/nix/profiles/dev/<lang>/`。
 
 ### sops — 密钥与加密
 
@@ -782,6 +998,7 @@ echo "experimental-features = nix-command flakes pipe-operators" >> ~/.config/ni
 
 > **注意：** NixOS 首次 build 后，非 `/` 挂载点下的目录会被 NixOS 管理，请将配置放在合适路径。
 > 首次 build 如果不是在系统别目录下，由于用户身份未创建等原因，会将其余的 ～/\* 清除。(nixos 本身)
+>
 > 后续再次构建不会有此问题
 
 ```bash
@@ -808,8 +1025,8 @@ just sops-chipr-create-all
 
 ### 部署
 
-> 在部署之前，如果你了解一些内容或者想自己diy, 可以更新 shared.nix 文件中的配置项。
-> 此后所有的修改都对此文件进行
+> 在部署之前，如果你了解一些内容或者想自己 DIY，可以更新 `shared.nix` 文件中的配置项。
+> 此后所有修改都对此文件进行。
 
 ```bash
 # NixOS 系统（将 <username> 替换为实际用户名）
@@ -866,7 +1083,7 @@ vim home/core/exp/app/<class>/<name>.nix
 # 在 home/core/exp/app/<class>/default.nix 的 imports 中添加引用
 
 # CLI 工具
-vim home/core/sys/<class>/<name>.nix
+vim home/core/exp/sys/<class>/<name>.nix
 # 在 home/core/exp/sys/<class>/default.nix 的 imports 中添加引用
 ```
 
@@ -880,7 +1097,7 @@ mkdir home/env/dev/<lang>
 
 ### 添加新 Secret（三步，核心逻辑零改动）
 
-**Step 0** - `nixos/core/srv/db/newdb.nix` impl + `nixos/core/srv/db/default.nix` import
+**Step 0** — `nixos/core/srv/db/newdb.nix` impl + `nixos/core/srv/db/default.nix` import
 
 **Step 1** — `docs/tmpl/shared.nix.tmpl` 中添加：
 
@@ -963,6 +1180,21 @@ just sops-plan-create-all
 > just sops-chipr-create-all
 > ```
 
+### 添加新 AI CLI 工具
+
+```bash
+# 1. 创建工具模块
+cat > home/core/exp/sys/ai/<tool-name>.nix << 'EOF'
+{ inputs, shared, lib, config, pkgs, ... }:
+{
+  home.packages = with pkgs; [ <tool-package> ];
+}
+EOF
+
+# 2. 在 home/core/exp/sys/ai/default.nix 的 imports 中添加引用
+# 工具即刻在所有平台可用，无需额外配置
+```
+
 ---
 
 ## 依赖图
@@ -984,6 +1216,7 @@ flake.nix
 ├── wechat                       # 微信（自建 flake）
 ├── unrpyc                       # RenPy 反编译（自建 flake）
 ├── cnmplayer                    # 网易云音乐 TUI（自建 flake）
+├── nmt                          # HM dotfile 测试框架（flake=false, GitHub mirror）
 ├── commit-config                # 提交规范（commitlint + commitizen + husky 规则）
 └── *-config (flake=false)       # 各工具配置仓库（外部 Git 源）
     nvim · emacs · vscode · starship · fastfetch · wezterm
@@ -994,74 +1227,22 @@ flake.nix
 
 ---
 
-## 测试体系
-
-测试套件覆盖 6 个平面，总计 **78 个 checks**（2026-05-12）：
-
-| 平面        | 前缀           | 数量 | KVM | 关注点                       |
-| ----------- | -------------- | ---- | --- | ---------------------------- |
-| Smoke       | `test_`        | 1    | ✓   | 基本系统完整性               |
-| NixOS       | `nixos_`       | 21   | ✓   | nixos/\* 模块 + 系统服务     |
-| HM          | `home_`        | 35   | ✓   | home/\* 包安装 + 运行时行为  |
-| Lib         | `lib_`         | 3    | ✓   | lib/shared 纯 Nix 表达式     |
-| Integration | `integration_` | 1    | ✓   | NixOS + HM 联合激活          |
-| nmt         | `nmt_`         | 17   | ✗   | HM dotfile 内容断言（零 VM） |
-
-```bash
-# 最快本地检查：nmt 平面（纯 Nix eval，<30s，无 QEMU）
-nix eval .#checks.x86_64-linux --apply \
-  'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
-  --json | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]" \
-  | xargs -I{} nix build ".#checks.x86_64-linux.{}" --no-link
-
-# 全量（需要 KVM）
-nix flake check
-
-# 单个
-nix build .#checks.x86_64-linux.nmt_home_core_base_git -L
-nix build .#checks.x86_64-linux.nixos_core_srv_db_postgresql -L
-```
-
-详见 [`docs/tests/test-matrix.md`](docs/tests/test-matrix.md) — 完整测试矩阵、平面设计、扩展指南、CI 集成说明。
-
-**参考资料：**
-
-- [NixOS Tests](https://nixos.org/manual/nixos/stable/#sec-nixos-tests)
-- [nmt Testing Framework](https://deepwiki.com/nix-community/home-manager/5.1-nmt-testing-framework)
-
----
-
-## CI/CD 流水线
-
-5 个阶段，最大并行，按平面分离：
-
-```
-push / PR
-    │
-    ├─► [STAGE 1: Lint]          静态分析 + 浅层 eval（< 2min）
-    │
-    ├─► [STAGE 2: nmt-Plane]     HM dotfile 断言，纯 eval，无 KVM（< 1min）
-    ├─► [STAGE 3: devShells]     devShell dry-run 矩阵（并行）
-    ├─► [STAGE 4: Security]      SOPS 完整性审计（并行）
-    │
-    └─► [STAGE 5: VM Tests]      QEMU 测试，按平面并行子矩阵（需 KVM）
-            ├── smoke / nixos / home-lib / integration
-    │
-    └─► [STAGE 6: Summary]       汇总报告（always）
-```
-
-自动化更新：每周日 `.github/workflows/update-flake.yml` 更新 flake inputs 并开 PR。
-
----
-
 ## 路线图
 
-- [x] CI 全量 build 验证（nmt-Plane + QEMU VM tests）
-- [x] NixOS 测试套件（78 checks，6 个测试平面）
+- [x] CI 全量 build 验证（nmt-Plane + QEMU VM tests，6 阶段流水线）
+- [x] NixOS 测试套件（79 checks，6 个测试平面）
 - [x] flake inputs 自动更新策略（定时 PR，每周日）
-- [ ] 第二台机器测试（验证跨机器可移植性）
+- [x] host/ 平台分发层（nixos · linux · macos · wsl，arch 路由）
+- [x] api.inputs 暴露（just 脚本动态枚举 inputs，零硬编码）
+- [x] AI CLI 工具集成（claude-code · opencode · gemini-cli · kiro-cli · cursor-cli）
+- [x] kiro 编辑器集成（home/core/exp/app/editor/kiro.nix）
+- [x] nmt mirror 解决方案（sourcehut 403 规避，buildHomeManagerTest 自实现）
+- [x] sops 数据驱动架构（零硬编码路径，phase-aware 信息源分离）
+- [ ] 第二台机器测试（验证跨机器可移植性，scfpath 多机器场景）
 - [ ] 惰性模块加载（提升大型配置求值速度）
 - [ ] 模块文档自动生成（从 Nix 模块 options 生成）
+- [ ] export/ 模块完善（可复用 NixOS/HM 模块供外部 flake 引用）
+- [ ] macOS 完整支持（darwin-specific modules，nix-darwin 集成）
 
 ---
 
