@@ -281,16 +281,17 @@ nixos/ · home/              通过 { shared, ... } 消费
 
 **可配置枚举（lib/shared/shared/enum.nix）：**
 
-| 字段              | 合法值                                                                                                                  |
-| ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `arch`            | `x86_64-linux` · `aarch64-linux` · `x86_64-darwin` · `aarch64-darwin` · `i686-linux`                                    |
-| `platform`        | `nixos` · `linux` · `macos` · `wsl`                                                                                     |
-| `window-manager`  | `hyprland` · `niri` · `gnome`（每个值携带 `portal` 策略）                                                               |
-| `display-manager` | `ly` · `gdm` · `sddm` · `lemurs`                                                                                        |
-| `drive-group`     | `intel` · `amd` · `nvidia` · `nvidia-prime` · `amd-nvidia` · `amd-nvidia-prime` · `intel-nvidia` · `intel-nvidia-prime` |
-| `shell`           | `zsh` · `fish` · `bash`                                                                                                 |
-| `editor`          | `nvim` · `vim` · `code` · `zeditor`                                                                                     |
-| `version`         | `v25_11`（值 `"25.11"`，用于 `system.stateVersion`）                                                                    |
+| 字段              | 合法值                                                                                                                                                                                                                                                                                                                                        |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `arch`            | `x86_64-linux` · `aarch64-linux` · `x86_64-darwin` · `aarch64-darwin` · `i686-linux`                                                                                                                                                                                                                                                          |
+| `platform`        | `nixos` · `linux` · `macos` · `wsl`                                                                                                                                                                                                                                                                                                           |
+| `window-manager`  | `hyprland` · `niri` · `gnome`（每个值携带 `portal` 策略）                                                                                                                                                                                                                                                                                     |
+| `display-manager` | `ly` · `gdm` · `sddm` · `lemurs`                                                                                                                                                                                                                                                                                                              |
+| `drive-group`     | `intel` · `amd` · `nvidia` · `nvidia-prime` · `amd-nvidia` · `amd-nvidia-prime` · `intel-nvidia` · `intel-nvidia-prime`                                                                                                                                                                                                                       |
+| `shell`           | `zsh` · `fish` · `bash`                                                                                                                                                                                                                                                                                                                       |
+| `editor`          | `nvim` · `vim` · `code` · `zeditor`                                                                                                                                                                                                                                                                                                           |
+| `pointer-cursor`  | `Bibata-Modern-Amber` · `Bibata-Modern-Amber-Right` · `Bibata-Modern-Classic` · `Bibata-Modern-Classic-Right` · `Bibata-Modern-Ice` · `Bibata-Modern-Ice-Right` · `Bibata-Original-Amber` · `Bibata-Original-Amber-Right` · `Bibata-Original-Classic` · `Bibata-Original-Classic-Right` · `Bibata-Original-Ice` · `Bibata-Original-Ice-Right` |
+| `version`         | `v25_11`（值 `"25.11"`，用于 `system.stateVersion`）                                                                                                                                                                                                                                                                                          |
 
 `window-manager` 枚举值内嵌 `portal` 策略，`nixos/core/base/portal.nix` 直接消费：
 
