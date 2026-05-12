@@ -611,29 +611,29 @@ sops decrypt secrets/chipr/nixos/core/base/user/kilig/password.yaml
 ```
 开发机 (本地)                        生产机 (NixOS)
     │                                      │
-    ├── 编辑 *.nix                         │
+    ├── edit *.nix                         │
     ├── nix flake check --no-build         │
     ├── git push → CI (GitHub Actions)     │
     │       └── lint + build dry-run       │
     │           + security audit           │
     │                                      │
-    └── [CI 通过后]                        │
-        ├── SSH 到目标机                   │
-        │   或在目标机上执行：             │
+    └── [CI Pass]                          │
+        ├── SSH to dest machine            │
+        │   or running in dest machine     │
         │                                  │
-        │   # 拉取最新配置                 │
+        │   # pull new config              │
         │   cd ~/.config/nix-config        │
         │   git pull                       │
         │                                  │
-        │   # 重建系统                     │
+        │   # rebuild system               │
         │   sudo nixos-rebuild switch \    │
         │     --flake .#kilig-nixos        │
         │                                  │
-        │   # 重建用户环境                 │
+        │   # rebuild user env             │
         │   home-manager switch \          │
         │     --flake .#kilig@nixos        │
         │                                  │
-        └── 验证服务状态                   │
+        └── Validate service               │
             systemctl status sops-*        │
             just sops-chipr-read-mongodb   │
 ```
