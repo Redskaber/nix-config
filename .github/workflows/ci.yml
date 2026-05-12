@@ -11,6 +11,29 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# ══════════════════════════════════════════════════════════════════════
+# Pipeline architecture (5 stages):
+#
+#   STAGE 1: lint          — static analysis + shallow eval (no build)
+#   STAGE 2: nmt-plane     — HM dotfile assertions (pure Nix eval, no KVM)
+#   STAGE 3: devshells     — devShell dry-run matrix
+#   STAGE 4: security      — SOPS secret integrity audit
+#   STAGE 5: vm-tests      — NixOS/HM/Lib/Integration QEMU tests (KVM)
+#   STAGE 6: summary       — aggregate result report
+#
+# Why we DON'T run `nix flake check` for nixosConfigurations:
+#   Deep eval reaches sopsFile = ../../../../secrets/chipr/**.yaml — a local
+#   path that becomes a separate store source. Under --no-build that source
+#   is never materialised → "path 'xxx-source' is not valid".
+#   We instead use targeted `nix eval` calls (attrNames only) for structure
+#   validation, and build checks by plane prefix for runtime validation.
+#
+# KVM note:
+#   QEMU VM tests (Plane 1–4) require /dev/kvm. GitHub-hosted ubuntu-latest
+#   runners provide KVM via nested virtualisation. nmt-Plane (Plane 5) is
+#   pure Nix eval — no QEMU, no KVM.
+# ══════════════════════════════════════════════════════════════════════
+
 jobs:
   # ─────────────────────────────────────────────────────────────
   # STAGE 1: Lint & Evaluate
@@ -31,25 +54,6 @@ jobs:
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@v7
 
-      # WHY we don't use `nix flake check --no-build` for the full flake:
-      #
-      # `nix flake check` evaluates ALL outputs deeply. nixosConfigurations deep
-      # evaluation reaches sopsFile = ../../../../secrets/chipr/**.yaml — a
-      # relative path that becomes a separate store source. Under --no-build that
-      # source is never materialised, giving "path 'xxx-source' is not valid".
-      #
-      # Instead we run targeted `nix eval` calls:
-      #   - overlays: use nix flake check (they have a stable isOverlay check)
-      #   - devShells + formatter: shallow eval (attrNames / .name)
-      #   - nixosConfigurations / homeConfigurations: attrNames only — enough to
-      #     confirm the config is structurally valid without touching sopsFile paths
-      #
-      - name: Check overlays (nix flake check subset)
-        run: |
-          # Only overlays are safe for nix flake check — they don't reference
-          # local sub-paths beyond the flake root.
-          nix flake check --no-build 2>&1 | grep -E '(overlays|✅|❌)' || true
-
       - name: Verify formatter evaluates
         run: nix eval .#formatter.x86_64-linux.name
 
@@ -61,43 +65,120 @@ jobs:
           echo "Total: $COUNT shells"
           [ "$COUNT" -gt 0 ] || { echo "ERROR: devShells is empty" >&2; exit 1; }
 
-      - name: Verify nixosConfigurations structure (shallow — no sopsFile paths)
-        run: |
-          # attrNames only: confirms the config key exists without deep evaluation
-          nix eval .#nixosConfigurations --apply builtins.attrNames --json
+      # Structural validation — attrNames only avoids evaluating sopsFile paths
+      - name: Verify nixosConfigurations structure (shallow)
+        run: nix eval .#nixosConfigurations --apply builtins.attrNames --json
 
       - name: Verify homeConfigurations structure (shallow)
-        run: |
-          nix eval .#homeConfigurations --apply builtins.attrNames --json
+        run: nix eval .#homeConfigurations --apply builtins.attrNames --json
 
       - name: Verify debug outputs
         run: |
           nix eval .#debug.test_system
           nix eval .#debug.test_devDir
 
-      # NOTE: my used self format
-      # Format check (RFC 109 aligned)
-      # - name: nixfmt check
-      #   run: |
-      #     nix run nixpkgs#nixfmt-rfc-style -- --check \
-      #       flake.nix shared.nix lib/ nixos/ home/ overlays/ pkgs/
+      # Verify checks attrset is parseable and non-empty
+      - name: Verify checks attrset (shallow)
+        run: |
+          SYS=$(nix eval --raw .#debug.test_system)
+          CHECKS=$(nix eval ".#checks.${SYS}" --apply builtins.attrNames --json)
+          COUNT=$(echo "$CHECKS" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
+          echo "Total checks: $COUNT (system: $SYS)"
+          [ "$COUNT" -gt 0 ] || { echo "ERROR: checks is empty" >&2; exit 1; }
 
-      # Static analysis
+          # Print plane breakdown
+          echo "$CHECKS" | python3 -c "
+          import sys, json, collections
+          cs = json.load(sys.stdin)
+          planes = collections.Counter()
+          for c in cs:
+              for prefix in ['nmt_','nixos_','home_','lib_','integration_','test_']:
+                  if c.startswith(prefix):
+                      planes[prefix.rstrip('_')] += 1
+                      break
+              else:
+                  planes['other'] += 1
+          for k,v in sorted(planes.items()): print(f'  {k}: {v}')
+          "
+
+      # Static analysis (Nix anti-patterns)
       - name: statix lint
         run: nix run nixpkgs#statix -- check .
 
-      # NOTE: my used self, don't care
-      # Dead code detection
-      # - name: deadnix check
-      #   run: nix run nixpkgs#deadnix -- --fail .
+  # ─────────────────────────────────────────────────────────────
+  # STAGE 2: nmt-Plane (pure Nix eval — no KVM, fastest feedback)
+  # ─────────────────────────────────────────────────────────────
+  # nmt tests evaluate HM module configuration and assert generated
+  # dotfile content via bash scripts. No QEMU VM is involved.
+  # This stage runs in parallel with devshells and security for
+  # maximum pipeline throughput.
+  nmt-plane:
+    name: nmt-Plane (HM dotfile assertions)
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v13
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            accept-flake-config = true
+
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@v7
+
+      - name: Discover nmt checks
+        id: discover
+        run: |
+          SYS=$(nix eval --raw .#debug.test_system)
+          CHECKS=$(nix eval ".#checks.${SYS}" --apply \
+            'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
+            --json)
+          COUNT=$(echo "$CHECKS" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
+          echo "Found $COUNT nmt checks on $SYS"
+          echo "system=$SYS" >> $GITHUB_OUTPUT
+          echo "count=$COUNT" >> $GITHUB_OUTPUT
+          # Print names for visibility
+          echo "$CHECKS" | python3 -c "import sys,json; [print(' -', c) for c in json.load(sys.stdin)]"
+
+      - name: Build all nmt checks
+        run: |
+          SYS="${{ steps.discover.outputs.system }}"
+          NAMES=$(nix eval ".#checks.${SYS}" --apply \
+            'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
+            --json | python3 -c "import sys,json; print(' '.join(f'.#checks.${SYS}.{c}' for c in json.load(sys.stdin)))" \
+            SYS="$SYS")
+          # Build each check individually for clearer per-test failure reporting
+          nix eval ".#checks.${SYS}" \
+            --apply 'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
+            --json | python3 -c "
+          import sys, json, subprocess, os
+          sys_name = os.environ['SYS']
+          checks = json.load(sys.stdin)
+          failed = []
+          for c in checks:
+              installable = f'.#checks.{sys_name}.{c}'
+              print(f'::group::Building {c}')
+              r = subprocess.run(['nix', 'build', installable, '--no-link', '--print-build-logs'], capture_output=False)
+              print('::endgroup::')
+              if r.returncode != 0:
+                  failed.append(c)
+          if failed:
+              print(f'FAILED checks ({len(failed)}):')
+              for f in failed: print(f'  - {f}')
+              sys.exit(1)
+          print(f'All {len(checks)} nmt checks passed.')
+          " SYS="$SYS"
+        env:
+          SYS: ${{ steps.discover.outputs.system }}
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 2: Evaluate devShells (dry-run)
+  # STAGE 3: Evaluate devShells (dry-run matrix)
   # ─────────────────────────────────────────────────────────────
-  # devShells can be dry-run safely: devDir now uses self + "/home/core/dev"
-  # (a fully-materialised store path), so pdshells.nix path evaluation succeeds.
-  # We skip nixos/home dry-run in CI: they require the age private key to decrypt
-  # sops secrets at build time — the key is never present in CI runners.
+  # devShells use self + "/home/core/dev" (materialised store path),
+  # so path evaluation succeeds without the age private key.
   evaluate-devshells:
     name: Evaluate devShells (dry-run)
     runs-on: ubuntu-latest
@@ -123,7 +204,7 @@ jobs:
         run: nix build .#devShells.x86_64-linux.${{ matrix.shell }} --dry-run --no-link
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 3: Security Audit
+  # STAGE 4: Security Audit
   # ─────────────────────────────────────────────────────────────
   security:
     name: Security Audit
@@ -144,50 +225,93 @@ jobs:
       # Every file under secrets/chipr/ must be SOPS-encrypted (not plaintext)
       - name: Validate SOPS encrypted files
         run: |
+          COUNT=0
+          FAILED=0
           find secrets/chipr -name "*.yaml" | while read f; do
+            COUNT=$((COUNT+1))
             echo "Checking: $f"
             if ! grep -q "^sops:" "$f"; then
-              echo "ERROR: $f is missing sops metadata — may be plaintext!" >&2
-              exit 1
+              echo "::error file=$f::Missing SOPS metadata — file may be plaintext!"
+              FAILED=$((FAILED+1))
             fi
           done
+          if find secrets/chipr -name "*.yaml" | xargs grep -rL "^sops:" 2>/dev/null | grep -q .; then
+            echo "ERROR: Some chipr secret files are missing sops metadata" >&2
+            find secrets/chipr -name "*.yaml" | xargs grep -rL "^sops:" 2>/dev/null
+            exit 1
+          fi
           echo "All chipr secret files have sops metadata"
 
       # secrets/plan/ must never be tracked by git (plaintext secrets)
       - name: Check secrets/plan is not git-tracked
         run: |
           if git ls-files secrets/plan 2>/dev/null | grep -q .; then
-            echo "ERROR: secrets/plan/ contains git-tracked files!" >&2
+            echo "::error::secrets/plan/ contains git-tracked files (plaintext secrets)!"
             git ls-files secrets/plan
             exit 1
           fi
           echo "OK: secrets/plan/ is not git-tracked"
 
       # .sops.yaml must exist and contain an age key section
-      - name: Validate .sops.yaml
+      - name: Validate .sops.yaml structure
         run: |
-          [ -f .sops.yaml ] || { echo "ERROR: .sops.yaml missing" >&2; exit 1; }
-          grep -q "age:" .sops.yaml || { echo "ERROR: .sops.yaml missing age key" >&2; exit 1; }
+          [ -f .sops.yaml ] || { echo "::error::.sops.yaml missing" >&2; exit 1; }
+          grep -q "age:" .sops.yaml || { echo "::error::.sops.yaml missing age key section" >&2; exit 1; }
+          grep -q "creation_rules:" .sops.yaml || { echo "::error::.sops.yaml missing creation_rules" >&2; exit 1; }
           echo "OK: .sops.yaml valid"
 
       # Scan for accidental hardcoded credentials in .nix files
       - name: Scan for potential plaintext secrets
         run: |
-          if grep -rn --include="*.nix" \
-              -e 'token\s*=\s*"ghp_[A-Za-z0-9_]' \
-              lib/ nixos/ home/ 2>/dev/null; then
-            echo "ERROR: Potential hardcoded GitHub token detected" >&2
-            exit 1
+          FOUND=0
+          # GitHub tokens
+          if grep -rn --include="*.nix" -e 'token\s*=\s*"ghp_[A-Za-z0-9_]' lib/ nixos/ home/ 2>/dev/null; then
+            echo "::error::Potential hardcoded GitHub token detected in .nix files"
+            FOUND=1
           fi
+          # Generic password assignments
+          if grep -rn --include="*.nix" -e 'password\s*=\s*"[^$"]\{8,\}"' lib/ nixos/ home/ 2>/dev/null; then
+            echo "::warning::Potential hardcoded password detected — review manually"
+          fi
+          [ "$FOUND" -eq 0 ] || exit 1
           echo "OK: No obvious hardcoded credentials found"
 
+      # Validate .gitignore excludes sensitive paths
+      - name: Validate .gitignore covers secrets/plan
+        run: |
+          if ! grep -q "secrets/plan" .gitignore 2>/dev/null; then
+            echo "::warning::.gitignore may not exclude secrets/plan/ — verify manually"
+          else
+            echo "OK: .gitignore covers secrets/plan/"
+          fi
+
   # ─────────────────────────────────────────────────────────────
-  # STAGE 4: Integration Tests (checks)
+  # STAGE 5: VM-based Tests (NixOS / HM / Lib / Integration planes)
   # ─────────────────────────────────────────────────────────────
-  tests:
-    name: Integration Tests
+  # These tests require QEMU KVM. GitHub-hosted ubuntu-latest runners
+  # support nested virtualisation. The AGE_SECRET_KEY secret is injected
+  # for SOPS decryption if available; tests that don't need it still pass.
+  #
+  # Test planes run in parallel sub-jobs keyed by prefix:
+  #   nixos_        → Plane 1: NixOS module tests
+  #   home_ + lib_  → Plane 2+3: HM module + Lib pure tests
+  #   integration_  → Plane 4: Full NixOS+HM joint tests
+  #   test_         → Plane 0: Smoke
+  #
+  # Each sub-job discovers its checks dynamically so no manual list
+  # maintenance is needed when new tests are added.
+  vm-tests:
+    name: VM Tests (${{ matrix.plane }})
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [lint, nmt-plane]
+    strategy:
+      matrix:
+        plane:
+          - smoke # prefix: test_
+          - nixos # prefix: nixos_
+          - home-lib # prefix: home_ + lib_
+          - integration # prefix: integration_
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
 
@@ -198,40 +322,114 @@ jobs:
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
-      - name: Run all checks (with SOPS if key available)
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@v7
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          ls -la /dev/kvm
+
+      - name: Discover & build ${{ matrix.plane }} checks
         env:
           SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}
+          PLANE: ${{ matrix.plane }}
         run: |
           echo "::add-mask::$SOPS_AGE_KEY"
-
-          # Get system architecture
           SYS=$(nix eval --raw .#debug.test_system)
 
-          # Generate installable list: ".#checks.x86_64-linux.test_0 .#checks... test_1 ..."
-          INSTALLABLES=$(nix eval --raw ".#checks.${SYS}" \
-            --apply "xs: builtins.concatStringsSep \" \" (map (x: \".#checks.${SYS}.\" + x) (builtins.attrNames xs))")
+          # Map plane → prefix list
+          case "$PLANE" in
+            smoke)       PREFIXES="test_" ;;
+            nixos)       PREFIXES="nixos_" ;;
+            home-lib)    PREFIXES="home_ lib_" ;;
+            integration) PREFIXES="integration_" ;;
+          esac
 
-          echo "Will run checks: $INSTALLABLES"
-          nix build $INSTALLABLES --no-link --print-build-logs --keep-going
+          # Build filter expression
+          FILTER=$(python3 -c "
+          import sys
+          prefixes = sys.argv[1].split()
+          conds = ' || '.join(
+              f'(builtins.substring 0 {len(p)} n == \"{p}\")'
+              for p in prefixes
+          )
+          print(f'cs: builtins.attrNames (builtins.filterAttrs (n: _: {conds}) cs)')
+          " "$PREFIXES")
+
+          NAMES=$(nix eval ".#checks.${SYS}" --apply "$FILTER" --json)
+          COUNT=$(echo "$NAMES" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
+          echo "Plane '$PLANE': $COUNT checks to build"
+          echo "$NAMES" | python3 -c "import sys,json; [print(' -', c) for c in json.load(sys.stdin)]"
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No checks for plane $PLANE — skipping"
+            exit 0
+          fi
+
+          # Build all checks in this plane, continue on individual failures
+          FAILED=()
+          while IFS= read -r CHECK; do
+            INSTALLABLE=".#checks.${SYS}.${CHECK}"
+            echo "::group::$CHECK"
+            if ! nix build "$INSTALLABLE" --no-link --print-build-logs; then
+              echo "::error::FAILED: $CHECK"
+              FAILED+=("$CHECK")
+            fi
+            echo "::endgroup::"
+          done < <(echo "$NAMES" | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]")
+
+          if [ "${#FAILED[@]}" -gt 0 ]; then
+            echo ""
+            echo "FAILED checks (${#FAILED[@]}):"
+            printf '  - %s\n' "${FAILED[@]}"
+            exit 1
+          fi
+          echo "All $COUNT checks in plane '$PLANE' passed."
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 5: Report summary
+  # STAGE 6: CI Summary
   # ─────────────────────────────────────────────────────────────
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [lint, evaluate-devshells, security, tests]
+    needs: [lint, nmt-plane, evaluate-devshells, security, vm-tests]
     if: always()
     steps:
-      - name: Write summary
+      - name: Write GitHub Step Summary
         run: |
-          cat >> $GITHUB_STEP_SUMMARY << EOF
+          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
           ## CI Results
 
-          | Stage               | Status |
-          |---------------------|--------|
-          | Lint & Evaluate     | ${{ needs.lint.result }} |
-          | devShells           | ${{ needs.evaluate-devshells.result }} |
-          | Security            | ${{ needs.security.result }} |
-          | Integration Tests   | ${{ needs.tests.result }} |
+          | Stage                    | Status                                                       |
+          |--------------------------|--------------------------------------------------------------|
+          | Lint & Evaluate          | ${{ needs.lint.result }}                                     |
+          | nmt-Plane (HM dotfiles)  | ${{ needs.nmt-plane.result }}                                |
+          | devShells dry-run        | ${{ needs.evaluate-devshells.result }}                       |
+          | Security Audit           | ${{ needs.security.result }}                                 |
+          | VM Tests (QEMU)          | ${{ needs.vm-tests.result }}                                 |
+
+          ### Test Plane Reference
+
+          | Plane       | Prefix        | KVM  | Approx. Tests |
+          |-------------|---------------|------|---------------|
+          | Smoke       | `test_`       | ✓    | 1             |
+          | NixOS       | `nixos_`      | ✓    | 21            |
+          | HM + Lib    | `home_` `lib_`| ✓    | 38            |
+          | Integration | `integration_`| ✓    | 1             |
+          | **nmt**     | `nmt_`        | **✗**| **17**        |
+
+          > nmt-Plane runs without QEMU — fastest feedback loop for HM module changes.
           EOF
+
+      - name: Fail if any required stage failed
+        if: |
+          needs.lint.result == 'failure' ||
+          needs.nmt-plane.result == 'failure' ||
+          needs.security.result == 'failure'
+        run: |
+          echo "One or more required stages failed."
+          exit 1

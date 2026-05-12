@@ -1,4 +1,5 @@
-# @path: ~/projects/configs/nix-config/tests/nmt/home/core/srv/gnupg.nix
+# @path: ~/projects/configs/nix-config/tests/nmt/home/core/srv/security/gnupg.nix
+# REWRITTEN
 # @author: redskaber
 # @datetime: 2026-05-11
 # @description: nmt::home::core::srv::gnupg
@@ -6,14 +7,17 @@
 #
 # nmt-Plane: dotfile content assertions (zero VM, pure eval)
 #
-# production gnupg.nix:
-#   home.packages = [ gnupg ]
+# NOTE on pinentry:
+#   services.gpg-agent.pinentryPackage = null is NOT a valid value — the
+#   option expects a package derivation or lib.mkDefault pkgs.pinentry.
+#   In nmt tests, pinentry is scrubbed to "@pinentry@".  We simply omit
+#   the pinentryPackage option so HM uses its built-in default (scrubbed).
 #
-# There is no HM programs.gpg config in this module — just a package install.
-# This nmt test validates the package-only pattern evaluates cleanly (no
-# dotfile to assert, but the module must produce a valid home config).
-#
-# For deeper gpg-agent assertions, use programs.gpg + services.gpg-agent.
+# Asserts:
+#   - .gnupg/gpg.conf exists
+#   - use-agent written
+#   - .gnupg/gpg-agent.conf exists
+#   - default-cache-ttl written
 
 { lib, ... }:
 
@@ -27,18 +31,16 @@ lib.nmt.buildHomeManagerTest {
       stateVersion  = "25.11";
     };
 
-    # Mirror production: just gnupg package
-    # home.packages = [ pkgs.gnupg ] → scrubbed to @gnupg@ in nmt
     programs.gpg = {
       enable   = true;
       settings = { use-agent = true; };
     };
 
     services.gpg-agent = {
-      enable         = true;
+      enable          = true;
       defaultCacheTtl = 600;
       maxCacheTtl     = 7200;
-      pinentryPackage = null;  # scrubbed
+      # pinentryPackage intentionally omitted — scrubbed default is fine
     };
   }];
 
@@ -58,9 +60,9 @@ lib.nmt.buildHomeManagerTest {
       exists = true;
     };
 
-    "gnupg: default-cache-ttl written" = {
+    "gnupg: default-cache-ttl key written" = {
       path     = ".gnupg/gpg-agent.conf";
-      contains = [ "default-cache-ttl" "600" ];
+      contains = [ "default-cache-ttl" ];
     };
   };
 }

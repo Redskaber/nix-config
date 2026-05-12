@@ -993,19 +993,72 @@ flake.nix
 
 ---
 
-## Tests
+## 测试体系
 
-- [nixosTest](https://nixos.org/manual/nixos/stable/#sec-nixos-tests)
-- [nmt](https://deepwiki.com/nix-community/home-manager/5.1-nmt-testing-framework)
+测试套件覆盖 6 个平面，总计 **78 个 checks**（2026-05-12）：
+
+| 平面        | 前缀           | 数量 | KVM | 关注点                       |
+| ----------- | -------------- | ---- | --- | ---------------------------- |
+| Smoke       | `test_`        | 1    | ✓   | 基本系统完整性               |
+| NixOS       | `nixos_`       | 21   | ✓   | nixos/\* 模块 + 系统服务     |
+| HM          | `home_`        | 35   | ✓   | home/\* 包安装 + 运行时行为  |
+| Lib         | `lib_`         | 3    | ✓   | lib/shared 纯 Nix 表达式     |
+| Integration | `integration_` | 1    | ✓   | NixOS + HM 联合激活          |
+| nmt         | `nmt_`         | 17   | ✗   | HM dotfile 内容断言（零 VM） |
+
+```bash
+# 最快本地检查：nmt 平面（纯 Nix eval，<30s，无 QEMU）
+nix eval .#checks.x86_64-linux --apply \
+  'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
+  --json | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]" \
+  | xargs -I{} nix build ".#checks.x86_64-linux.{}" --no-link
+
+# 全量（需要 KVM）
+nix flake check
+
+# 单个
+nix build .#checks.x86_64-linux.nmt_home_core_base_git -L
+nix build .#checks.x86_64-linux.nixos_core_srv_db_postgresql -L
+```
+
+详见 [`docs/tests/test-matrix.md`](docs/tests/test-matrix.md) — 完整测试矩阵、平面设计、扩展指南、CI 集成说明。
+
+**参考资料：**
+
+- [NixOS Tests](https://nixos.org/manual/nixos/stable/#sec-nixos-tests)
+- [nmt Testing Framework](https://deepwiki.com/nix-community/home-manager/5.1-nmt-testing-framework)
+
+---
+
+## CI/CD 流水线
+
+5 个阶段，最大并行，按平面分离：
+
+```
+push / PR
+    │
+    ├─► [STAGE 1: Lint]          静态分析 + 浅层 eval（< 2min）
+    │
+    ├─► [STAGE 2: nmt-Plane]     HM dotfile 断言，纯 eval，无 KVM（< 1min）
+    ├─► [STAGE 3: devShells]     devShell dry-run 矩阵（并行）
+    ├─► [STAGE 4: Security]      SOPS 完整性审计（并行）
+    │
+    └─► [STAGE 5: VM Tests]      QEMU 测试，按平面并行子矩阵（需 KVM）
+            ├── smoke / nixos / home-lib / integration
+    │
+    └─► [STAGE 6: Summary]       汇总报告（always）
+```
+
+自动化更新：每周日 `.github/workflows/update-flake.yml` 更新 flake inputs 并开 PR。
 
 ---
 
 ## 路线图
 
-- [ ] CI 全量 build 验证（nixos-rebuild dry-run in CI）
+- [x] CI 全量 build 验证（nmt-Plane + QEMU VM tests）
+- [x] NixOS 测试套件（78 checks，6 个测试平面）
+- [x] flake inputs 自动更新策略（定时 PR，每周日）
 - [ ] 第二台机器测试（验证跨机器可移植性）
-- [ ] NixOS 测试套件（关键路径自动化验证）
-- [ ] flake inputs 自动更新策略（定时 PR）
 - [ ] 惰性模块加载（提升大型配置求值速度）
 - [ ] 模块文档自动生成（从 Nix 模块 options 生成）
 

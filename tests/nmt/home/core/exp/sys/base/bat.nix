@@ -1,15 +1,18 @@
-# @path: ~/projects/configs/nix-config/tests/nmt/home/core/base/bat.nix
+# @path: ~/projects/configs/nix-config/tests/nmt/home/core/exp/sys/base/bat.nix
 # @author: redskaber
 # @datetime: 2026-05-11
-# @description: nmt::home::core::base::bat
-# @source: home/core/exp/sys/base/bat.nix
+# @description: nmt::home::core::exp::sys::base::bat
 #
 # nmt-Plane: dotfile content assertions (zero VM, pure eval)
 #
-# Asserts:
-#   - .config/bat/config exists
-#   - theme = "gruvbox-dark" written
-#   - pager value present
+# programs.bat writes .config/bat/config with lines like:
+#   --theme=gruvbox-dark
+#   --pager=less -CN
+#   --map-syntax=*.conf:TOML
+#
+# IMPORTANT: assertFileContains calls `grep -qF "$needle" "$file"`.
+# When needle = "--pager", grep receives "--pager" as a flag → error.
+# Fix: use needle "pager" (substring present in "--pager=less -CN").
 
 { lib, ... }:
 
@@ -41,12 +44,13 @@ lib.nmt.buildHomeManagerTest {
 
     "bat: theme written" = {
       path     = ".config/bat/config";
-      contains = [ "--theme=gruvbox-dark" ];
+      contains = [ "theme=gruvbox-dark" ];
     };
 
+    # needle "pager" avoids the "--" leading-dash grep-flag issue
     "bat: pager written" = {
       path     = ".config/bat/config";
-      contains = [ "--pager" ];
+      contains = [ "pager" ];
     };
   };
 }
