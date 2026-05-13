@@ -272,16 +272,18 @@ nix-config/
 
 ## 核心机制
 
-### 1. 共享层 — 两阶段初始化
+### 1. 共享层 — 三阶段初始化
 
 `lib/shared` 解决了 Nix 中"配置依赖 pkgs，pkgs 依赖配置"的循环问题：
 
 ```
 阶段一 (shared/):  const(常量) + schema(结构定义) + enum(合法状态集合) + fn(工具函数)
                    ↓ 纯 Nix 表达式，不依赖 pkgs，可在求值阶段完整验证
-阶段二 (runtime/): user_shared(shared.nix 用户填充) → runtime_shared
+阶段二 (core_shared/): user_shared(shared.nix 用户填充) → core_shared
                    ↓ 注入: pkgs · upkgs · isNixOS · homeDir · orc · sopsFile · sopsUserPath · sopsPath
-fullShared = shared(阶段一) ∪ user_shared ∪ runtime(阶段二注入字段)
+阶段三 (runtime_shared): core_shared(runtime_core) → runtime_shared
+                   ↓ 注入: packages · overlays
+fullShared = shared(阶段一) ∪ user_shared ∪ runtime_core(阶段二注入) ∪ runtime(阶段三注入)
 ```
 
 **合并顺序（后者覆盖前者）：**
