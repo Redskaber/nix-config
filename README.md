@@ -228,7 +228,7 @@ nix-config/
 │   ├── nixos/              # 可复用 NixOS 模块（供外部 flake 引用，当前为占位符）
 │   └── home/               # 可复用 Home Manager 模块（供外部 flake 引用，当前为占位符）
 │
-├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches · unstable-packages
+├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（当前为占位符）
 │
 ├── tests/                  # 测试层（6 平面，79 checks）
@@ -288,9 +288,13 @@ fullShared = shared(阶段一) ∪ user_shared ∪ runtime(阶段二注入字段
 
 ```nix
 # lib/shared/runtime/default.nix
-runtime_shared = shared // user_shared // {
+core_shared = shared // user_shared // {
   inherit homeDir pkgs upkgs orc isNixOS sopsFile sopsPath sopsUserPath;
   _user_shared = user_shared;  # 原始快照，调试用
+};
+runtime_shared = core_shared // {
+  packages = import "${core_shared.self}/pkgs" { inherit pkgs; };
+  overlays = import "${core_shared.self}/overlays" { shared = core_shared; };
 };
 ```
 
@@ -320,6 +324,8 @@ shared = import ./lib/shared {
 | `sopsPath`     | runtime 注入 | `rel → /run/secrets/<rel>`，普通 secret 运行时路径               |
 | `sopsUserPath` | runtime 注入 | `rel → /run/secrets-for-users/<rel>`，neededForUsers secret 路径 |
 | `_user_shared` | runtime 保留 | 原始 user_shared 快照（调试/内省用）                             |
+| `packages`     | runtime 注入 | `pkgs` 目录导入的自定义 derivation 集合                          |
+| `overlays`     | runtime 注入 | `overlays` 目录导入的 overlays (含 patches)                      |
 
 **工具函数（`shared.fn`）：**
 
