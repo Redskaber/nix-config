@@ -323,19 +323,6 @@ in
     '';
   };
 
-  home.activation.ensure_zsh_in_shells = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if [ -x ${zsh_path} ]; then
-      if ! grep -Fxq '${zsh_path}' /etc/shells; then
-        echo "⚠️ Zsh is installed but not in /etc/shells."
-        echo "   To use 'chsh -s ${zsh_path}', run the following as root:"
-        echo "     echo '${zsh_path}' | sudo tee -a /etc/shells"
-        echo ""
-      else
-        verboseEcho "'${zsh_path}' already present in /etc/shells"
-      fi
-    else
-      verboseEcho "Warning: ${zsh_path} not found - skipping /etc/shells check"
-    fi
-  '';
+
 }
 

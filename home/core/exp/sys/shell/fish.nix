@@ -93,20 +93,8 @@ in
   };
 
   # fish: /etc/shells (chsh)
-  home.activation.ensure_fish_in_shells = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if [ -x ${fish_path} ]; then
-      if ! grep -Fxq '${fish_path}' /etc/shells; then
-        echo "⚠️ Fish is installed but not in /etc/shells."
-        echo "   To use 'chsh -s ${fish_path}', run the following as root:"
-        echo "     echo '${fish_path}' | sudo tee -a /etc/shells"
-        echo ""
-      else
-        verboseEcho "'${fish_path}' already present in /etc/shells"
-      fi
-    else
-      verboseEcho "Warning: ${fish_path} not found - skipping /etc/shells check"
-    fi
-  '';
+
+
 }
 
 

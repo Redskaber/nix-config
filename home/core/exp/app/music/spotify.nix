@@ -127,16 +127,6 @@ in
     };
   };
 
-  # ===== 安全提示 (首次运行指南) =====
-  home.activation.spotifySetup = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if [ ! -f "${paths.spotifyCache}/credentials" ]; then
-      echo "Spotify setup required:"
-      echo "1. Set SPOTIFY_USERNAME/SPOTIFY_PASSWORD in your secret manager"
-      echo "2. Or run: ncspot to login interactively"
-      echo "   (credentials will be stored in system keyring)"
-    fi
-  '';
-
 
 }
 
