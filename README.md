@@ -177,6 +177,7 @@ nix-config/
 │   │   │   │   ├── im/         #   即时通讯：discord(vesktop) · qq · wechat
 │   │   │   │   ├── image/      #   图像：gimp · imagemagick · imv · ghostscript · mermaid-cli · tectonic
 │   │   │   │   ├── misc/       #   杂项：showmethekey
+│   │   │   │   ├── model/      #   建模：blender
 │   │   │   │   ├── music/      #   音乐：mpd · easyeffects · spotify · playerctld · cnmplayer
 │   │   │   │   ├── note/       #   笔记：obsidian
 │   │   │   │   ├── office/     #   办公：pandoc · pdf · wpsoffice · unoconv

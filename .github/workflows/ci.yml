@@ -420,7 +420,7 @@ jobs:
           | NixOS       | `nixos_`      | ✓    | 21            |
           | HM + Lib    | `home_` `lib_`| ✓    | 38            |
           | Integration | `integration_`| ✓    | 1             |
-          | **nmt**     | `nmt_`        | **✗**| **17**        |
+          | nmt         | `nmt_`        | ✗    |   17          |
 
           > nmt-Plane runs without QEMU — fastest feedback loop for HM module changes.
           EOF

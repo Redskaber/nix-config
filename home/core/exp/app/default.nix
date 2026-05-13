@@ -23,6 +23,7 @@
     ./im
     ./image
     ./misc
+    ./model
     ./music
     ./note
     ./office
