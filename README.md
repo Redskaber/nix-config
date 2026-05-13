@@ -558,7 +558,7 @@ secrets/plan/
 
 ### 5. 配置编排器 — orc（ConfigurationOrchestrator）
 
-`shared.orc` 是针对纯粹 config lib 的操作库，提供了 wallust 主题动态注入的核心机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出等）复制到相应的配置目录：
+`shared.orc` 是针对纯粹通用型 config lib 的操作库，提供了 config 的可筛选、编辑等能力；如：wallust 主题动态注入机制，用于在 Home Manager activation 阶段将动态生成的配色文件（wallust 输出等）复制到相应的配置目录：
 
 ```nix
 # 典型用法（以 waybar 为例）
