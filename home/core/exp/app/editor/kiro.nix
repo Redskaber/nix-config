@@ -4,7 +4,7 @@
 # @description: home::core::app::editor::kiro
 # - kiro    : IDE for Agentic AI workflows based on VS Code
 # - kiro-fhs: Wrapped variant of kiro which launches in a FHS compatible environment,
-#             should allow for easy usage of extensions without nix-specific modifications
+#             should allow for easy usage of extensions without nix-specific patches
 
 { inputs
 , shared

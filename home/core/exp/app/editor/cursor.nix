@@ -4,7 +4,7 @@
 # @description: home::core::exp::app::editor::cursor
 # - cursor  : AI-powered code editor built on vscode
 # - kiro-fhs: Wrapped variant of cursor which launches in a FHS compatible environment,
-#             should allow for easy usage of extensions without nix-specific modifications
+#             should allow for easy usage of extensions without nix-specific patches
 
 
 { inputs

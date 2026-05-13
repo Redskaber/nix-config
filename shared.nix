@@ -65,10 +65,31 @@
   };
 
   nixpkgs = {
-    overlays = [ ];
+    # You can add overlays here
+    overlays = [
+      # Add overlays your own flake exports (from overlays and pkgs dir):
+      # or `inputs.self.overlays.additions`
+      shared.self.overlays.additions
+      shared.self.overlays.patches
+
+      # You can also add overlays exported from other flakes:
+      # neovim-nightly-overlay.overlays.default
+
+      # Or define it inline, for example:
+      # (final: prev: {
+      #   helloworld-patched = final.helloworld.overrideAttrs (oldAttrs: {
+      #     patches = [ ./helloworld-to-helloworld-patched.patch ];
+      #   });
+      # })
+    ];
+    # Configure your nixpkgs instance
     config = {
+      # Disable if you don't want unfree packages
       allowUnfree = true;
-      permittedInsecurePackages = [ "python3.12-ecdsa-0.19.1" ];
+      # Unsafe pkgs
+      permittedInsecurePackages = [
+        "python3.12-ecdsa-0.19.1"  # python-renpy
+      ];
     };
   };
 }

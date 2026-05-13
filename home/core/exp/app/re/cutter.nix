@@ -2,6 +2,7 @@
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: home::core::exp::app::re::cutter
+# use `nixpkgs-unstable.overlays.patches.cutter_patched`
 
 { inputs
 , shared
@@ -10,18 +11,8 @@
 , pkgs
 , ...
 }:
-let
-  cutter-patched = shared.upkgs.cutter.overrideAttrs (old: {
-    postPatch = (old.postPatch or "") + ''
-      sed -i \
-        -e 's/\bSBK_CUTTERPLUGIN_IDX\b/SBK_CutterPlugin_IDX/g' \
-        -e 's/\bSBK_CUTTERPLUGINMETADATA_IDX\b/SBK_CutterPluginMetadata_IDX/g' \
-        src/plugins/PluginManager.cpp
-    '';
-  });
-in
 {
-  home.packages = [ cutter-patched ];
+  home.packages = with shared.upkgs; [ cutter_patched ];
 
 
 }

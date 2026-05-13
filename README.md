@@ -228,7 +228,7 @@ nix-config/
 │   ├── nixos/              # 可复用 NixOS 模块（供外部 flake 引用，当前为占位符）
 │   └── home/               # 可复用 Home Manager 模块（供外部 flake 引用，当前为占位符）
 │
-├── overlays/               # nixpkgs overlay：additions(pkgs/) · modifications · unstable-packages
+├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches · unstable-packages
 ├── pkgs/                   # 自定义 derivation（当前为占位符）
 │
 ├── tests/                  # 测试层（6 平面，79 checks）

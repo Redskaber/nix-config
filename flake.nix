@@ -198,9 +198,9 @@
 
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
-      packages = import ./pkgs pkgs;
-      # Your custom packages and modifications, exported as overlays
-      overlays = import ./overlays { inherit inputs; };
+      packages = shared.packages;
+      # Your custom packages and patches, exported as overlays
+      overlays = shared.overlays;
       # Formatter choices
       formatter.${shared.arch.tag} = pkgs.nixfmt;
 

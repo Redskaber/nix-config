@@ -38,13 +38,17 @@ let
   upkgs       = import nixpkgs-unstable pattrs;                                       # obj
   orc         = inputs.configuration-orchestrator.lib.${user_shared.arch.tag};        # obj
 
-  runtime_shared = shared // user_shared // {
+  core_shared = shared // user_shared // {
     inherit
       homeDir
       pkgs upkgs orc
       isNixOS
-      sopsFile sopsPath sopsUserPath;
+      sopsFile sopsPath sopsUserPath
+    ;
     _user_shared = user_shared;
   };
-
+  runtime_shared = core_shared // {
+    packages    = import "${core_shared.self}/pkgs" { inherit pkgs; };
+    overlays    = import "${core_shared.self}/overlays" { shared = core_shared; };
+  };
 in runtime_shared
