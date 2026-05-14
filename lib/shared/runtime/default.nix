@@ -13,6 +13,7 @@
 #   isNixOS     — bool: platform == nixos (used for conditional module loading)
 #   homeDir     — string: platform-aware home directory path
 #   orc         — configuration-orchestrator lib (wallust theme injection)
+#   pdshell     — pipeline-driven nix dev shell manager
 #   _user_shared — snapshot of raw user_shared before merge (debug/introspection)
 #
 # Merge order: shared (schema+enum) ← user_shared ← runtime fields
@@ -37,15 +38,17 @@ let
   pkgs        = import nixpkgs pattrs;                                                # obj
   upkgs       = import nixpkgs-unstable pattrs;                                       # obj
   orc         = inputs.configuration-orchestrator.lib.${user_shared.arch.tag};        # obj
+  pdshell     = inputs.pdshell.lib.${user_shared.arch.tag};                           # obj
 
   core_shared = shared // user_shared // {
     inherit
       homeDir
-      pkgs upkgs orc
+      pkgs upkgs orc pdshell
       isNixOS
       sopsFile sopsPath sopsUserPath
     ;
     _user_shared = user_shared;
+    inherit (pdshell) pdshells mkDevShell;
   };
   runtime_shared = core_shared // {
     packages    = import "${core_shared.self}/pkgs" { inherit pkgs; };

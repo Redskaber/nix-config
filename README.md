@@ -281,7 +281,7 @@ nix-config/
 阶段一 (shared/):  const(常量) + schema(结构定义) + enum(合法状态集合) + fn(工具函数)
                    ↓ 纯 Nix 表达式，不依赖 pkgs，可在求值阶段完整验证
 阶段二 (core_shared/): user_shared(shared.nix 用户填充) → core_shared
-                   ↓ 注入: pkgs · upkgs · isNixOS · homeDir · orc · sopsFile · sopsUserPath · sopsPath
+                   ↓ 注入: pkgs · upkgs · isNixOS · homeDir · orc · sopsFile · sopsUserPath · sopsPath · pdshell · pdshells · mkDevShell
 阶段二 (runtime_shared): core_shared(runtime_core) → runtime_shared
                    ↓ 注入: packages · overlays
 fullShared = shared(阶段一) ∪ user_shared ∪ runtime_core(阶段二注入) ∪ runtime(阶段二注入)
@@ -292,12 +292,18 @@ fullShared = shared(阶段一) ∪ user_shared ∪ runtime_core(阶段二注入)
 ```nix
 # lib/shared/runtime/default.nix
 core_shared = shared // user_shared // {
-  inherit homeDir pkgs upkgs orc isNixOS sopsFile sopsPath sopsUserPath;
-  _user_shared = user_shared;  # 原始快照，调试用
+  inherit
+    homeDir
+    pkgs upkgs orc pdshell
+    isNixOS
+    sopsFile sopsPath sopsUserPath
+  ;
+  _user_shared = user_shared; # 原始快照，调试使用
+  inherit (pdshell) pdshells mkDevShell;
 };
 runtime_shared = core_shared // {
-  packages = import "${core_shared.self}/pkgs" { inherit pkgs; };
-  overlays = import "${core_shared.self}/overlays" { shared = core_shared; };
+  packages    = import "${core_shared.self}/pkgs" { inherit pkgs; };
+  overlays    = import "${core_shared.self}/overlays" { shared = core_shared; };
 };
 ```
 
@@ -323,6 +329,9 @@ shared = import ./lib/shared {
 | `isNixOS`      | runtime 计算 | `platform == nixos`，用于条件模块加载                            |
 | `homeDir`      | runtime 计算 | 平台感知的 home 目录（Linux: `/home/<u>`，macOS: `/Users/<u>`）  |
 | `orc`          | runtime 注入 | configuration-orchestrator lib（wallust 主题注入）               |
+| `pdshell`      | runtime 注入 | pdshell 管道流开发环境构建工具                                   |
+| `pdshells`     | runtime 注入 | pdshell.pdshells 的函数别名                                      |
+| `mkDevShell`   | runtime 注入 | pdshell.mkDevShell 的函数别名                                    |
 | `sopsFile`     | runtime 注入 | `rel → store path`，从 secret REL 推导加密文件路径               |
 | `sopsPath`     | runtime 注入 | `rel → /run/secrets/<rel>`，普通 secret 运行时路径               |
 | `sopsUserPath` | runtime 注入 | `rel → /run/secrets-for-users/<rel>`，neededForUsers secret 路径 |

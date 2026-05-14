@@ -212,7 +212,7 @@
       home = import ./export/home;
 
       # devShells loader
-      devShells.${shared.arch.tag} = import inputs.pdshell.pdshells { inherit pkgs inputs shared devDir; };
+      devShells.${shared.arch.tag} = shared.pdshells { inherit pkgs inputs shared devDir; };
 
       # NixOS configuration entrypoint
       # First used(root): 'nixos-install --flake <flake_path>#your-hostname switch'
