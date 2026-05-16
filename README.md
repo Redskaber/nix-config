@@ -183,7 +183,7 @@ nix-config/
 │   │   │   │   ├── office/     #   办公：pandoc · pdf · wpsoffice · unoconv
 │   │   │   │   ├── re/         #   逆向：ghidra · imhex · cutter · pince · scanmem
 │   │   │   │   ├── terminal/   #   终端：wezterm · kitty
-│   │   │   │   └── video/      #   视频：obs-studio
+│   │   │   │   └── video/      #   视频：kazumi · obs-studio
 │   │   │   └── sys/        # 系统工具：
 │   │   │       ├── ai/         #   AI CLI：claude-code · opencode · gemini-cli · kiro-cli · cursor-cli
 │   │   │       ├── base/       #   基础 CLI：git · fzf · bat · eza · fd · ripgrep · zoxide · yazi
@@ -241,7 +241,7 @@ nix-config/
 │   ├── integration/        # Plane 4: Integration-Plane（NixOS + HM 联合）
 │   └── nmt/                # Plane 5: nmt-Plane（零 VM，纯 eval，dotfile 断言）
 │       ├── default.nix     # buildHomeManagerTest 实现 + 注册表
-│       └── home/…          # 测试文件（lib.nmt.buildHomeManagerTest）
+│       └── home/           # 测试文件（lib.nmt.buildHomeManagerTest）
 │
 ├── scripts/
 │   └── just/               # justfile 子模块（单一职责分层）
@@ -259,7 +259,7 @@ nix-config/
 │       ├── shared.nix.tmpl # 策略层模板（__USERNAME__ 占位符；提交到 Git）
 │       └── sops/           # SOPS secret YAML 模板（镜像路径层级结构）
 │           ├── sops-rules.yaml.tmpl
-│           └── nixos/…     # 模板 YAML 文件（__USERNAME__ 占位符）
+│           └── nixos/      # 模板 YAML 文件（__USERNAME__ 占位符）
 │
 ├── .github/
 │   └── workflows/

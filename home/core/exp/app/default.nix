@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/default.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/default.nix
 # @author: redskaber
 # @datetime: 2026-03-04
-# @description: home::core::app::default
+# @description: home::core::exp::app::default
 
 
 

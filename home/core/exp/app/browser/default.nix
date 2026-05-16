@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/browser/default.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/browser/default.nix
 # @author: redskaber
-# @datetime: 2026-04-18
-# @description: home::core::app::browser::default
+# @datetime: 2026-05-15
+# @description: home::core::exp::app::browser::default
 
 { inputs
 , shared

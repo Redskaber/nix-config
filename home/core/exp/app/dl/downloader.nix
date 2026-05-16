@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/downloader.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/downloader.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::app::downloader
+# @description: home::core::exp::app::downloader
 
 
 { inputs

@@ -1,4 +1,4 @@
-# @path: ~/projects/configs/nix-config/home/core/app/wechat.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/wechat.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 

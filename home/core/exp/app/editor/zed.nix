@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/editor/zed.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/editor/zed.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::app::editor::zed
+# @description: home::core::exp::app::editor::zed
 
 { inputs
 , shared

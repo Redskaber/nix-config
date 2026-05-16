@@ -1,4 +1,4 @@
-# @path: ~/projects/configs/nix-config/home/core/app/wezterm.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/wezterm.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.wezterm.enable

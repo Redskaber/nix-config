@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/img/gimp.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/img/gimp.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::app::img::gimp
+# @description: home::core::exp::app::img::gimp
 # - open source image edit
 
 

@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/kitty.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/kitty.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::app::kitty
+# @description: home::core::exp::app::kitty
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.kitty.enable
 
 

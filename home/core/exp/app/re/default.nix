@@ -13,6 +13,7 @@
 {
 
   imports = [
+    ./avalonia-ilspy.nix
     ./cutter.nix
     ./ghidra.nix
     ./imhex.nix

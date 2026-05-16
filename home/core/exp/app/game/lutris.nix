@@ -1,4 +1,4 @@
-# @path: ~/projects/configs/nix-config/home/core/app/lutris.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/lutris.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @discription: home::core::app:lutris

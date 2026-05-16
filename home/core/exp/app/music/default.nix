@@ -1,8 +1,8 @@
-# @path: ~/projects/configs/nix-config/home/core/app/music.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/music.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
-# @derivation: home::core::app::music
+# @derivation: home::core::exp::app::music
 # @description: 统一音乐生态系统配置 (MPD + ncurses客户端 + 音频增强)
 #
 # ========================================================================

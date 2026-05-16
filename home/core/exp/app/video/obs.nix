@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/obs.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/obs.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::app::obs
+# @description: home::core::exp::app::obs
 
 { inputs
 , shared

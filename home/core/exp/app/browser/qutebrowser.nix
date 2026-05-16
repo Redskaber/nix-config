@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/browser/qutebrowser.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/browser/qutebrowser.nix
 # @author: redskaber
 # @datetime: 2026-04-18
-# @discription: home::core::app::browser::qutebrowser
+# @description: home::core::exp::app::browser::qutebrowser
 
 
 { inputs

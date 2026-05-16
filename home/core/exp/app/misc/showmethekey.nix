@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/showmethekey.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/showmethekey.nix
 # @author: redskaber
 # @datetime: 2026-04-22
-# @discription: home::core::app::showmethekey
+# @discription: home::core::exp::app::showmethekey
 
 
 { inputs

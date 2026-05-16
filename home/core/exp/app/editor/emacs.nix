@@ -1,7 +1,8 @@
-# @path: ~/projects/configs/nix-config/home/core/app/editor/emacs.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/editor/emacs.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml#opt-programs.emacs.enable
+# @description: home::core::exp::app::editor::emacs
 
 
 { inputs

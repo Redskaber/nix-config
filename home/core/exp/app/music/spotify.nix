@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/app/music/spotify.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/music/spotify.nix
 # @author: redskaber
 # @datetime: 2026-02-14
-# @description: home::core::app::music::spotify
+# @description: home::core::exp::app::music::spotify
 
 { inputs
 , shared
