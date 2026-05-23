@@ -889,11 +889,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779529845,
-        "narHash": "sha256-dapbGu4iZvbUDlQlL0CGY/m3GmImT0rPHEYBcwqOs2Y=",
+        "lastModified": 1779531731,
+        "narHash": "sha256-u847p05G/t7Bh3gsjuK+yjaNhNs5QHcphFZDjuyAdUI=",
         "owner": "Redskaber",
         "repo": "pdshell",
-        "rev": "9dfe54b94c3acaa288517d0c26e65701c41993fe",
+        "rev": "339595700a5c655c8e2f4d87161184fa911feee8",
         "type": "github"
       },
       "original": {
