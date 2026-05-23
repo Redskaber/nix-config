@@ -14,8 +14,11 @@
 {
 
   imports = [
+    ./ani-cli.nix
+    # ./animeko.nix
     ./kazumi.nix
     ./obs.nix
+    ./viu.nix
   ];
 
 

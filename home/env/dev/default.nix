@@ -96,7 +96,29 @@
     '';
 
   };
+  
+  # os dev
+  day30os = {
+    shell = "zsh";
+    combinFrom = [
+      dev.c
+    ];
+    buildInputs = with shared.upkgs; [ qemu_full nasm ];
+    nativeBuildInputs = with pkgs; [ ];
 
+    preInputsHook = ''
+      echo "[preInputsHook]: 30day make os shell!"
+    '';
+    postInputsHook = ''
+      echo "[postInputsHook]: 30day make os shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: 30day make os shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: 30day make os shell!"
+    '';
+  };
 
 }
 

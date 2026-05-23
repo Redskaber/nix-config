@@ -28,6 +28,7 @@
     ./note
     ./office
     ./re
+    ./reader
     ./terminal
     ./video
   ];
