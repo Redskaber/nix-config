@@ -8,6 +8,7 @@ result
 !.sops.yaml
 !.husky
 !.cz.toml
+!.envrc
 
 # custom library old impl
 lib/old
