@@ -27,7 +27,9 @@
     orca            # niri default window reader
     brightnessctl   # niri default light-changer
 
-    swww
+   (if shared.version == shared.enum.version.v25_11
+    then swww
+    else awww)
     swaybg
     yad
     hyprpicker

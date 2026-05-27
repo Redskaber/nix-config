@@ -70,7 +70,9 @@ in
     nwg-displays
     nwg-look
     waypaper
-    swww
+    (if shared.version == shared.enum.version.v25_11
+     then swww
+     else awww)
     swappy
     yad
     hyprpicker
