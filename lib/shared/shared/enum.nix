@@ -12,6 +12,7 @@ let
   editor    = enum "editor"   [ "vim" "nvim" "code" "zeditor" ];
   version   = enum "version"  {
     v25_11  = "25.11";
+    v26_05  = "26.05";
   };
   platform        = enum "platform"       [ "linux" "macos" "nixos" "wsl" ];
   arch            = enum "arch"           [ "aarch64-darwin" "aarch64-linux" "i686-linux" "x86_64-darwin" "x86_64-linux" ];

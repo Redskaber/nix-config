@@ -16,6 +16,7 @@
   imports = [
     ./baidupcs-go.nix
     ./downloader.nix
+    ./motrix-next.nix
     ./xunlei.nix
   ];
 

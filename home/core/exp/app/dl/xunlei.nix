@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/exp/app/xunlei.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/dl/xunlei.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::exp::app::xunlei
+# @description: home::core::exp::app::dl::xunlei
 
 
 { inputs

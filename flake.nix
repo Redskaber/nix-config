@@ -10,7 +10,7 @@
   # TODO: waiting design flake-dep-manager handle inputs
   inputs = {
     # Nixpkgs (url version)
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     # You can access packages and modules from different nixpkgs revs
     # at the same time. Here's an working example:
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -25,7 +25,7 @@
     nur.inputs.nixpkgs.follows = "nixpkgs";
 
     # Home Manager
-    home-manager.url = "github:nix-community/home-manager/release-25.11";
+    home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     # NMT — Nix Module Test framework (Plane 5 nmt-Plane)

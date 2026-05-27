@@ -5,6 +5,11 @@
 #
 # - echo "fd42:$(openssl rand -hex 2):$(openssl rand -hex 2):$(openssl rand -hex 2):$(openssl rand -hex 2)::1/64"
 #   fd42:8bdd:fa83:9703:95b2::1/64
+#
+# ## v26.05
+# Failed assertions:
+# - The option definition `programs.adb' in `/nix/store/b3qxh150g0ni445dyx40c249xmjyr230-source/nixos/core/base/virtual.nix' no longer has any effect; please remove it.
+# This option is no longer needed as systemd 258 handles uaccess rules automatically. Please add `pkgs.android-tools` to your system packages to get the adb command.
 
 
 { inputs
@@ -14,6 +19,14 @@
 , pkgs
 , ...
 }:
+let
+  exp = v:
+    if v == "25.11"
+    then {
+      programs.adb.enable = true;  # Android调试桥
+    }
+    else {};
+in 
 {
   # Add user to libvirtd incus-admin waydroid group
   # NOTE: These groups are created by their respective virtualisation services.
@@ -62,6 +75,9 @@
 
     #Incus
     # zfs
+
+    # v26.05
+    android-tools   # programs.adb remove
   ];
 
   # Manage the virtualisation services
@@ -223,7 +239,6 @@
     enable = true;
     package = pkgs.virt-manager;
   };
-  programs.adb.enable = true;  # Android调试桥
 
 
   # 网络配置 - 支持虚拟化网络
@@ -251,6 +266,6 @@
     '' else "";
 
 
-}
+} // exp shared.version.value
 
 

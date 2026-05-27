@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/core/exp/app/downloader.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/dl/downloader.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::core::exp::app::downloader
+# @description: home::core::exp::app::dl::downloader
 
 
 { inputs
@@ -25,6 +25,7 @@
     # - aria2c "magnet:?xt=urn:btih:..."
     # - aria2c https://example.com/file.zip
     aria2
+    # Deluge
   ];
 
 }

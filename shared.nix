@@ -18,7 +18,7 @@
   window-manager  = shared.enum.window-manager.hyprland;
   display-manager = shared.enum.display-manager.ly;
   pointer-cursor  = shared.enum.pointer-cursor.Bibata-Modern-Classic;
-  version = shared.enum.version.v25_11;
+  version = shared.enum.version.v26_05;
   editor  = shared.enum.editor.nvim;
   devDir  = "${shared.self}/home/env/dev";
   hostName = "nixos";
