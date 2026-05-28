@@ -51,9 +51,7 @@
     shell = "zsh";
     buildInputs = with pkgs; [
       nix                        # Core runtime (with flakes, experimental features)
-      nixfmt-rfc-style           # Formatter(RFC 109): Officially endorsed formatter
       statix                     # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
-      #alejandra                 # Format specifications
       deadnix                    # Dead-code-eliminayion: Removes unused definitions
       nil                        # Language-Server-Protocol: Fast, official LSP by NixOS team (supports flakes, overlays, etc.)
       nvd                        # Nix/NixOS package version diff tool

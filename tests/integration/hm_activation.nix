@@ -53,9 +53,18 @@ let
         programs = {
           git = {
             enable    = true;
-            userName  = "Integration Test";
-            userEmail = "ci@nix-config.test";
-            extraConfig.init.defaultBranch = "main";
+            settings = {
+              init = {
+                defaultBranch = shared.git.defaultBranch;
+              };
+              user = {
+                name = shared.git.name;
+                email = shared.git.email;
+              };
+              core.editor = shared.editor.tag;
+              pull.rebase = true;
+              push.autoSetupRemote = true;
+            };
           };
           zsh = {
             enable            = true;
