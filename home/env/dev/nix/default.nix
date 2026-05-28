@@ -47,6 +47,42 @@
 
   };
 
+  nonfmt = {
+    shell = "zsh";
+    buildInputs = with pkgs; [
+      nix                        # Core runtime (with flakes, experimental features)
+      nixfmt-rfc-style           # Formatter(RFC 109): Officially endorsed formatter
+      statix                     # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
+      #alejandra                 # Format specifications
+      deadnix                    # Dead-code-eliminayion: Removes unused definitions
+      nil                        # Language-Server-Protocol: Fast, official LSP by NixOS team (supports flakes, overlays, etc.)
+      nvd                        # Nix/NixOS package version diff tool
+
+      # Optional but useful:
+      # nix-output-monitor       # Visualize build outputs (great for CI/debugging)
+      nix-tree                   # Explore closure dependencies interactively
+    ];
+
+    nativeBuildInputs = with pkgs; [
+      # Usually empty for pure Nix dev
+    ];
+
+    preInputsHook = ''
+      echo "[preInputsHook]: nix shell!"
+    '';
+    postInputsHook = ''
+      echo "[postInputsHook]: nix shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: nix shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: nix shell!"
+    '';
+
+  };
+
+
   derivation-free-security = {
     shell = "zsh";
     combinFrom = [
@@ -75,5 +111,3 @@
   };
 
 }
-
-
