@@ -19,7 +19,7 @@
 # Backend: QEMU VM with home-manager NixOS module
 # Note: sops secrets NOT required; packages only.
 
-{ pkgs, lib, inputs, ... }:
+{ pkgs,inputs, shared, ... }:
 let
   testUser = "hmintegtest";
 
