@@ -18,6 +18,7 @@
     ./emacs.nix
     ./kiro.nix
     ./nvim.nix
+    ./trae.nix
     ./vscode.nix
     ./zed.nix
   ];

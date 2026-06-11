@@ -98,7 +98,7 @@
   };
   
   # os dev
-  day30os = {
+  makeOs = {
     shell = "zsh";
     combinFrom = [
       dev.c
