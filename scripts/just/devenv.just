@@ -126,7 +126,7 @@ devenv-use lang:
     if [[ -z "${U}" ]]; then
         echo "Error: could not parse username from {{SHARED_NIX_PATH}}" >&2; exit 1
     fi
-    cd "{{ROOT}}" && nix develop .#{{lang}} --profile "{{DEV_PROFILE_HOME}}/{{lang}}/${U}-{{lang}}"
+    cd "{{ROOT}}" && nix develop "{{DEV_PROFILE_HOME}}/{{lang}}/${U}-{{lang}}"
 
 # Enter an existing composite variant profile.
 devenv-use-from lang class:
@@ -136,7 +136,7 @@ devenv-use-from lang class:
     if [[ -z "${U}" ]]; then
         echo "Error: could not parse username from {{SHARED_NIX_PATH}}" >&2; exit 1
     fi
-    cd "{{ROOT}}" && nix develop .#{{lang}}-{{class}} --profile "{{DEV_PROFILE_HOME}}/{{lang}}/${U}-{{lang}}-{{class}}"
+    cd "{{ROOT}}" && nix develop "{{DEV_PROFILE_HOME}}/{{lang}}/${U}-{{lang}}-{{class}}"
 
 
 # --------------------------------------------------------------------------
