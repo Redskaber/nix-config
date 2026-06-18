@@ -21,6 +21,7 @@
     ./commitlint.nix
     ./curl.nix
     ./direnv.nix
+    ./dpkg.nix
     ./eza.nix
     ./fastfetch.nix
     ./fd.nix

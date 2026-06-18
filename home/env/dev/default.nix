@@ -103,7 +103,7 @@
     combinFrom = [
       dev.c
     ];
-    buildInputs = with shared.upkgs; [ zsh qemu_full nasm ];
+    buildInputs = with shared.upkgs; [ zsh qemu_full nasm  just ];
     nativeBuildInputs = with pkgs; [ ];
 
     preInputsHook = ''

@@ -867,11 +867,11 @@
     "nvim-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1780357607,
-        "narHash": "sha256-TGBTLvuBR4V6ALOMrtc9djbL6QVG/zXH2nbr8+IDle0=",
+        "lastModified": 1781824925,
+        "narHash": "sha256-vh5c/a95723FJ0N/taPVc2GOUBaVK7ZP5Wgiqmg6LEY=",
         "owner": "Redskaber",
         "repo": "nvim-config",
-        "rev": "25df0a993c08a566a5e084f9f9c06e6bdd34e3ae",
+        "rev": "dbbb1e562ca02a8187e53b335698b4b3f70b979e",
         "type": "github"
       },
       "original": {
@@ -1014,6 +1014,7 @@
         "wechat": "wechat",
         "wezterm-config": "wezterm-config",
         "wlogout-config": "wlogout-config",
+        "z-library": "z-library",
         "zen-browser": "zen-browser"
       }
     },
@@ -1308,6 +1309,26 @@
       "original": {
         "owner": "hyprwm",
         "repo": "xdg-desktop-portal-hyprland",
+        "type": "github"
+      }
+    },
+    "z-library": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781463820,
+        "narHash": "sha256-FtvDARY14WEUR5uIlG00BVaCOkBIj+twtNLwAnympRw=",
+        "owner": "Redskaber",
+        "repo": "z-library",
+        "rev": "a70781ec5913877638b4354051437850831064af",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Redskaber",
+        "repo": "z-library",
         "type": "github"
       }
     },

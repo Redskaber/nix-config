@@ -15,6 +15,7 @@
   imports = [
     ./koodo-reader.nix
     ./librum.nix
+    ./z-library.nix
   ];
 
 }

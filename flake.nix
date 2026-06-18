@@ -81,6 +81,10 @@
     trae.url = "github:Redskaber/trae";
     trae.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Z-library
+    z-library.url = "github:Redskaber/z-library";
+    z-library.inputs.nixpkgs.follows = "nixpkgs";
+
     # Commit Checker (husky, commitlint, commitizen)
     commit-config.url = "github:Redskaber/commit-config";
     commit-config.flake = false;

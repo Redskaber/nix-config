@@ -13,7 +13,7 @@
 , ...
 }:
 {
-  home.packages = with pkgs; [
+  home.packages = with shared.upkgs; [
     just
   ];
 
