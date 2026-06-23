@@ -145,7 +145,7 @@ devenv-use-from lang class:
 
 # List all registered devShells in the flake.
 devenv-show:
-    @cd {{ROOT}} && nix flake show | grep devShells -A21
+    @cd {{ROOT}} && nix flake show | grep devShells -A24
 
 # Tree-list all created profiles.
 devenv-list:

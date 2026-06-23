@@ -1,6 +1,6 @@
 # @path: ~/projects/configs/nix-config/home/env/dev/lua/default.nix
 # @author: redskaber
-# @datetime: 2026-05-05
+# @datetime: 2026-06-23
 # @description: home::env::dev::lua::default
 #
 # Modern Lua dev environment for Neovim/plugins/scripting
@@ -13,11 +13,12 @@
   default = {
     shell = "zsh";
     buildInputs = with pkgs; [
-      lua54Packages.lua     # Standard Lua 5.4 (for general scripting)
-      luajit                # LuaJIT 2.1 (Lua 5.1 compatible, used by Neovim)
-      luarocks              # Package manager (use with caution in Nix env)
-      lua-language-server   # LSP (sumneko) — supports both Lua 5.1 and 5.4
-      stylua                # Formatter (opinionated, fast, widely adopted)
+      lua55Packages.lua       # Standard Lua 5.5 (for general scripting)
+      lua55Packages.luacheck  # Lua Formatter
+      luajit                  # LuaJIT 2.1 (Lua 5.1 compatible, used by Neovim)
+      luarocks                # Package manager (use with caution in Nix env)
+      lua-language-server     # LSP (sumneko) — supports both Lua 5.1 and 5.4
+      stylua                  # Formatter (opinionated, fast, widely adopted)
     ];
 
     nativeBuildInputs = with pkgs; [
