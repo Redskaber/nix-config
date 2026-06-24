@@ -18,6 +18,7 @@
   default = {
     shell = "zsh";
     combinFrom = [
+      dev.asm
       dev.c
       dev.cpp
       dev.go
@@ -32,8 +33,8 @@
       dev.typescript
       dev.zig
     ];
-    # buildInputs = with pkgs; [];
-    # nativeBuildInputs = with pkgs; [];
+    buildInputs = with pkgs; [];
+    nativeBuildInputs = with pkgs; [];
     preInputsHook = ''
       echo "[preInputsHook]: default shell!"
     '';
@@ -56,8 +57,8 @@
       dev.cpp
       dev.python
     ];
-    # buildInputs = with pkgs; [];
-    # nativeBuildInputs = with pkgs; [];
+    buildInputs = with pkgs; [];
+    nativeBuildInputs = with pkgs; [];
     preInputsHook = ''
       echo "[preInputsHook]: cpython shell!"
     '';
@@ -96,14 +97,15 @@
     '';
 
   };
-  
+
   # os dev
   makeOs = {
     shell = "zsh";
     combinFrom = [
+      dev.asm
       dev.c
     ];
-    buildInputs = with shared.upkgs; [ zsh qemu_full nasm  just ];
+    buildInputs = with shared.upkgs; [ zsh qemu_full just ];
     nativeBuildInputs = with pkgs; [ ];
 
     preInputsHook = ''

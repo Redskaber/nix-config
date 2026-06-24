@@ -34,6 +34,7 @@ _DEV_U_CMD := "grep -oP 'username\\s*=\\s*\"\\K[^\"]+' " + SHARED_NIX_PATH
 
 # Create all known language envs and composite variants.
 devenv-create-all:
+    @just devenv-create       asm
     @just devenv-create       c
     @just devenv-create       cpp
     @just devenv-create       go
@@ -145,7 +146,7 @@ devenv-use-from lang class:
 
 # List all registered devShells in the flake.
 devenv-show:
-    @cd {{ROOT}} && nix flake show | grep devShells -A24
+    @cd {{ROOT}} && nix flake show | grep devShells -A25
 
 # Tree-list all created profiles.
 devenv-list:
