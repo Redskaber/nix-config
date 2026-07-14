@@ -171,19 +171,20 @@ nix-config/
 │   │   │   ├── app/        # GUI 应用：
 │   │   │   │   ├── browser/    #   浏览器：google-chrome · qutebrowser · w3m · zen-browser
 │   │   │   │   ├── dl/         #   下载：baidupcs-go · xunlei · downloader
-│   │   │   │   ├── editor/     #   编辑器：nvim · emacs · vscode · zed · kiro · cursor
+│   │   │   │   ├── editor/     #   编辑器：nvim · emacs · vscode · zed · kiro · cursor · trae
 │   │   │   │   ├── fm/         #   文件管理：nemo
 │   │   │   │   ├── game/       #   游戏：lutris · minecraft(prismlauncher)
 │   │   │   │   ├── im/         #   即时通讯：discord(vesktop) · qq · wechat
 │   │   │   │   ├── image/      #   图像：gimp · imagemagick · imv · ghostscript · mermaid-cli · tectonic
-│   │   │   │   ├── misc/       #   杂项：showmethekey
+│   │   │   │   ├── misc/       #   杂项：showmethekey · codex
 │   │   │   │   ├── model/      #   建模：blender
 │   │   │   │   ├── music/      #   音乐：mpd · easyeffects · spotify · playerctld · cnmplayer
 │   │   │   │   ├── note/       #   笔记：obsidian
 │   │   │   │   ├── office/     #   办公：pandoc · pdf · wpsoffice · unoconv
-│   │   │   │   ├── re/         #   逆向：ghidra · imhex · cutter · pince · scanmem
+│   │   │   │   ├── re/         #   逆向：ghidra · imhex · cutter · pince · scanmem · avalonia-ilspy
+│   │   │   │   ├── reader/     #   阅读：koodo-reader · librum · z-library
 │   │   │   │   ├── terminal/   #   终端：wezterm · kitty
-│   │   │   │   └── video/      #   视频：kazumi · obs-studio
+│   │   │   │   └── video/      #   视频：kazumi · obs-studio · ani-cli · animeko · viu
 │   │   │   └── sys/        # 系统工具：
 │   │   │       ├── ai/         #   AI CLI：claude-code · opencode · gemini-cli · kiro-cli · cursor-cli
 │   │   │       ├── base/       #   基础 CLI：git · fzf · bat · eza · fd · ripgrep · zoxide · yazi

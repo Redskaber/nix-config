@@ -14,6 +14,7 @@
 {
 
   imports = [
+    ./codex.nix
     ./showmethekey.nix
   ];
 
