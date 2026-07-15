@@ -25,7 +25,7 @@ lib.nmt.buildHomeManagerTest {
     home = {
       username      = "testuser";
       homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version}";
+      stateVersion  = "${shared.version.value}";
     };
 
     services.mako = {
