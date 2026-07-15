@@ -122,7 +122,7 @@ let
   # ── base module ───────────────────────────────────────────────────────
   baseModule = {
     _module.args.pkgs  = lib.mkForce scrubbedPkgs;
-    xdg.enable             = lib.mkDefault true;
+    xdg.enable             = lib.mkDefault true;  # use ~/.config/<xxx>
     home.username          = lib.mkDefault "testuser";
     home.homeDirectory     = lib.mkDefault "/home/testuser";
     home.stateVersion      = lib.mkDefault "${shared.version.value}";

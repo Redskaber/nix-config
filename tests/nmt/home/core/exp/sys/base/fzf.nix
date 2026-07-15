@@ -49,7 +49,7 @@ lib.nmt.buildHomeManagerTest {
     };
 
     "fzf: fzf key-bindings sourced in zshrc" = {
-      path  = ".zshrc";
+      path   = ".config/zsh/.zshrc";
       regex = "fzf";
     };
 
