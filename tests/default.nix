@@ -128,7 +128,6 @@ in
   # ── home/core/base ────────────────────────────────────────────────
   home_core_base_fonts                      = nixosTest ./home/core/base/fonts.nix;
   home_core_base_i18n                       = nixosTest ./home/core/base/i18n.nix;
-  home_core_base_portal                     = nixosTest ./home/core/base/portal.nix;
 
   # ── home/core/exp/app/editor ──────────────────────────────────────
   home_core_exp_app_editor_nvim             = nixosTest ./home/core/exp/app/editor/nvim.nix;
