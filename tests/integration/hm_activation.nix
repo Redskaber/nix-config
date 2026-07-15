@@ -154,9 +154,9 @@ in
         w = machine.succeed("which direnv").strip()
         assert "direnv" in w
 
-    with subtest("integration: python3.12 accessible"):
-        ver = machine.succeed("python3.12 --version 2>&1").strip()
-        assert "Python 3.12" in ver
+    with subtest("integration: python3.14 accessible"):
+        ver = machine.succeed("python3.14 --version 2>&1").strip()
+        assert "Python 3.14" in ver
 
     with subtest("integration: uv accessible"):
         ver = machine.succeed("uv --version 2>&1").strip()
