@@ -12,10 +12,11 @@
 , pkgs
 , ...
 }:
-let
-  zsh_path = "${config.home.profileDirectory}/bin/zsh";
-in
 {
+  home.sessionVariables = {
+    ZDOTDIR = "${config.home.homeDirectory}/.config/zsh";
+  };
+
   programs.zsh = {
     enable = true;
     enableCompletion = true;
