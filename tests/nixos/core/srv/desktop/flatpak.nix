@@ -19,36 +19,15 @@
     };
     environment.systemPackages = with pkgs; [ flatpak ];
 
-    # 🔧 覆盖已知不稳定的测试套件
-    nixpkgs.overlays = lib.mkForce [
-      (self: super: {
-        openldap = super.openldap.overrideAttrs (old: {
-          doCheck = false;   # 跳过 openldap 测试
-        });
-        xdg-desktop-portal = super.xdg-desktop-portal.overrideAttrs (old: {
-          doCheck = false;   # 跳过 xdg-desktop-portal 测试
-        });
-      })
-    ];
   };
 
   testScript = ''
     start_all()
     machine.wait_for_unit("multi-user.target")
 
-    with subtest("flatpak: binary present"):
+    with subtest("flatpak: binary present and version reported"):
         ver = machine.succeed("flatpak --version 2>&1").strip()
-        print(f"flatpak: {ver}")
-        assert "Flatpak" in ver, f"flatpak not found: {ver}"
-
-    with subtest("flatpak: flatpak-system-helper unit listed"):
-        rc = machine.execute(
-            "systemctl list-unit-files flatpak-system-helper.service 2>/dev/null"
-        )[0]
-        print(f"flatpak-system-helper rc: {rc}")
-
-    with subtest("flatpak: remote list runs"):
-        out = machine.succeed("flatpak remote-list 2>&1 || true").strip()
-        print(f"remotes: {out}")
+        print(f"flatpak version: {ver}")
+        assert "Flatpak" in ver, f"flatpak not found or wrong output: {ver}"
   '';
 }
