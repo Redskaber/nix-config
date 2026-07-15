@@ -5,7 +5,7 @@
 # @source: home/env/dev/python/default.nix
 #
 # Mirrors production buildInputs:
-#   python312, uv, ruff, pyright, nodejs_24 (pyright dep)
+#   python314, uv, ruff, pyright, nodejs_24 (pyright dep)
 # nativeBuildInputs: pkg-config
 # env: UV_PYTHON, UV_CACHE_DIR, PYTHONPYCACHEPREFIX
 
@@ -18,7 +18,7 @@
     virtualisation.memorySize = 768;
 
     environment.systemPackages = with pkgs; [
-      python312
+      python314 # FIXME: python312 doc err
       uv
       ruff
       pyright
@@ -31,13 +31,13 @@
     start_all()
     machine.wait_for_unit("multi-user.target")
 
-    with subtest("python_dev: python3.12 present"):
-        ver = machine.succeed("python3.12 --version 2>&1").strip()
+    with subtest("python_dev: python3.14 present"):
+        ver = machine.succeed("python3.14 --version 2>&1").strip()
         print(f"python: {ver}")
-        assert "Python 3.12" in ver, f"python3.12 not found: {ver}"
+        assert "Python 3.14" in ver, f"python3.14 not found: {ver}"
 
     with subtest("python_dev: basic eval 1+1"):
-        out = machine.succeed("python3.12 -c 'print(1+1)'").strip()
+        out = machine.succeed("python3.14 -c 'print(1+1)'").strip()
         assert out == "2", f"Expected 2, got: {out}"
 
     with subtest("python_dev: uv present"):

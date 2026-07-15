@@ -17,8 +17,11 @@
 
     environment.systemPackages = with pkgs; [
       nodejs_24
-      nodePackages.pnpm
-      nodePackages.yarn
+      # FIXME: pnpm, yarn from nodePackages move to header pattern
+      # nodePackages.pnpm
+      # nodePackages.yarn
+      pnpm
+      yarn
       typescript
       nodePackages.typescript-language-server
       tsx
