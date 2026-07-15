@@ -1,6 +1,7 @@
 # build about
 build
 result
+tmp
 
 # logger about
 *.log

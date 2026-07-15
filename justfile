@@ -21,6 +21,7 @@ import "scripts/just/hardware.just"
 import "scripts/just/flake.just"
 import "scripts/just/devenv.just"
 import "scripts/just/sops.just"
+import "scripts/just/dump.just"
 
 
 # ==============================================================================
