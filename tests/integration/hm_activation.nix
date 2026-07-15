@@ -45,7 +45,7 @@ let
             direnv
             git
             delta
-            (python312.override { buildDocs = false; })   # 禁用文档构建
+            (python312.overrideAttrs (old: { outputs = [ "out" ]; }))   # 禁用文档构建
             uv
           ];
         };
@@ -113,7 +113,7 @@ in
 
     environment.systemPackages = with pkgs; [
       git direnv ripgrep fd bat
-      (python312.override { buildDocs = false; })   # 禁用文档构建
+      (python312.overrideAttrs (old: { outputs = [ "out" ]; }))  # 禁用文档构建
       uv
       starship atuin tmux
     ];
