@@ -14,7 +14,7 @@
 # Strategy: test file existence only.
 # The shell init hook (written as plain text) is also verified.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "starship: dotfile content assertions";

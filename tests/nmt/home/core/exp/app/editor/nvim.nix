@@ -20,7 +20,7 @@
 # framework itself works.  The production neovim module is tested at the
 # NixOS/HM integration level (Plane 4), not here.
 
-{ lib, ... }:
+{ inputs, shared, lib, ... }:
 
 lib.nmt.buildHomeManagerTest {
   description = "nvim: home-manager neovim program assertions";

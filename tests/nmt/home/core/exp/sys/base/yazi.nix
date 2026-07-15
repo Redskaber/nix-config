@@ -22,7 +22,7 @@
 # The production plugin configuration (yaziPlugins.*) requires real package
 # closures → tested at Plane 2 (QEMU VM). Here we use a plain initLua only.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "yazi: config files present";

@@ -19,7 +19,7 @@
 #   - .gnupg/gpg-agent.conf exists
 #   - default-cache-ttl written
 
-{ lib, ... }:
+{ inputs, shared, lib, ... }:
 
 lib.nmt.buildHomeManagerTest {
   description = "gnupg: package-only module evaluates cleanly";

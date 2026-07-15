@@ -37,7 +37,7 @@
 #
 # We test fish integration via a home.file that writes a plain fish snippet.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "fish: config.fish content assertions";

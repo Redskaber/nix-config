@@ -19,7 +19,7 @@
 # In HM 25.11: programs.git.extraConfig accepts both attrset AND string.
 # String form is written directly as text — NOT via a derivation.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "git: dotfile content assertions";

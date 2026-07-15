@@ -12,7 +12,7 @@
 # programs.bash.enable = true is REQUIRED for HM to generate .bashrc.
 # programs.zsh.enable  = true is REQUIRED for HM to generate .zshrc.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "zoxide: shell integration hook injected";

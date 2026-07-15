@@ -14,7 +14,7 @@
 # When needle = "--pager", grep receives "--pager" as a flag → error.
 # Fix: use needle "pager" (substring present in "--pager=less -CN").
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "bat: config file content assertions";

@@ -13,7 +13,7 @@
 # Strategy: assert file exists (symlink), and assert shell integration
 # hook is injected into the shell rc (which uses plain text).
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "atuin: config.toml content assertions";

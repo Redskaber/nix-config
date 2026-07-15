@@ -17,7 +17,7 @@
 #   setw -g mode-keys vi
 # so contains = [ "mode-keys" ] is safe.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "tmux: config file content assertions";

@@ -192,7 +192,7 @@ let
     nmt.buildHomeManagerTest = buildHomeManagerTest;
   });
 
-  buildTest = path: import path { lib = libWithNmt; };
+  buildTest = path: import path { inherit inputs shared; lib = libWithNmt; };
 
 in
 {

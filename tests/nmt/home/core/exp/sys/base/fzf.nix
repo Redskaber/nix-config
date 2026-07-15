@@ -20,7 +20,7 @@
 # NOTE: assertFileContains needle must NOT start with "-".
 #       We test the option values without leading dash.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "fzf: shell integration written to zshrc";

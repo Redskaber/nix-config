@@ -12,7 +12,7 @@
 #   ignores = [ ".git/" "*.bak" ];
 # HM writes each entry on its own line.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "fd: ignore file written";

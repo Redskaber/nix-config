@@ -16,7 +16,7 @@
 #
 # The settings attrset is also set so the module evaluates correctly.
 
-{ lib, ... }:
+{ inputs, shared, lib, ... }:
 
 lib.nmt.buildHomeManagerTest {
   description = "mako: config file content assertions";

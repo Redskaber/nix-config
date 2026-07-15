@@ -18,7 +18,7 @@
 #   eval "$(direnv hook zsh)"    in .zshrc
 # grep -qF "direnv hook" matches both.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "direnv: dotfile content assertions";

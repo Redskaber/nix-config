@@ -19,7 +19,7 @@
 # source command line IS written in .zshrc as plain text (just with broken path).
 # grep -qF "zsh-autosuggestions" finds the scrubbed placeholder string.
 
-{ lib, ... }:
+{ inputs, shared, lib, ...}:
 
 lib.nmt.buildHomeManagerTest {
   description = "zsh: .zshrc content assertions";
