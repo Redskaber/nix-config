@@ -25,7 +25,7 @@
     environment.systemPackages = with pkgs; [ xdg-desktop-portal ];
 
     # 🔧 全局 overlay：禁用 xdg-desktop-portal 测试（CI 环境不稳定）
-    nixpkgs.overlays = [
+    nixpkgs.overlays = lib.mkForce [
       (self: super: {
         xdg-desktop-portal = super.xdg-desktop-portal.overrideAttrs (old: {
           doCheck = false;

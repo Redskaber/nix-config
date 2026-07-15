@@ -20,7 +20,7 @@
     environment.systemPackages = with pkgs; [ flatpak ];
 
     # 🔧 覆盖已知不稳定的测试套件
-    nixpkgs.overlays = [
+    nixpkgs.overlays = lib.mkForce [
       (self: super: {
         openldap = super.openldap.overrideAttrs (old: {
           doCheck = false;   # 跳过 openldap 测试
