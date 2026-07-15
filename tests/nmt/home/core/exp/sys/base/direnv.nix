@@ -53,7 +53,7 @@ lib.nmt.buildHomeManagerTest {
     };
 
     "direnv: zsh hook written" = {
-      path     = ".zshrc";
+      path     = ".config/zsh/.zshrc";
       contains = [ "direnv hook" ];
     };
   };

@@ -50,31 +50,31 @@ lib.nmt.buildHomeManagerTest {
 
   tests = {
     "zsh: .zshrc generated" = {
-      path   = ".zshrc";
+      path   = ".config/zsh/.zshrc";
       exists = true;
     };
 
     # HM writes HISTSIZE=N in the generated .zshrc
     "zsh: HISTSIZE present" = {
-      path     = ".zshrc";
+      path   = ".config/zsh/.zshrc";
       contains = [ "HISTSIZE" ];
     };
 
     # plugin source line contains scrubbed placeholder "@zsh-autosuggestions@"
     # grep -qF "zsh-autosuggestions" finds it
     "zsh: autosuggestions sourced" = {
-      path     = ".zshrc";
+      path   = ".config/zsh/.zshrc";
       contains = [ "zsh-autosuggestions" ];
     };
 
     "zsh: syntax-highlighting sourced" = {
-      path     = ".zshrc";
+      path   = ".config/zsh/.zshrc";
       contains = [ "zsh-syntax-highlighting" ];
     };
 
     # alias written as: vi='nvim' or vi = 'nvim'
     "zsh: nvim alias present" = {
-      path     = ".zshrc";
+      path   = ".config/zsh/.zshrc";
       contains = [ "nvim" ];
     };
   };

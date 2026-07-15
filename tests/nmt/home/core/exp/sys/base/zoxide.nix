@@ -46,7 +46,7 @@ lib.nmt.buildHomeManagerTest {
     };
 
     "zoxide: zoxide init in .zshrc" = {
-      path     = ".zshrc";
+      path     = ".config/zsh/.zshrc";
       contains = [ "zoxide init" ];
     };
   };

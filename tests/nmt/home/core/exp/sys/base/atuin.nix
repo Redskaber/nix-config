@@ -48,7 +48,7 @@ lib.nmt.buildHomeManagerTest {
 
     # shell integration: written as plain text in .zshrc
     "atuin: zsh integration present" = {
-      path     = ".zshrc";
+      path     = ".config/zsh/.zshrc";
       contains = [ "atuin" ];
     };
   };

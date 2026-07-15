@@ -44,7 +44,7 @@ lib.nmt.buildHomeManagerTest {
 
   tests = {
     "fzf: .zshrc exists" = {
-      path   = ".zshrc";
+      path   = ".config/zsh/.zshrc";
       exists = true;
     };
 
