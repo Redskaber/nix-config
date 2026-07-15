@@ -29,7 +29,7 @@ lib.nmt.buildHomeManagerTest {
     home = {
       username      = "testuser";
       homeDirectory = "/home/testuser";
-      stateVersion  = "25.11";
+      stateVersion  = "${shared.version}";
     };
 
     # Write a plain marker that proves the test module evaluates cleanly.

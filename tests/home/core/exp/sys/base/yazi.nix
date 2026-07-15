@@ -8,7 +8,7 @@
 
 { pkgs, lib, ... }:
 {
-  name = "home_core_exp_sys_misc";
+  name = "home_core_exp_sys_base_yazi";
   meta = { maintainers = [ "redskaber" ]; timeout = 120; };
 
   nodes.machine = {

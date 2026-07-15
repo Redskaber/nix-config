@@ -21,7 +21,7 @@ lib.nmt.buildHomeManagerTest {
     home = {
       username      = "testuser";
       homeDirectory = "/home/testuser";
-      stateVersion  = "25.11";
+      stateVersion  = "${shared.version}";
     };
 
     programs.bash.enable = true;

@@ -46,7 +46,7 @@ lib.nmt.buildHomeManagerTest {
     home = {
       username      = "testuser";
       homeDirectory = "/home/testuser";
-      stateVersion  = "25.11";
+      stateVersion  = "${shared.version}";
     };
 
     # Write a fish config fragment directly as a plain text file.

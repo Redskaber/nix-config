@@ -125,7 +125,7 @@ let
     xdg.enable             = lib.mkDefault true;
     home.username          = lib.mkDefault "testuser";
     home.homeDirectory     = lib.mkDefault "/home/testuser";
-    home.stateVersion      = lib.mkDefault "25.11";
+    home.stateVersion      = lib.mkDefault "${shared.version}";
     manual.manpages.enable = lib.mkDefault false;
   };
 
