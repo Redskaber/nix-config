@@ -17,6 +17,7 @@
     ./fonts.nix
     ./i18n.nix
     ./portal.nix
+    ./xdg.nix
   ];
 
 
