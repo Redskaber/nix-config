@@ -4,13 +4,26 @@
 # @description: tests::nixos::core::srv::desktop::flatpak
 # @source: nixos/core/srv/desktop/flatpak.nix
 
-{ pkgs, lib, ... }:
+{ shared, pkgs, ... }:
 {
   name = "nixos_core_srv_desktop_flatpak";
   meta = { maintainers = [ "redskaber" ]; timeout = 180; };
 
   nodes.machine = {
     virtualisation.memorySize = 768;
+    xdg.portal = {
+      enable = true;
+      wlr.enable = true;
+      xdgOpenUsePortal = true;
+
+      config = {
+        common.default = [ "gtk" ];
+        ${shared.window-manager.tag}.default = shared.window-manager.value.portal.value.default;
+      };
+
+      extraPortals = shared.window-manager.value.portal.value.extraPortals pkgs;
+
+    };
     services.flatpak.enable = true;
     environment.systemPackages = with pkgs; [ flatpak ];
 
