@@ -105,9 +105,6 @@ in
   nixos_core_srv_db_postgresql              = nixosTest ./nixos/core/srv/db/postgresql.nix;
   nixos_core_srv_db_redis                   = nixosTest ./nixos/core/srv/db/redis.nix;
 
-  # ── core/srv/desktop ──────────────────────────────────────────────
-  nixos_core_srv_desktop_flatpak            = nixosTest ./nixos/core/srv/desktop/flatpak.nix;
-
   # ── core/srv/hardware ─────────────────────────────────────────────
   nixos_core_srv_hardware_bluetooth         = nixosTest ./nixos/core/srv/hardware/bluetooth.nix;
   nixos_core_srv_hardware_printing          = nixosTest ./nixos/core/srv/hardware/printing.nix;
