@@ -186,7 +186,7 @@ nix-config/
 │   │   │   │   ├── terminal/   #   终端：wezterm · kitty
 │   │   │   │   └── video/      #   视频：kazumi · obs-studio · ani-cli · animeko · viu
 │   │   │   └── sys/        # 系统工具：
-│   │   │       ├── ai/         #   AI CLI：claude-code · opencode · gemini-cli · kiro-cli · cursor-cli
+│   │   │       ├── ai/         #   AI CLI：claude-code · opencode · gemini-cli · kiro-cli · cursor-cli · pi-coding-agent
 │   │   │       ├── base/       #   基础 CLI：git · fzf · bat · eza · fd · ripgrep · zoxide · yazi
 │   │   │       │               #   atuin · starship · direnv · tmux · rbw · just · jq · yq
 │   │   │       │               #   wl-clipboard · cliphist · wl-clip-persist · tealdeer · curl · wget

@@ -17,6 +17,7 @@
     ./gemini-cli.nix
     ./kiro-cli.nix
     ./opencode.nix
+    ./pi-coding-agent.nix
   ];
 
 
