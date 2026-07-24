@@ -128,13 +128,13 @@
       dev.c
       dev.rust
     ];
-    buildInputs = with shared.upkgs; [ zsh llvm ];
+    buildInputs = with shared.pkgs; [ zsh llvm ];
     nativeBuildInputs = with pkgs; [ ];
     preInputsHook = ''
       echo "[preInputsHook]: rust compiler dev shell!"
     '';
     postInputsHook = ''
-      # export PATH="${pkgs.llvm}/bin:$PATH"
+      export PATH="${pkgs.llvm}/bin:$PATH"
       export CXX="${pkgs.clang}/bin/clang++"
       export AR="${pkgs.llvm}/bin/llvm-ar"
       export RANLIB="${pkgs.llvm}/bin/llvm-ranlib"
