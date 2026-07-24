@@ -138,7 +138,7 @@
       export CXX="${pkgs.clang}/bin/clang++"
       export AR="${pkgs.llvm}/bin/llvm-ar"
       export RANLIB="${pkgs.llvm}/bin/llvm-ranlib"
-      export RUSTFLAGS="-C linker=${pkgs.lld}/bin/ld.lld $RUSTFLAGS"
+      export RUSTFLAGS="-C linker=${pkgs.clang}/bin/clang -C link-arg=-fuse-ld=lld $RUSTFLAGS"
       export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
       echo "[postInputsHook]: Rust + LLVM compiler dev shell!"
     '';
