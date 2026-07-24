@@ -122,6 +122,33 @@
     '';
   };
 
+  rs_compiler_dev = {
+    shell = "zsh";
+    combinFrom = [
+      dev.c
+      dev.rust
+    ];
+    buildInputs = with shared.upkgs; [ zsh llvm ];
+    nativeBuildInputs = with pkgs; [ ];
+    preInputsHook = ''
+      echo "[preInputsHook]: rust compiler dev shell!"
+    '';
+    postInputsHook = ''
+      # export PATH="${pkgs.llvm}/bin:$PATH"
+      export CXX="${pkgs.clang}/bin/clang++"
+      export AR="${pkgs.llvm}/bin/llvm-ar"
+      export RANLIB="${pkgs.llvm}/bin/llvm-ranlib"
+      export RUSTFLAGS="-C linker=${pkgs.lld}/bin/ld.lld $RUSTFLAGS"
+      export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
+      echo "[postInputsHook]: Rust + LLVM compiler dev shell!"
+    '';
+    preShellHook = ''
+      echo "[preShellHook]: Rust + LLVM compiler dev shell!"
+    '';
+    postShellHook = ''
+      echo "[postShellHook]: Rust + LLVM compiler dev shell!"
+    '';
+  };
 }
 
 
