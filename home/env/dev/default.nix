@@ -141,7 +141,7 @@
       export CXX="${shared.pkgs.llvmPackages_21.clang}/bin/clang++"
       export AR="${shared.pkgs.llvmPackages_21.llvm}/bin/llvm-ar"
       export RANLIB="${shared.pkgs.llvmPackages_21.llvm}/bin/llvm-ranlib"
-      export LLVM_SYS_211_PREFIX="${shared.pkgs.llvmPackages_21.llvm}"
+      export LLVM_SYS_211_PREFIX="${shared.pkgs.llvmPackages_21.llvm.dev}"
       export LLVM_LINK_SHARED=1
       export LD_LIBRARY_PATH="${shared.pkgs.llvmPackages_21.llvm.lib}/lib:$LD_LIBRARY_PATH"
       export RUSTFLAGS="-C linker=${shared.pkgs.llvmPackages_21.clang}/bin/clang -C link-arg=-fuse-ld=lld $RUSTFLAGS"
