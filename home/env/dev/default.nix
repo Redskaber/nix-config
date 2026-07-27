@@ -140,6 +140,9 @@
       export RANLIB="${pkgs.llvm}/bin/llvm-ranlib"
       export RUSTFLAGS="-C linker=${pkgs.clang}/bin/clang -C link-arg=-fuse-ld=lld $RUSTFLAGS"
       export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
+      export LLVM_SYS_211_PREFIX="${pkgs.llvm}"
+      export LLVM_LINK_SHARED=1
+      export LD_LIBRARY_PATH="${pkgs.llvm}/lib:$LD_LIBRARY_PATH"
       echo "[postInputsHook]: Rust + LLVM compiler dev shell!"
     '';
     preShellHook = ''
