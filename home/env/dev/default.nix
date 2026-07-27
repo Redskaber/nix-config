@@ -128,22 +128,24 @@
       dev.c
       dev.rust
     ];
-    buildInputs = with shared.pkgs; [ zsh llvm ];
+    buildInputs = with shared.pkgs; [
+      zsh
+      llvmPackages_21.llvm
+    ];
     nativeBuildInputs = with pkgs; [ ];
     preInputsHook = ''
       echo "[preInputsHook]: rust compiler dev shell!"
     '';
     postInputsHook = ''
-      export PATH="${pkgs.llvm}/bin:$PATH"
-      export CC="${pkgs.clang}/bin/clang"
-      export CXX="${pkgs.clang}/bin/clang++"
-      export AR="${pkgs.llvm}/bin/llvm-ar"
-      export RANLIB="${pkgs.llvm}/bin/llvm-ranlib"
-      export RUSTFLAGS="-C linker=${pkgs.clang}/bin/clang -C link-arg=-fuse-ld=lld $RUSTFLAGS"
-      export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
-      export LLVM_SYS_211_PREFIX="${pkgs.llvm}"
+      export CC="${shared.pkgs.llvmPackages_21.clang}/bin/clang"
+      export CXX="${shared.pkgs.llvmPackages_21.clang}/bin/clang++"
+      export AR="${shared.pkgs.llvmPackages_21.llvm}/bin/llvm-ar"
+      export RANLIB="${shared.pkgs.llvmPackages_21.llvm}/bin/llvm-ranlib"
+      export LLVM_SYS_211_PREFIX="${shared.pkgs.llvmPackages_21.llvm}"
       export LLVM_LINK_SHARED=1
-      export LD_LIBRARY_PATH="${pkgs.llvm}/lib:$LD_LIBRARY_PATH"
+      export LD_LIBRARY_PATH="${shared.pkgs.llvmPackages_21.llvm.lib}/lib:$LD_LIBRARY_PATH"
+      export RUSTFLAGS="-C linker=${shared.pkgs.llvmPackages_21.clang}/bin/clang -C link-arg=-fuse-ld=lld $RUSTFLAGS"
+      export RUST_SRC_PATH="${shared.pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
       echo "[postInputsHook]: Rust + LLVM compiler dev shell!"
     '';
     preShellHook = ''

@@ -12,13 +12,15 @@
 { pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.pkgs; [
       # gcc                     # GNU toolchain (fallback or specific needs)
-      clang                     # Primary C compiler (recommended)
-      clang-tools               # Provides clangd (LSP), clang-tidy, etc.
-      lld                       # Fast LLVM linker (optional but recommended)
-      lldb                      # LLVM debugger
       glibc                     # C Library (macos musl)
+
+      llvmPackages_21.clang     # Primary C compiler (recommended)
+      llvmPackages_21.clang-tools # Provides clangd (LSP), clang-tidy, etc.
+      llvmPackages_21.lld       # Fast LLVM linker (optional but recommended)
+      llvmPackages_21.lldb      # LLVM debugger
+      # llvmPackages_21.libc    # LLVM STD libc
 
       # Build & analysis
       bear                      # Generates compile_commands.json for LSP/tools
@@ -35,11 +37,11 @@
     '';
     postInputsHook = ''
       # Use Clang as default C compiler (modern, better diagnostics)
-      export CC="ccache  ${pkgs.clang}/bin/clang"
-      export C_INCLUDE_PATH="${pkgs.glibc.dev}/include"
+      export CC="ccache  ${shared.pkgs.llvmPackages_21.clang}/bin/clang"
+      export C_INCLUDE_PATH="${shared.pkgs.glibc.dev}/include"
 
       # Force use of lld linker
-      export LD=${pkgs.lld}/bin/ld.lld
+      export LD=${shared.pkgs.llvmPackages_21.lld}/bin/ld.lld
       export LDFLAGS="-fuse-ld=lld"
       export CLANG_COLOR_DIAGNOSTICS=always
       # Optional: Symbols

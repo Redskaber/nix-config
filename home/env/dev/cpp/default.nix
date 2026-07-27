@@ -19,14 +19,14 @@
 { pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.pkgs; [
       # Core LLVM toolchain (pure)
-      llvmPackages.libcxxClang  # Clang++ preconfigured wrapper
-      libcxx                    # provides libc++ and lib++abi
-      clang-tools               # clangd, clang-tidy, clang-format
-      lld                       # LLVM linker
-      lldb                      # LLVM debugger
-      llvm                      # opt, llc, etc.
+      llvmPackages_21.libcxxClang # Clang++ preconfigured wrapper
+      llvmPackages_21.libcxx      # provides libc++ and lib++abi
+      llvmPackages_21.clang-tools # clangd, clang-tidy, clang-format
+      llvmPackages_21.lld         # LLVM linker
+      llvmPackages_21.lldb        # LLVM debugger
+      llvmPackages_21.llvm        # opt, llc, etc.
 
       # Build & analysis
       bear                      # compile_commands.json
@@ -50,23 +50,23 @@
 
     postInputsHook = ''
       # Use the pure libc++-aware Clang wrapper as default compilers
-      export CC="ccache  ${pkgs.llvmPackages.libcxxClang}/bin/clang"
-      export CXX="ccache  ${pkgs.llvmPackages.libcxxClang}/bin/clang++"
+      export CC="ccache  ${shared.pkgs.llvmPackages_21.libcxxClang}/bin/clang"
+      export CXX="ccache  ${shared.pkgs.llvmPackages_21.libcxxClang}/bin/clang++"
 
       # Explicitly set include paths to prefer libc++ headers
       # Note: glibc C headers are still needed (libc is glibc), but C++ must be libc++
-      export C_INCLUDE_PATH="${pkgs.glibc.dev}/include"
-      export CPLUS_INCLUDE_PATH="${pkgs.libcxx.dev}/include/c++/v1:${pkgs.glibc.dev}/include"
+      export C_INCLUDE_PATH="${shared.pkgs.glibc.dev}/include"
+      export CPLUS_INCLUDE_PATH="${shared.pkgs.llvmPackages_21.libcxx.dev}/include/c++/v1:${shared.pkgs.glibc.dev}/include"
 
       # Force use of lld linker
-      export LD=${pkgs.lld}/bin/ld.lld
+      export LD=${shared.pkgs.llvmPackages_21.lld}/bin/ld.lld
       export LDFLAGS="-fuse-ld=lld"
 
       # Enable color diagnostics
       export CLANG_COLOR_DIAGNOSTICS=always
 
       # Runtime-Linker
-      export LD_LIBRARY_PATH="${pkgs.libcxx}/lib:$LD_LIBRARY_PATH"
+      export LD_LIBRARY_PATH="${shared.pkgs.llvmPackages_21.libcxx}/lib:$LD_LIBRARY_PATH"
 
       # Optional: uncomment to enforce C++20+ in all builds (use cautiously in generic env)
       # export CXXFLAGS="-std=c++20 -stdlib=libc++ -Wall -Wextra -Wpedantic -fdiagnostics-color=always"
