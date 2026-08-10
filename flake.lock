@@ -707,11 +707,11 @@
     },
     "nix-types_2": {
       "locked": {
-        "lastModified": 1774805688,
-        "narHash": "sha256-+rx2OtuPQI7A4SKot3M1j1GiiJzSWrkEB9V8s8zdEPA=",
+        "lastModified": 1786354024,
+        "narHash": "sha256-goQ/YaKRJfRmpklM2Sjx85ZtydDeJH84QZ91L96siqs=",
         "owner": "Redskaber",
         "repo": "nix-types",
-        "rev": "439e85b219441d3d3475b6cffd78061217175c89",
+        "rev": "815fc3fa921c243ec0dc9efd39201d05f0990a8a",
         "type": "github"
       },
       "original": {
@@ -867,11 +867,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779645488,
-        "narHash": "sha256-vdYSNqcB7B80N3lu+C+dgEhPnxj0zILuXpvHClrfFvY=",
+        "lastModified": 1786360084,
+        "narHash": "sha256-gH7YBmWRXw6MzZKqQ21ENnkzNH1bmfKgpUZiSuIBKwU=",
         "owner": "Redskaber",
         "repo": "pdshell",
-        "rev": "ab0d5671da5c19975bcba16ad702aeb2fc8de294",
+        "rev": "da51c57d9da1e8ee77c8a963e80ab0b3be8a2b76",
         "type": "github"
       },
       "original": {
