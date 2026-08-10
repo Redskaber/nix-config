@@ -7,7 +7,7 @@
 
 { inputs, ... }:
 let
-  inherit (inputs.nix-types.enum) enum;
+  inherit (inputs.nix-types.lib) enum;
 
   editor    = enum "editor"   [ "vim" "nvim" "code" "zeditor" ];
   version   = enum "version"  {

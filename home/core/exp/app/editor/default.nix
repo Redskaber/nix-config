@@ -20,6 +20,7 @@
     ./nvim.nix
     ./trae.nix
     ./vscode.nix
+    ./zcode.nix
     ./zed.nix
   ];
 

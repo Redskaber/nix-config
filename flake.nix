@@ -85,6 +85,10 @@
     z-library.url = "github:Redskaber/z-library";
     z-library.inputs.nixpkgs.follows = "nixpkgs";
 
+    # Zcode
+    zcode.url = "github:Redskaber/zcode";
+    zcode.inputs.nixpkgs.follows = "nixpkgs";
+
     # Commit Checker (husky, commitlint, commitizen)
     commit-config.url = "github:Redskaber/commit-config";
     commit-config.flake = false;

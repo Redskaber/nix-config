@@ -171,7 +171,7 @@ nix-config/
 │   │   │   ├── app/        # GUI 应用：
 │   │   │   │   ├── browser/    #   浏览器：google-chrome · qutebrowser · w3m · zen-browser
 │   │   │   │   ├── dl/         #   下载：baidupcs-go · xunlei · downloader
-│   │   │   │   ├── editor/     #   编辑器：nvim · emacs · vscode · zed · kiro · cursor · trae
+│   │   │   │   ├── editor/     #   编辑器：nvim · emacs · vscode · zed · kiro · cursor · trae · zcode (AI)
 │   │   │   │   ├── fm/         #   文件管理：nemo
 │   │   │   │   ├── game/       #   游戏：lutris · minecraft(prismlauncher)
 │   │   │   │   ├── im/         #   即时通讯：discord(vesktop) · qq · wechat

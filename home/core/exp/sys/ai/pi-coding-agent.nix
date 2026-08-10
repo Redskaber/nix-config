@@ -11,7 +11,7 @@
 , ...
 }:
 {
-  home.packages = with shared.unpkgs; [ pi-coding-agent ];
+  home.packages = with shared.upkgs; [ pi-coding-agent ];
 
 }
 
