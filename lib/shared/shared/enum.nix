@@ -93,7 +93,7 @@ let
         postgresql = { install = true;  autostart = false; };
         mysql      = { install = true;  autostart = false; };
         redis      = { install = true;  autostart = false; };
-        mongodb    = { install = false; autostart = false; };
+        mongodb    = { install = true;  autostart = false; };
       };
       virt = {
         libvirtd = { install = true;  autostart = false; };

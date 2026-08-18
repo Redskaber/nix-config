@@ -25,9 +25,9 @@ shared.schema.shared
   version = shared.enum.version.v26_05;
   editor  = shared.enum.editor.nvim;
   # Application sets (multi-select routing)
-  editor-set   = shared.enum.editor-set.minimal;
-  terminal-set = shared.enum.terminal-set.kitty-only;
-  browser-set  = shared.enum.browser-set.chrome-only;
+  editor-set   = shared.enum.editor-set.full;
+  terminal-set = shared.enum.terminal-set.both;
+  browser-set  = shared.enum.browser-set.all;
   # Service profile: controls install vs autostart
   service-profile = shared.enum.service-profile.dev-on-demand;
   devDir  = "${shared.self}/home/env/dev";
