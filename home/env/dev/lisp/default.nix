@@ -10,7 +10,7 @@
 
 { pkgs, inputs, shared, dev, ... }: {
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
 
     buildInputs = with shared.upkgs; [
       # core common lisp runtime

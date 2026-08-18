@@ -1,6 +1,7 @@
 # @path: ~/projects/configs/nix-config/export/home/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: export::home — placeholder for reusable Home Manager modules
 
 
 # Add your reusable home-manager modules to this directory, on their own file (https://nixos.wiki/wiki/Module).

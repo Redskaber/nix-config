@@ -63,7 +63,7 @@
   environment.systemPackages = with pkgs; [ postgresql ];
 
   services.postgresql = {
-    enable = true;
+    enable = shared.services.db.postgresql.install;
     package = pkgs.postgresql;
     dataDir = "/var/lib/postgresql/${config.services.postgresql.package.psqlSchema}";
     enableJIT = true;     # 性能优化
@@ -117,9 +117,9 @@
     # @note: 规则顺序很重要！先匹配的规则生效
     authentication = lib.mkOverride 10 ''
       # TYPE  DATABASE        USER            ADDRESS                 METHOD
-      # 本地 peer 认证（无密码）
+      # peer （password）
       local   all             all                                     peer
-      # 本地 IPv4/IPv6 连接（使用 scram-sha-256 密码认证）
+      # IPv4/IPv6 （use scram-sha-256 password）
       host    all             all             127.0.0.1/32            scram-sha-256
       host    all             all             ::1/128                 scram-sha-256
     '';
@@ -127,14 +127,14 @@
     # 初始化脚本：创建应用用户和数据库（幂等）
     # @note: 此脚本仅在首次初始化时执行
     initialScript = pkgs.writeText "app-init.sql" ''
-      -- 创建应用用户
+      -- create application user
       DO $$ BEGIN
         CREATE USER ${shared.user.username} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
       EXCEPTION WHEN duplicate_object THEN
         RAISE NOTICE 'User ${shared.user.username} exists (password managed externally)';
       END $$;
 
-      -- 创建数据库
+      -- createdatabase
       CREATE DATABASE dev
         OWNER ${shared.user.username}
         ENCODING 'UTF8'
@@ -144,23 +144,23 @@
 
       \c dev
 
-      -- 启用内置扩展
-      CREATE EXTENSION IF NOT EXISTS pg_trgm;     -- 模糊搜索
-      CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- UUID 生成
-      CREATE EXTENSION IF NOT EXISTS vector;      -- 向量搜索 (pgvector)
+      -- enableinside
+      CREATE EXTENSION IF NOT EXISTS pg_trgm; -- 
+      CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- UUID generate
+      CREATE EXTENSION IF NOT EXISTS vector; -- (pgvector)
 
-      -- 授予权限
+      -- grant privileges
       GRANT ALL PRIVILEGES ON SCHEMA public TO ${shared.user.username};
 
-      -- 创建示例表
+      -- createexample table
       CREATE TABLE IF NOT EXISTS health_check (
         id SERIAL PRIMARY KEY,
         status TEXT NOT NULL DEFAULT 'ok',
         checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
-      INSERT INTO health_check (status) VALUES ('NixOS PostgreSQL 配置成功!');
+      INSERT INTO health_check (status) VALUES ('NixOS PostgreSQL configsuccess!');
 
-      -- 验证
+      -- verify
       SELECT 'Initialization completed successfully!' AS status;
     '';
 
@@ -224,7 +224,7 @@
     description = "Inject PostgreSQL user passwords from sops secrets";
     after = [ "postgresql.service" ];
     requires = [ "postgresql.service" ];
-    wantedBy = [ "multi-user.target" ];
+    wantedBy = lib.mkForce (lib.optional shared.services.db.postgresql.autostart "multi-user.target");
 
     path = with pkgs; [ postgresql ];
     script = ''

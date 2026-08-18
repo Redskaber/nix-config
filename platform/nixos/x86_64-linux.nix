@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/host/wsl/default.nix
+# @path: ~/projects/configs/nix-config/host/nixos/x86_64-linux.nix
 # @author: redskaber
-# @datetime: 2025-12-12
-# @description: host::wsl::default
+# @datetime: 2026-03-07
+# @description: host::nixos::x86_64-linux
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
 
 
@@ -15,21 +15,10 @@
 , ...
 }:
 {
-
-  # linux non-nixos environment inject
-  targets.genericLinux = {
-    enable = true;
-    nixGL = {
-      packages = inputs.nixgl.packages;
-      defaultWrapper = "mesa";
-      offloadWrapper = "mesaPrime";
-    };
-  };
-
   home = {
     username = shared.user.username;
     homeDirectory = shared.homeDir;
-    stateVersion = shared.version.value;
+    stateVersion = shared.version.value.stateVersion;
   };
   programs.home-manager.enable = true;
 
@@ -48,6 +37,7 @@
 
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
+
 
 }
 

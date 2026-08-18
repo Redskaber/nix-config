@@ -14,10 +14,8 @@
 }:
 {
 
-  programs.direnv = {
+  programs.direnv = shared.shellIntegrations // {
     enable = true;
-    enableBashIntegration = true;
-    enableZshIntegration = true;
     # enableFishIntegration = true;   # (readonly)
     # config = {};
     nix-direnv.enable = true;

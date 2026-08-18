@@ -12,7 +12,7 @@
 
 { pkgs, inputs, shared, dev, ... }: {
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     # Core Rust toolchain (stable, from nixpkgs)
     buildInputs = with shared.upkgs; [
       rustc                # Rust compiler

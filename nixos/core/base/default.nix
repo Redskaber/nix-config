@@ -15,7 +15,7 @@
   imports = [
     ./bluetooth.nix
     ./boot.nix
-    ./hardware.nix
+    # hardware.nix moved to hosts/${shared.hostName}/hardware.nix (multi-host support)
     ./i18n.nix
     ./memory.nix
     ./network.nix

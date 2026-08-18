@@ -13,7 +13,7 @@
 
   # NIXPKGS_ALLOW_INSECURE=1 nix develop .#python-renpy --impure
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     # Core runtime & tools
     buildInputs = with shared.upkgs; [
       python314         # Stable, reproducible base interpreter

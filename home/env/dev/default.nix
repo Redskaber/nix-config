@@ -16,7 +16,7 @@
 
   # (readonly)
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     combinFrom = [
       dev.asm
       dev.c
@@ -51,7 +51,7 @@
 
   # (custom)
   cpython = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     combinFrom = [
       dev.c
       dev.cpp
@@ -74,7 +74,7 @@
   };
 
   godot = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     combinFrom = [
       dev.c
       dev.cpp
@@ -100,7 +100,7 @@
 
   # os dev
   makeOs = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     combinFrom = [
       dev.asm
       dev.c
@@ -123,7 +123,7 @@
   };
 
   rs_compiler_dev = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     combinFrom = [
       dev.c
       dev.rust

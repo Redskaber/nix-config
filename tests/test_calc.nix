@@ -17,10 +17,10 @@
 
     # wait graph loading
     machine.wait_for_unit("multi-user.target")
-    machine.screenshot("postboot")                    # 图形屏幕 tty1~7
+    machine.screenshot("postboot") # tty1~7
 
     with subtest("TEST::helloworld"):
-        msg = machine.succeed("echo 'hello, world!'") # 串口控制台 ttyS0
+        msg = machine.succeed("echo 'hello, world!'") # ttyS0
         print(f"echo output: {msg.strip()}")
         assert msg.strip() == "hello, world!", f"Unexpected: {msg}"
 

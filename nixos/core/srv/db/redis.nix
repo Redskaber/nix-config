@@ -22,7 +22,7 @@
     servers = {
       # full-name: redis + <-keyname>
       ${shared.user.username} = {
-        enable = true;
+        enable = shared.services.db.redis.install;
         port = 6379;
         bind = "127.0.0.1";
         user =  "redis-${shared.user.username}";
@@ -42,6 +42,8 @@
   };
 
 
+
+  # Control autostart: clear wantedBy when autostart=false (install but not autostart)
+  systemd.services."redis-${shared.user.username}".wantedBy =
+    lib.mkForce (lib.optional shared.services.db.redis.autostart "multi-user.target");
 }
-
-

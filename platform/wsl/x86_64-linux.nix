@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/host/nixos/x86_64-linux.nix
+# @path: ~/projects/configs/nix-config/platform/linux/x86_64-linux.nix
 # @author: redskaber
 # @datetime: 2026-03-07
-# @description: host::nixos::x86_64-linux
+# @description: host::linux::x86_64-linux
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
 
 
@@ -15,10 +15,20 @@
 , ...
 }:
 {
+  # linux non-nixos environment inject
+  targets.genericLinux = {
+    enable = true;
+    nixGL = {
+      packages = inputs.nixgl.packages;
+      defaultWrapper = "mesa";
+      offloadWrapper = "mesaPrime";
+    };
+  };
+
   home = {
     username = shared.user.username;
     homeDirectory = shared.homeDir;
-    stateVersion = shared.version.value;
+    stateVersion = shared.version.value.stateVersion;
   };
   programs.home-manager.enable = true;
 

@@ -3,14 +3,8 @@
 # @datetime: 2026-01-13
 # @description: nixos::wm::hyprland::plugins::default
 #
-## v26.05: 2026-05-26 00:23
-# error: undefined variable 'hyprscrolling'
-# at /home/kilig/projects/configs/nix-config/nixos/wm/hyprland/plugins/hyprscrolling.nix:16:5:
-#     15|   environment.systemPackages = with pkgs.hyprlandPlugins; [
-#     16|     hyprscrolling
-#       |     ^
-#     17|   ];
-#
+# Design: uses shared.tools.nix-types match on shared.version for exhaustiveness.
+# Adding a new version variant forces explicit handling here (no silent else).
 
 { inputs
 , shared
@@ -20,10 +14,8 @@
 , ...
 }:
 {
-
-  imports = if shared.version.value == "26.05" then [] else [ ./hyprscrolling.nix ];
-
-
+  imports = (shared.tools.nix-types.match shared.version) {
+    v25_11 = _: [ ./hyprscrolling.nix ];
+    v26_05 = _: [ ];
+  };
 }
-
-

@@ -11,7 +11,7 @@
 
 { pkgs, inputs, shared, dev, ... }: {
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       temurin-bin-21      # Eclipse Temurin JDK 21 (LTS, OpenJDK)
       maven               # Build tool

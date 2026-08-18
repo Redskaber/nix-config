@@ -11,7 +11,7 @@
 
 { pkgs, inputs, shared, dev, ... }: {
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       lua55Packages.lua       # Standard Lua 5.5 (for general scripting)
       lua55Packages.luacheck  # Lua Formatter

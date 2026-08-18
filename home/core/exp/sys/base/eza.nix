@@ -14,11 +14,8 @@
 }:
 {
 
-  programs.eza = {
+  programs.eza = shared.shellIntegrations // {
     enable = true;
-    enableBashIntegration = true;
-    enableFishIntegration = true;
-    enableZshIntegration = true;
   };
 }
 

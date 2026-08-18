@@ -24,9 +24,7 @@
   #   - wine-ver: wine --version
   home.packages = with pkgs; [
     lutris
-    (if shared.version == shared.enum.version.v25_11
-     then wineWowPackages.waylandFull
-     else wineWow64Packages.waylandFull)
+    (shared.version.value.wine pkgs)
   ];
 
   # Optional: auto create decktop icon

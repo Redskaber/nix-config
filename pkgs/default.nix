@@ -1,6 +1,7 @@
 # @path: ~/projects/configs/nix-config/pkgs/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: pkgs::default — custom packages (placeholder)
 
 
 # Custom packages, that can be defined similarly to ones from nixpkgs

@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/wm/hyprland/theme/wlogout.nix
+# @path: ~/projects/configs/nix-config/home/wm/niri/theme/wlogout.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @discription: home::wm::hyprland::theme::wlogout
+# @discription: home::wm::niri::theme::wlogout
 # - A graphical logout/shutdown menu tool designed specifically for
 #   Wayland desktop environments (such as Hyprland and Sway).
 

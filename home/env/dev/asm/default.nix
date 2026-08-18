@@ -10,7 +10,7 @@
 
 { pkgs, inputs, shared, dev, ... }: {
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       nasm                     # Netwide Assembler (primary assembler)
       nasmfmt                  # Netwide Assembler formatter

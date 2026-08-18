@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/wm/hyprland/theme/swaync.nix
+# @path: ~/projects/configs/nix-config/home/wm/niri/theme/swaync.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::wm::hyprland::theme::swaync
+# @description: home::wm::niri::theme::swaync
 # - swaynotificationcenter
 # - Notification Center and Notification Daemon for wayland
 

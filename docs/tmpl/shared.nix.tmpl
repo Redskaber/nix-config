@@ -10,7 +10,11 @@
 #   username appears only here; propagated to shared.nix via generation,
 #   never via sed in-place patch (mutation breaks declarative invariant).
 
-{ shared, inputs, ... }: shared.schema.shared
+{ shared, inputs, ... }:
+let
+  username = "__USERNAME__";
+in
+shared.schema.shared
 {
   arch  = shared.enum.arch.x86_64-linux;
   drive = shared.enum.drive-group.intel;
@@ -20,11 +24,15 @@
   pointer-cursor  = shared.enum.pointer-cursor.Bibata-Modern-Classic;
   version = shared.enum.version.v26_05;
   editor  = shared.enum.editor.nvim;
+  editor-set   = shared.enum.editor-set.minimal;
+  terminal-set = shared.enum.terminal-set.kitty-only;
+  browser-set  = shared.enum.browser-set.chrome-only;
+  service-profile = shared.enum.service-profile.dev-on-demand;
   devDir  = "${shared.self}/home/env/dev";
   hostName = "nixos";
 
   user = {
-    username = "__USERNAME__";
+    inherit username;
     shell = shared.enum.shell.zsh;
     openssh-authKeys = [ ];
   };
@@ -52,16 +60,21 @@
     extraLocales      = [ "zh_CN.UTF-8/UTF-8" ];
   };
 
+  # Network config (incus bridge, etc.)
+  network = {
+    incusIPv6 = "fd42:8bdd:fa83:9703:95b2::1/64";
+  };
+
   # sops age key paths derived from username (secrets paths follow username)
   secrets = {
-    sshKeyPaths = [ "/home/__USERNAME__/.ssh/id_ed25519_github" ];
-    nixos.core.base.user.password                 = "nixos/core/base/user/__USERNAME__/password";
-    nixos.core.base.nix.user.github.access-token  = "nixos/core/base/nix/users/__USERNAME__/github/access-token";
-    nixos.core.srv.db.mongodb.user.password       = "nixos/core/srv/db/mongodb/users/__USERNAME__/password";
+    sshKeyPaths = [ "/home/${username}/.ssh/id_ed25519_github" ];
+    nixos.core.base.user.password                 = "nixos/core/base/user/${username}/password";
+    nixos.core.base.nix.user.github.access-token  = "nixos/core/base/nix/users/${username}/github/access-token";
+    nixos.core.srv.db.mongodb.user.password       = "nixos/core/srv/db/mongodb/users/${username}/password";
     nixos.core.srv.db.mysql.root.password         = "nixos/core/srv/db/mysql/users/root/password";
-    nixos.core.srv.db.mysql.user.password         = "nixos/core/srv/db/mysql/users/__USERNAME__/password";
-    nixos.core.srv.db.postgresql.user.password    = "nixos/core/srv/db/postgresql/users/__USERNAME__/password";
-    nixos.core.srv.db.redis.user.password         = "nixos/core/srv/db/redis/users/redis-__USERNAME__/password";
+    nixos.core.srv.db.mysql.user.password         = "nixos/core/srv/db/mysql/users/${username}/password";
+    nixos.core.srv.db.postgresql.user.password    = "nixos/core/srv/db/postgresql/users/${username}/password";
+    nixos.core.srv.db.redis.user.password         = "nixos/core/srv/db/redis/users/redis-${username}/password";
   };
 
   nixpkgs = {
@@ -88,7 +101,7 @@
       allowUnfree = true;
       # Unsafe pkgs
       permittedInsecurePackages = [
-        # "python3.12-ecdsa-0.19.1"  # python-renpy
+        "python3.12-ecdsa-0.19.1"  # python-renpy
       ];
     };
   };

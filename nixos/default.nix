@@ -33,6 +33,8 @@
     ./wm
     # dispaly manager
     ./dm
+    # host-specific config (hardware.nix + overrides)
+    ../hosts/${shared.hostName}
 
   ];
 
@@ -48,7 +50,7 @@
   # accidentally delete configuration.nix.
   # system.copySystemConfiguration = true;
 
-  system.stateVersion = shared.version.value;
+  system.stateVersion = shared.version.value.stateVersion;
 
 
 }

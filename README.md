@@ -65,13 +65,13 @@
            │                              │
 ┌──────────▼──────────┐       ┌───────────▼──────────────────┐
 │  SYSTEM LAYER       │       │  USER LAYER                  │
-│  nixos/             │       │  home/ + host/               │
+│  nixos/             │       │  home/ + platform/           │
 │  硬件·驱动·安全·服务│       │  应用·开发环境·窗口管理器    │
 │  dm/ · wm/          │       │  core/ · env/ · wm/          │
 └──────────┬──────────┘       └───────────┬──────────────────┘
            │                              │
            │         ┌────────────────────▼──────────────────┐
-           │         │  HOST DISPATCH LAYER  ·  host/        │
+           │         │  HOST DISPATCH LAYER  ·  platform/    │
            │         │  平台入口：nixos · linux · macos · wsl│
            │         │  arch 路由 · nixGL 注入 · HM 激活点   │
            │         └────────────────────┬──────────────────┘
@@ -90,7 +90,8 @@
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
 │  TEST LAYER  ·  tests/                                      │
-│  6 平面 · 79 checks · nmt(零VM) + QEMU · CI 自动发现        │
+│  6 平面 · 77 tests + 46 pre-commit-hooks = 123 checks       │
+│         · nmt(零VM) + QEMU · CI 自动发现                    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -102,7 +103,7 @@ shared.nix (策略)
 lib/shared (两阶段初始化)
     ↓ specialArgs / extraSpecialArgs
 flake.nix → nixosConfigurations / homeConfigurations
-    ↓ host/<platform>/<arch>.nix (平台分发)
+    ↓ platform/<platform>/<arch>.nix (平台分发)
 nixos/ + home/ + home/wm/ (模块树)
     ↓ sops-nix (initrd 阶段)
 /run/secrets/ (运行时 secret 挂载)
@@ -139,13 +140,14 @@ nix-config/
 │   └── shared/
 │       ├── default.nix     # 共享加载器：两阶段初始化（scfpath 可覆盖，支持多机器）
 │       ├── shared/
-│       │   ├── default.nix # 阶段一聚合：const + schema + enum + fn
-│       │   ├── enum.nix    # 枚举类型：arch / platform / wm / dm / shell / drive-group 等
+│       │   ├── default.nix # 阶段一聚合：const + schema + enum + fn + tools
+│       │   ├── enum.nix    # 枚举类型：arch / platform / wm / dm / shell / drive-group / editor-set / service-profile 等
 │       │   ├── schema.nix  # 结构验证：user / git / rbw / time / i18n / secrets / shared
 │       │   ├── fn.nix      # 工具函数：isNixOS · isMacOS · isLinux · isWSL · homeDir · sopsFile · sopsRuntimePath
-│       │   └── const.nix   # 常量：secrets 路径 · 权限模式(0400/0440/0600) · XDG 目录名
+│       │   ├── const.nix   # 常量：secrets 路径 · 权限模式(0400/0440/0600) · XDG 目录名
+│       │   └── tools.nix    # 外部工具库注册：nix-types / orc / pdshell（短路径访问，配置文件解耦 inputs）
 │       ├── runtime/
-│       │   └── default.nix # 阶段二合成：pkgs/upkgs/isNixOS/homeDir/orc/sopsFile/sopsPath/sopsUserPath 注入
+│       │   └── default.nix # 阶段二合成：pkgs/upkgs/isNixOS/homeDir/orc/sopsFile/tools 注入
 │       └── template.nix    # 配置模板参考（不直接导入）
 │
 ├── nixos/                  # 系统层（NixOS only）
@@ -216,11 +218,14 @@ nix-config/
 │           ├── lisp/ lua/ nix/ python/ re/ rust/ zig/
 │           └── default.nix # 复合环境：default(全语言) · cpython(C+C++Python) · godot
 │
-├── host/                   # 平台分发层（Home Manager 激活点）
+├── platform/              # 平台分发层（Home Manager 激活点）
 │   ├── nixos/              # NixOS：imports home/core + home/env + home/wm；arch 路由
 │   ├── linux/              # 通用 Linux：standalone HM + nixGL(mesa) + genericLinux
 │   ├── macos/              # macOS：standalone HM；homeDirectory=/Users/<u>；无 nixGL
 │   └── wsl/                # WSL2：standalone HM + nixGL + genericLinux + systemd
+│
+├── hosts/                 # 多主机支持（per-machine hardware + overrides）
+│   └── nixos/             # 默认主机：hardware.nix（nixos-generate-config 生成）+ default.nix
 │
 ├── secrets/
 │   ├── chipr/              # SOPS 加密文件（提交到 Git；.sops.yaml 管控解密权限）
@@ -233,7 +238,7 @@ nix-config/
 ├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（当前为占位符）
 │
-├── tests/                  # 测试层（6 平面，79 checks）
+├── tests/                  # 测试层（6 平面，77 tests + 46 pre-commit-hooks）
 │   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks；nixosTest/nmtTest runner
 │   ├── test_calc.nix       # Plane 0: Smoke 基线
 │   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM）
@@ -409,8 +414,12 @@ nixos/ · home/              通过 { shared, ... } 消费
 | `drive-group`     | `intel` · `amd` · `nvidia` · `nvidia-prime` · `amd-nvidia` · `amd-nvidia-prime` · `intel-nvidia` · `intel-nvidia-prime`                                                                                                                                                                                                                       |
 | `shell`           | `zsh` · `fish` · `bash`                                                                                                                                                                                                                                                                                                                       |
 | `editor`          | `nvim` · `vim` · `code` · `zeditor`                                                                                                                                                                                                                                                                                                           |
+| `editor-set`      | `minimal` · `full-ai` · `emacs-dev` · `full`（多选路由，携带 `editors` 列表）                                                                                                                                                                                                                                                                  |
+| `terminal-set`    | `kitty-only` · `wezterm-only` · `both`（多选路由，携带 `terminals` 列表）                                                                                                                                                                                                                                                                      |
+| `browser-set`     | `chrome-only` · `qutebrowser` · `cli-only` · `chrome-qute` · `all`（多选路由，携带 `browsers` 列表）                                                                                                                                                                                                                                           |
+| `service-profile` | `full-autostart` · `dev-on-demand` · `server-pg-only` · `minimal`（策略携带，控制 db/virt 的 install vs autostart）                                                                                                                                                                                                                             |
 | `pointer-cursor`  | `Bibata-Modern-Amber` · `Bibata-Modern-Amber-Right` · `Bibata-Modern-Classic` · `Bibata-Modern-Classic-Right` · `Bibata-Modern-Ice` · `Bibata-Modern-Ice-Right` · `Bibata-Original-Amber` · `Bibata-Original-Amber-Right` · `Bibata-Original-Classic` · `Bibata-Original-Classic-Right` · `Bibata-Original-Ice` · `Bibata-Original-Ice-Right` |
-| `version`         | `v25_11`（值 `"25.11"`，用于 `system.stateVersion`）                                                                                                                                                                                                                                                                                          |
+| `version`         | `v25_11`（携带 `{stateVersion, wine, swww}` 策略） · `v26_05`（同构）                                                                                                                                                                                                                                                                          |
 
 `window-manager` 枚举值内嵌 `portal` 策略，`nixos/core/base/portal.nix` 和 `home/core/base/portal.nix` 直接消费：
 
@@ -433,14 +442,14 @@ imports = map (d: ./${d}.nix) shared.drive.value;
 # shared.drive.value = [ "intel" "nvidia" ]  → imports [ ./intel.nix ./nvidia.nix ]
 ```
 
-**`host/` 平台分发层 — arch 路由：**
+**`platform/` 平台分发层 — arch 路由：**
 
 ```nix
-# host/nixos/default.nix
+# platform/nixos/default.nix
 imports = [ ./${shared.arch.tag}.nix ];
 # shared.arch.tag = "x86_64-linux" → imports ./x86_64-linux.nix
 
-# host/nixos/x86_64-linux.nix 完整激活点
+# platform/nixos/x86_64-linux.nix 完整激活点
 { imports = [ ../../home/core ../../home/env ../../home/wm ]; ... }
 ```
 
@@ -589,10 +598,10 @@ home.activation.waybarWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] waybar
 
 ### 6. 用户环境层 — home/env
 
-`home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的 `host/*/` 入口中与 `home/core` 并列导入：
+`home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的 `platform/*/` 入口中与 `home/core` 并列导入：
 
 ```
-host/<platform>/default.nix
+platform/<platform>/default.nix
     imports = [ ../../home/core  ../../home/env  ../../home/wm ]
 ```
 
@@ -698,6 +707,93 @@ just commit-global-rules
 
 所有命令都从 `flake.nix` 的 `api.inputs` 动态获取 `commit-config` 在 Nix store 中的路径，确保完全可复现。修改规则时，更新 `commit-config` 仓库后只需重新运行 `just commit-setup` 即可同步。
 
+### 9. 工具库统一管理 — tools.nix
+
+`lib/shared/shared/tools.nix` 集中注册所有外部工具库，配置文件通过 `shared.tools.<name>` 短路径访问，解耦对 `inputs.<long-name>.lib` 的直接引用：
+
+```
+lib/shared/shared/tools.nix
+    ├─ nix-types（短别名 nt）    — ADT 系统：enum / match / Option / Result
+    ├─ orc-raw                  — configuration-orchestrator（arch-specific，runtime 解析）
+    └─ pdshell-raw              — pipeline-driven dev shell manager
+
+配置文件消费方式：
+    shared.tools.nix-types.match shared.version { ... }     # 替代 inputs.nix-types.lib.match
+    shared.tools.orc.mergeHomeFiles ...                      # 替代 inputs.configuration-orchestrator.lib.${system}
+```
+
+### 10. 多主机支持 — hosts/
+
+`hosts/` 目录实现多主机分发，每台机器独立 `hardware.nix` + 可选 `shared.nix` 覆盖：
+
+```
+hosts/
+└── nixos/                   # 默认主机
+    ├── default.nix          # 主机入口（imports hardware.nix + overrides）
+    └── hardware.nix         # nixos-generate-config 自动生成
+
+nixos/default.nix 通过 ../hosts/${shared.hostName} 动态路由到对应主机。
+新增主机只需：
+  1. mkdir hosts/<new-hostname>
+  2. just hardware-generate   # 自动写入 hosts/<hostname>/hardware.nix
+  3. 在 shared.nix 修改 hostName
+```
+
+### 11. 服务按需启动 — service-profile
+
+NixOS 服务管理有 3 个层次：
+
+| 层次 | 机制 | 持久性 | 谁控制 |
+| ------ | ------ | -------- | -------- |
+| **安装** | `enable = true` | rebuild 后保持 | nix 配置 |
+| **首次自启** | `wantedBy = ["multi-user.target"]` | rebuild 后重新应用 | nix 配置（service-profile） |
+| **开机自启** | `systemctl enable/disable` | 跨重启 + 跨 rebuild 持久 | 用户手动 |
+
+`service-profile` enum 控制**安装**和**首次自启**：
+
+```nix
+# shared.nix
+service-profile = shared.enum.service-profile.dev-on-demand;
+
+# dev-on-demand profile:
+#   db.postgresql  = { install = true;  autostart = false; }  # 装但不自启
+#   db.mongodb     = { install = false; autostart = false; }  # 不装
+#   virt.podman    = { install = true;  autostart = true;  }  # 装且自启
+
+# 配置文件消费（nixos/core/srv/db/postgresql.nix）
+services.postgresql.enable = shared.services.db.postgresql.install;
+systemd.services.postgresql.wantedBy =
+  lib.mkForce (lib.optional shared.services.db.postgresql.autostart "multi-user.target");
+```
+
+**关键设计**：`dev-on-demand` 设 `wantedBy = []`，意味着 NixOS **不通过 nix 管理开机自启 symlink**。用户通过 `systemctl` 管理：
+
+```bash
+# 立即启动/停止（不持久，重启后失效）
+just service-start postgresql        # systemctl start
+just service-stop postgresql         # systemctl stop
+
+# 开机自启管理（持久，跨重启 + 跨 rebuild）
+just service-enable postgresql        # systemctl enable（重启后自启）
+just service-disable postgresql       # systemctl disable（重启后不自启）
+just service-is-enabled postgresql    # 检查是否开机自启
+
+# 数据库别名
+just db-start postgresql              # = service-start
+just db-stop postgresql               # = service-stop
+just db-enable postgresql             # = service-enable
+just db-disable postgresql            # = service-disable
+```
+
+**核心原则**：
+
+- nix 文件只决定"安装"和"build 后首次是否自启"
+- 首次决定后，服务状态完全由用户通过 `systemctl` 管理
+- **不需要修改 nix 文件 + rebuild 来改变服务运行状态**
+- `systemctl enable/disable` 的状态跨重启和跨 rebuild 持久
+
+可选 profile：`full-autostart` / `dev-on-demand` / `server-pg-only` / `minimal`
+
 ---
 
 ## CI/CD 完整执行流
@@ -708,7 +804,7 @@ just commit-global-rules
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
 2. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-3. **测试覆盖** — 79 个 checks 覆盖 nixos/home/lib/integration/nmt 五个平面
+3. **测试覆盖** — 123 个 checks（77 测试 + 46 pre-commit-hooks） 覆盖 nixos/home/lib/integration/nmt 五个平面
 4. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（6 阶段，最大并行）
@@ -825,7 +921,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **79 个 checks**（2026-05-13）：
+测试套件覆盖 6 个平面，总计 **123 个 checks（77 测试 + 46 pre-commit-hooks）**（2026-05-13）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
@@ -908,8 +1004,32 @@ just shared-validate             # 验证模板占位符存在
 ### hardware — 硬件配置
 
 ```bash
-just hardware-generate           # 生成 nixos/core/base/hardware.nix（首次或硬件变更后）
+just hardware-generate           # 生成 hosts/<hostname>/hardware.nix（首次或硬件变更后）
 just hardware-show               # 显示当前 hardware.nix 内容
+just hardware-list               # 列出所有已配置主机
+```
+
+### services — 按需服务管理
+
+```bash
+# 立即启动/停止（不持久，重启后失效）
+just service-start <name>        # systemctl start
+just service-stop <name>         # systemctl stop
+just service-restart <name>     # systemctl restart
+just service-status <name>      # systemctl status
+
+# 开机自启管理（持久，跨重启 + 跨 rebuild）
+just service-enable <name>      # systemctl enable（重启后自启）
+just service-disable <name>    # systemctl disable（重启后不自启）
+just service-is-enabled <name> # 检查是否开机自启
+
+# 数据库别名
+just db-start <name>             # = service-start
+just db-stop <name>              # = service-stop
+just db-enable <name>            # = service-enable
+just db-disable <name>           # = service-disable
+just db-list                      # 列出所有数据库服务
+just autostart-list              # 列出所有已启用的服务
 ```
 
 ### flake — 依赖管理
@@ -1249,19 +1369,36 @@ flake.nix
 ## 路线图
 
 - [x] CI 全量 build 验证（nmt-Plane + QEMU VM tests，6 阶段流水线）
-- [x] NixOS 测试套件（79 checks，6 个测试平面）
+- [x] NixOS 测试套件（123 checks = 77 tests + 46 pre-commit-hooks，6 个测试平面）
 - [x] flake inputs 自动更新策略（定时 PR，每周日）
-- [x] host/ 平台分发层（nixos · linux · macos · wsl，arch 路由）
+- [x] platform/ 平台分发层（nixos · linux · macos · wsl，arch 路由）
 - [x] api.inputs 暴露（just 脚本动态枚举 inputs，零硬编码）
 - [x] AI CLI 工具集成（claude-code · opencode · gemini-cli · kiro-cli · cursor-cli）
 - [x] kiro 编辑器集成（home/core/exp/app/editor/kiro.nix）
 - [x] nmt mirror 解决方案（sourcehut 403 规避，buildHomeManagerTest 自实现）
 - [x] sops 数据驱动架构（零硬编码路径，phase-aware 信息源分离）
+- [x] tools.nix 工具库统一管理（nix-types / orc / pdshell 短路径访问）
+- [x] hosts/ 多主机支持（per-machine hardware.nix + overrides）
+- [x] service-profile 按需启动（install vs autostart 分离，dev-on-demand / full-autostart / server-pg-only / minimal）
+- [x] editor-set / terminal-set / browser-set 集合路由（多选路由模式）
+- [x] version 策略携带（variant 携带 {stateVersion, wine, swww} 策略）
+- [x] shellIntegrations 统一（runtime 计算，8 个 base 模块复用）
+- [x] match 穷尽性（nix-types lib.match 替代手写 if）
+- [x] pre-commit-hooks（nixfmt + statix + deadnix 自动检查）
+- [x] services.just 按需启动命令（service-start/stop/status + db-start/stop/list）
 - [ ] 第二台机器测试（验证跨机器可移植性，scfpath 多机器场景）
 - [ ] 惰性模块加载（提升大型配置求值速度）
 - [ ] 模块文档自动生成（从 Nix 模块 options 生成）
 - [ ] export/ 模块完善（可复用 NixOS/HM 模块供外部 flake 引用）
 - [ ] macOS 完整支持（darwin-specific modules，nix-darwin 集成）
+- [ ] nixos-facter 替代 nixos-generate-config（声明式硬件发现）
+- [ ] disko 声明式磁盘分区（替代 hardware.nix 里的 fileSystems 硬编码）
+- [ ] impermanence 实验性 ephemeral root（btrfs subvol rollback）
+- [ ] nixci 统一管理 30+ flake=false input（简化外置配置仓库 CI）
+- [ ] nix-types 上游贡献（schema pattern matching 模式文档化）
+- [ ] Option/Result 类型化错误处理（secret 路径校验用 result.andThen）
+- [ ] 可观测性（prometheus exporters + loki 日志 + grafana dashboard）
+- [ ] 健康检查（数据库服务加 systemd HealthCheck）
 
 ---
 

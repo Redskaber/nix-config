@@ -11,8 +11,16 @@ let
 
   editor    = enum "editor"   [ "vim" "nvim" "code" "zeditor" ];
   version   = enum "version"  {
-    v25_11  = "25.11";
-    v26_05  = "26.05";
+    v25_11  = {
+      stateVersion = "25.11";
+      wine = pkgs: pkgs.wineWowPackages.waylandFull;
+      swww = pkgs: pkgs.swww;
+    };
+    v26_05  = {
+      stateVersion = "26.05";
+      wine = pkgs: pkgs.wineWow64Packages.waylandFull;
+      swww = pkgs: pkgs.awww;
+    };
   };
   platform        = enum "platform"       [ "linux" "macos" "nixos" "wsl" ];
   arch            = enum "arch"           [ "aarch64-darwin" "aarch64-linux" "i686-linux" "x86_64-darwin" "x86_64-linux" ];
@@ -44,6 +52,86 @@ let
   };
   shell           = enum "shell"          [ "bash" "zsh" "fish" ];
 
+  # Application sets (multi-select routing, same pattern as drive-group)
+  editor-set   = enum "editorSet" {
+    minimal    = { editors = [ "nvim" ]; };
+    full-ai    = { editors = [ "nvim" "vscode" "cursor" "zed" ]; };
+    emacs-dev  = { editors = [ "nvim" "emacs" ]; };
+    full       = { editors = [ "nvim" "vscode" "cursor" "zed" "emacs" "kiro" "trae" "zcode" ]; };
+  };
+  terminal-set = enum "terminalSet" {
+    kitty-only    = { terminals = [ "kitty" ]; };
+    wezterm-only  = { terminals = [ "wezterm" ]; };
+    both          = { terminals = [ "kitty" "wezterm" ]; };
+  };
+  browser-set  = enum "browserSet" {
+    chrome-only   = { browsers = [ "google-chrome" ]; };
+    qutebrowser   = { browsers = [ "qutebrowser" ]; };
+    cli-only      = { browsers = [ "w3m" ]; };
+    chrome-qute   = { browsers = [ "google-chrome" "qutebrowser" ]; };
+    all           = { browsers = [ "google-chrome" "qutebrowser" "w3m" ]; };
+  };
+
+  # Service profile: controls install vs autostart for databases and virtualization
+  service-profile = enum "serviceProfile" {
+    full-autostart = {
+      db = {
+        postgresql = { install = true;  autostart = true;  };
+        mysql      = { install = true;  autostart = true;  };
+        redis      = { install = true;  autostart = true;  };
+        mongodb    = { install = true;  autostart = true;  };
+      };
+      virt = {
+        libvirtd = { install = true;  autostart = true;  };
+        incus    = { install = true;  autostart = true;  };
+        waydroid = { install = true;  autostart = true;  };
+        podman   = { install = true;  autostart = true;  };
+      };
+    };
+    dev-on-demand = {
+      db = {
+        postgresql = { install = true;  autostart = false; };
+        mysql      = { install = true;  autostart = false; };
+        redis      = { install = true;  autostart = false; };
+        mongodb    = { install = false; autostart = false; };
+      };
+      virt = {
+        libvirtd = { install = true;  autostart = false; };
+        incus    = { install = false; autostart = false; };
+        waydroid = { install = false; autostart = false; };
+        podman   = { install = true;  autostart = true;  };
+      };
+    };
+    server-pg-only = {
+      db = {
+        postgresql = { install = true;  autostart = true;  };
+        mysql      = { install = false; autostart = false; };
+        redis      = { install = false; autostart = false; };
+        mongodb    = { install = false; autostart = false; };
+      };
+      virt = {
+        libvirtd = { install = false; autostart = false; };
+        incus    = { install = false; autostart = false; };
+        waydroid = { install = false; autostart = false; };
+        podman   = { install = true;  autostart = true;  };
+      };
+    };
+    minimal = {
+      db = {
+        postgresql = { install = false; autostart = false; };
+        mysql      = { install = false; autostart = false; };
+        redis      = { install = false; autostart = false; };
+        mongodb    = { install = false; autostart = false; };
+      };
+      virt = {
+        libvirtd = { install = false; autostart = false; };
+        incus    = { install = false; autostart = false; };
+        waydroid = { install = false; autostart = false; };
+        podman   = { install = false; autostart = false; };
+      };
+    };
+  };
+
   pointer-cursor  = enum "pointerCursor" [
     "Bibata-Modern-Amber"
     "Bibata-Modern-Amber-Right"
@@ -69,6 +157,10 @@ in {
     display-manager
     drive-group
     shell
+    editor-set
+    terminal-set
+    browser-set
+    service-profile
     pointer-cursor
   ;
 }

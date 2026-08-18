@@ -13,11 +13,8 @@
 , ...
 }:
 {
-  programs.fzf = {
+  programs.fzf = shared.shellIntegrations // {
     enable = true;
-    enableZshIntegration = true;
-    enableBashIntegration = true;
-    enableFishIntegration = true;
 
     # Basic options for all fzf usage (including history search)
     defaultOptions = [

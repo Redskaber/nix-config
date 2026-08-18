@@ -11,7 +11,7 @@
 
 { pkgs, inputs, shared, dev, ... }: {
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     # === Core Toolchain ===
     buildInputs = with shared.upkgs; [
       zig             # Zig compiler (nixpkgs stable, usually the latest LTS)

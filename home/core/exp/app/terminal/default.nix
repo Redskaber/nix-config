@@ -2,6 +2,9 @@
 # @author: redskaber
 # @datetime: 2026-03-04
 # @description: home::core::exp::app::terminal::default
+#
+# Routing mode (mode B: multi-select routing):
+#   Selects terminal modules based on shared.terminals list.
 
 
 { inputs
@@ -12,13 +15,5 @@
 , ...
 }:
 {
-
-  imports = [
-    ./kitty.nix
-    ./wezterm.nix
-  ];
-
-
+  imports = builtins.map (t: ./${t}.nix) shared.terminals;
 }
-
-

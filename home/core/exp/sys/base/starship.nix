@@ -14,11 +14,8 @@
 }:
 {
 
-  programs.starship = {
+  programs.starship = shared.shellIntegrations // {
     enable = true;
-    enableBashIntegration = true;
-    enableZshIntegration = true;
-    enableFishIntegration = true;
   };
 
   # Used user config:

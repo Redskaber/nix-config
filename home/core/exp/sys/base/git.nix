@@ -5,13 +5,7 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.git.enable
 
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
-}:
+{ inputs, shared, lib, config, pkgs,... }:
 {
   programs.git = {
     enable = true;
@@ -62,11 +56,8 @@
     };
   };
 
-  programs.lazygit = {
+  programs.lazygit = shared.shellIntegrations // {
     enable = true;
-    enableZshIntegration = true;
-    enableFishIntegration = true;
-    enableBashIntegration = true;
 
     settings = {
       gui = {
@@ -75,7 +66,7 @@
           activeBorderColor = [ "cyan" "bold" ];
           inactiveBorderColor = [ "240" ];  # 深灰色
           selectedLineBgColor = [ "236" ];  # 暗灰色背景
-          optionsTextColor = [ "yellow" ];
+          optionsTextColor = [ "skyblue"];
         };
         scrollHeight = 2;
         scrollPastBottom = true;

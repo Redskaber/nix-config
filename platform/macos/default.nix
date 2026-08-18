@@ -17,14 +17,13 @@
   home = {
     username = shared.user.username;
     homeDirectory = shared.homeDir;
-    stateVersion = shared.version.value;
+    stateVersion = shared.version.value.stateVersion;
   };
   programs.home-manager.enable = true;
 
   imports = [
     ../../home/core
     ../../home/env
-    ../../home/wm
   ];
 
   nixpkgs = shared.nixpkgs;

@@ -12,7 +12,7 @@
 { pkgs, inputs, shared, ... }: {
 
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       # Core runtime & tooling
       python312

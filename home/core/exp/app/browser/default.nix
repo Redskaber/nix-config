@@ -2,6 +2,9 @@
 # @author: redskaber
 # @datetime: 2026-05-15
 # @description: home::core::exp::app::browser::default
+#
+# Routing mode (mode B: multi-select routing):
+#   Selects browser modules based on shared.browsers list.
 
 { inputs
 , shared
@@ -11,15 +14,5 @@
 , ...
 }:
 {
-
-  imports = [
-    ./google-chrome.nix
-    ./qutebrowser.nix
-    ./w3m.nix
-    # ./zen-browser.nix
-  ];
-
-
+  imports = builtins.map (b: ./${b}.nix) shared.browsers;
 }
-
-

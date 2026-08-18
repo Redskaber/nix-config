@@ -14,13 +14,8 @@
 , ...
 }:
 {
-  programs.atuin = {
+  programs.atuin = shared.shellIntegrations // {
     enable = true;
-
-    # === Shell integrations ===
-    enableBashIntegration = true;
-    enableFishIntegration = true;
-    enableZshIntegration = true;
     # Nushell not used in your setup → leave disabled
 
     # === Recommended settings for modern workflow ===

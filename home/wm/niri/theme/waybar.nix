@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/wm/hyprland/theme/waybar.nix
+# @path: ~/projects/configs/nix-config/home/wm/niri/theme/waybar.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @discription: home::wm::hyprland::theme::waybar
+# @discription: home::wm::niri::theme::waybar
 # - this file is window status-bar
 
 

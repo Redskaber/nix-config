@@ -1,7 +1,7 @@
-# @path: ~/projects/configs/nix-config/home/wm/hyprland/theme/satty.nix
+# @path: ~/projects/configs/nix-config/home/wm/niri/theme/satty.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: home::wm::hyprland::theme::satty
+# @description: home::wm::niri::theme::satty
 # - edit screenshot and label tag
 
 

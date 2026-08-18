@@ -29,7 +29,7 @@
       enableExtraSocket = false;
       enableBrowserSocket = false;
       pinentryPackage = pkgs.pinentry-curses;
-      # 参考: NIST SP 800-63B 建议 ≤ 15min，桌面体验可适度放宽
+      #: NIST SP 800-63B ≤ 15min，
       # ssettings
     };
     dirmngr.enable = true;

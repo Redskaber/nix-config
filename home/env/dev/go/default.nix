@@ -3,14 +3,14 @@
 # @datetime: 2026-05-05
 # @description: home::env::dev::go::default
 # Modern Go dev environment with China-optimized networking & toolchain
-# - Attrset   : (Permission , Scope , Load      )
-# - default   : (readonly   , global, default   ): Minimal base env with proxy resilience
-# - <variant> : (custom     , custom, optional  ): Project-specific overrides
+# - Attrset   : (Permission, Scope, Load)
+# - default   : (readonly, global, default): Minimal base env with proxy resilience
+# - <variant> : (custom, custom, optional): Project-specific overrides
 
-{ pkgs, inputs, shared, dev, ... }: {
+{ pkgs, inputs, shared, dev,... }: {
   default = {
-    shell = "zsh";
-    # 🌐 核心工具链（Go 1.22+ 现代标准）
+    shell = shared.user.shell.tag; 
+    # 🌐 core toolchain（Go 1.22+ ）
     buildInputs = with shared.upkgs; [
       go
       gopls                       # 官方 LSP（2026 已深度集成 generics 支持）

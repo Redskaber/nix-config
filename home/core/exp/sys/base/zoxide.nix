@@ -14,11 +14,8 @@
 }:
 {
 
-  programs.zoxide = {
+  programs.zoxide = shared.shellIntegrations // {
     enable = true;
-    enableBashIntegration = true;
-    enableZshIntegration = true;
-    enableFishIntegration = true;
     # options: extra params
     # options = [ "--no-cmd" ];
   };

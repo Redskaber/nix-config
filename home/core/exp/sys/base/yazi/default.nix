@@ -19,19 +19,17 @@ in
 {
   home.file.".config/yazi/theme.toml" = lib.mkForce { source = ./theme.toml; };
 
-  programs.yazi = {
+  programs.yazi = shared.shellIntegrations // {
     enable = true;
-    enableZshIntegration = true;
-    enableBashIntegration = true;
     enableFishIntegration = true;
     shellWrapperName = "yy";
     settings = settings;
     keymap = keymap;
     plugins = {
-      lazygit = pkgs.yaziPlugins.lazygit;
-      full-border = pkgs.yaziPlugins.full-border;
-      git = pkgs.yaziPlugins.git;
-      smart-enter = pkgs.yaziPlugins.smart-enter;
+      lazygit = shared.pkgs.yaziPlugins.lazygit;
+      full-border = shared.pkgs.yaziPlugins.full-border;
+      git = shared.pkgs.yaziPlugins.git;
+      smart-enter = shared.pkgs.yaziPlugins.smart-enter;
     };
 
     initLua = ''

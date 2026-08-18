@@ -18,7 +18,7 @@
 
 { pkgs, inputs, shared, dev, ... }: {
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       # Core LLVM toolchain (pure)
       llvmPackages_22.libcxxClang # Clang++ preconfigured wrapper

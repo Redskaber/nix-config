@@ -70,9 +70,7 @@ in
     nwg-displays
     nwg-look
     waypaper
-    (if shared.version == shared.enum.version.v25_11
-     then swww
-     else awww)
+    (shared.version.value.swww pkgs)
     swappy
     yad
     hyprpicker
@@ -80,14 +78,22 @@ in
   ];
 
   # hyprland through system enable
-  wayland.windowManager.hyprland = {
+  wayland.windowManager.hyprland = let
+    inherit (shared.tools.nix-types) match;
+    hmHyprlandPkgs = {
+      package = inputs.hyprland.packages.${shared.arch.tag}.hyprland;
+      portalPackage = inputs.hyprland.packages.${shared.arch.tag}.xdg-desktop-portal-hyprland;
+    };
+  in {
     enable = true;
-    package = if shared.isNixOS
-      then null
-      else inputs.hyprland.packages.${shared.arch.tag}.hyprland;
-    portalPackage = if shared.isNixOS
-      then null
-      else inputs.hyprland.packages.${shared.arch.tag}.xdg-desktop-portal-hyprland;
+    package = match shared.platform {
+      nixos = _: null;
+      _     = _: hmHyprlandPkgs.package;
+    };
+    portalPackage = match shared.platform {
+      nixos = _: null;
+      _     = _: hmHyprlandPkgs.portalPackage;
+    };
     xwayland.enable = true;
     systemd = {
       enable = true;

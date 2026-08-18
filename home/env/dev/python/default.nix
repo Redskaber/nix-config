@@ -13,7 +13,7 @@
 
   # default: (readonly) : used nixos origin link
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     # Core runtime & tools
     buildInputs = with shared.upkgs; [
       python314         # Stable, reproducible base interpreter

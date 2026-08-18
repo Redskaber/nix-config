@@ -93,6 +93,10 @@
     commit-config.url = "github:Redskaber/commit-config";
     commit-config.flake = false;
 
+    # Pre-commit hooks for nix fmt + statix + deadnix
+    pre-commit-hooks.url = "github:cachix/git-hooks.nix";
+    pre-commit-hooks.inputs.nixpkgs.follows = "nixpkgs";
+
     # Fcitx5 config
     fcitx5-config.url = "github:Redskaber/fcitx5-config";
     fcitx5-config.flake = false;
@@ -206,11 +210,23 @@
       debug.test_devDir = devDir;
 
       # checks
-      checks.${shared.arch.tag} = import ./tests { inherit inputs shared; };
+      checks.${shared.arch.tag} =
+        (import ./tests { inherit inputs shared; })
+        // inputs.pre-commit-hooks.lib.${shared.arch.tag}.run {
+          src = self;
+          hooks = {
+            nixfmt-rfc-style = {
+              enable = true;
+              excludes = [ "flake.lock" ".*-config/.*" ];
+            };
+            statix.enable = true;
+            deadnix.enable = true;
+          };
+        };
 
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
-      packages = shared.packages;
+      packages.${shared.arch.tag} = shared.packages;
       # Your custom packages and patches, exported as overlays
       overlays = shared.overlays;
       # Formatter choices
@@ -244,7 +260,7 @@
         "${shared.user.username}@${shared.platform.tag}" = home-manager.lib.homeManagerConfiguration {
           inherit pkgs;
           extraSpecialArgs = { inherit inputs shared; };
-          modules = [ ./host/${shared.platform.tag} ];
+          modules = [ ./platform/${shared.platform.tag} ];
         };
       };
     };

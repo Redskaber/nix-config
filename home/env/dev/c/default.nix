@@ -11,7 +11,7 @@
 
 { pkgs, inputs, shared, dev, ... }: {
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       # gcc                     # GNU toolchain (fallback or specific needs)
       glibc                     # C Library (macos musl)

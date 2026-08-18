@@ -13,10 +13,10 @@
 
   # base attrset
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       nix                        # Core runtime (with flakes, experimental features)
-      nixfmt-rfc-style           # Formatter(RFC 109): Officially endorsed formatter
+      nixfmt                     # Formatter(RFC 109): Officially endorsed formatter
       statix                     # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
       alejandra                  # Format specifications
       deadnix                    # Dead-code-eliminayion: Removes unused definitions
@@ -48,7 +48,7 @@
   };
 
   nonfmt = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       nix                        # Core runtime (with flakes, experimental features)
       statix                     # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
@@ -82,7 +82,7 @@
 
 
   derivation-free-security = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
     combinFrom = [
       dev.derivation.free
     ];

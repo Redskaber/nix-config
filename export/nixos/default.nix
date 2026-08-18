@@ -1,6 +1,7 @@
 # @path: ~/projects/configs/nix-config/export/nixos/default.nix
 # @author: redskaber
 # @datetime: 2025-12-12
+# @description: export::nixos — placeholder for reusable NixOS modules
 
 
 # Add your reusable NixOS modules to this directory, on their own file (https://nixos.wiki/wiki/Module).

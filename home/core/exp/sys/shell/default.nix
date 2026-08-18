@@ -1,7 +1,11 @@
-# @path: ~/projects/configs/nix-config/home/core/sys/shell/default.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/sys/shell/default.nix
 # @author: redskaber
 # @datetime: 2026-03-04
-# @description: home::core::sys::shell::default
+# @description: home::core::exp::sys::shell::default
+#
+# Routing mode (mode A: single-select routing):
+#   Selects shell module based on shared.user.shell.tag.
+#   Consistent with nixos/wm/default.nix and nixos/dm/default.nix.
 
 
 { inputs
@@ -12,13 +16,7 @@
 , ...
 }:
 {
-
   imports = [
-    ./fish.nix
-    ./zsh.nix
+    ./${shared.user.shell.tag}.nix
   ];
-
-
 }
-
-
