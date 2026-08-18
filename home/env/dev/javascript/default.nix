@@ -12,7 +12,7 @@
 { pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       nodejs_24               # LTS-ish (Node 24 is current active release)
       yarn                    # Yarn Classic or Berry
       pnpm                    # Fast, disk-efficient package manager

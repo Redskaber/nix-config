@@ -11,17 +11,19 @@
 , ...
 }:
 {
-  home.packages = with pkgs; [
-    clang
-    clang-tools
-    cmake
+  home.packages = with shared.upkgs; [
+    llvmPackages_22.clang
+    llvmPackages_22.clang-tools
+    llvmPackages_22.lld
+
+    gcc16
     gdb
-    lld
+    cmake
 
     rustc
     cargo
-    python312
-    nodejs_24
+    python314
+    nodejs_26
 
     file
     valgrind

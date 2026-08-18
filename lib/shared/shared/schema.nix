@@ -36,8 +36,8 @@ let
   } @return_i18n: return_i18n;
 
   secrets = {
-    sshKeyPaths                                   ,
-    nixos                                         ,
+    sshKeyPaths       ,
+    nixos             ,
     ...
   } @return_secrets: return_secrets;
 

@@ -15,8 +15,8 @@
   default = {
     shell = "zsh";
     # Core runtime & tools
-    buildInputs = with pkgs; [
-      python312         # Stable, reproducible base interpreter
+    buildInputs = with shared.upkgs; [
+      python314         # Stable, reproducible base interpreter
       uv                # Ultra-fast Python package installer & project manager
       ruff              # All-in-one linter/formatter (replaces black/isort/flake8)
       pyright           # Fast, Microsoft-backed LSP for Python
@@ -25,10 +25,10 @@
       unrpa             # github package nix
       inputs.unrpyc.packages.${shared.arch.tag}.default # github package nix
       # pyright depands
-      nodejs_24
+      nodejs_26
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       pkg-config
       # Add gcc if you frequently install packages with C extensions (e.g., numpy, pandas)
       # gcc
@@ -43,7 +43,7 @@
       export PYTHONPYCACHEPREFIX="$PWD/.cache/python"
 
       # Ensure uv uses the correct Python version
-      export UV_PYTHON=${pkgs.python312}/bin/python
+      export UV_PYTHON=${shared.upkgs.python314}/bin/python
       # Cache path uv caching
       export UV_CACHE_DIR="$PWD/.cache/uv"
       echo "[postInputsHook]: python shell!"

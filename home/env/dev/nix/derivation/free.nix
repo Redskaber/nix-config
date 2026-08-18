@@ -16,7 +16,7 @@
   # 专注：Nix 表达式开发、PR 审查、社区协作、可复现构建
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       nix                          # 核心工具链（含 flakes 支持）
       nixfmt-rfc-style             # RFC 109 官方格式化器
       statix                       # 静态分析（检测反模式/未使用绑定）

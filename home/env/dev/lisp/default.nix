@@ -12,7 +12,7 @@
   default = {
     shell = "zsh";
 
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       # core common lisp runtime
       sbcl                      # primary common lisp implementation
 
@@ -26,7 +26,7 @@
       gnumake                   # build helper for native deps
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       # keep minimal; useful when some lisp libs compile native parts
       pkg-config
     ];
@@ -37,18 +37,18 @@
 
     postInputsHook = ''
       # common lisp runtime
-      export LISP=${pkgs.sbcl}/bin/sbcl
-      export SBCL_HOME="${pkgs.sbcl}/lib/sbcl"
+      export LISP=${shared.upkgs.sbcl}/bin/sbcl
+      export SBCL_HOME="${shared.upkgs.sbcl}/lib/sbcl"
 
       # optional: make sbcl the default lisp executable
-      export CL="${pkgs.sbcl}/bin/sbcl"
+      export CL="${shared.upkgs.sbcl}/bin/sbcl"
 
       # development-friendly defaults
       export ASDF_OUTPUT_TRANSLATIONS="/tmp/asdf-cache/:"
       export SBCL_DISABLE_DEBUGGER="no"
 
       # optional native toolchain hints for ffi / c bindings
-      export CC="${pkgs.gcc}/bin/gcc"
+      export CC="${shared.upkgs.llvmPackages_22.clang}/bin/clang"
 
       echo "[postInputsHook]: lisp shell!"
     '';

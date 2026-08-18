@@ -33,8 +33,8 @@
       dev.typescript
       dev.zig
     ];
-    buildInputs = with pkgs; [];
-    nativeBuildInputs = with pkgs; [];
+    buildInputs = with shared.upkgs; [];
+    nativeBuildInputs = with shared.pkgs; [];
     preInputsHook = ''
       echo "[preInputsHook]: default shell!"
     '';
@@ -57,8 +57,8 @@
       dev.cpp
       dev.python
     ];
-    buildInputs = with pkgs; [];
-    nativeBuildInputs = with pkgs; [];
+    buildInputs = with shared.upkgs; [];
+    nativeBuildInputs = with shared.pkgs; [];
     preInputsHook = ''
       echo "[preInputsHook]: cpython shell!"
     '';
@@ -80,8 +80,8 @@
       dev.cpp
       dev.python
     ];
-    buildInputs = with pkgs; [ godot ];
-    nativeBuildInputs = with pkgs; [ ];
+    buildInputs = with shared.upkgs; [ godot ];
+    nativeBuildInputs = with shared.pkgs; [ ];
 
     preInputsHook = ''
       echo "[preInputsHook]: godot shell!"
@@ -106,7 +106,7 @@
       dev.c
     ];
     buildInputs = with shared.upkgs; [ zsh qemu_full just ];
-    nativeBuildInputs = with pkgs; [ ];
+    nativeBuildInputs = with shared.pkgs; [ ];
 
     preInputsHook = ''
       echo "[preInputsHook]: 30day make os shell!"
@@ -128,24 +128,24 @@
       dev.c
       dev.rust
     ];
-    buildInputs = with shared.pkgs; [
+    buildInputs = with shared.upkgs; [
       zsh
-      llvmPackages_21.llvm
+      llvmPackages_22.llvm
     ];
-    nativeBuildInputs = with pkgs; [ ];
+    nativeBuildInputs = with shared.pkgs; [ ];
     preInputsHook = ''
       echo "[preInputsHook]: rust compiler dev shell!"
     '';
     postInputsHook = ''
-      export CC="${shared.pkgs.llvmPackages_21.clang}/bin/clang"
-      export CXX="${shared.pkgs.llvmPackages_21.clang}/bin/clang++"
-      export AR="${shared.pkgs.llvmPackages_21.llvm}/bin/llvm-ar"
-      export RANLIB="${shared.pkgs.llvmPackages_21.llvm}/bin/llvm-ranlib"
-      export LLVM_SYS_211_PREFIX="${shared.pkgs.llvmPackages_21.llvm.dev}"
+      export CC="${shared.upkgs.llvmPackages_22.clang}/bin/clang"
+      export CXX="${shared.upkgs.llvmPackages_22.clang}/bin/clang++"
+      export AR="${shared.upkgs.llvmPackages_22.llvm}/bin/llvm-ar"
+      export RANLIB="${shared.upkgs.llvmPackages_22.llvm}/bin/llvm-ranlib"
+      export LLVM_SYS_211_PREFIX="${shared.upkgs.llvmPackages_22.llvm.dev}"
       export LLVM_LINK_SHARED=1
-      export LD_LIBRARY_PATH="${shared.pkgs.llvmPackages_21.llvm.lib}/lib:$LD_LIBRARY_PATH"
-      export RUSTFLAGS="-C linker=${shared.pkgs.llvmPackages_21.clang}/bin/clang -C link-arg=-fuse-ld=lld $RUSTFLAGS"
-      export RUST_SRC_PATH="${shared.pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
+      export LD_LIBRARY_PATH="${shared.upkgs.llvmPackages_22.llvm.lib}/lib:$LD_LIBRARY_PATH"
+      export RUSTFLAGS="-C linker=${shared.upkgs.llvmPackages_22.clang}/bin/clang -C link-arg=-fuse-ld=lld $RUSTFLAGS"
+      export RUST_SRC_PATH="${shared.upkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
       echo "[postInputsHook]: Rust + LLVM compiler dev shell!"
     '';
     preShellHook = ''

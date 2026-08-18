@@ -19,14 +19,14 @@
 { pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
-    buildInputs = with shared.pkgs; [
+    buildInputs = with shared.upkgs; [
       # Core LLVM toolchain (pure)
-      llvmPackages_21.libcxxClang # Clang++ preconfigured wrapper
-      llvmPackages_21.libcxx      # provides libc++ and lib++abi
-      llvmPackages_21.clang-tools # clangd, clang-tidy, clang-format
-      llvmPackages_21.lld         # LLVM linker
-      llvmPackages_21.lldb        # LLVM debugger
-      llvmPackages_21.llvm        # opt, llc, etc.
+      llvmPackages_22.libcxxClang # Clang++ preconfigured wrapper
+      llvmPackages_22.libcxx      # provides libc++ and lib++abi
+      llvmPackages_22.clang-tools # clangd, clang-tidy, clang-format
+      llvmPackages_22.lld         # LLVM linker
+      llvmPackages_22.lldb        # LLVM debugger
+      llvmPackages_22.llvm        # opt, llc, etc.
 
       # Build & analysis
       bear                      # compile_commands.json
@@ -38,7 +38,7 @@
       eigen
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       pkg-config
       cmake
       ninja
@@ -50,23 +50,23 @@
 
     postInputsHook = ''
       # Use the pure libc++-aware Clang wrapper as default compilers
-      export CC="ccache  ${shared.pkgs.llvmPackages_21.libcxxClang}/bin/clang"
-      export CXX="ccache  ${shared.pkgs.llvmPackages_21.libcxxClang}/bin/clang++"
+      export CC="ccache  ${shared.upkgs.llvmPackages_22.libcxxClang}/bin/clang"
+      export CXX="ccache  ${shared.upkgs.llvmPackages_22.libcxxClang}/bin/clang++"
 
       # Explicitly set include paths to prefer libc++ headers
       # Note: glibc C headers are still needed (libc is glibc), but C++ must be libc++
-      export C_INCLUDE_PATH="${shared.pkgs.glibc.dev}/include"
-      export CPLUS_INCLUDE_PATH="${shared.pkgs.llvmPackages_21.libcxx.dev}/include/c++/v1:${shared.pkgs.glibc.dev}/include"
+      export C_INCLUDE_PATH="${shared.upkgs.glibc.dev}/include"
+      export CPLUS_INCLUDE_PATH="${shared.upkgs.llvmPackages_22.libcxx.dev}/include/c++/v1:${shared.upkgs.glibc.dev}/include"
 
       # Force use of lld linker
-      export LD=${shared.pkgs.llvmPackages_21.lld}/bin/ld.lld
+      export LD=${shared.upkgs.llvmPackages_22.lld}/bin/ld.lld
       export LDFLAGS="-fuse-ld=lld"
 
       # Enable color diagnostics
       export CLANG_COLOR_DIAGNOSTICS=always
 
       # Runtime-Linker
-      export LD_LIBRARY_PATH="${shared.pkgs.llvmPackages_21.libcxx}/lib:$LD_LIBRARY_PATH"
+      export LD_LIBRARY_PATH="${shared.upkgs.llvmPackages_22.libcxx}/lib:$LD_LIBRARY_PATH"
 
       # Optional: uncomment to enforce C++20+ in all builds (use cautiously in generic env)
       # export CXXFLAGS="-std=c++20 -stdlib=libc++ -Wall -Wextra -Wpedantic -fdiagnostics-color=always"

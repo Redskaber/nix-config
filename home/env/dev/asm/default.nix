@@ -11,7 +11,7 @@
 { pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       nasm                     # Netwide Assembler (primary assembler)
       nasmfmt                  # Netwide Assembler formatter
       binutils                 # Provides ld (linker), objdump, readelf, etc.
@@ -19,7 +19,7 @@
       # (Optional) gcc         # Only if you need libc or C runtime for linking
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       pkg-config
       gnumake                  # Optional build automation (for Makefile projects)
     ];

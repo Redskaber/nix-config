@@ -14,7 +14,7 @@
   default = {
     shell = "zsh";
     # Core Rust toolchain (stable, from nixpkgs)
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       rustc                # Rust compiler
       cargo                # Package manager & build tool
       rustfmt              # Code formatter (RFC-compliant)
@@ -26,7 +26,7 @@
     ];
 
     # Build dependencies for crates that use C/C++ libraries (e.g., via bindgen)
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       pkg-config
       # Add system libraries if needed (e.g., openssl, libusb):
       openssl.dev
@@ -38,7 +38,7 @@
       echo "[preInputsHook]: rust shell!"
     '';
     postInputsHook = ''
-      export RUST_SRC_PATH="${pkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
+      export RUST_SRC_PATH="${shared.upkgs.rust.packages.stable.rustPlatform.rustLibSrc}"
       echo "[postInputsHook]: rust shell!"
     '';
     preShellHook = ''

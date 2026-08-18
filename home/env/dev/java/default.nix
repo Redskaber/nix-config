@@ -12,14 +12,14 @@
 { pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       temurin-bin-21      # Eclipse Temurin JDK 21 (LTS, OpenJDK)
       maven               # Build tool
       gradle              # Build tool (alternative)
       jdt-language-server # Official Java LSP from Nixpkgs (preferred over jdt-language-server)
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       # Most Java tools are runtime deps, so nativeBuildInputs often empty
     ];
 
@@ -28,7 +28,7 @@
     '';
     postInputsHook = ''
       # Set JAVA_HOME correctly for Temurin
-      export JAVA_HOME=${pkgs.temurin-bin-21}
+      export JAVA_HOME=${shared.upkgs.temurin-bin-21}
 
       # Optional: verify
       # echo "Java $(java -version 2>&1 | head -1)"

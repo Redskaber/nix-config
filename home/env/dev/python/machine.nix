@@ -13,7 +13,7 @@
 
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       # Core runtime & tooling
       python312
       uv
@@ -48,7 +48,7 @@
       nodejs_24
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       pkg-config
       gcc  # Required for building C extensions (e.g., via uv pip install)
     ];
@@ -58,7 +58,7 @@
     '';
     postInputsHook = ''
       # depends inject (c/cpp env)
-      export LD_LIBRARY_PATH="${pkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH"
+      export LD_LIBRARY_PATH="${shared.upkgs.gcc.cc.lib}/lib:$LD_LIBRARY_PATH"
       # Bytecode cache isolation
       export PYTHONPYCACHEPREFIX="$PWD/.cache/python"
 

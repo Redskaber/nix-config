@@ -11,7 +11,7 @@
   default = {
     shell = "zsh";
     # 🌐 核心工具链（Go 1.22+ 现代标准）
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       go
       gopls                       # 官方 LSP（2026 已深度集成 generics 支持）
       delve                       # 调试器（支持 generics 断点）

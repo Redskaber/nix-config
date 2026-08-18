@@ -15,7 +15,7 @@
   # 专注：二进制封装、许可证合规、非自由依赖处理、安全交付
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       nix
       patchelf                     # ELF 二进制重定向（关键！修复 RPATH/interpreter）
       chrpath                      # 修改二进制 RPATH（轻量替代 patchelf）

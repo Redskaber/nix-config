@@ -15,18 +15,18 @@
     shell = "zsh";
 
     # 核心工具链
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       # clang/llvm 反汇编支持
-      llvmPackages.libcxxClang  # clang++ preconfigured wrapper
-      libcxx                    # provides libc++ and lib++abi
-      clang-tools               # clangd, clang-tidy, clang-format
-      lld                       # llvm linker
-      lldb                      # llvm debugger
-      llvm                      # opt, llc, etc.
-                                # build & analysis
-      bear                      # compile_commands.json
-      ccache                    # compiler cache
-                                # common modern c++ libraries (header-only or built against libc++)
+      llvmPackages_22.libcxxClang  # clang++ preconfigured wrapper
+      llvmPackages_22.libcxx       # provides libc++ and lib++abi
+      llvmPackages_22.clang-tools  # clangd, clang-tidy, clang-format
+      llvmPackages_22.lld          # llvm linker
+      llvmPackages_22.lldb         # llvm debugger
+      llvmPackages_22.llvm         # opt, llc, etc.
+                                   # build & analysis
+      bear                         # compile_commands.json
+      ccache                       # compiler cache
+                                   # common modern c++ libraries (header-only or built against libc++)
       fmt
       spdlog
       eigen
@@ -120,23 +120,23 @@
 
     postInputsHook = ''
       # Use the pure libc++-aware Clang wrapper as default compilers
-      export CC="ccache  ${pkgs.llvmPackages.libcxxClang}/bin/clang"
-      export CXX="ccache  ${pkgs.llvmPackages.libcxxClang}/bin/clang++"
+      export CC="ccache  ${shared.upkgs.llvmPackages_22.libcxxClang}/bin/clang"
+      export CXX="ccache  ${shared.upkgs.llvmPackages_22.libcxxClang}/bin/clang++"
 
       # Explicitly set include paths to prefer libc++ headers
       # Note: glibc C headers are still needed (libc is glibc), but C++ must be libc++
-      export C_INCLUDE_PATH="${pkgs.glibc.dev}/include"
-      export CPLUS_INCLUDE_PATH="${pkgs.libcxx.dev}/include/c++/v1:${pkgs.glibc.dev}/include"
+      export C_INCLUDE_PATH="${shared.upkgs.glibc.dev}/include"
+      export CPLUS_INCLUDE_PATH="${shared.upkgs.libcxx.dev}/include/c++/v1:${shared.upkgs.glibc.dev}/include"
 
       # Force use of lld linker
-      export LD=${pkgs.lld}/bin/ld.lld
+      export LD=${shared.upkgs.llvmPackages_22.lld}/bin/ld.lld
       export LDFLAGS="-fuse-ld=lld"
 
       # Enable color diagnostics
       export CLANG_COLOR_DIAGNOSTICS=always
 
       # Runtime-Linker
-      export LD_LIBRARY_PATH="${pkgs.libcxx}/lib:$LD_LIBRARY_PATH"
+      export LD_LIBRARY_PATH="${shared.upkgs.llvmPackages_22.libcxx}/lib:$LD_LIBRARY_PATH"
       echo "[postInputsHook]: Reverse Engining shell!"
     '';
 

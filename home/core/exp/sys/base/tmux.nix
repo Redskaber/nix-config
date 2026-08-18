@@ -21,6 +21,9 @@
     recursive = true;              # rec-link
     force = true;
   };
+
+  # Put tx on PATH for ALL shells (zsh, fish, bash) — the Nix side's job
+  home.sessionPath = [ "${config.xdg.configHome}/tmux/bin" ];
 }
 
 

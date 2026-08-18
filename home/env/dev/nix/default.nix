@@ -14,7 +14,7 @@
   # base attrset
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       nix                        # Core runtime (with flakes, experimental features)
       nixfmt-rfc-style           # Formatter(RFC 109): Officially endorsed formatter
       statix                     # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
@@ -28,7 +28,7 @@
       # nix-tree                 # Explore closure dependencies interactively
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       # Usually empty for pure Nix dev
     ];
 
@@ -49,7 +49,7 @@
 
   nonfmt = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       nix                        # Core runtime (with flakes, experimental features)
       statix                     # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
       deadnix                    # Dead-code-eliminayion: Removes unused definitions
@@ -61,7 +61,7 @@
       nix-tree                   # Explore closure dependencies interactively
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       # Usually empty for pure Nix dev
     ];
 
@@ -88,7 +88,7 @@
     ];
 
     # extras
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       vulnix                            # NixOS vulnerability scanner
     ];
 

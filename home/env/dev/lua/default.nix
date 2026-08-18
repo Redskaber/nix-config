@@ -12,7 +12,7 @@
 { pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       lua55Packages.lua       # Standard Lua 5.5 (for general scripting)
       lua55Packages.luacheck  # Lua Formatter
       luajit                  # LuaJIT 2.1 (Lua 5.1 compatible, used by Neovim)
@@ -21,7 +21,7 @@
       stylua                  # Formatter (opinionated, fast, widely adopted)
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       # pkg-config          # Only needed if building C-based Lua modules
     ];
 
@@ -30,8 +30,8 @@
     '';
     postInputsHook = ''
       # Set up Lua paths for lua54
-      export LUA_PATH="./?.lua;${pkgs.lua54Packages.lua}/share/lua/5.4/?.lua;;"
-      export LUA_CPATH="./?.so;${pkgs.lua54Packages.lua}/lib/lua/5.4/?.so;;"
+      export LUA_PATH="./?.lua;${shared.upkgs.lua54Packages.lua}/share/lua/5.4/?.lua;;"
+      export LUA_CPATH="./?.so;${shared.upkgs.lua54Packages.lua}/lib/lua/5.4/?.so;;"
 
       # Optional: configure luarocks to avoid global writes
       export LUAROCKS_CONFIG=/dev/null  # Disable global config

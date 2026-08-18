@@ -13,12 +13,12 @@
   default = {
     shell = "zsh";
     # === Core Toolchain ===
-    buildInputs = with pkgs; [
+    buildInputs = with shared.upkgs; [
       zig             # Zig compiler (nixpkgs stable, usually the latest LTS)
       zls             # Zig Language Server (Official LSP, IDE Smart Support)
     ];
 
-    nativeBuildInputs = with pkgs; [
+    nativeBuildInputs = with shared.pkgs; [
       pkg-config      # C library dependency discovery (required when Zig calls C code)
     ];
 

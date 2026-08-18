@@ -12,8 +12,8 @@
 { pkgs, inputs, shared, dev, ... }: {
   default = {
     shell = "zsh";
-    buildInputs = with pkgs; [
-      nodejs_24                     # Runtime (includes npm)
+    buildInputs = with shared.upkgs; [
+      nodejs_26                     # Runtime (includes npm)
       pnpm                          # Recommended package manager
       yarn                          # Alternative
 

@@ -12,7 +12,9 @@
 , ...
 }:
 {
-  home.packages = with pkgs; [ wpsoffice ];
+  home.packages = with shared.upkgs; [
+    wpsoffice-cn
+  ];
 
 }
 
