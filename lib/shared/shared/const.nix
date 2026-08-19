@@ -33,5 +33,15 @@
     data   = ".local/share";
     state  = ".local/state";
     cache  = ".cache";
+    userDirs = {
+      desktop     = "Desktop";
+      documents   = "Documents";
+      download    = "Downloads";
+      music       = "Music";
+      pictures    = "Pictures";
+      publicShare = "Public";
+      templates   = "Templates";
+      videos      = "Videos";
+    };
   };
 }

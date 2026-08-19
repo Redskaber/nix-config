@@ -21,14 +21,14 @@
       enable = true;             # gen ~/.config/user-dirs.dirs
       createDirectories = true;  # autocreate dir (not exist)
       # home.homeDirectory（host/* define）
-      desktop     = "${config.home.homeDirectory}/Desktop";
-      documents   = "${config.home.homeDirectory}/Documents";
-      download    = "${config.home.homeDirectory}/Downloads";
-      music       = "${config.home.homeDirectory}/Music";
-      pictures    = "${config.home.homeDirectory}/Pictures";
-      publicShare = "${config.home.homeDirectory}/Public";
-      templates   = "${config.home.homeDirectory}/Templates";
-      videos      = "${config.home.homeDirectory}/Videos";
+      desktop     = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.desktop}";
+      documents   = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.documents}";
+      download    = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.download}";
+      music       = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.music}";
+      pictures    = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.pictures}";
+      videos      = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.videos}";
+      # publicShare = "${config.home.homeDirectory}/Public";
+      # templates   = "${config.home.homeDirectory}/Templates";
       extraConfig = {
         # extra dir mapping
       };
