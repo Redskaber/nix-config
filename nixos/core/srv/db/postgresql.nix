@@ -224,7 +224,7 @@
     description = "Inject PostgreSQL user passwords from sops secrets";
     after = [ "postgresql.service" ];
     requires = [ "postgresql.service" ];
-    wantedBy = lib.mkForce (lib.optional shared.services.db.postgresql.autostart "multi-user.target");
+    wantedBy = [ "multi-user.target" ];
 
     path = with pkgs; [ postgresql ];
     script = ''
@@ -256,7 +256,9 @@
     unitConfig.RequiresMountsFor = [ "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}" ];
   };
 
-
+  # Control autostart: clear wantedBy when autostart=false (install but not autostart)
+  systemd.services.postgresql.wantedBy =
+    lib.mkForce (lib.optional shared.services.db.postgresql.autostart "multi-user.target");
 }
 
 
