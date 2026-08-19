@@ -31,7 +31,7 @@ lib.nmt.buildHomeManagerTest {
     home = {
       username      = "testuser";
       homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value}";
+      stateVersion  = "${shared.version.value.stateVersion}";
     };
 
     programs.yazi = {

@@ -125,7 +125,7 @@ let
     xdg.enable             = lib.mkDefault true;  # use ~/.config/<xxx>
     home.username          = lib.mkDefault "testuser";
     home.homeDirectory     = lib.mkDefault "/home/testuser";
-    home.stateVersion      = lib.mkDefault "${shared.version.value}";
+    home.stateVersion      = lib.mkDefault "${shared.version.value.stateVersion}";
     manual.manpages.enable = lib.mkDefault false;
   };
 

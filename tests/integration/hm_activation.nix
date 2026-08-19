@@ -35,7 +35,7 @@ let
         home = {
           username      = testUser;
           homeDirectory = "/home/${testUser}";
-          stateVersion  = "${shared.version.value}";
+          stateVersion  = "${shared.version.value.stateVersion}";
 
           # Representative packages from home/core + home/env/dev
           packages = with pkgs; [
