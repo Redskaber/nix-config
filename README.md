@@ -609,7 +609,7 @@ platform/<platform>/default.nix
 
 | 子层       | 路径             | 说明                                                                                                                                  |
 | ---------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `env/base` | `home/env/base/` | 全局基础包：编译器(clang/rustc/cargo)、运行时(python312/nodejs_24)、调试工具(valgrind/strace/ltrace)、硬件工具(pciutils/vulkan-tools) |
+| `env/base` | `home/env/base/` | 全局基础包：编译器(clang/rustc/cargo)、运行时(python314/nodejs_26)、调试工具(valgrind/strace/ltrace)、硬件工具(pciutils/vulkan-tools) |
 | `env/dev`  | `home/env/dev/`  | pdshell devShell 定义文件（每语言一目录，由 `flake.nix` 的 `devShells` 输出加载）                                                     |
 
 **`sys/ai/` — AI CLI 子层：**
