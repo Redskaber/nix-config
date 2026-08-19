@@ -15,11 +15,13 @@ let
       stateVersion = "25.11";
       wine = pkgs: pkgs.wineWowPackages.waylandFull;
       swww = pkgs: pkgs.swww;
+      adb  = { programs.adb.enable = true; };
     };
     v26_05  = {
       stateVersion = "26.05";
       wine = pkgs: pkgs.wineWow64Packages.waylandFull;
       swww = pkgs: pkgs.awww;
+      adb = { };
     };
   };
   platform        = enum "platform"       [ "linux" "macos" "nixos" "wsl" ];

@@ -19,12 +19,7 @@
 , pkgs
 , ...
 }:
-{
-  programs.adb.enable = (shared.tools.nix-types.match shared.version) {
-    v25_11 = _: true;
-    _      = _: false;
-  };  # Android debug
-
+shared.version.value.adb // {
   # Add user to libvirtd incus-admin waydroid group
   # NOTE: These groups are created by their respective virtualisation services.
   #       They are safe to declare here because the services are enabled below.

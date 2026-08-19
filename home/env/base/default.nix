@@ -12,11 +12,7 @@
 }:
 {
   home.packages = with shared.upkgs; [
-    llvmPackages_22.clang
-    llvmPackages_22.clang-tools
-    llvmPackages_22.lld
-
-    gcc16
+    gcc
     gdb
     cmake
 

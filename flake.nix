@@ -203,6 +203,7 @@
     {
       # api
       api.inputs = inputs;
+      api.shared = shared;
 
       # debug information
       # Available through 'nix eval .#debug.test_system'
