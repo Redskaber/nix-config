@@ -46,7 +46,10 @@ let
   hyprResult = shared.orc.mergeHomeFiles (
     shared.orc.listFilesRecursive inputs.hypr-config ""
   ) [
-    { include = [ "sys/policy/wallust/wallust-hyprland.conf" ];
+    { include = [ "sys/policy/wallust/wallust-hyprland.lua" ];
+      emitter = "copy";
+      destPrefix = ".config/hypr"; }
+    { include = [ ".deps_cache.sh" ];
       emitter = "copy";
       destPrefix = ".config/hypr"; }
   ];
