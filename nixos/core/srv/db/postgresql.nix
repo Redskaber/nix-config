@@ -62,6 +62,7 @@
 
   environment.systemPackages = with pkgs; [ postgresql ];
 
+
   services.postgresql = {
     enable = shared.services.db.postgresql.install;
     package = pkgs.postgresql;
@@ -209,7 +210,7 @@
 
     # 系统调用过滤
     systemCallFilter = {
-      default       = true;   # 启用默认过滤
+      "@default"    = true;   # 启用默认过滤
       "@network-io" = true;   # 允许网络 IO
       "@file-system"= true;   # 允许文件系统访问
       "@clock"      = true;   # 允许时钟访问
@@ -219,16 +220,37 @@
     };
   };
 
+
   # 🔒 专用服务：安全注入密码（运行时）
   systemd.services.postgresql-set-user-passwords = {
     description = "Inject PostgreSQL user passwords from sops secrets";
     after = [ "postgresql.service" ];
-    requires = [ "postgresql.service" ];
-    wantedBy = [ "multi-user.target" ];
+    partOf = [ "postgresql.service" ];
+    restartIfChanged = false;
+    wantedBy = lib.mkForce (
+      if shared.services.db.postgresql.autostart
+      then [ "multi-user.target" ]
+      else [ "postgresql.service" ]
+    );
 
     path = with pkgs; [ postgresql ];
     script = ''
-      while ! pg_isready -q 2>/dev/null; do sleep 0.5; done
+      # Guard: 数据库没运行时跳过（防止 switch 时误触发）
+      if ! systemctl is-active postgresql.service 2>/dev/null; then
+        echo "PostgreSQL is not running, skipping password injection"
+        exit 0
+      fi
+
+      # Wait for PostgreSQL ready (with timeout)
+      for i in $(seq 1 10); do
+        pg_isready -q 2>/dev/null && break
+        sleep 1
+      done
+      if ! pg_isready -q 2>/dev/null; then
+        echo "PostgreSQL not ready after 10s, skipping"
+        exit 0
+      fi
+
       user_pwd=$(cat ${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path})
 
       psql -d postgres <<SQL_EOF
@@ -256,9 +278,24 @@
     unitConfig.RequiresMountsFor = [ "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}" ];
   };
 
+
   # Control autostart: clear wantedBy when autostart=false (install but not autostart)
   systemd.services.postgresql.wantedBy =
-    lib.mkForce (lib.optional shared.services.db.postgresql.autostart "multi-user.target");
+    lib.mkForce (
+      if shared.services.db.postgresql.autostart
+      then [ "multi-user.target" ]
+      else []
+    );
+
+  # ⚠️ NixOS 26.05 PG module creates postgresql.target wanted by multi-user.target
+  # Must also override the target, otherwise it pulls in postgresql.service at boot
+  systemd.targets.postgresql.wantedBy =
+    lib.mkForce (
+      if shared.services.db.postgresql.autostart
+      then [ "multi-user.target" ]
+      else []
+    );
+
 }
 
 

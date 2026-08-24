@@ -280,11 +280,11 @@
     "hypr-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1787563642,
-        "narHash": "sha256-tFtUcHTSybEYdnUVJ9/YsttbQ40ErVE4woBluJa1xhI=",
+        "lastModified": 1787569765,
+        "narHash": "sha256-qknsbUwVMfI954VlmVOLzCt4xJeTg8CZy9a/Nxl5mFU=",
         "owner": "Redskaber",
         "repo": "hypr-config",
-        "rev": "437c12ceda804556a6c93bd8acb6cbdc2dc441db",
+        "rev": "677a8f3f418a910ef82bb88759ef40f602090935",
         "type": "github"
       },
       "original": {

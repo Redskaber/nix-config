@@ -30,6 +30,7 @@
 {
   environment.systemPackages = with pkgs; [ mongodb-ce mongosh ];
 
+
   services.mongodb = {
     enable = shared.services.db.mongodb.install;
     package = pkgs.mongodb-ce;
@@ -52,5 +53,9 @@
 
   # Control autostart: clear wantedBy when autostart=false (install but not autostart)
   systemd.services.mongodb.wantedBy =
-    lib.mkForce (lib.optional shared.services.db.mongodb.autostart "multi-user.target");
+    lib.mkForce (
+      if shared.services.db.mongodb.autostart
+      then [ "multi-user.target" ]
+      else []
+    );
 }

@@ -16,6 +16,7 @@
 {
   environment.systemPackages = with pkgs; [ redis ];
 
+
   services.redis = {
     package = pkgs.redis;
     vmOverCommit = true;
@@ -42,8 +43,11 @@
   };
 
 
-
   # Control autostart: clear wantedBy when autostart=false (install but not autostart)
   systemd.services."redis-${shared.user.username}".wantedBy =
-    lib.mkForce (lib.optional shared.services.db.redis.autostart "multi-user.target");
+    lib.mkForce (
+      if shared.services.db.redis.autostart
+      then [ "multi-user.target" ]
+      else []
+    );
 }

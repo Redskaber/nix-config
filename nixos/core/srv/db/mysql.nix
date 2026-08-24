@@ -29,6 +29,7 @@
     mariadb     # free
   ];
 
+
   # MYSQLD SERVICES
   services.mysql = {
     enable = shared.services.db.mysql.install;
@@ -78,20 +79,31 @@
   systemd.services.mysql-set-user-passwords = {
     description = "Securely set MySQL user passwords from sops secrets";
     after = [ "mysql.service" ];
-    requires = [ "mysql.service" ];
-    wantedBy = lib.mkForce (lib.optional shared.services.db.mysql.autostart "multi-user.target");
+    partOf = [ "mysql.service" ];
+    restartIfChanged = false;
+    wantedBy = lib.mkForce (
+      if shared.services.db.mysql.autostart
+      then [ "multi-user.target" ]
+      else [ "mysql.service" ]
+    );
 
     path = with pkgs; [ mariadb ];
     script = ''
-      # checkissettingpassword(ifrequiresalreadyinsettingcomment)
-      # if [ -f /var/lib/mysql/.passwords_set ]; then
-      #   exit 0
-      # fi
+      # Guard: 数据库没运行时跳过
+      if ! systemctl is-active mysql.service 2>/dev/null; then
+        echo "MySQL is not running, skipping password injection"
+        exit 0
+      fi
 
-      # wait MySQL ready
-      while ! mysqladmin ping -u root --silent 2>/dev/null; do
-        sleep 0.5
+      # Wait for MySQL ready (with timeout)
+      for i in $(seq 1 10); do
+        mysqladmin ping -u root --silent 2>/dev/null && break
+        sleep 1
       done
+      if ! mysqladmin ping -u root --silent 2>/dev/null; then
+        echo "MySQL not ready after 10s, skipping"
+        exit 0
+      fi
 
       # securepassword
       user_pwd=$(tr -d '\n' < ${config.sops.secrets.${shared.secrets.nixos.core.srv.db.mysql.user.password}.path})
@@ -130,8 +142,11 @@
   };
 
 
-
   # Control autostart: clear wantedBy when autostart=false (install but not autostart)
   systemd.services.mysql.wantedBy =
-    lib.mkForce (lib.optional shared.services.db.mysql.autostart "multi-user.target");
+    lib.mkForce (
+      if shared.services.db.mysql.autostart
+      then [ "multi-user.target" ]
+      else []
+    );
 }
