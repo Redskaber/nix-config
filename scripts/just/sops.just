@@ -24,21 +24,36 @@
 #     hardcoded paths in sops.just. Adding a new secret = edit shared.nix.tmpl
 #     + add one template YAML file. No code changes needed here.
 #
-#   - Single derivation rule (template path ↔ secret REL path):
-#     The value in shared.nix (e.g. "nixos/core/srv/db/mongodb/users/kilig/password")
-#     IS the template file path relative to SECRETS_TMPL_PATH, with the real
-#     username reversed back to __USERNAME__. Derivation:
-#       TMPL_REL = REL | sed "s|/${U}/|/__USERNAME__/|g; s|redis-${U}|redis-__USERNAME__|g"
-#       TMPL     = SECRETS_TMPL_PATH / TMPL_REL + ".yaml"
-#     This rule is defined ONCE and applied identically in _sops-plan-gen and
-#     _sops-chipr-write, so the two layers are always structurally in sync.
+#   - Canonical substitution rule (SINGLE, position-agnostic — no special-cases):
+#     shared.nix is a Nix module and stores secret rel-paths using Nix string
+#     interpolation, e.g. "nixos/core/base/user/${username}/password". The real
+#     username is bound once via `username = "<U>"` near the top of the file.
+#     Because just reads shared.nix as plain text (grep), it sees the literal
+#     "${username}" rather than the resolved value. We resolve it at the text
+#     level with ONE bash parameter expansion, applied identically to every key:
+#         needle='${username}'
+#         TMPL_REL = "${REL//${needle}/__USERNAME__}"   # → template rel-path
+#         RES_REL  = "${REL//${needle}/${U}}"           # → resolved secret rel-path
+#     The substitution is global and literal, so it handles the username whether
+#     it appears as a path segment (…/kilig/…) OR as an affix (redis-kilig) with
+#     the SAME rule. There are no per-secret sed clauses and no special-case for
+#     redis. This rule is defined ONCE in _sops-paths and reused by every layer.
+#
+#   - Single resolver: _sops-paths <key> is the ONLY function that maps a dotted
+#     key in shared.nix to concrete filesystem locations. It emits
+#     (template path, resolved rel-path, username) so plan/chipr layers always
+#     agree on which file is which. No recipe duplicates the grep+resolve logic.
+#
+#   - Single username source: _sops-username is the ONLY function that parses
+#     the username binding from shared.nix. Every recipe that needs U (and not
+#     full paths) goes through it.
 #
 #   - Generic encrypt writer: _sops-chipr-write handles all secrets. Per-secret
 #     recipes (sops-chipr-create-*) are thin wrappers supplying only what differs:
 #     prompt label, template placeholder, and optional transform.
 #
-#   - _sops-mkdir iterates all nixos.* secret values in shared.nix to create
-#     directories — no path list to maintain separately.
+#   - _sops-mkdir iterates all nixos.* secret values in shared.nix (resolved via
+#     the canonical rule) to create directories — no path list to maintain.
 #
 #   - Generate, don't mutate: overwrite, never in-place patch.
 #   - plan / chipr fully separated — different lifecycle, different audience.
@@ -123,8 +138,9 @@ sops-rules-destroy:
 # ==============================================================================
 # PLAIN LAYER — plaintext template instances (plan)
 # ==============================================================================
-# All paths derived from shared.nix at runtime. To add a new secret:
-#   (1) add to shared.nix.tmpl  (2) add template YAML file  (3) add one line below.
+# All paths derived from shared.nix at runtime via _sops-paths. To add a new
+# secret: (1) add to shared.nix.tmpl  (2) add template YAML file  (3) add one
+# line below.
 
 # Generate all plaintext template instances (data-driven, paths from shared.nix).
 sops-plan-create-all:
@@ -148,7 +164,7 @@ sops-plan-destroy:
 # CIPHER LAYER — encrypt (POST-BOOTSTRAP)
 # ==============================================================================
 # Each recipe is a thin wrapper: supplies key + prompt + placeholder [+ transform].
-# All path resolution and I/O are handled by the generic _sops-chipr-write.
+# All path resolution and I/O are handled by _sops-chipr-write (→ _sops-paths).
 # To add a new secret: add one sops-chipr-create-* recipe (4 lines) here.
 
 # Encrypt user system password (stored as mkpasswd sha-512 hash).
@@ -274,17 +290,51 @@ sops-destroy-all:
 
 
 # ==============================================================================
-# Private helpers — shared.nix parsing
+# Private helpers — shared.nix parsing (single source of truth)
 # ==============================================================================
 
-# Read a string value from shared.nix by dotted key; whitespace-insensitive.
-# Usage:  _shared-get <path> <dotted.key>
-# Returns the matched value (no quotes); empty string if not found.
-_shared-get path key:
+# Print the username parsed from shared.nix (single source of truth).
+# Exits non-zero with a clear message if shared.nix is missing or the username
+# cannot be parsed. Every recipe that needs U (and not full paths) goes here.
+_sops-username:
     #!/usr/bin/env bash
     set -euo pipefail
+    SHARED="{{SHARED_NIX_PATH}}"
+    [[ -f "${SHARED}" ]] || { echo "Error: ${SHARED} not found. Run: just shared-generate <username>" >&2; exit 1; }
+    U=$(grep -oP 'username\s*=\s*"\K[^"]+' "${SHARED}" || true)
+    [[ -n "${U}" ]] || { echo "Error: could not parse username from ${SHARED}" >&2; exit 1; }
+    printf '%s\n' "${U}"
+
+
+# Canonical secret-path resolver — the ONLY place that maps a dotted key in
+# shared.nix to concrete filesystem locations. Emits three lines to stdout:
+#   line 1: absolute template file path   (TMPL — uses __USERNAME__ placeholder)
+#   line 2: resolved secret rel-path      (REL  — real username substituted)
+#   line 3: username value                (U    — for in-content substitution)
+#
+# The substitution rule is defined ONCE here (see "Canonical substitution rule"
+# in the file header) and applied identically to every secret key. It is a
+# single global literal replacement with no per-secret special-casing, so it
+# covers usernames embedded as path segments (…/kilig/…) AND as affixes
+# (redis-kilig) with the same expression. plan and chipr layers therefore
+# always reference the same template file.
+#
+# Usage: just _sops-paths "nixos.core.srv.db.redis.user.password"
+_sops-paths key:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SHARED="{{SHARED_NIX_PATH}}"
+    [[ -f "${SHARED}" ]] || { echo "Error: ${SHARED} not found. Run: just shared-generate <username>" >&2; exit 1; }
+    U=$(grep -oP 'username\s*=\s*"\K[^"]+' "${SHARED}" || true)
+    [[ -n "${U}" ]] || { echo "Error: could not parse username from ${SHARED}" >&2; exit 1; }
     pat=$(printf '%s' "{{key}}" | sed 's/\./\\./g')
-    grep -oP "${pat}"'\s*=\s*"\K[^"]+' "{{path}}" || true
+    REL=$(grep -oP "${pat}"'\s*=\s*"\K[^"]+' "${SHARED}" || true)
+    [[ -n "${REL}" ]] || { echo "Error: key '{{key}}' not found in ${SHARED}" >&2; exit 1; }
+    # Canonical rule (single, position-agnostic — handles segments AND affixes):
+    needle='${username}'
+    TMPL_REL="${REL//${needle}/__USERNAME__}"
+    RES_REL="${REL//${needle}/${U}}"
+    printf '%s\n%s\n%s\n' "{{SECRETS_TMPL_PATH}}/${TMPL_REL}.yaml" "${RES_REL}" "${U}"
 
 
 # ==============================================================================
@@ -292,22 +342,22 @@ _shared-get path key:
 # ==============================================================================
 
 # Create all secret dirs (plan/ and chipr/) driven entirely by shared.nix.
-# Greps every nixos.* secret value → dirname → mkdir. Zero hardcoded paths.
+# Greps every nixos.* secret value, resolves ${username} → U via the canonical
+# rule, then mkdir. Zero hardcoded paths.
 _sops-mkdir:
     #!/usr/bin/env bash
     set -euo pipefail
     SHARED="{{SHARED_NIX_PATH}}"
-    if [[ ! -f "${SHARED}" ]]; then
-        echo "Error: ${SHARED} not found. Run: just shared-generate <username>" >&2; exit 1
-    fi
-    # Extract all secret REL paths from shared.nix (values of nixos.* = "..." entries).
+    [[ -f "${SHARED}" ]] || { echo "Error: ${SHARED} not found. Run: just shared-generate <username>" >&2; exit 1; }
+    U=$(grep -oP 'username\s*=\s*"\K[^"]+' "${SHARED}" || true)
+    [[ -n "${U}" ]] || { echo "Error: could not parse username from ${SHARED}" >&2; exit 1; }
     mapfile -t RELS < <(grep -oP 'nixos\.[a-zA-Z0-9._-]+\s*=\s*"\K[^"]+' "${SHARED}")
-    if [[ ${#RELS[@]} -eq 0 ]]; then
-        echo "Error: no nixos.* secrets found in ${SHARED}" >&2; exit 1
-    fi
+    [[ ${#RELS[@]} -gt 0 ]] || { echo "Error: no nixos.* secrets found in ${SHARED}" >&2; exit 1; }
+    needle='${username}'
     for REL in "${RELS[@]}"; do
-        mkdir -p "{{SECRETS_PLAN_PATH}}/$(dirname "${REL}")"
-        mkdir -p "{{SECRETS_CHIPR_PATH}}/$(dirname "${REL}")"
+        R="${REL//${needle}/${U}}"
+        mkdir -p "{{SECRETS_PLAN_PATH}}/$(dirname "${R}")"
+        mkdir -p "{{SECRETS_CHIPR_PATH}}/$(dirname "${R}")"
     done
     echo "Created dirs for ${#RELS[@]} secret(s) under secrets/plan and secrets/chipr"
 
@@ -324,23 +374,15 @@ _sops-keygen:
     fi
 
 # Generate .sops.yaml from template (tmpl → sed → overwrite).
+# Username comes from _sops-username (single source), age pubkey from the keyfile.
 _sops-write-rules:
     #!/usr/bin/env bash
     set -euo pipefail
-    SHARED="{{SHARED_NIX_PATH}}"
-    if [[ ! -f "${SHARED}" ]]; then
-        echo "Error: ${SHARED} not found. Run: just shared-generate <username>" >&2; exit 1
-    fi
-    U=$(grep -oP 'username\s*=\s*"\K[^"]+' "${SHARED}")
-    if [[ -z "${U}" ]]; then
-        echo "Error: could not parse username from ${SHARED}" >&2; exit 1
-    fi
+    U=$(just _sops-username) || exit 1
     PUB=$(age-keygen -y "{{SECRETS_KEYFILE}}")
     TMPL="{{SECRETS_TMPL_PATH}}/sops-rules.yaml.tmpl"
     DEST="{{DOT_SOPS_FILENAME}}"
-    if [[ ! -f "${TMPL}" ]]; then
-        echo "Error: sops rules template not found: ${TMPL}" >&2; exit 1
-    fi
+    [[ -f "${TMPL}" ]] || { echo "Error: sops rules template not found: ${TMPL}" >&2; exit 1; }
     sed \
         -e "s|__USERNAME__|${U}|g" \
         -e "s|__AGE_PUBLIC_KEY__|${PUB}|g" \
@@ -352,36 +394,20 @@ _sops-write-rules:
 # Private — plan plaintext instance generator
 # ==============================================================================
 # Generate one plaintext secret instance.
+# Path resolution delegated to _sops-paths (canonical rule). No inline grep.
 #
-# Template path derivation rule (the single canonical rule for this file):
-#   REL      = value of dotted key in shared.nix  (e.g. "nixos/.../kilig/password")
-#   TMPL_REL = REL with real username reversed to __USERNAME__
-#            = sed "s|/${U}/|/__USERNAME__/|g; s|redis-${U}|redis-__USERNAME__|g"
-#   TMPL     = SECRETS_TMPL_PATH / TMPL_REL + ".yaml"
-#
-# This rule is the inverse of the substitution performed by shared-generate and
-# is applied identically in _sops-chipr-write — ensuring plan and chipr always
-# reference the same template file.
-#
-# Usage:   just _sops-plan-gen <dotted.key>
-# Example: just _sops-plan-gen "nixos.core.srv.db.mongodb.user.password"
+# Usage:   just _sops-plan-gen "nixos.core.srv.db.mongodb.user.password"
 _sops-plan-gen key:
     #!/usr/bin/env bash
     set -euo pipefail
-    SHARED="{{SHARED_NIX_PATH}}"
-    U=$(grep -oP 'username\s*=\s*"\K[^"]+' "${SHARED}")
-    pat=$(printf '%s' "{{key}}" | sed 's/\./\\./g')
-    REL=$(grep -oP "${pat}"'\s*=\s*"\K[^"]+' "${SHARED}" || true)
-    if [[ -z "${REL}" ]]; then
-        echo "Error: key '{{key}}' not found in ${SHARED}" >&2; exit 1
-    fi
-    TMPL_REL=$(printf '%s' "${REL}" \
-        | sed "s|/${U}/|/__USERNAME__/|g; s|redis-${U}|redis-__USERNAME__|g")
-    TMPL="{{SECRETS_TMPL_PATH}}/${TMPL_REL}.yaml"
+    OUT=$(just _sops-paths "{{key}}") || exit 1
+    mapfile -t LINES <<< "${OUT}"
+    TMPL="${LINES[0]:-}"
+    REL="${LINES[1]:-}"
+    U="${LINES[2]:-}"
+    [[ -n "${TMPL}" && -n "${REL}" && -n "${U}" ]] || { echo "Error: _sops-paths returned incomplete data for '{{key}}'" >&2; exit 1; }
     DEST="{{SECRETS_PLAN_PATH}}/${REL}.yaml"
-    if [[ ! -f "${TMPL}" ]]; then
-        echo "Error: template not found: ${TMPL}" >&2; exit 1
-    fi
+    [[ -f "${TMPL}" ]] || { echo "Error: template not found: ${TMPL}" >&2; exit 1; }
     mkdir -p "$(dirname "${DEST}")"
     sed "s|__USERNAME__|${U}|g" "${TMPL}" > "${DEST}"
     echo "Generated plan: ${DEST}"
@@ -390,25 +416,25 @@ _sops-plan-gen key:
 # ==============================================================================
 # Private — chipr decrypt reader
 # ==============================================================================
-# Decrypt a secret by dotted key (path resolved at runtime from shared.nix).
+# Decrypt a secret by dotted key (path resolved at runtime via _sops-paths).
 # Usage:  just _sops-chipr-read "nixos.core.srv.db.mongodb.user.password"
 _sops-chipr-read key:
     #!/usr/bin/env bash
     set -euo pipefail
-    SHARED="{{SHARED_NIX_PATH}}"
-    pat=$(printf '%s' "{{key}}" | sed 's/\./\\./g')
-    REL=$(grep -oP "${pat}"'\s*=\s*"\K[^"]+' "${SHARED}" || true)
-    if [[ -z "${REL}" ]]; then
-        echo "Error: key '{{key}}' not found in ${SHARED}" >&2; exit 1
-    fi
-    sops decrypt "{{SECRETS_CHIPR_PATH}}/${REL}.yaml"
+    OUT=$(just _sops-paths "{{key}}") || exit 1
+    mapfile -t LINES <<< "${OUT}"
+    REL="${LINES[1]:-}"
+    [[ -n "${REL}" ]] || { echo "Error: _sops-paths returned incomplete data for '{{key}}'" >&2; exit 1; }
+    TARGET="{{SECRETS_CHIPR_PATH}}/${REL}.yaml"
+    [[ -f "${TARGET}" ]] || { echo "Error: cannot operate on non-existent file \"${TARGET}\"" >&2; exit 100; }
+    sops decrypt "${TARGET}"
 
 
 # ==============================================================================
 # Private — generic chipr encrypt writer
 # ==============================================================================
-# Single implementation for all secret encryption. Eliminates per-secret duplication.
-# Uses the same template path derivation rule as _sops-plan-gen.
+# Single implementation for all secret encryption. Eliminates per-secret
+# duplication. Path resolution via _sops-paths (same canonical rule as plan).
 #
 # Usage:   just _sops-chipr-write <key> <prompt> <placeholder> [transform]
 #   key:         dotted key in shared.nix — used to resolve REL and derive TMPL
@@ -418,38 +444,26 @@ _sops-chipr-read key:
 #                "mkpasswd"        — hash via mkpasswd -m sha-512 before storing
 #
 # Execution flow:
-#   1. Look up REL from shared.nix by dotted key
-#   2. Derive TMPL_REL by reversing username substitution; locate TMPL file
-#   3. Read secret interactively (hidden, confirmed); apply optional transform
-#   4. sed substitute __USERNAME__ + placeholder in template
-#   5. Pipe through sops encrypt → SECRETS_CHIPR_PATH/REL.yaml
+#   1. Resolve TMPL/REL/U from shared.nix via _sops-paths (canonical rule)
+#   2. Read secret interactively (hidden, confirmed); apply optional transform
+#   3. sed substitute __USERNAME__ + placeholder in template
+#   4. Pipe through sops encrypt → SECRETS_CHIPR_PATH/REL.yaml (atomic mv)
 #
 # To add a new secret type: no changes here. Add to shared.nix.tmpl + template
 # file + 4-line sops-chipr-create-* wrapper above.
 _sops-chipr-write key prompt placeholder transform="plain":
     #!/usr/bin/env bash
     set -euo pipefail
-    SHARED="{{SHARED_NIX_PATH}}"
-    U=$(grep -oP 'username\s*=\s*"\K[^"]+' "${SHARED}")
-
-    # 1. Resolve REL path from shared.nix.
-    pat=$(printf '%s' "{{key}}" | sed 's/\./\\./g')
-    REL=$(grep -oP "${pat}"'\s*=\s*"\K[^"]+' "${SHARED}" || true)
-    if [[ -z "${REL}" ]]; then
-        echo "Error: key '{{key}}' not found in ${SHARED}" >&2; exit 1
-    fi
-
-    # 2. Derive template path (same rule as _sops-plan-gen — single definition).
-    TMPL_REL=$(printf '%s' "${REL}" \
-        | sed "s|/${U}/|/__USERNAME__/|g; s|redis-${U}|redis-__USERNAME__|g")
-    TMPL="{{SECRETS_TMPL_PATH}}/${TMPL_REL}.yaml"
+    OUT=$(just _sops-paths "{{key}}") || exit 1
+    mapfile -t LINES <<< "${OUT}"
+    TMPL="${LINES[0]:-}"
+    REL="${LINES[1]:-}"
+    U="${LINES[2]:-}"
+    [[ -n "${TMPL}" && -n "${REL}" && -n "${U}" ]] || { echo "Error: _sops-paths returned incomplete data for '{{key}}'" >&2; exit 1; }
     DEST="{{SECRETS_CHIPR_PATH}}/${REL}.yaml"
+    [[ -f "${TMPL}" ]] || { echo "Error: template not found: ${TMPL}" >&2; exit 1; }
 
-    if [[ ! -f "${TMPL}" ]]; then
-        echo "Error: template not found: ${TMPL}" >&2; exit 1
-    fi
-
-    # 3. Read secret interactively (hidden input, with confirmation).
+    # 1. Read secret interactively (hidden input, with confirmation).
     echo -n "{{prompt}}: "; read -rs secret; echo
     echo -n "Confirm: ";    read -rs csecret; echo
     if [[ "${secret}" != "${csecret}" ]]; then
@@ -458,14 +472,14 @@ _sops-chipr-write key prompt placeholder transform="plain":
     fi
     unset -v csecret
 
-    # 4. Apply optional transform; clear plaintext immediately after.
+    # 2. Apply optional transform; clear plaintext immediately after.
     value="${secret}"
     unset -v secret
     if [[ "{{transform}}" == "mkpasswd" ]]; then
         value=$(printf '%s' "${value}" | mkpasswd -m sha-512 -R 5000 -s)
     fi
 
-    # 5. Substitute __USERNAME__, then substitute the secret placeholder.
+    # 3. Substitute __USERNAME__, then substitute the secret placeholder.
     #    awk via ENVIRON is used for the placeholder substitution instead of sed
     #    so that arbitrary characters in the secret value (|, \, &, newlines, …)
     #    are treated as literals and never interpreted as sed metacharacters.
