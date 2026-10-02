@@ -15,7 +15,9 @@
 
   imports = [
     ./codex.nix
-    ./showmethekey.nix
+    ./gitlogue.nix
+    # ./showmethekey.nix
+
   ];
 
 
