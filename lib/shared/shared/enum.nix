@@ -58,7 +58,7 @@ let
   editor-set   = enum "editorSet" {
     minimal    = { editors = [ "nvim" ]; };
     full-ai    = { editors = [ "nvim" "vscode" "cursor" "zed" ]; };
-    emacs-dev  = { editors = [ "nvim" "emacs" ]; };
+    dev        = { editors = [ "nvim" "vscode" "cursor" "zed" "emacs" "kiro" ]; };
     full       = { editors = [ "nvim" "vscode" "cursor" "zed" "emacs" "kiro" "trae" "zcode" ]; };
   };
   terminal-set = enum "terminalSet" {

@@ -66,7 +66,7 @@
     configuration-orchestrator.url = "github:Redskaber/ConfigurationOrchestrator";
 
     # Wechat
-    wechat.url = "github:Redskaber/wechat";
+    wechat.url = "github:Redskaber/wechat/auto-update/20261006-225659";
     wechat.inputs.nixpkgs.follows = "nixpkgs";
 
     # Unpryc

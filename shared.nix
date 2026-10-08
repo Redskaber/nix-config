@@ -25,7 +25,7 @@ shared.schema.shared
   version = shared.enum.version.v26_05;
   editor  = shared.enum.editor.nvim;
   # Application sets (multi-select routing)
-  editor-set   = shared.enum.editor-set.full;
+  editor-set   = shared.enum.editor-set.dev;
   terminal-set = shared.enum.terminal-set.both;
   browser-set  = shared.enum.browser-set.all;
   # Service profile: controls install vs autostart
@@ -105,6 +105,7 @@ shared.schema.shared
       # Unsafe pkgs
       permittedInsecurePackages = [
         "python3.12-ecdsa-0.19.1"  # python-renpy
+        "electron-41.10.7" 
       ];
     };
   };

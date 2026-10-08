@@ -17,8 +17,8 @@
   imports = [
     ./lutris.nix
     ./minecraft.nix
+    ./pokemmo.nix
   ];
-
 
 }
 
