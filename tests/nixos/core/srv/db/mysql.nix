@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::srv::db::mysql
-# @source: nixos/core/srv/db/mysql.nix
+# @source: platform/nixos/core/srv/db/mysql.nix
 #
 # Mirrors production config (sops replaced with initialScript for test isolation):
 #   services.mysql.package = pkgs.mariadb

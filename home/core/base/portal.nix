@@ -5,7 +5,7 @@
 # @directory: https://nix-community.github.io/home-manager/options.xhtml#opt-xdg.portal.enable
 #
 # User-level XDG portal configuration (standalone HM only).
-# On NixOS, portal is managed by nixos/core/base/portal.nix via system config.
+# On NixOS, portal is managed by platform/nixos/core/base/portal.nix via system config.
 # xdg.portal.enable is gated on the resolved capability facts (T4.0):
 # !caps.nixos-system (system layer owns it) && desktop-session (a real
 # desktop session exists to mediate) — no predicate calls, no tag strings.

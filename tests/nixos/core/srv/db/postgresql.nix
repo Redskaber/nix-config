@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::srv::db::postgresql
-# @source: nixos/core/srv/db/postgresql.nix
+# @source: platform/nixos/core/srv/db/postgresql.nix
 #
 # Mirrors production config (sops secrets replaced with ensureUsers for test isolation):
 #   services.postgresql.enable = true

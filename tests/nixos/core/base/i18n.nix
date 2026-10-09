@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::base::i18n
-# @source: nixos/core/base/i18n.nix
+# @source: platform/nixos/core/base/i18n.nix
 #
 # Mirrors production config:
 #   i18n.defaultLocale = "en_US.UTF-8"   (shared.i18n.defaultLocale)

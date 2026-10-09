@@ -1,0 +1,272 @@
+{
+  "version": 1,
+  "system": "x86_64-linux",
+  "virtualisation": "kvm",
+  "uefi": {
+    "supported": false
+  },
+  "hardware": {
+    "cpu": [
+      {
+        "architecture": "x86_64",
+        "vendor_name": "GenuineIntel",
+        "model_name": "QEMU Virtual CPU version 2.5+",
+        "family": 6,
+        "model": 173,
+        "stepping": 1,
+        "features": [
+          "fpu",
+          "vme",
+          "de",
+          "pse",
+          "tsc",
+          "msr",
+          "pae",
+          "mce",
+          "cx8",
+          "apic",
+          "sep",
+          "mtrr",
+          "pge",
+          "mca",
+          "cmov",
+          "pat",
+          "pse36",
+          "clflush",
+          "mmx",
+          "fxsr",
+          "sse",
+          "sse2",
+          "ss",
+          "ht",
+          "syscall",
+          "nx",
+          "pdpe1gb",
+          "rdtscp",
+          "lm",
+          "constant_tsc",
+          "rep_good",
+          "nopl",
+          "xtopology",
+          "nonstop_tsc",
+          "cpuid",
+          "tsc_known_freq",
+          "pni",
+          "pclmulqdq",
+          "ssse3",
+          "fma",
+          "cx16",
+          "pdcm",
+          "pcid",
+          "sse4_1",
+          "sse4_2",
+          "x2apic",
+          "movbe",
+          "popcnt",
+          "tsc_deadline_timer",
+          "aes",
+          "xsave",
+          "avx",
+          "f16c",
+          "rdrand",
+          "hypervisor",
+          "lahf_lm",
+          "abm",
+          "3dnowprefetch",
+          "cpuid_fault",
+          "invpcid_single",
+          "ssbd",
+          "ibrs",
+          "ibpb",
+          "stibp",
+          "ibrs_enhanced",
+          "fsgsbase",
+          "bmi1",
+          "hle",
+          "avx2",
+          "smep",
+          "bmi2",
+          "erms",
+          "invpcid",
+          "rtm",
+          "rdseed",
+          "adx",
+          "smap",
+          "clflushopt",
+          "clwb",
+          "sha_ni",
+          "umip",
+          "gfni",
+          "vaes",
+          "vpclmulqdq",
+          "movdiri",
+          "movdir64b",
+          "fsrm",
+          "md_clear",
+          "flush_l1d",
+          "arch_capabilities"
+        ],
+        "bugs": [
+          "spectre_v1",
+          "spectre_v2",
+          "spec_store_bypass",
+          "swapgs"
+        ],
+        "power_management": [
+          ""
+        ],
+        "bogo": 4800,
+        "cache": 4096,
+        "units": 1,
+        "page_size": 4096,
+        "physical_id": 0,
+        "siblings": 1,
+        "cores": 1,
+        "fpu": true,
+        "fpu_exception": true,
+        "cpuid_level": 31,
+        "write_protect": false,
+        "tlb_size": 14471,
+        "clflush_size": 64,
+        "cache_alignment": 64,
+        "address_sizes": {
+          "physical": "0x2e",
+          "virtual": "0x36"
+        }
+      }
+    ],
+    "disk": [
+      {
+        "index": 13,
+        "attached_to": 10,
+        "class_list": [
+          "disk",
+          "block_device"
+        ],
+        "base_class": {
+          "hex": "0106",
+          "name": "Mass Storage Device",
+          "value": 262
+        },
+        "sub_class": {
+          "hex": "0000",
+          "name": "Disk",
+          "value": 0
+        },
+        "model": "Disk",
+        "sysfs_id": "/class/block/vda",
+        "sysfs_bus_id": "virtio0",
+        "sysfs_device_link": "/devices/pci0000:00/0000:00:04.0/virtio0",
+        "unix_device_names": [
+          "/dev/vda"
+        ],
+        "driver": "virtio_blk",
+        "drivers": [
+          "virtio_blk"
+        ],
+        "driver_modules": [
+          "virtio_blk"
+        ]
+      }
+    ],
+    "storage_controller": [
+      {
+        "index": 10,
+        "attached_to": 0,
+        "class_list": [
+          "storage_controller"
+        ],
+        "bus_type": {
+          "hex": "008f",
+          "name": "Virtio",
+          "value": 143
+        },
+        "slot": {
+          "bus": 0,
+          "number": 0
+        },
+        "base_class": {
+          "hex": "0001",
+          "name": "Mass storage controller",
+          "value": 1
+        },
+        "sub_class": {
+          "hex": "0080",
+          "name": "Storage controller",
+          "value": 128
+        },
+        "vendor": {
+          "hex": "1af4",
+          "name": "Red Hat, Inc.",
+          "value": 6900
+        },
+        "device": {
+          "hex": "1042",
+          "name": "Virtio Block Device",
+          "value": 4162
+        },
+        "model": "Virtio Block Device",
+        "sysfs_id": "/devices/pci0000:00/0000:00:04.0/virtio0",
+        "sysfs_bus_id": "virtio0",
+        "driver": "virtio_blk",
+        "drivers": [
+          "virtio_blk"
+        ],
+        "driver_modules": [
+          "virtio_blk"
+        ]
+      }
+    ],
+    "network_controller": [
+      {
+        "index": 6,
+        "attached_to": 0,
+        "class_list": [
+          "network_controller"
+        ],
+        "bus_type": {
+          "hex": "008f",
+          "name": "Virtio",
+          "value": 143
+        },
+        "slot": {
+          "bus": 0,
+          "number": 1
+        },
+        "base_class": {
+          "hex": "0002",
+          "name": "Network controller",
+          "value": 2
+        },
+        "sub_class": {
+          "hex": "0000",
+          "name": "Ethernet controller",
+          "value": 0
+        },
+        "vendor": {
+          "hex": "1af4",
+          "name": "Red Hat, Inc.",
+          "value": 6900
+        },
+        "device": {
+          "hex": "1040",
+          "name": "Virtio Network Device",
+          "value": 4160
+        },
+        "model": "Virtio Network Device",
+        "sysfs_id": "/devices/pci0000:00/0000:00:05.0/virtio1",
+        "sysfs_bus_id": "virtio1",
+        "unix_device_names": [
+          "eth0"
+        ],
+        "driver": "virtio_net",
+        "drivers": [
+          "virtio_net"
+        ],
+        "driver_modules": [
+          "virtio_net"
+        ]
+      }
+    ]
+  }
+}

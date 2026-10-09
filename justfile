@@ -18,6 +18,7 @@ ROOT := justfile_directory()
 import "scripts/just/commit.just"
 import "scripts/just/shared.just"
 import "scripts/just/hardware.just"
+import "scripts/just/disk.just"
 import "scripts/just/flake.just"
 import "scripts/just/devenv.just"
 import "scripts/just/secrets.just"

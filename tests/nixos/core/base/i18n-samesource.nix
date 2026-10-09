@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-10-08
 # @description: tests::nixos::core::base::i18n-samesource
-# @source: lib/shared/shared/fn.nix, nixos/core/base/i18n.nix
+# @source: lib/shared/lang/fn.nix, nixos/core/base/i18n.nix
 #
 # T2.6 acceptance: "mixed-source combinations abort at EVAL time."
 #
@@ -24,7 +24,7 @@
 }:
 let
   # ── REAL production fn.nix (phase-1 pure) ─────────────────────────
-  realFn = import ../../../../lib/shared/shared/fn.nix {
+  realFn = import ../../../../lib/shared/lang/fn.nix {
     inputs = { };
     enum = { };
     const = { };
@@ -82,7 +82,7 @@ let
 
   importProduction =
     shared:
-    import ../../../../nixos/core/base/i18n.nix {
+    import ../../../../platform/nixos/core/base/i18n.nix {
       inputs = { };
       inherit shared lib;
       config = { };

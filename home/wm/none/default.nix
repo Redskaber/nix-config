@@ -7,8 +7,8 @@
 # Null-Object window-manager target (T3.1/T3.2): platforms without a
 # Linux windowing stack (wsl console host, darwin Aqua) route here via
 # shared.window-manager.tag = "none". The module intentionally provides
-# NOTHING — its existence is what lets platform/<tag>/x86_64-*.nix keep
-# the unconditional `imports = [ ../../home/wm ]` line, so the platform
+# NOTHING — its existence is what lets platform/<tag>/home/<arch>.nix keep
+# the unconditional `imports = [ ../../../home/wm ]` line, so the platform
 # tree stays uniform (router pattern: dispatch happens at the edge).
 
 { ... }:

@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-10-08
 # @description: tests::nixos::core::srv::monitor-policy
-# @source: nixos/core/srv/monitor/{default,healthcheck}.nix
+# @source: platform/nixos/core/srv/monitor/{default,healthcheck}.nix
 #
 # T3.4 acceptance (eval depth, mirrors the i18n-source pattern): the
 # REAL monitor modules are imported through a full nixpkgs.lib.nixosSystem
@@ -29,7 +29,7 @@ let
   mkMockShared =
     profile:
     let
-      realEnum = import ../../../../lib/shared/shared/enum.nix { inherit inputs; };
+      realEnum = import ../../../../lib/shared/lang/enum.nix { inherit inputs; };
       instance = realEnum.service-profile.${profile};
     in
     {
@@ -55,7 +55,7 @@ let
         {
           nixpkgs.hostPlatform = "x86_64-linux";
           # The real module (imports healthcheck.nix internally).
-          imports = [ ../../../../nixos/core/srv/monitor/default.nix ];
+          imports = [ ../../../../platform/nixos/core/srv/monitor/default.nix ];
         }
       ];
     }).config;

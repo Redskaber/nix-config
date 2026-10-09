@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::base::boot
-# @source: nixos/core/base/boot.nix
+# @source: platform/nixos/core/base/boot.nix
 #
 # Verifies the NixOS boot subsystem:
 #   - Reaches multi-user.target

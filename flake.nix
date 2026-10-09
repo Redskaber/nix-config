@@ -28,6 +28,16 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
+    # ── nix-darwin (T3.2): darwin system closure ─────────────────────
+    # Tarball-pinned (github: short syntax would need API resolution;
+    # the archive URL fetches directly and pins the exact rev).
+    # Branch nix-darwin-26.05 — nix-darwin release-checks its branch
+    # against the nixpkgs release it is built for (26.05 here); master
+    # (26.11) would fail the eval-time assert.
+    # Home-manager integrates in module mode via darwinModules.
+    nix-darwin.url = "https://github.com/LnL7/nix-darwin/archive/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74.tar.gz";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
+
     # NMT — Nix Module Test framework (Plane 5 nmt-Plane)
     # Mirror of git@git.sr.ht:~rycee/nmt (sourcehut returns HTTP 403 to Nix
     # fetchers due to bot-protection; github.com/Redskaber/nmt is accessible).
@@ -35,18 +45,28 @@
     nmt.url = "github:Redskaber/nmt";
     nmt.flake = false;
 
-    # Zen-browser
-    zen-browser = {
-      url = "github:0xc000022070/zen-browser-flake";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        home-manager.follows = "home-manager";
-      };
-    };
-
     # Sops-Nix
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Disko — declarative disk partitioning (T5.13): the interpreter for
+    # hosts/<h>/disk.nix layouts. Unlike the facter module (upstreamed
+    # into nixpkgs' default module list, T5.12), disko is NOT in nixpkgs
+    # (checked against the locked nixos-26.05 tree) — this input IS its
+    # registration. Pinned to the newest semver tag (v1.13.0, 2026-01)
+    # rather than master: reproducibility over chasing unreleased fixes;
+    # the module surface it uses (module system, extendModules, lib
+    # types) is stable across the Jan→Apr gap to the locked nixpkgs.
+    # Tarball-pinned like nix-darwin above (github: short syntax would
+    # need API resolution and this sandbox's api.github.com is
+    # rate-limited; the archive URL fetches directly and pins the exact
+    # rev of the tag). The module evaluates against OUR nixpkgs
+    # (follows) so layout scripts and the interpreter share one channel.
+    # The import happens platform-side (see
+    # platform/nixos/core/base/disk.nix), never here — the entry layer
+    # registers producers, it does not assemble consumers.
+    disko.url = "https://github.com/nix-community/disko/archive/56ef5e72fec74b993ad0973b2dfa4eadeb48ba41.tar.gz";
+    disko.inputs.nixpkgs.follows = "nixpkgs";
 
     # Nix types expend from my costum
     nix-types.url = "github:Redskaber/nix-types";
@@ -189,16 +209,6 @@
     # input-overlay preview
     input-overlay-config.url = "github:Redskaber/input-overlay-config";
     input-overlay-config.flake = false;
-
-    # ── nix-darwin (T3.2): darwin system closure ─────────────────────
-    # Tarball-pinned (github: short syntax would need API resolution;
-    # the archive URL fetches directly and pins the exact rev).
-    # Branch nix-darwin-26.05 — nix-darwin release-checks its branch
-    # against the nixpkgs release it is built for (26.05 here); master
-    # (26.11) would fail the eval-time assert.
-    # Home-manager integrates in module mode via darwinModules.
-    nix-darwin.url = "https://github.com/LnL7/nix-darwin/archive/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74.tar.gz";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -206,13 +216,17 @@
       self,
       nixpkgs,
       nixpkgs-unstable,
-      home-manager,
       ...
     }@inputs:
     let
-      # User-Shared Config — base policy (the default host; checks/devShells/
-      # packages stay on this instance).
-      shared = import ./lib/shared {
+      # ── Host→closure targets (T5.1) ─────────────────────────────
+      # The compiler-shaped backend lives in lib/shared/targets.nix:
+      # inventory → capability classification → target emitters. This
+      # file only maps the finished products onto flake-protocol output
+      # names — no host enumeration, no filters, no constructor calls
+      # here (the entry layer stays declarative; the pipeline stages
+      # belong to the producer).
+      targets = import ./lib/shared/targets.nix {
         inherit
           self
           nixpkgs
@@ -220,63 +234,25 @@
           inputs
           ;
       };
+
+      # ── Producer side (lib/shared) ───────────────────────────────
+      # Base policy instance: two-phase init (schema/enum/fn/const →
+      # runtime synthesis), host-scoped by default. Everything
+      # flake-level consumes THIS handle; hosts get their own
+      # policy-scoped instances inside lib/shared/targets.nix.
+      # T5.10: the backend pass exports the base IR handle it already
+      # builds (targets.base), so the flake level and the dispatch
+      # layer read ONE instance instead of each paying for an
+      # identical policy-graph construction.
+      shared = targets.base;
       pkgs = shared.pkgs;
       devDir = shared.devDir;
-
-      # ── Host inventory (T2.3/T2.4) ──────────────────────────────
-      # Enumerated from hosts/ — adding a machine is mkdir + files, no
-      # flake.nix edit. Each host gets its own policy-scoped `shared`
-      # (base shared.nix ⊕ hosts/<host>/shared.nix overrides).
-      hostNames = builtins.attrNames (
-        pkgs.lib.filterAttrs (_: t: t == "directory") (builtins.readDir ./hosts)
-      );
-      mkShared =
-        host:
-        import ./lib/shared {
-          inherit
-            self
-            nixpkgs
-            nixpkgs-unstable
-            inputs
-            ;
-          hostName = host;
-        };
-      mkNixos =
-        host:
-        nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit inputs;
-            shared = mkShared host;
-          };
-          modules = [ ./nixos ];
-        };
-
-      # ── Platform dispatch (T3.1/T3.2, T4.0 capability-routed) ───────
-      # The hosts/ inventory is heterogeneous now: NixOS machines, a wsl
-      # standalone-HM host and a darwin host link through DIFFERENT output
-      # sections — same object graph, several target formats (a compiler
-      # links one IR into multi-target artifacts; the flake links one
-      # policy graph into nixos / darwin / standalone-HM closures).
-      # T4.0: routing queries the platform capability table (enum.nix
-      # caps vectors) instead of raw tag strings — the entry layer and
-      # the leaves now read the SAME dispatch table, and a host changes
-      # class by editing hosts/<h>/shared.nix, not this file.
-      hostCaps = h: (mkShared h).caps;
-      nixosHosts = builtins.filter (h: (hostCaps h).nixos-system) hostNames;
-      darwinHosts = builtins.filter (h: (hostCaps h).darwin) hostNames;
-      # Standalone home-manager stays meaningful on generic-Linux-class
-      # tags; darwin hosts get their HM through the darwin module instead
-      # (a darwin standalone closure would otherwise carry linux pkgs).
-      standaloneHosts = builtins.filter (h: !(hostCaps h).darwin) hostNames;
-
-      hostConfigs = builtins.listToAttrs (
-        builtins.map (h: pkgs.lib.nameValuePair h (mkNixos h)) nixosHosts
-      );
     in
     {
       # api
       api.inputs = inputs;
       api.shared = shared;
+      api.targets = targets.inventory;
 
       # debug information
       # Available through 'nix eval .#debug.test_system'
@@ -284,45 +260,28 @@
       debug.test_devDir = devDir;
 
       # checks
-      # NOTE(fix): git-hooks.nix removed the `nixfmt-rfc-style` hook alias —
-      # its formatter merged into plain `nixfmt` (nixfmt ≥0.6 speaks RFC-116
-      # style) — and `lib.<sys>.run` returns the check DERIVATION directly,
-      # not `{ pre-commit-check }`. Merging it with `//` used to spill drv
-      # attrs (outPath/drvPath/…) into checks and silently DROP the hook
-      # entry from the output set (shallow CI eval never noticed). Assign it
-      # under its proper attr name — `nix flake check --no-build` is the gate
-      # that keeps this wiring honest.
-      checks.${shared.arch.tag} = (import ./tests { inherit inputs shared; }) // {
-        pre-commit-check = inputs.pre-commit-hooks.lib.${shared.arch.tag}.run {
-          src = self;
-          hooks = {
-            nixfmt = {
-              enable = true;
-              excludes = [
-                "flake.lock"
-                ".*-config/.*"
-              ];
-            };
-            statix.enable = true;
-            # deadnix gates on dead `let` bindings (the real dead-code class).
-            # `--no-lambda-pattern-names` / `--no-lambda-arg` exempt the
-            # idiomatic signatures this tree standardises on: uniform module
-            # heads ({ inputs, shared, lib, config, pkgs, ... }) and overlay
-            # pairs (final: prev:).
-            deadnix = {
-              enable = true;
-              settings = {
-                noLambdaPatternNames = true;
-                noLambdaArg = true;
-              };
-            };
-          };
-        };
-      };
+      # Test planes 0–5 + the pre-commit eval gate (see
+      # tests/pre-commit.nix for the git-hooks half and its history).
+      checks.${shared.arch.tag} =
+        (import ./tests { inherit inputs shared; })
+        // (import ./tests/pre-commit.nix { inherit inputs self shared; });
 
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
-      packages.${shared.arch.tag} = shared.packages;
+      packages.${shared.arch.tag} = shared.packages // {
+        # Options reference for the export/ modules (T5.3) — the doc
+        # factory is producer-side (lib/shared/docs.nix); this is the
+        # protocol-name mapping only.
+        module-docs = import ./lib/shared/docs.nix {
+          inherit
+            self
+            nixpkgs
+            inputs
+            ;
+          arch = shared.arch.tag;
+        };
+      };
+
       # Your custom packages and patches, exported as overlays
       overlays = shared.overlays;
       # Formatter choices
@@ -348,65 +307,25 @@
           ;
       };
 
-      # NixOS configuration entrypoints — HOST-KEYED (T2.4)
+      # ── Host closures — HOST-KEYED (T2.4), CAPABILITY-ROUTED (T4.0),
+      # PRODUCED by lib/shared/targets.nix (T5.1) ────────────────────
       # 'sudo nixos-rebuild --flake <flake_path>#<host> switch'
       # Hosts are enumerated from hosts/ automatically; the legacy
       # username-platform alias keeps the pre-T2.4 attr reachable.
-      nixosConfigurations = hostConfigs // {
-        "${shared.user.username}-${shared.platform.tag}" = hostConfigs.${shared.hostName};
-      };
-
+      inherit (targets) nixosConfigurations;
       # Standalone home-manager configuration entrypoints — per host
-      # (T2.3): '<user>@<host>' — the host-scoped shared flows into the
-      # same platform tree, so the second machine gets its own sets too.
-      # First: through 'nix build .#homeConfigurations.<user>@<host>.activationPackage' && './result/activate'
-      # Available through 'home-manager --flake .#<user>@<host>'
-      homeConfigurations = builtins.listToAttrs (
-        builtins.map (
-          h:
-          let
-            hshared = mkShared h;
-          in
-          pkgs.lib.nameValuePair "${hshared.user.username}@${h}" (
-            home-manager.lib.homeManagerConfiguration {
-              inherit pkgs;
-              extraSpecialArgs = {
-                inherit inputs;
-                shared = hshared;
-              };
-              modules = [ ./platform/${hshared.platform.tag} ];
-            }
-          )
-        ) standaloneHosts
-      );
-
-      # ── Darwin entrypoints (T3.2) ──────────────────────────────────
-      # hosts/<h> whose policy declares platform.tag = "darwin" are built
-      # through nix-darwin instead of nixosSystem. Home-manager rides in
-      # via home-manager.darwinModules.home-manager (module mode): one
-      # activation path, darwin-native. Evaluation of the darwin closure
-      # is exercised from any builder platform; 'switch' itself needs a
-      # darwin host (darwin-rebuild switch --flake .#<host>).
-      darwinConfigurations = builtins.listToAttrs (
-        builtins.map (
-          h:
-          let
-            dshared = mkShared h;
-          in
-          pkgs.lib.nameValuePair h (
-            inputs.nix-darwin.lib.darwinSystem {
-              system = dshared.arch.tag;
-              specialArgs = {
-                inherit inputs;
-                shared = dshared;
-              };
-              modules = [
-                inputs.home-manager.darwinModules.home-manager
-                ./darwin
-              ];
-            }
-          )
-        ) darwinHosts
-      );
+      # (T2.3): '<user>@<host>'. First: through 'nix build
+      # .#homeConfigurations.<user>@<host>.activationPackage' &&
+      # './result/activate'; available through 'home-manager --flake
+      # .#<user>@<host>'.
+      inherit (targets) homeConfigurations;
+      # nix-darwin configuration entrypoints (T3.2): hosts/<h> whose
+      # policy declares platform.tag = "darwin" are built through
+      # nix-darwin instead of nixosSystem; the platform system
+      # customs (platform/<tag>/default.nix — single live door, the
+      # T5.8 fold; directory-as-domain, T5.11) carries the system
+      # assembly with home-manager riding in module mode.
+      # 'darwin-rebuild switch --flake .#<host>'.
+      inherit (targets) darwinConfigurations;
     };
 }

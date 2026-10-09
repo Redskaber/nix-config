@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::base::user
-# @source: nixos/core/base/user.nix
+# @source: platform/nixos/core/base/user.nix
 #
 # Mirrors production config:
 #   users.mutableUsers = false

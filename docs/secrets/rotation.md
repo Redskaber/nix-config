@@ -53,7 +53,7 @@ USER+HOST ──just key-remove──▶ USER_ONLY （随后 secrets-sync 重加
 都**不存在**——它们由 just 流程生成（`secrets-init` / `secret-set`），
 用**你自己的** age key 加密后才提交入库。任何工具或他人生成的 key 材料
 都无法替你完成引导（没有你的私钥就无法重加密），这正是本仓库不携带
-预置密钥的原因。eval 期对 EMPTY 态宽容（`lib/shared/shared/validate.nix`
+预置密钥的原因。eval 期对 EMPTY 态宽容（`lib/shared/lang/validate.nix`
 只 trace 提示引导命令；一旦树上出现任何一个 blob，声明而缺失即报错）。
 
 模板（`docs/tmpl/sops/sops-rules.yaml.tmpl`）携带 **双渲染模式**：
@@ -70,17 +70,17 @@ boot 之后 `.sops.yaml` 即为策略真值——`rules-init` 对已演化文件
 **新用户机引导**（全新机器，三条命令）:
 
 ```console
-$ just init <username>        # shared.nix → hardware.nix → sops 基线
-$ just secret-set-all         # 交互式录入全部秘密（输入即加密）
-$ just nixos-switch nixos     # 或手工 nixos-rebuild —— 落地
+just init <username>        # shared.nix → hardware.nix → sops 基线
+just secret-set-all         # 交互式录入全部秘密（输入即加密）
+just nixos-switch nixos     # 或手工 nixos-rebuild —— 落地
 ```
 
 **服务器机 day-one 直达引导**（host key 材料先行，两步取代三步）:
 
 ```console
-$ just key-new-host <alias>          # ① 生成 keypair（仓外交付副本）
-$ just init <username> <alias> age1… # ② 直达 USER+HOST（srv 域双收件人）
-$ # ③ host-<alias>.age → 目标机 /var/lib/sops-nix/key.txt（chmod 400）+ shred
+just key-new-host <alias>          # ① 生成 keypair（仓外交付副本）
+just init <username> <alias> age1… # ② 直达 USER+HOST（srv 域双收件人）
+# ③ host-<alias>.age → 目标机 /var/lib/sops-nix/key.txt（chmod 400）+ shred
 ```
 
 **own host = srv host（个人机双 key 落位本机，五步）**:
@@ -94,11 +94,11 @@ host identity 同时落位本机：**硬化策略**（srv 收件人轮换到 hos
 srv 域的有效解密方——key group OR 语义）。合并而非另建基础设施：
 
 ```console
-$ just key-new-host <alias>           # ① 生成 keypair（仓外交付副本）
-$ just key-add-host <alias> age1…     # ② 公钥接线（或 init 直达双 key）
-$ just secrets-sync                   # ③ 存量 blob 迁移
-$ just key-install-host <alias>       # ④ identity 合并进本机 sops key 文件
-$ shred -u ~/Downloads/host-<alias>.age  # ⑤ 本机已持有，销毁交付副本
+just key-new-host <alias>           # ① 生成 keypair（仓外交付副本）
+just key-add-host <alias> age1…     # ② 公钥接线（或 init 直达双 key）
+just secrets-sync                   # ③ 存量 blob 迁移
+just key-install-host <alias>       # ④ identity 合并进本机 sops key 文件
+shred -u ~/Downloads/host-<alias>.age  # ⑤ 本机已持有，销毁交付副本
 ```
 
 `key-install-host` 按 secret-key 行幂等（重复装跳过）、原子追加
@@ -109,11 +109,11 @@ $ shred -u ~/Downloads/host-<alias>.age  # ⑤ 本机已持有，销毁交付副
 **新 srv host 引导**（已 USER_ONLY 引导后的增量接入，四步，见 `just secrets-guide`）:
 
 ```console
-$ just key-new-host <alias>           # ① 生成 keypair（仓外交付副本）
-$ just key-add-host <alias> age1…     # ② 公钥接线进 .sops.yaml（srv 域）
-$ just secrets-sync                   # ③ sops updatekeys ×N（存量 blob 迁移）
-$ # ④ host-<alias>.age → 目标机 /var/lib/sops-nix/key.txt（chmod 400）
-$ #    然后 shred 交付副本
+just key-new-host <alias>           # ① 生成 keypair（仓外交付副本）
+just key-add-host <alias> age1…     # ② 公钥接线进 .sops.yaml（srv 域）
+just secrets-sync                   # ③ sops updatekeys ×N（存量 blob 迁移）
+# ④ host-<alias>.age → 目标机 /var/lib/sops-nix/key.txt（chmod 400）
+#    然后 shred 交付副本
 ```
 
 **新 secret 三层声明**（配置层是真值，脚本只执行）:
@@ -141,7 +141,7 @@ $ #    然后 shred 交付副本
 ## 4. 操作面：just 动词总表（create / update / destroy × key / rules / blob）
 
 | 动词 | 对象 | just 命令 | 说明 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | create | key (user) | `secrets-init` | 幂等生成 ~/.config/sops/age/keys.txt |
 | create | key (host) | `key-new-host <alias>` | 仓外交付副本 + chmod 400 + 接线指引 |
 | create | key (host→本机) | `key-install-host <alias>` | own host 双 key：identity 合并进本机 sops key 文件（幂等/原子/保持 400） |
@@ -162,7 +162,7 @@ $ #    然后 shred 交付副本
 轮换模式与 `scripts/sh/secrets-rotate.sh` 一一对应：
 
 | 模式 | 作用 | 何时 |
-|---|---|---|
+| --- | --- | --- |
 | `check`（`just secrets-verify`） | 校验每个 blob 的 metadata 收件人 == `.sops.yaml` 规则 | CI / 日常 |
 | `update`（`just secrets-sync`） | `sops updatekeys` 全量 re-encrypt 到当前规则 | 分层迁移、加 key |
 | `rotate user age1…`（`just key-rotate-user`） | 生成三步走指引（替换 key → sync → 历史暴露决策） | 定期 / 疑似失陷 |
@@ -172,6 +172,7 @@ $ #    然后 shred 交付副本
 `.sops.yaml` 是唯一致命形**（分发层消失而密文尚存——明文风险级）。
 
 **失陷响应**（最坏情况）:
+
 1. 撤销: `just key-remove <alias>` → `just secrets-sync`
    re-encrypt（失陷 key 从此解不开新 blob）。
 2. 由于 sops 的 metadata MAC，旧 key 持有者无法伪造新 blob。

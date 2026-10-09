@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-10
 # @description: tests::nixos::core::drive::nvidia
-# @source: nixos/core/drive/nvidia.nix
+# @source: platform/nixos/core/drive/nvidia.nix
 #
 # Verifies NVIDIA driver tooling presence (no real GPU in VM):
 #   - nvidia-smi binary present (from driver package)

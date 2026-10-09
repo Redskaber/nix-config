@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-10
 # @description: tests::nixos::core::srv::hardware::printing
-# @source: nixos/core/srv/hardware/printing.nix
+# @source: platform/nixos/core/srv/hardware/printing.nix
 #
 # Verifies CUPS printing stack:
 #   - cups service active

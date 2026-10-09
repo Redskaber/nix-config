@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-10
 # @description: tests::nixos::core::srv::hardware::bluetooth
-# @source: nixos/core/srv/hardware/bluetooth.nix
+# @source: platform/nixos/core/srv/hardware/bluetooth.nix
 #
 # Verifies bluetooth stack:
 #   - bluetoothd service active

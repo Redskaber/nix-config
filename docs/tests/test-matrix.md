@@ -222,7 +222,7 @@ tests/
 │   │       ├── notify/mako.nix
 │   │       └── security/gnupg.nix
 │   └── env/dev/{c,cpp,go,java,lua,nix,python,re,rust,typescript,zig}/default.nix
-├── lib/shared/shared/{enum,fn,schema}.nix
+├── lib/shared/lang/{enum,fn,schema}.nix
 ├── integration/hm_activation.nix
 └── nmt/
     ├── default.nix                        ← buildHomeManagerTest impl + registry

@@ -1,0 +1,61 @@
+# @path: ~/projects/configs/nix-config/platform/nixos/core/base/user.nix
+# @author: redskaber
+# @datetime: 2026-01-13
+# @description: platform::nixos::system::core::base::user
+# - log: 2026-02-27: sup `sops-nix` used hashedPasswordFile
+
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+{
+  programs.${shared.user.shell.tag}.enable = true;
+
+  # System-wide user settings; add more users here as needed.
+  users = {
+    mutableUsers = false;
+    defaultUserShell = pkgs.${shared.user.shell.tag};
+    users = {
+      ${shared.user.username} = {
+        homeMode = "755";
+        isNormalUser = true;
+        useDefaultShell = true;
+        description = shared.user.username;
+        # SSH public keys go here when SSH access is needed
+        openssh.authorizedKeys.keys = shared.user.openssh-authKeys;
+        # Add any other groups as needed
+        # (such as networkmanager, audio, docker, etc)
+        extraGroups = [
+          "wheel" # Sudo / administrative access
+          "networkmanager" # Manage network connections without root
+          "video" # GPU & framebuffer devices (/dev/dri, /dev/fb)
+          "audio" # Sound devices (/dev/snd)
+          "input" # Input devices: keyboard, mouse, gamepad (/dev/input)
+          "tty" # Virtual consoles & keyboard maps (required by dumpkeys)
+          "libvirtd" # Libvirt virtual machine management
+          "scanner" # Scanners
+          "lp" # Printers
+        ];
+        packages = with pkgs; [ ];
+        # An initial password can be set here (prefer sops-managed passwords)
+        # If you do, you can skip setting a root password by passing '--no-root-passwd' to nixos-install.
+        # Be sure to change it (using passwd) after rebooting!
+        # entry: "nixos-enter --root /mnt -c 'passwd your-username'"
+        # initialPassword = "1024";
+
+        # Used Sops-nix manager User pwd
+        # WARN: pleace used mkpasswd build sops-base ppassword
+        # > echo "password" | mkpasswd -s ...
+        #   $y$j9T$WFoiErKnEnMcGq0ruQK4K.$4nJAY3LBeBsZBTYSkdTOejKU6KlDmhnfUV3Ll1K/1b....
+        hashedPasswordFile = config.sops.secrets.${shared.secrets.nixos.core.base.user.password}.path;
+      };
+    };
+  };
+
+  security.sudo.enable = true; # wheel
+
+}

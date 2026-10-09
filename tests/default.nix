@@ -189,13 +189,13 @@ let
   plane3_lib = {
     # T4.0: the platform dispatch-table contract (caps vectors +
     # strategy lambdas) — the distribution layer has its own test now.
-    lib_shared_shared_caps = nixosTest ./lib/shared/shared/caps.nix;
-    lib_shared_shared_enum = nixosTest ./lib/shared/shared/enum.nix;
-    lib_shared_shared_fn = nixosTest ./lib/shared/shared/fn.nix;
-    lib_shared_shared_schema = nixosTest ./lib/shared/shared/schema.nix;
+    lib_shared_lang_caps = nixosTest ./lib/shared/lang/caps.nix;
+    lib_shared_lang_enum = nixosTest ./lib/shared/lang/enum.nix;
+    lib_shared_lang_fn = nixosTest ./lib/shared/lang/fn.nix;
+    lib_shared_lang_schema = nixosTest ./lib/shared/lang/schema.nix;
     # T4.1: the Result railway contract (ok/err lanes, front-end
     # precedence, boundary throw) — typed error handling has a test now.
-    lib_shared_shared_validate = nixosTest ./lib/shared/shared/validate.nix;
+    lib_shared_lang_validate = nixosTest ./lib/shared/lang/validate.nix;
   };
 
   # ══════════════════════════════════════════════════════════════════

@@ -377,12 +377,12 @@ jobs:
         run: |
           FOUND=0
           # GitHub tokens
-          if grep -rn --include="*.nix" -e 'token\s*=\s*"ghp_[A-Za-z0-9_]' lib/ nixos/ home/ 2>/dev/null; then
+          if grep -rn --include="*.nix" -e 'token\s*=\s*"ghp_[A-Za-z0-9_]' lib/ platform/ home/ 2>/dev/null; then
             echo "::error::Potential hardcoded GitHub token detected in .nix files"
             FOUND=1
           fi
           # Generic password assignments
-          if grep -rn --include="*.nix" -e 'password\s*=\s*"[^$"]\{8,\}"' lib/ nixos/ home/ 2>/dev/null; then
+          if grep -rn --include="*.nix" -e 'password\s*=\s*"[^$"]\{8,\}"' lib/ platform/ home/ 2>/dev/null; then
             echo "::warning::Potential hardcoded password detected — review manually"
           fi
           [ "$FOUND" -eq 0 ] || exit 1

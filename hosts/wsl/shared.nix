@@ -28,4 +28,8 @@
   editor-set = shared.enum.editor-set.minimal;
   terminal-set = shared.enum.terminal-set.kitty-only;
   browser-set = shared.enum.browser-set.cli-only;
+  # Console machine (T5.10): the set-routed triad only — this host's
+  # own comment said "no desktop apps" since T3.1, but the app tree
+  # was eager until now (prismlauncher/wps/blender rode the closure).
+  app-set = shared.enum.app-set.none;
 }

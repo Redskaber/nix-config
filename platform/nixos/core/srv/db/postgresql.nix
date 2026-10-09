@@ -1,0 +1,310 @@
+# @path: ~/projects/configs/nix-config/platform/nixos/core/srv/db/postgresql.nix
+# @author: redskaber
+# @datetime: 2025-12-12
+# @description: platform::nixos::system::core::srv::db::postgresql
+# @deploy: 验证安装:
+#   psql -U kilig -d dev -c "\dt"
+#   psql -h 127.0.0.1 -U redskaber -d dev -W   # 密码=1024
+#
+# @reset: 重置数据库（开发环境）:
+#   sudo systemctl stop postgresql
+#   sudo rm -rf /var/lib/postgresql/${config.services.postgresql.package.psqlSchema}
+#   sudo systemctl start postgresql  # 自动重新初始化
+#
+# @schema: 应用初始化:
+#   1. 应用启动时自动运行 migrations（推荐）
+#   2. 手动执行: psql -U redskaber -d dev < schema.sql
+#
+# @prod: 生产环境必须:
+#   1. 替换 initialScript 中的明文密码为 sops-nix 管理
+#   2. 删除 127.0.0.1/32 trust 规则
+#   3. 使用 Let's Encrypt 证书替换自签名证书
+#   4. 限制 max_connections 并调整内存参数
+#
+# @warning: 证书生成（仅开发环境）:
+#   openssl req -new -x509 -days 365 -nodes -text -out server.crt \
+#     -keyout server.key -subj "/CN=localhost" -addext "subjectAltName = DNS:localhost"
+#   chmod 600 server.key
+#   sudo chown postgres:postgres server.*
+#
+# @fix-ssl: 生成开发证书（首次部署）:
+#   cd ~/projects/configs/nix-config/platform/nixos/core/srv
+#   openssl req -new -x509 -days 365 -nodes -text -out server.crt \
+#     -keyout server.key -subj "/CN=localhost" -addext "subjectAltName=DNS:localhost"
+#   chmod 600 server.key
+#   # 取消注释 systemd.tmpfiles.rules 和 settings.ssl 相关行
+#
+# @verify: 验证部署:
+#   sudo -u postgres psql -U postgres -d postgres -c "\du"
+#   psql -U kilig -d root -c "SELECT current_user;"           # peer 认证（无密码）
+#   psql -h 127.0.0.1 -U kilig -d dev -W                      # TCP + 密码认证(1024)
+#
+# @reset: 重置数据库（开发环境）:
+#   sudo systemctl stop postgresql
+#   sudo rm -rf /var/lib/postgresql/${config.services.postgresql.package.psqlSchema}
+#   sudo systemctl start postgresql
+
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
+}:
+{
+  # 创建 SSL 证书（开发环境自签名，生产环境应替换）
+  # systemd.tmpfiles.rules = [
+  #   "d /var/lib/postgresql 0700 postgres postgres - -"
+  #   "f /var/lib/postgresql/server.crt 0600 postgres postgres - ${builtins.readFile ./server.crt}"
+  #   "f /var/lib/postgresql/server.key 0600 postgres postgres - ${builtins.readFile ./server.key}"
+  # ];
+
+  environment.systemPackages = lib.optionals shared.services.db.postgresql.install (
+    with pkgs; [ postgresql ]
+  );
+
+  services.postgresql = {
+    enable = shared.services.db.postgresql.install;
+    package = pkgs.postgresql;
+    dataDir = "/var/lib/postgresql/${config.services.postgresql.package.psqlSchema}";
+    enableJIT = true; # 性能优化
+    enableTCPIP = true; # Allow TCP
+    checkConfig = true; # 编译检查配置
+
+    # 核心配置
+    settings = {
+      # 连接设置
+      listen_addresses = lib.mkForce "127.0.0.1"; # 仅本地访问（生产环境可扩展）
+      port = 5432;
+      max_connections = 128;
+
+      # 认证设置
+      password_encryption = "scram-sha-256"; # 现代密码哈希算法
+
+      # 内存设置
+      shared_buffers = "128MB"; # 约为系统内存的 25%
+      effective_cache_size = "384MB";
+      work_mem = "4MB";
+      maintenance_work_mem = "64MB";
+
+      # WAL 和检查点
+      wal_level = "replica";
+      checkpoint_completion_target = 0.9;
+      wal_buffers = "3.9MB";
+
+      # 查询规划
+      default_statistics_target = 100;
+      random_page_cost = 1.1; # SSD 优化
+
+      # 日志（开发环境详细，生产环境精简）
+      logging_collector = true;
+      log_filename = "postgresql-%Y-%m-%d.log";
+      log_truncate_on_rotation = true;
+      log_rotation_age = "1d";
+      log_statement = "ddl"; # 生产环境应为 "ddl"，调试环境可设为 "all"
+      log_line_prefix = "%m [%p] %q%u@%d "; # 丰富日志前缀
+      log_timezone = shared.time.timeZone; # "Asia/Shanghai"
+
+      # 本地化
+      default_text_search_config = "pg_catalog.english";
+
+      # 安全设置
+      # ssl = "on";  # 启用 SSL（即使本地连接）
+      # ssl_cert_file = "/var/lib/postgresql/server.crt";
+      # ssl_key_file = "/var/lib/postgresql/server.key";
+    };
+
+    # 认证配置：精确控制访问（pg_hba.conf）
+    # @note: 规则顺序很重要！先匹配的规则生效
+    authentication = lib.mkOverride 10 ''
+      # TYPE  DATABASE        USER            ADDRESS                 METHOD
+      # peer （password）
+      local   all             all                                     peer
+      # IPv4/IPv6 （use scram-sha-256 password）
+      host    all             all             127.0.0.1/32            scram-sha-256
+      host    all             all             ::1/128                 scram-sha-256
+    '';
+
+    # 初始化脚本：创建应用用户和数据库（幂等）
+    # @note: 此脚本仅在首次初始化时执行
+    initialScript = pkgs.writeText "app-init.sql" ''
+      -- create application user
+      DO $$ BEGIN
+        CREATE USER ${shared.user.username} WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE;
+      EXCEPTION WHEN duplicate_object THEN
+        RAISE NOTICE 'User ${shared.user.username} exists (password managed externally)';
+      END $$;
+
+      -- createdatabase
+      CREATE DATABASE dev
+        OWNER ${shared.user.username}
+        ENCODING 'UTF8'
+        LC_COLLATE 'en_US.UTF-8'
+        LC_CTYPE 'en_US.UTF-8'
+        TEMPLATE template0;
+
+      \c dev
+
+      -- enableinside
+      CREATE EXTENSION IF NOT EXISTS pg_trgm; -- 
+      CREATE EXTENSION IF NOT EXISTS "uuid-ossp"; -- UUID generate
+      CREATE EXTENSION IF NOT EXISTS vector; -- (pgvector)
+
+      -- grant privileges
+      GRANT ALL PRIVILEGES ON SCHEMA public TO ${shared.user.username};
+
+      -- createexample table
+      CREATE TABLE IF NOT EXISTS health_check (
+        id SERIAL PRIMARY KEY,
+        status TEXT NOT NULL DEFAULT 'ok',
+        checked_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      INSERT INTO health_check (status) VALUES ('NixOS PostgreSQL configsuccess!');
+
+      -- verify
+      SELECT 'Initialization completed successfully!' AS status;
+    '';
+
+    # 确保关键数据库存在（即使 initialScript 失败）
+    ensureDatabases = [ shared.user.username ];
+    ensureUsers = [
+      {
+        name = shared.user.username;
+        ensureDBOwnership = true;
+        ensureClauses = {
+          login = true;
+          createdb = true;
+        };
+      }
+      # {
+      #   name = "appuser";
+      #   ensureDBOwnership = false;
+      #   ensureClauses = {
+      #     login = true;
+      #     createdb = true;
+      #   };
+      # }
+    ];
+
+    # 第三方扩展
+    # 内置扩展 (pg_trgm/uuid-ossp) 由 postgresql-contrib 提供
+    extensions =
+      ps: with ps; [
+        pgvector # 向量搜索（AI 应用）
+      ];
+
+    # initdb 额外参数（增强可靠性）
+    initdbArgs = [
+      "--locale=en_US.UTF-8"
+      "--encoding=UTF8"
+      "--data-checksums" # 启用数据校验（防止静默损坏）
+      "--auth-host=scram-sha-256"
+      "--auth-local=peer"
+    ];
+
+    # ident 映射：允许系统用户映射到 DB 用户
+    identMap = ''
+      # MapName       SystemUser      DBUser
+      superuser_map    postgres        postgres
+      # superuser_map    ${shared.user.username}           ${shared.user.username}      # 系统用户 kilig      → DB 用户 kilig
+    '';
+
+    # 系统调用过滤
+    systemCallFilter = {
+      "@default" = true; # 启用默认过滤
+      "@network-io" = true; # 允许网络 IO
+      "@file-system" = true; # 允许文件系统访问
+      "@clock" = true; # 允许时钟访问
+      "@privileged" = false;
+      "@debug" = false;
+      "@module" = false;
+    };
+  };
+
+  # 🔒 专用服务：安全注入密码（运行时）— gated on the service-profile
+  # install flag: the unit reads the postgresql sops secret, which only
+  # exists where postgresql is installed (second-machine dividend, T2.5).
+  systemd.services = lib.mkIf shared.services.db.postgresql.install {
+    postgresql-set-user-passwords = {
+      description = "Inject PostgreSQL user passwords from sops secrets";
+      after = [ "postgresql.service" ];
+      partOf = [ "postgresql.service" ];
+      restartIfChanged = false;
+      # T4.0: on-demand units stay bound to their parent service;
+      # autostarted ones ride the boot target — expressed branchless
+      # (service-profile is the dispatch layer for services).
+      wantedBy = lib.mkForce (
+        lib.optionals shared.services.db.postgresql.autostart [ "multi-user.target" ]
+        ++ lib.optionals (!shared.services.db.postgresql.autostart) [ "postgresql.service" ]
+      );
+
+      path = with pkgs; [ postgresql ];
+      script = ''
+        # Guard: 数据库没运行时跳过（防止 switch 时误触发）
+        if ! systemctl is-active postgresql.service 2>/dev/null; then
+          echo "PostgreSQL is not running, skipping password injection"
+          exit 0
+        fi
+
+        # Wait for PostgreSQL ready (with timeout)
+        for i in $(seq 1 10); do
+          pg_isready -q 2>/dev/null && break
+          sleep 1
+        done
+        if ! pg_isready -q 2>/dev/null; then
+          echo "PostgreSQL not ready after 10s, skipping"
+          exit 0
+        fi
+
+        user_pwd=$(cat ${
+          config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path
+        })
+
+        psql -d postgres <<SQL_EOF
+        ALTER USER ${shared.user.username} WITH PASSWORD '$user_pwd';
+        SELECT '✅ Password injected for ${shared.user.username}' AS status;
+        SQL_EOF
+      '';
+
+      serviceConfig = {
+        Type = "oneshot";
+        User = "postgres";
+        # 🌐 最小权限三重锁
+        ReadOnlyPaths = [
+          "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}"
+        ];
+        # 🛡️ 深度加固
+        PrivateTmp = true;
+        NoNewPrivileges = true;
+        CapabilityBoundingSet = "";
+        RestrictAddressFamilies = "AF_UNIX"; # 仅允许 Unix socket
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        StandardOutput = "journal";
+        StandardError = "journal";
+        UMask = "0077"; # 临时文件权限加固
+      };
+      unitConfig.RequiresMountsFor = [
+        "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}"
+      ];
+    };
+
+    # Control autostart: clear wantedBy when autostart=false (install but
+    # not autostart) — branchless selection (T4.0).
+    postgresql.wantedBy = lib.mkForce (
+      lib.optional shared.services.db.postgresql.autostart "multi-user.target"
+    );
+
+    # ⚠️ NixOS 26.05 PG module creates postgresql.target wanted by multi-user.target
+    # Must also override the target, otherwise it pulls in postgresql.service at boot
+  };
+
+  # target stays gated alongside the service above
+  systemd.targets = lib.mkIf shared.services.db.postgresql.install {
+    postgresql.wantedBy = lib.mkForce (
+      lib.optional shared.services.db.postgresql.autostart "multi-user.target"
+    );
+  };
+
+}

@@ -5,7 +5,7 @@
 #
 # Routing mode (mode B: multi-select routing):
 #   Selects editor modules based on shared.editors list.
-#   Same pattern as nixos/core/drive/default.nix.
+#   Same pattern as platform/nixos/core/drive/default.nix.
 
 {
   inputs,

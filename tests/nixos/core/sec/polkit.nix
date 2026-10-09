@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::sec::polkit
-# @source: nixos/core/sec/polkit.nix
+# @source: platform/nixos/core/sec/polkit.nix
 #
 # Verifies polkit:
 #   - polkit.service active

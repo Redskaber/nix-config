@@ -5,6 +5,17 @@
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # - shared configurations loader design
 #
+# Layer naming (T5.2, compiler three-stage mirroring):
+#
+#   lib/shared/lang/     language front-end — types, enums, schema,
+#                        constants, validators (no pkgs)
+#   lib/shared/runtime/  IR synthesis — policy data becomes a live
+#                        handle (pkgs/overlays/sops bindings)
+#   lib/shared/targets.nix  code generation — host inventory to
+#                        closures
+#
+# This loader is the driver that threads them together.
+#
 # Host-scoped policy (T2.3 — the scfpath last mile):
 #
 #   base policy (scfpath, default ./../../shared.nix)
@@ -30,7 +41,12 @@
   ...
 }:
 let
-  shared = import ./shared { inherit self inputs; };
+  # Phase 1: language front-end (types/enum/schema/validate — no pkgs).
+  # The logical name `shared` is the stable wire protocol every policy
+  # file and module tree speaks; the directory name says what the layer
+  # IS (the configuration language), the binding says what it provides
+  # (the shared contract).
+  shared = import ./lang { inherit self inputs; };
   base_shared = import scfpath { inherit shared inputs; };
 
   # Which host are we building for?

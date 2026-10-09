@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::sec::pam
-# @source: nixos/core/sec/pam.nix
+# @source: platform/nixos/core/sec/pam.nix
 #
 # Verifies PAM configuration files are present and contain expected stanzas.
 

@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-10
 # @description: tests::nixos::core::drive::amd
-# @source: nixos/core/drive/amd.nix
+# @source: platform/nixos/core/drive/amd.nix
 #
 # Verifies AMD GPU driver toolchain:
 #   - radeontop, mesa, rocmPackages, vulkan-tools

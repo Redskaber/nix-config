@@ -13,7 +13,7 @@
   ...
 }:
 {
-  # FIXME(fix@2026-10-08): 与 nixos/core/base/i18n.nix 同根因——
+  # FIXME(fix@2026-10-08): 与 platform/nixos/core/base/i18n.nix 同根因——
   # Home Manager 侧 fcitx5-with-addons 由 HM 的 pkgs (stable) 组装 daemon，
   # addons 若取 shared.upkgs (unstable) 会出现 core/addon 版本依赖不满足，
   # 导致非 NixOS 平台 (standalone HM) 上中文输入法同样 (not available)。

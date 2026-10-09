@@ -8,7 +8,7 @@
 #
 # Boundary:
 #   - This layer handles user-space security (SSH agent, GPG agent, credential helpers).
-#   - System-level security (PAM, polkit, sops secret injection) lives in nixos/core/sec/.
+#   - System-level security (PAM, polkit, sops secret injection) lives in platform/nixos/core/sec/.
 #   - Application-level credential management (rbw) lives in home/core/exp/sys/base/rbw.nix.
 #
 # Currently empty — extension point for future user security modules:

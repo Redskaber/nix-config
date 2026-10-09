@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-10-08
 # @description: tests::nixos::core::base::i18n-source
-# @source: nixos/core/base/i18n.nix
+# @source: platform/nixos/core/base/i18n.nix
 #
 # T1.5 + T1.2 (regression guard, first production-tree import):
 #
@@ -33,7 +33,7 @@
 let
   # REAL production fn.nix (phase-1 pure) — provides sameSource/pkgsFingerprint
   # for the T2.6 guard the production module now routes through.
-  realFn = import ../../../../lib/shared/shared/fn.nix {
+  realFn = import ../../../../lib/shared/lang/fn.nix {
     inputs = { };
     enum = { };
     const = { };
@@ -82,7 +82,7 @@ let
   };
 
   # ── REAL production import ────────────────────────────────────────
-  production = import ../../../../nixos/core/base/i18n.nix {
+  production = import ../../../../platform/nixos/core/base/i18n.nix {
     inputs = { };
     shared = mockShared;
     config = { };

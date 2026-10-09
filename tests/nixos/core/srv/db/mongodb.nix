@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::srv::db::mongodb
-# @source: nixos/core/srv/db/mongodb.nix
+# @source: platform/nixos/core/srv/db/mongodb.nix
 #
 # Mirrors production config (enableAuth=false for test isolation):
 #   services.mongodb.package = pkgs.mongodb-ce

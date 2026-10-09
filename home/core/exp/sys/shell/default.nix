@@ -5,7 +5,7 @@
 #
 # Routing mode (mode A: single-select routing):
 #   Selects shell module based on shared.user.shell.tag.
-#   Consistent with nixos/wm/default.nix and nixos/dm/default.nix.
+#   Consistent with platform/nixos/wm/default.nix and platform/nixos/dm/default.nix.
 
 {
   inputs,

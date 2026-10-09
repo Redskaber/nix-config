@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::sec::secret::cmd::sops
-# @source: nixos/core/sec/secret/cmd/sops.nix
+# @source: platform/nixos/core/sec/secret/cmd/sops.nix
 #
 # Verifies sops and ssh-to-age CLI tools are installed:
 #   - sops binary present, version reportable

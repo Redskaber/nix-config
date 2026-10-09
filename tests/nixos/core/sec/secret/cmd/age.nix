@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::sec::secret::cmd::age
-# @source: nixos/core/sec/secret/cmd/age.nix
+# @source: platform/nixos/core/sec/secret/cmd/age.nix
 #
 # Verifies age encryption tool:
 #   - age binary present

@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::srv::security::keyring
-# @source: nixos/core/srv/security/keyring.nix
+# @source: platform/nixos/core/srv/security/keyring.nix
 #
 # Verifies gnome-keyring presence:
 #   - gnome-keyring-daemon binary present

@@ -117,6 +117,10 @@ let
       editors = user_shared.editor-set.value.editors;
       terminals = user_shared.terminal-set.value.terminals;
       browsers = user_shared.browser-set.value.browsers;
+      # App tree categories (T5.10 demand-driven module loading):
+      # which home/core/exp/app/ category TREES the host merges at all.
+      # Config: imports = builtins.map (c: ./${c}) shared.appCategories;
+      appCategories = user_shared.app-set.value.categories;
 
       # Service profile (strategy carrying): expanded from user_shared variant
       # Config: enable = shared.services.db.postgresql.install;

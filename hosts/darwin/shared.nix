@@ -26,6 +26,11 @@
   editor-set = shared.enum.editor-set.minimal;
   terminal-set = shared.enum.terminal-set.kitty-only;
   browser-set = shared.enum.browser-set.cli-only;
+  # Terminal-shaped laptop (T5.10): the triad + document/reading/RE
+  # trees stay (cross-platform tooling); desktop entertainment trees
+  # don't. Pre-T5.10 the closure carried the whole app grab-bag —
+  # 126 home.packages including linux-only blobs (wps-office).
+  app-set = shared.enum.app-set.lean;
 
   # Headless-from-WSL-style minimal services (no db stack on a laptop).
   service-profile = shared.enum.service-profile.minimal;

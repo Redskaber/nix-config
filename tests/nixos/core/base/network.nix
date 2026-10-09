@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::base::network
-# @source: nixos/core/base/network.nix
+# @source: platform/nixos/core/base/network.nix
 #
 # Mirrors production config:
 #   networking.hostName = shared.hostName  ("nixos")

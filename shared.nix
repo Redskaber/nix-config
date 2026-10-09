@@ -27,6 +27,9 @@ shared.schema.shared {
   editor-set = shared.enum.editor-set.dev;
   terminal-set = shared.enum.terminal-set.both;
   browser-set = shared.enum.browser-set.all;
+  # App tree weight class (T5.10 demand-driven module loading): the
+  # desktop workstation merges every app category tree.
+  app-set = shared.enum.app-set.full;
   # Service profile: controls install vs autostart
   service-profile = shared.enum.service-profile.dev-on-demand;
   devDir = "${shared.self}/home/env/dev";

@@ -61,26 +61,39 @@
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  ENTRY LAYER  ·  flake.nix                                 │
-│  统一入口 · 输入声明 · 输出路由 · 多平台分发 · api.inputs  │
+│  统一入口 · 输入声明 · 协议名映射 · api.inputs             │
+│  （目标构造已在 SHARED LAYER 生产，此处只消费成品）        │
 └──────────┬──────────────────────────────┬──────────────────┘
            │                              │
 ┌──────────▼──────────┐       ┌───────────▼──────────────────┐
 │  SYSTEM LAYER       │       │  USER LAYER                  │
-│  nixos/             │       │  home/ + platform/           │
+│  platform/<tag>/    │       │  home/ + platform/<tag>/home │
+│    default.nix      │       │  home/default.nix →<arch>.nix│
 │  硬件·驱动·安全·服务│       │  应用·开发环境·窗口管理器    │
-│  dm/ · wm/          │       │  core/ · env/ · wm/          │
+│  core/ · dm/ · wm/  │       │  core/ · env/ · wm/          │
+│  （顶层 = 系统域，  │       │  （目录即域，T5.11）         │
+│   T5.11）           │       │                              │
 └──────────┬──────────┘       └───────────┬──────────────────┘
            │                              │
            │         ┌────────────────────▼──────────────────┐
            │         │  HOST DISPATCH LAYER  ·  platform/    │
-           │         │  平台入口：nixos · linux · darwin · wsl│
-           │         │  arch 路由 · nixGL 注入 · HM 激活点   │
+           │         │  平台目录 =目标机描述（target double：│
+           │         │  platform 轴选目录，arch 轴选用户域内 │
+           │         │  的 payload 行）目录即域（T5.11）：   │
+           │         │  顶层 = 系统域（default.nix = 系统海关│
+           │         │  有系统形态的平台才有）；home/ = 用户 │
+           │         │  域（唯一保留字；home/default.nix =   │
+           │         │  HM 海关，有独立门才有）·  文件存在性 │
+           │         │  = 能力声明                           │
            │         └────────────────────┬──────────────────┘
            │                              │
 ┌──────────▼──────────────────────────────▼───────────────────┐
 │  SHARED LAYER  ·  lib/shared/                               │
 │  两阶段初始化：schema/enum/fn/const → runtime 合成          │
-│  pkgs · upkgs · isNixOS · homeDir · orc · sopsFile ...      │
+│  目标工厂 targets.nix：hosts/ 清单 → caps 分类 →            │
+│  nixos / darwin / standalone-HM 三类 closure 发射器         │
+│  （生产端：flake.nix 只写 inherit (targets) …；             │
+│   策略 IR 每主机单实例化，T5.10）                           │
 └──────────────────────────────┬──────────────────────────────┘
                                │
 ┌──────────────────────────────▼──────────────────────────────┐
@@ -103,9 +116,12 @@ shared.nix (策略)
     ↓ just shared-generate
 lib/shared (两阶段初始化)
     ↓ specialArgs / extraSpecialArgs
-flake.nix → nixosConfigurations / homeConfigurations
-    ↓ platform/<platform>/<arch>.nix (平台分发)
-nixos/ + home/ + home/wm/ (模块树)
+lib/shared/targets.nix (目标工厂：hosts/ 清单 → caps 分类 → 发射器)
+    ↓ 产出成品 closures
+flake.nix → inherit (targets) nixosConfigurations / homeConfigurations / darwinConfigurations
+    ↓ 三门分发（发射器纯数据驱动目录引用，语法 v3：目录即域）：
+    ↓   nixos 系统门 platform/<tag> → default.nix · darwin 单门 platform/<tag> → default.nix（系统路由+arch 分发，HM 内乘） · HM 门 platform/<tag>/home → home/default.nix（arch 路由）
+platform/nixos/{default.nix, home/{default,x86_64-linux}.nix} + core/ dm/ wm/ + home/（模块树；app 树按 app-set 重量级路由：full/lean/none）
     ↓ sops-nix (initrd 阶段)
 /run/secrets/ (运行时 secret 挂载)
     ↓ systemd services
@@ -135,43 +151,48 @@ nixos/ + home/ + home/wm/ (模块树)
 
 ```
 nix-config/
-├── flake.nix               # entry layer: 输入声明、输出路由、多平台分发、api.inputs 暴露
+├── flake.nix               # entry layer: 输入声明 + flake 协议名映射（成品由 lib/shared/targets.nix 生产）
 ├── shared.nix              # 策略层（由 just shared-generate 生成，禁止手动编辑用户名）
 │
 ├── lib/
 │   └── shared/
 │       ├── default.nix     # 共享加载器：两阶段初始化（scfpath 可覆盖，支持多机器）
-│       ├── shared/
-│       │   ├── default.nix # 阶段一聚合：const + schema + enum + fn + tools
+│       ├── targets.nix     # 目标工厂（生产端）：hosts/ 清单 → caps 分类 → 三类 closure 发射器；
+│       │                   #   flake.nix 只写 inherit (targets) nixosConfigurations …
+│       ├── docs.nix        # 文档工厂（生产端）：export/ 模块 → optionsDoc markdown（侧通道发射器）
+│       ├── lang/           # 阶段一 · 语言前端：类型/枚举/schema/验证（无 pkgs）
+│       │   ├── default.nix # 阶段一聚合：const + schema + enum + fn + tools + validate
 │       │   ├── enum.nix    # 枚举类型：arch / platform / wm / dm / shell / drive-group / editor-set / service-profile 等
 │       │   ├── schema.nix  # 结构验证：user / git / rbw / time / i18n / secrets / shared
 │       │   ├── fn.nix      # 工具函数：isNixOS · isMacOS · isLinux · isWSL · homeDir · sopsFile · sopsRuntimePath
 │       │   ├── const.nix   # 常量：secrets 路径 · 权限模式(0400/0440/0600) · XDG 目录名
-│       │   └── tools.nix    # 外部工具库注册：nix-types / orc / pdshell（短路径访问，配置文件解耦 inputs）
+│       │   └── tools.nix   # 外部工具库注册：nix-types / orc / pdshell（短路径访问，配置文件解耦 inputs）
 │       ├── runtime/
-│       │   └── default.nix # 阶段二合成：pkgs/upkgs/isNixOS/homeDir/orc/sopsFile/tools 注入
+│       │   └── default.nix # 阶段二 · IR 合成：pkgs/upkgs/isNixOS/homeDir/orc/sopsFile/tools 注入
 │
-├── nixos/                  # 系统层（NixOS only）
-│   ├── default.nix         # 顶层：imports core + wm + dm；nixpkgs = shared.nixpkgs
-│   ├── core/
-│   │   ├── base/           # 基础：boot · network · user · i18n · sound · bluetooth · memory · portal · nix · systemd · virtual
-│   │   ├── drive/          # 驱动：AMD · Intel · NVIDIA · nvidia-prime（drive-group 枚举多驱动组合）
-│   │   ├── exp/            # 实验：steam · clash-verge · obs · compat · xwayland · core
-│   │   ├── sec/            # 安全：PAM · polkit · secret/（sops-nix 注入 + age/sops/ssh-to-age 工具）
-│   │   └── srv/            # 服务：
-│   │       ├── db/         #   数据库：PostgreSQL · MySQL(MariaDB) · MongoDB · Redis
-│   │       ├── desktop/    #   桌面：flatpak · gvfs · tumbler
-│   │       ├── hardware/   #   硬件：bluetooth · firmware · power · printing · storage
-│   │       ├── log/        #   日志：logrotate（MySQL/PostgreSQL 日志轮转）
-│   │       └── security/   #   安全服务：SSH · gnupg keyring · ptrace · wrappers(dumpkeys/gdb)
-│   ├── dm/                 # 显示管理器：gdm · ly · sddm · lemurs（shared.display-manager 路由）
-│   └── wm/                 # 窗口管理器：hyprland(+plugins) · niri · gnome（shared.window-manager 路由）
+├── platform/               # 平台分发层（host-dispatch：目录语法 v3 — 目录即域，T5.11）
+│   ├── nixos/              # NixOS 双海关（双活门）：顶层 = 系统域：default.nix = 系统海关
+│   │                       #   （core/dm/wm 注册 + hosts facts）；home/ = 用户域：
+│   │                       #   home/default.nix = HM 海关（standalone 门，秒级切换/独立
+│   │                       #   回滚的策略选择）；home/x86_64-linux.nix = HM payload 行；
+│   │                       #   core/{base,drive,exp,sec,srv} · dm/ · wm/；nixpkgs = shared.nixpkgs
+│   ├── linux/              # 通用 Linux：目录即用户域——home/default.nix = 唯一海关
+│   │                       #   （standalone HM + nixGL(mesa) + genericLinux；无系统形态
+│   │                       #   ——顶层无 default.nix 即声明；整个平台目录只有 home/）
+│   ├── darwin/             # macOS(nix-darwin)：default.nix = 唯一海关（T5.8 单门折叠：
+│   │                       #   hm.darwinModule + hosts facts + home-manager.users 挂载
+│   │                       #   = import ./home/${arch.tag}.nix 一体——系统门跨域引用，
+│   │                       #   路径可见；home/ 内无 default.nix——HM 非独立门，payload
+│   │                       #   行仍驻留，以 module mode 挂载）；home/<arch>.nix = HM payload
+│   └── wsl/                # WSL2：home/default.nix = 唯一海关（standalone HM + nixGL +
+│                           #   genericLinux + systemd；无系统形态，顶层无 default.nix；
+│                           #   整个平台目录即用户域）
 │
 ├── home/                   # 用户层（Home Manager）
 │   ├── core/
 │   │   ├── base/           # 基础：字体 · i18n(fcitx5) · portal(wm 策略驱动) · XDG
 │   │   ├── exp/            # 扩展功能（可选模块）
-│   │   │   ├── app/        # GUI 应用：
+│   │   │   ├── app/        # GUI 应用（app-set 重量级路由，T5.10： full=全树 / lean=文档·阅读·逆向 / none=仅三选集目录）：
 │   │   │   │   ├── browser/    #   浏览器：google-chrome · qutebrowser · w3m
 │   │   │   │   ├── dl/         #   下载：baidupcs-go · xunlei · downloader
 │   │   │   │   ├── editor/     #   编辑器：nvim · emacs · vscode · zed · kiro · cursor · trae · zcode (AI)
@@ -219,14 +240,11 @@ nix-config/
 │           ├── lisp/ lua/ nix/ python/ re/ rust/ zig/
 │           └── default.nix # 复合环境：default(全语言) · cpython(C+C++Python) · godot
 │
-├── platform/              # 平台分发层（Home Manager 激活点）
-│   ├── nixos/              # NixOS：imports home/core + home/env + home/wm；arch 路由
-│   ├── linux/              # 通用 Linux：standalone HM + nixGL(mesa) + genericLinux
-│   ├── darwin/              # macOS：standalone HM；homeDirectory=/Users/<u>；无 nixGL
-│   └── wsl/                # WSL2：standalone HM + nixGL + genericLinux + systemd
-│
-├── hosts/                 # 多主机支持（per-machine hardware + overrides）
-│   └── nixos/             # 默认主机：hardware.nix（nixos-generate-config 生成）+ default.nix
+├── hosts/                  # 多主机支持（per-machine hardware + policy overrides）
+│   ├── nixos/              # 默认主机：hardware.nix（nixos-generate-config 生成）+ default.nix
+│   ├── vm/                 # 评估级 VM 主机：facter.json + disk.nix（声明式硬件/磁盘事实，T5.12/T5.13）+ shared.nix 策略覆盖
+│   ├── wsl/                # WSL 主机：shared.nix（platform=wsl 类翻转）
+│   └── darwin/             # darwin 主机：shared.nix（platform=darwin + aarch64-darwin）
 │
 ├── secrets/
 │   ├── chipr/              # SOPS 加密文件（提交到 Git；.sops.yaml 管控解密权限）
@@ -404,7 +422,7 @@ fullShared                  运行时合成（pkgs + user_shared + runtime）
 nixos/ · home/              通过 { shared, ... } 消费
 ```
 
-**可配置枚举（lib/shared/shared/enum.nix）：**
+**可配置枚举（lib/shared/lang/enum.nix）：**
 
 | 字段              | 合法值                                                                                                                                                                                                                                                                                                                                        |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -415,9 +433,10 @@ nixos/ · home/              通过 { shared, ... } 消费
 | `drive-group`     | `intel` · `amd` · `nvidia` · `nvidia-prime` · `amd-nvidia` · `amd-nvidia-prime` · `intel-nvidia` · `intel-nvidia-prime`                                                                                                                                                                                                                       |
 | `shell`           | `zsh` · `fish` · `bash`                                                                                                                                                                                                                                                                                                                       |
 | `editor`          | `nvim` · `vim` · `code` · `zeditor`                                                                                                                                                                                                                                                                                                           |
-| `editor-set`      | `minimal` · `full-ai` · `emacs-dev` · `full`（多选路由，携带 `editors` 列表）                                                                                                                                                                                                                                                                  |
+| `editor-set`      | `minimal` · `full-ai` · `dev` · `full`（多选路由，携带 `editors` 列表）                                                                                                                                                                                                                                                                  |
 | `terminal-set`    | `kitty-only` · `wezterm-only` · `both`（多选路由，携带 `terminals` 列表）                                                                                                                                                                                                                                                                      |
 | `browser-set`     | `chrome-only` · `qutebrowser` · `cli-only` · `chrome-qute` · `all`（多选路由，携带 `browsers` 列表）                                                                                                                                                                                                                                           |
+| `app-set`         | `full` · `lean` · `none`（目录级路由，T5.10 惰性模块加载：携带 `categories` 列表——主机合并哪些 app 树；browser/editor/terminal 三目录随每行必达（自身由各自 set 剪枝）；`full` 行顺序即模块合并序，闭包哈希指纹锚点，由 enum 测试锁定）                                                                                     |
 | `service-profile` | `full-autostart` · `dev-on-demand` · `server-pg-only` · `minimal`（策略携带，控制 db/virt 的 install vs autostart）                                                                                                                                                                                                                             |
 | `pointer-cursor`  | `Bibata-Modern-Amber` · `Bibata-Modern-Amber-Right` · `Bibata-Modern-Classic` · `Bibata-Modern-Classic-Right` · `Bibata-Modern-Ice` · `Bibata-Modern-Ice-Right` · `Bibata-Original-Amber` · `Bibata-Original-Amber-Right` · `Bibata-Original-Classic` · `Bibata-Original-Classic-Right` · `Bibata-Original-Ice` · `Bibata-Original-Ice-Right` |
 | `version`         | `v25_11`（携带 `{stateVersion, wine, swww, adb}` 策略） · `v26_05`（同构）                                                                                                                                                                                                                                                                          |
@@ -443,27 +462,31 @@ imports = map (d: ./${d}.nix) shared.drive.value;
 # shared.drive.value = [ "intel" "nvidia" ]  → imports [ ./intel.nix ./nvidia.nix ]
 ```
 
-**`platform/` 平台分发层 — arch 路由：**
+**`platform/` 平台分发层 — arch 路由（目录即域，T5.11）：**
 
 ```nix
-# platform/nixos/default.nix
+# platform/nixos/home/default.nix（HM 海关；linux/wsl 的 home/default.nix 同语法）
 imports = [ ./${shared.arch.tag}.nix ];
 # shared.arch.tag = "x86_64-linux" → imports ./x86_64-linux.nix
 
-# platform/nixos/x86_64-linux.nix 完整激活点
-{ imports = [ ../../home/core ../../home/env ../../home/wm ]; ... }
+# platform/nixos/home/x86_64-linux.nix 完整激活点
+{ imports = [ ../../../home/core ../../../home/env ../../../home/wm ]; ... }
 ```
 
 **平台能力表（T4.0 分发层收敛）—— `enum.platform` 即目标描述：**
 
 ```nix
-# lib/shared/shared/enum.nix：每行回答“该平台是什么”，一处声明
+# lib/shared/lang/enum.nix：每行回答“该平台是什么”，一处声明
 nixos = { caps = { linux-family = true; nixos-system = true; wsl = false; darwin = false; };
           home-prefix = "/home"; btop = pkgs: pkgs.btop.override { … }; … };
 
-# flake.nix 输出路由读同一张表：
-nixosHosts  = filter (h: (mkShared h).caps.nixos-system) hostNames;
-darwinHosts = filter (h: (mkShared h).caps.darwin) hostNames;
+# lib/shared/targets.nix 输出路由读同一张表（flake.nix 只消费成品；
+# 策略 IR 每主机单实例化——分类器/发射器/命名/别名共读一张表，T5.10）：
+nixosHosts  = filter (h: sharedByHost.${h}.caps.nixos-system) hostNames;
+darwinHosts = filter (h: sharedByHost.${h}.caps.darwin) hostNames;
+
+# app 树按重量级路由（目录级多选，与 browser/editor/terminal 同构但选树不选叶）：
+imports = builtins.map (c: ./${c}) shared.appCategories;
 
 # 叶子只消费已解析事实，不再出现 if-else / 谓词重复推导 / tag 比较：
 home.packages = lib.mkIf shared.caps.linux-family (with pkgs; [ gimp ]);
@@ -472,7 +495,7 @@ home.packages = [ … ] ++ (shared.platform.value.trace-tools shared.upkgs);  # 
 ```
 
 新增平台 = 写一行；新增能力维度 = 加一列（构造即穷尽，如 nix-types match）。
-契约测试 `tests/lib/shared/shared/caps.nix` 锁定整张表（真值表 + 策略选择 + 穷尽性）。
+契约测试 `tests/lib/shared/lang/caps.nix` 锁定整张表（真值表 + 策略选择 + 穷尽性）。
 
 ### 3. 开发环境管道 — pdshell
 
@@ -588,7 +611,7 @@ host 私钥落位（二选一，交付副本只有一份）:
 **EMPTY 是仓库的出厂态（fresh clone 即此态）：** `.sops.yaml` 与全部密文
 blob **不在仓库里**——它们由 just 流程生成（`secrets-init` / `secret-set`），
 用**你自己的** age key 加密后才提交。eval 期对 EMPTY 态宽容
-（`lib/shared/shared/validate.nix` 的 resolution pass 只 trace 引导命令；
+（`lib/shared/lang/validate.nix` 的 resolution pass 只 trace 引导命令；
 树上出现任一 blob 后即转严——声明而缺失的 secret 在 eval 期报
 「declared but not provided」）。deploy 在 EMPTY 态会在 sops 激活期硬失败
 （正确的失败层）。
@@ -667,11 +690,11 @@ home.activation.waybarWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] waybar
 
 ### 6. 用户环境层 — home/env
 
-`home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的 `platform/*/` 入口中与 `home/core` 并列导入：
+`home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的用户域 payload 行（`platform/*/home/<arch>.nix`）中与 `home/core` 并列导入：
 
 ```
-platform/<platform>/default.nix
-    imports = [ ../../home/core  ../../home/env  ../../home/wm ]
+platform/<platform>/home/<arch>.nix
+    imports = [ ../../../home/core  ../../../home/env  ../../../home/wm ]
 ```
 
 **子层职责：**
@@ -778,10 +801,10 @@ just commit-global-rules
 
 ### 9. 工具库统一管理 — tools.nix
 
-`lib/shared/shared/tools.nix` 集中注册所有外部工具库，配置文件通过 `shared.tools.<name>` 短路径访问，解耦对 `inputs.<long-name>.lib` 的直接引用：
+`lib/shared/lang/tools.nix` 集中注册所有外部工具库，配置文件通过 `shared.tools.<name>` 短路径访问，解耦对 `inputs.<long-name>.lib` 的直接引用：
 
 ```
-lib/shared/shared/tools.nix
+lib/shared/lang/tools.nix
     ├─ nix-types（短别名 nt）    — ADT 系统：enum / match / Option / Result
     ├─ orc-raw                  — configuration-orchestrator（arch-specific，runtime 解析）
     └─ pdshell-raw              — pipeline-driven dev shell manager
@@ -793,18 +816,63 @@ lib/shared/shared/tools.nix
 
 ### 10. 多主机支持 — hosts/
 
-`hosts/` 目录实现多主机分发，每台机器独立 `hardware.nix` + 可选 `shared.nix` 覆盖：
+`hosts/` 目录实现多主机分发，每台机器独立硬件事实 + 可选 `shared.nix` 覆盖。
+
+**机器事实的三个文件（T5.12 + T5.13 — 数据 + 解释器路线）：**
 
 ```
 hosts/
-└── nixos/                   # 默认主机
-    ├── default.nix          # 主机入口（imports hardware.nix + overrides）
-    └── hardware.nix         # nixos-generate-config 自动生成
+├── nixos/                   # 默认主机（legacy 形态）
+│   ├── default.nix          # 主机入口（imports hardware.nix + overrides）
+│   └── hardware.nix         # nixos-generate-config 自动生成（模块形态的机器事实）
+└── vm/                       # 评估级第二主机（声明式形态）
+    ├── default.nix          # 主机入口（reportPath 一行 + imports ./disk.nix）
+    ├── facter.json          # nixos-facter 报告（硬件事实的数据形态，T5.12）
+    └── disk.nix             # disko 磁盘布局（磁盘事实的数据形态，T5.13）
+```
 
-nixos/default.nix 通过 ../hosts/${shared.hostName} 动态路由到对应主机。
+legacy 形态：hardware.nix 是 nixos-generate-config 探测硬件后**生成的 NixOS 模块**——
+fileSystems、initrd 模块、微码全部以 option 赋值硬编码在生成物里。声明式形态按事实
+类型分文件：**facter.json 是硬件数据**（标准 facter 报告 schema，version 1），由 nixpkgs
+自带的 `hardware.facter` 模块（默认模块表内）解释——initrd 的 virtio 模块集、
+`nixpkgs.hostPlatform`（report.system）、guest 处理（virtualisation → qemu 类模块集）
+全部从报告派生；**disk.nix 是磁盘数据**（disko.devices 布局声明：分区表、分区用途、
+文件系统与挂载点），由 disko 模块解释——`fileSystems`、`swapDevices` 与 BIOS boot 的
+`boot.loader.grub.devices` 全部从布局派生。解释器注册位置不同是上游化差异的直接后果：
+facter 模块上游化进了 nixpkgs（零 import、零 input）；disko 不在 nixpkgs（已对锁定树
+核实），其注册 = `platform/nixos/core/base/disk.nix` 一行 import——**能力归平台结构树，
+数据归 hosts/**（与 sops-nix 注册于 core/sec/secret 同一裁决）。数据与解释器分离的
+价值与 hosts/ 本身同构：机器事实是前端数据，解释它的能力是后端，主机入口只做一行
+接线。
+
+真实机器迁移（在目标机上执行；磁盘布局是重装时机——disko 应用即重分区，数据不可保留）：
+
+```
+  1. just hardware-facter    # 生成 hosts/<hostname>/facter.json（root 扫描）
+  2. 主机入口：imports = [ ./hardware.nix ] → hardware.facter.reportPath = ./facter.json;
+  3. 删除 hardware.nix 中的 initrd/hostPlatform 行；fileSystems 走第 4 步
+  4. 写 hosts/<hostname>/disk.nix（声明目标分区表）+ 主机入口 imports ./disk.nix；
+     重装时从 installer 运行 just disk-format <hostname>（分区/格式化/挂载，破坏性）
+```
+
+vm 的报告是**声明**而非探测产物——VM 的硬件本就是被定义的（QEMU x86_64 guest +
+virtio 盘/网卡），报告按标准 schema 写出该形态（kvm 虚拟化、virtio_blk/virtio_net 的
+driver_modules、无 vmx/svm 的 vCPU）。报告刻意不列 network_interface：平台的
+NetworkManager 策略拥有 DHCP，facter 的 per-interface useDHCP 默认面向 scripted
+networking，在 NM 之下会再挂一层 dhcpcd；CONTROLLER（virtio-net）在报告中，
+驱动照样进 initrd。同理，vm 的磁盘布局也是声明：GPT + EF02（BIOS boot，grub core.img
+的 1MiB staging）+ root ext4 占满余盘——布局中的 EF02 分区就是 disko 派生
+`boot.loader.grub.devices = ["/dev/vda"]` 的依据（BIOS 形态的结构化表达），与 facter
+报告的 `uefi: false` 互相印证；主机文件里只补齐引导策略对齐（grub on /
+systemd-boot off——平台默认面向 UEFI 机器群）。
+
+platform/nixos/default.nix 通过 ../../hosts/${shared.hostName} 动态路由到对应主机（系统海关
+挂载 host facts；darwin 的海关同理）。
 新增主机只需：
+
+```
   1. mkdir hosts/<new-hostname>
-  2. just hardware-generate   # 自动写入 hosts/<hostname>/hardware.nix
+  2. just hardware-facter    # 写入 hosts/<hostname>/facter.json（或 hardware-generate 走 legacy）
   3. 在 shared.nix 修改 hostName
 ```
 
@@ -839,8 +907,8 @@ systemd.services.postgresql.wantedBy =
 
 ```bash
 # 立即启动/停止（不持久，重启后失效）
-just service-start postgresql        # systemctl start
-just service-stop postgresql         # systemctl stop
+just service-start postgresql         # systemctl start
+just service-stop postgresql          # systemctl stop
 
 # 开机自启管理（持久，跨重启 + 跨 rebuild）
 just service-enable postgresql        # systemctl enable（重启后自启）
@@ -893,7 +961,7 @@ push / PR
     │       └── 动态发现 nmt_* checks → nix build 逐个验证
     │
     ├─► [STAGE 3: devShells dry-run]   devShell 矩阵（并行，与 STAGE 2 同时）
-    │       └── rust · python · python-machine · nix · go · cpp · c · typescript · re
+    │       └── rust · python · python-machine · nix · go · cpp · c · typescript · re ...
     │
     ├─► [STAGE 4: Security Audit]      SOPS 完整性审计（并行，与 STAGE 2 同时）
     │       ├── secrets/chipr/*.yaml 必须含 sops: 元数据
@@ -901,12 +969,12 @@ push / PR
     │       ├── .sops.yaml 含 age: + creation_rules:
     │       └── .nix 文件扫描硬编码 token/password
     │
-    └─► [STAGE 5: VM Tests]            QEMU 测试，按平面并行子矩阵（需 KVM）
-            ├── smoke        (test_*)        — 基线
-            ├── nixos        (nixos_*)       — 系统模块
-            ├── home-lib     (home_* lib_*)  — HM 模块 + lib 纯表达式
-            └── integration  (integration_*) — NixOS + HM 联合激活
-
+    ├─► [STAGE 5: VM Tests]            QEMU 测试，按平面并行子矩阵（需 KVM）
+    │       ├── smoke        (test_*)        — 基线
+    │       ├── nixos        (nixos_*)       — 系统模块
+    │       ├── home-lib     (home_* lib_*)  — HM 模块 + lib 纯表达式
+    │       └── integration  (integration_*) — NixOS + HM 联合激活
+    │
     └─► [STAGE 6: Summary]             汇总报告（always，即使前序失败）
 ```
 
@@ -1067,17 +1135,17 @@ just init <username>
 
 # 服务器机直达双 key（host 密钥材料先行时，状态机跳一跳）：
 #   先生成 host keypair（仓外交付副本），再把公钥传入引导：
-just key-new-host <alias>           # 生成 keypair，打印公钥
+just key-new-host <alias>            # 生成 keypair，打印公钥
 just init <username> <alias> <age1…> # EMPTY → USER+HOST 直达
 
 # own host = srv host（个人机同时跑 srv 服务）——host 私钥落位本机：
-just key-install-host <alias>       # identity 合并进本机 sops key 文件
+just key-install-host <alias>        # identity 合并进本机 sops key 文件
 # （硬化 srv 策略后本机仍可解；交付副本此时可 shred）
 
 # POST-BOOTSTRAP（shared.nix 已存在）
-just secrets-init [alias age1…]    # 仅初始化 sops 基础设施（可选直达双 key）
-just secrets-plan-create           # 生成明文模板参考
-just rules-init                    # 仅当 .sops.yaml 缺失时重建（对已演化文件拒绝）
+just secrets-init [alias age1…]      # 仅初始化 sops 基础设施（可选直达双 key）
+just secrets-plan-create             # 生成明文模板参考
+just rules-init                      # 仅当 .sops.yaml 缺失时重建（对已演化文件拒绝）
 ```
 
 ### host — 主机与部署目标（T2.4，数据驱动）
@@ -1108,31 +1176,40 @@ just shared-roundtrip            # 验证 shared.nix ⇄ 模板可双向字节�
 ### hardware — 硬件配置
 
 ```bash
-just hardware-generate           # 生成 hosts/<hostname>/hardware.nix（首次或硬件变更后）
-just hardware-show               # 显示当前 hardware.nix 内容
-just hardware-list               # 列出所有已配置主机
+just hardware-facter           # 生成 hosts/<hostname>/facter.json（声明式路线，T5.12；首次或硬件变更后）
+just hardware-generate         # 生成 hosts/<hostname>/hardware.nix（legacy 路线，nixos-generate-config）
+just hardware-show             # 显示当前 hardware.nix 内容
+just hardware-list             # 列出所有已配置主机
+```
+
+### disk — 磁盘布局应用（T5.13）
+
+```bash
+just disk-show <host>          # 只读：求值该主机 disko 布局的推导结果（fileSystems/boot 接线）
+just disk-format <host>        # 破坏性：从锁定闭包构建并运行 pinned 分区/格式化/挂载脚本
+                               # （重装/installer 场景；extra args 透传，如 --dry-run）
 ```
 
 ### services — 按需服务管理
 
 ```bash
 # 立即启动/停止（不持久，重启后失效）
-just service-start <name>        # systemctl start
-just service-stop <name>         # systemctl stop
+just service-start <name>       # systemctl start
+just service-stop <name>        # systemctl stop
 just service-restart <name>     # systemctl restart
 just service-status <name>      # systemctl status
 
 # 开机自启管理（持久，跨重启 + 跨 rebuild）
 just service-enable <name>      # systemctl enable（重启后自启）
-just service-disable <name>    # systemctl disable（重启后不自启）
-just service-is-enabled <name> # 检查是否开机自启
+just service-disable <name>     # systemctl disable（重启后不自启）
+just service-is-enabled <name>  # 检查是否开机自启
 
 # 数据库别名
 just db-start <name>             # = service-start
 just db-stop <name>              # = service-stop
 just db-enable <name>            # = service-enable
 just db-disable <name>           # = service-disable
-just db-list                      # 列出所有数据库服务
+just db-list                     # 列出所有数据库服务
 just autostart-list              # 列出所有已启用的服务
 ```
 
@@ -1199,7 +1276,7 @@ just key-destroy                  # 销毁 user 密钥文件（不可逆）
 just key-new-host <alias> [dest]  # 生成 host keypair（仓外交付副本，chmod 400）
 just key-show-host <alias> [src]  # 显示 host 交付副本的公钥
 just key-add-host <alias> <age1…> [domain=srv]  # 公钥接线进 .sops.yaml（增量）
-just key-install-host <alias> [src]  # host identity 合并进本机 key 文件（own host，幂等）
+just key-install-host <alias> [src]             # host identity 合并进本机 key 文件（own host，幂等）
 just key-remove <alias>           # 撤销密钥（接受短名 lab 或全名 host_lab）
 just key-rotate-user <age1…>      # user key 轮换（三步引导）
 just key-rotate-host <age1…>      # host key 轮换（四步：先加后撤，无裸窗口）
@@ -1210,7 +1287,7 @@ just rules-reset                  # 硬重置到基线（host keys + 轮换全�
 just rules-destroy                # 删除 .sops.yaml
 
 # ── 明文模板实例（PLAIN LAYER，secrets/plan/**，不入仓）─────────────────
-just secrets-plan-create           # 生成所有明文模板实例（填写前对照）
+just secrets-plan-create          # 生成所有明文模板实例（填写前对照）
 just secrets-plan-destroy         # 删除所有明文模板实例
 
 # ── 一致性与审计 ─────────────────────────────────────────────────────
@@ -1317,7 +1394,7 @@ nix shell nixpkgs#mkpasswd --command just secret-set-all
 #   just secret-set mongodb             # ...
 
 just secrets-verify              # 收件人一致性审计（期望全绿，红则按提示修）
-just secrets-status             # 三层状态总览（key / rule / blob + 本机 identity）
+just secrets-status              # 三层状态总览（key / rule / blob + 本机 identity）
 ```
 
 > **个人机同时跑 srv 服务**（dev-on-demand db profile）？Phase 1 用直达双 key
@@ -1354,7 +1431,7 @@ just home-switch <host>         # → <username>@<host>（如 just home-switch w
 ### Phase 4 — 验证与回滚
 
 ```bash
-just secrets-status              # secrets 三层健康
+just secrets-status             # secrets 三层健康
 nixos-rebuild list-generations  # 世代清单（每次 switch 一代）
 sudo nixos-rebuild rollback     # 一键回上一代
 just nixos-test <host>          # 试验性切换（不写 boot 条目，重启即弃）
@@ -1445,11 +1522,11 @@ srv 域。这是「own host = srv host」分支：host 私钥也落位**本机**
 （age 身份文件原生多 identity，`sops-nix` 的 `keyFile` 本就指向它）。
 
 ```bash
-just key-new-host <alias>            # ① 生成 host keypair（仓外交付副本 ~/Downloads）
+just key-new-host <alias>             # ① 生成 host keypair（仓外交付副本 ~/Downloads）
 just init <username> <alias> <age1…>  # ② 直达 USER+HOST（①打印的公钥传入）
 just secret-set-all                   # ③ 录入（srv 域 blob 双收件人）
 just key-install-host <alias>         # ④ host identity 合并进本机 key 文件
-shred -u ~/Downloads/host-<alias>.age  # ⑤ 本机已持有 identity，销毁交付副本
+shred -u ~/Downloads/host-<alias>.age # ⑤ 本机已持有 identity，销毁交付副本
 ```
 
 已按情景 1 引导过？增量接入：`just key-add-host <alias> <age1…>` →
@@ -1470,7 +1547,7 @@ user key 将解不开 srv blob；**独立恢复路径**（user key 在其它机�
 ```bash
 just key-new-host <alias>            # ① 服务器 keypair（你操作机上生成）
 just key-add-host <alias> <age1…>    # ② 公钥接线进 .sops.yaml（srv 域）
-just secrets-sync                     # ③ 存量 blob 迁移到双收件人
+just secrets-sync                    # ③ 存量 blob 迁移到双收件人
 # ④ 交付: host-<alias>.age → 服务器 /var/lib/sops-nix/key.txt（chmod 400）
 #    然后 shred 交付副本 —— 目标机唯一持有
 ```
@@ -1742,17 +1819,22 @@ flake.nix
 - [x] shellIntegrations 统一（runtime 计算，8 个 base 模块复用）
 - [x] match 穷尽性（nix-types lib.match 替代手写 if）
 - [x] 分发层收敛（T4.0：enum.platform 能力表 caps + 策略载荷；全树消灭叶子级 if-else/谓词重复推导/tag 比较；schema 嵌套默认值物化修复；变异验证 ×2 + 六配置求值级行为保持——home×3/darwin drv 字节一致）
+- [x] 入口清爽化（T5.1：flake.nix 只保留输入声明 + 协议名映射；主机清单→caps 分类→closure 发射器全部移入 lib/shared/targets.nix 生产端——编译器后端 pass；根目录 darwin/ 并入 platform/darwin/system.nix，host-dispatch 层一个平台一个目录；pre-commit 配置移入 tests/pre-commit.nix）
+- [x] 中间层命名收敛（T5.2：lib/shared/shared → lib/shared/lang——语言前端层（类型/枚举/schema/验证，无 pkgs），消除路径重复命名；三段式镜像编译器管道：lang（frontend）→ runtime（IR 合成）→ targets.nix（codegen）；`shared` 逻辑名保持为全树稳定线协议，测试镜像与 check 名同步 lib_shared_lang_*）
 - [x] pre-commit-hooks（nixfmt + statix + deadnix 自动检查）
 - [x] services.just 按需启动命令（service-start/stop/status + db-start/stop/list）
 - [ ] 第二台机器测试（验证跨机器可移植性，scfpath 多机器场景）（T2.3-T2.5：hosts/vm 策略链已通，双机求值级验收完成；boot 级验收待 KVM/真实环境）
-- [ ] 惰性模块加载（提升大型配置求值速度）
-- [ ] 模块文档自动生成（从 Nix 模块 options 生成）
-- [x] export/ 模块完善（T2.1 首批五组：portal / fcitx5(nixos+home) / shell / waybar / yazi，options-first + 外部导入验收测试；接口规范见 docs/modules/interface-standards.md）
-- [ ] macOS 完整支持（darwin-specific modules，nix-darwin 集成）（T3.2：darwinConfigurations.darwin 全闭包求值级验收完成——nix-darwin 26.05 + hm module mode；activation 待真实 Mac）
-- [ ] nixos-facter 替代 nixos-generate-config（声明式硬件发现）
-- [ ] disko 声明式磁盘分区（替代 hardware.nix 里的 fileSystems 硬编码）
+- [x] 惰性模块加载（T5.10：两 pass 一 commit——**Pass A 策略 IR 单实例化**（分发层 CSE：mkShared 每 flake 求值 ~23 次〔3×byCap 分类 × 每主机 + 三类发射器 + homeConfigurations 命名 + 遗留别名重发射 + flake 基实例〕；单进程全输出求值 4GB 沙箱仍 OOM〔六 OS 级模块宇宙驻留的内存地板，非策略实例问题〕）
+- [x] 模块文档自动生成（从 Nix 模块 options 生成）（三 closure + 双 HM drv 哈希字节级一致验证）
+- [x] darwin 发射器装配内聚
+- [x] 平台架构完成：nixos 系统树归位
+- [x] darwin 单门折叠
+- [x] 平台目录语法 v2：文件名即域
+- [x] 平台目录语法 v3：目录即域
+- [x] export/ 模块完善
+- [x] nixos-facter 替代 nixos-generate-config（声明式硬件发现）
+- [x] disko 声明式磁盘分区（替代 hardware.nix 里的 fileSystems 硬编码）
 - [ ] impermanence 实验性 ephemeral root（btrfs subvol rollback）
-- [ ] nixci 统一管理 30+ flake=false input（简化外置配置仓库 CI）
 - [ ] nix-types 上游贡献（schema pattern matching 模式文档化）
 - [x] Option/Result 类型化错误处理（T4.1：secret 路径校验用 result.andThen —— nix-types Result 铁路〔shared/validate.nix〕：形状检查前置 pass 折叠 + 文件系统存在性 resolution pass + unwrapOrElse 单一边界 throw；声明而缺失的 secret 在 eval 期报「declared but not provided」；变异验证 ×2 + home×3/darwin drv 字节一致）
 - [x] 可观测性（prometheus exporters + loki 日志 + grafana dashboard）（T3.4：service-profile 携带 monitor 策略，三档 profile 求值级验收 + nixos_core_srv_monitor_policy 测试）

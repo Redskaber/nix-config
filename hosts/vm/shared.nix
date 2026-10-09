@@ -22,4 +22,8 @@
   editor-set = shared.enum.editor-set.minimal;
   terminal-set = shared.enum.terminal-set.kitty-only;
   browser-set = shared.enum.browser-set.chrome-qute;
+  # No app grab-bag trees at all (T5.10): a maintenance VM wants its
+  # editors/browsers/terminals and the sys toolbelt, nothing else —
+  # pre-T5.10 it merged (and installed) the full desktop app universe.
+  app-set = shared.enum.app-set.none;
 }

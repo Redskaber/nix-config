@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::srv::security::ssh
-# @source: nixos/core/srv/security/ssh.nix
+# @source: platform/nixos/core/srv/security/ssh.nix
 #
 # Verifies OpenSSH server hardening:
 #   - sshd.service active

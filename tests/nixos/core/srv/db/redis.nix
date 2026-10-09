@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::srv::db::redis
-# @source: nixos/core/srv/db/redis.nix
+# @source: platform/nixos/core/srv/db/redis.nix
 #
 # Mirrors production config:
 #   services.redis.servers."".enable = true

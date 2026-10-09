@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::base::nix
-# @source: nixos/core/base/nix.nix
+# @source: platform/nixos/core/base/nix.nix
 #
 # Mirrors production config:
 #   nix.settings.experimental-features = ["nix-command" "flakes"]

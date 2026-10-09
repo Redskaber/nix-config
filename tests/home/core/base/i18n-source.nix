@@ -29,7 +29,7 @@
 let
   # REAL production fn.nix (phase-1 pure) — provides sameSource/pkgsFingerprint
   # for the T2.6 guard the production module now routes through.
-  realFn = import ../../../../lib/shared/shared/fn.nix {
+  realFn = import ../../../../lib/shared/lang/fn.nix {
     inputs = { };
     enum = { };
     const = { };
