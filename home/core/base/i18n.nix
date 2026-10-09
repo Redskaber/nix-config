@@ -44,7 +44,7 @@
         ];
     in
     {
-      # NixOS layer owns the input method there; macOS owns it via the
+      # NixOS layer owns the input method there; darwin owns it via the
       # OS input sources (fcitx5 is not a darwin package) — standalone
       # Linux (incl. wsl) is the only family this module serves.
       # T4.0: composed from resolved capability facts (linux-family minus

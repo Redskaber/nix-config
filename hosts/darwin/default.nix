@@ -3,7 +3,7 @@
 # @datetime: 2026-10-08
 # @description: hosts::darwin — darwin machine profile (T3.2)
 #
-# Eval-level darwin machine (the T2.5 pattern applied to macOS): this
+# Eval-level darwin machine (the T2.5 pattern applied to darwin): this
 # host proves the flake evaluates a full nix-darwin + home-manager
 # closure from its own policy file (hosts/darwin/shared.nix). The toplevel
 # is built under aarch64-darwin; activation itself needs a real Mac

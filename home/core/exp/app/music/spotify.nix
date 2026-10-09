@@ -19,7 +19,7 @@ let
 
   # T3.2: the whole Spotify stack is Linux-only (spotifyd's upstream
   # module asserts non-darwin platforms; pulseaudio backend likewise).
-  # macOS gets its stack from the OS itself — gate the module to the
+  # darwin gets its stack from the OS itself — gate the module to the
   # Linux family instead of failing the darwin closure at eval time.
   # (Module-position mkIf is illegal — body goes under `config =`.)
   isLinuxFamily = shared.caps.linux-family;

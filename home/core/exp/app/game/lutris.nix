@@ -13,7 +13,7 @@
   ...
 }:
 # T3.2: wine/lutris is a Linux gaming stack; desktopEntries likewise
-# live in Linux desktop environments. macOS App bundles own that land.
+# live in Linux desktop environments. darwin App bundles own that land.
 # (Body under `config = mkIf` — module-position mkIf is illegal.)
 {
   config = lib.mkIf shared.caps.linux-family {

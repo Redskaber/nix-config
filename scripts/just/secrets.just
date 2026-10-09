@@ -145,14 +145,6 @@
 #   Example: key "nixos/core/base/nix/users/kilig/github/access-token"
 #            → YAML leaf key: "access-token"  (singular — matches path segment)
 #            → VALUE may be:  "access-tokens = github.com=TOKEN"  (nix.conf line)
-#
-# NOTE: sop base init flows:
-# ```
-# > just init <username>
-# > just key-add-host <host_name> <public_key>   # [OPTIONAL]
-# > just secret-set-all
-# > just secrets-verify
-# ```
 # ==============================================================================
 
 SECRETS_PATH       := ROOT          / "secrets"
@@ -1047,6 +1039,12 @@ _secrets-encrypt key prompt transform="plain":
     unset -v csecret
 
     # 2. Apply optional transform; clear plaintext immediately after.
+    #    Existence is checked BEFORE the interactive read: failing after
+    #    the password is typed (bare "command not found" from bash) wastes
+    #    the operator's input and hides the remedy (the whois package).
+    if [[ "{{transform}}" == "mkpasswd" ]]; then
+        command -v mkpasswd >/dev/null 2>&1 || { echo "Error: mkpasswd not found — install the 'whois' package first" >&2; exit 1; }
+    fi
     value="${secret}"
     unset -v secret
     if [[ "{{transform}}" == "mkpasswd" ]]; then

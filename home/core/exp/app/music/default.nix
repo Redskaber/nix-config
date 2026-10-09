@@ -59,7 +59,7 @@ let
   };
 
   # T3.2: the whole music ecosystem rides on the Linux audio stack
-  # (pulseaudio/alsa/mpd) — macOS gets its stack from the OS. One gate
+  # (pulseaudio/alsa/mpd) — darwin gets its stack from the OS. One gate
   # at the ROUTER keeps every leaf unconditional; the darwin closure
   # skips this subtree entirely. NOTE: module-position mkIf is illegal
   # (imports-chain lambdas must return a plain attrset) — the body

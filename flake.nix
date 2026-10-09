@@ -54,6 +54,11 @@
     # Nix dev Shell manager
     pdshell.url = "github:Redskaber/pdshell";
     pdshell.inputs.nixpkgs.follows = "nixpkgs";
+    # pdshell builds its ContextPhase FSM on nix-types' enum — pin it to
+    # OUR nix-types input so the dispatch tables and the FSM evaluate
+    # against ONE rev (SSOT). Without this the lock graph keeps a second
+    # nix-types_2 node that can silently drift on partial updates.
+    pdshell.inputs.nix-types.follows = "nix-types";
 
     # hyprland config
     hyprland.url = "github:hyprwm/Hyprland";
@@ -185,7 +190,7 @@
     input-overlay-config.url = "github:Redskaber/input-overlay-config";
     input-overlay-config.flake = false;
 
-    # ── nix-darwin (T3.2): macOS system closure ─────────────────────
+    # ── nix-darwin (T3.2): darwin system closure ─────────────────────
     # Tarball-pinned (github: short syntax would need API resolution;
     # the archive URL fetches directly and pins the exact rev).
     # Branch nix-darwin-26.05 — nix-darwin release-checks its branch
@@ -381,7 +386,7 @@
       # via home-manager.darwinModules.home-manager (module mode): one
       # activation path, darwin-native. Evaluation of the darwin closure
       # is exercised from any builder platform; 'switch' itself needs a
-      # macOS host (darwin-rebuild switch --flake .#<host>).
+      # darwin host (darwin-rebuild switch --flake .#<host>).
       darwinConfigurations = builtins.listToAttrs (
         builtins.map (
           h:

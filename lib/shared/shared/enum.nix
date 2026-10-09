@@ -38,7 +38,7 @@ let
     btop =
       pkgs:
       pkgs.btop.override {
-        # Linux GPU introspection — darwin takes the stock build (macOS
+        # Linux GPU introspection — darwin takes the stock build (darwin
         # GPU reporting works out of the box).
         rocmSupport = true;
         cudaSupport = true;
@@ -156,7 +156,7 @@ let
       wlr = false;
     };
     # Null-Object portal (T3.1/T3.2): headless / non-Linux-WM platforms
-    # (wsl console, macOS Aqua) route here so downstream consumers stay
+    # (wsl console, darwin Aqua) route here so downstream consumers stay
     # unconditional — the absence of a windowing stack is expressed as a
     # strategy value, not as call-site conditionals.
     none = {

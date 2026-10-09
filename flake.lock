@@ -767,21 +767,6 @@
         "type": "github"
       }
     },
-    "nix-types_2": {
-      "locked": {
-        "lastModified": 1786354024,
-        "narHash": "sha256-goQ/YaKRJfRmpklM2Sjx85ZtydDeJH84QZ91L96siqs=",
-        "owner": "Redskaber",
-        "repo": "nix-types",
-        "rev": "815fc3fa921c243ec0dc9efd39201d05f0990a8a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Redskaber",
-        "repo": "nix-types",
-        "type": "github"
-      }
-    },
     "nixgl": {
       "inputs": {
         "flake-utils": "flake-utils",
@@ -923,7 +908,9 @@
     "pdshell": {
       "inputs": {
         "flake-utils": "flake-utils_2",
-        "nix-types": "nix-types_2",
+        "nix-types": [
+          "nix-types"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]

@@ -20,7 +20,7 @@
 # - rofi            : Window switcher, run dialog and dmenu replacement
 # - grim            : Grab images from a Wayland compositor
 # - slurp           : Select a region in a Wayland compositor
-# - swappy          : Wayland native snapshot editing tool, inspired by Snappy on macOS
+# - swappy          : Wayland native snapshot editing tool, inspired by Snappy on darwin
 # - swaynotificationcenter: Simple notification daemon with a GUI built for Sway
 # - wallust         : Better pywal, Terminal wallpaper management tool written in Rust
 # - wlogout         : Wayland based logout menu

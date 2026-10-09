@@ -30,7 +30,7 @@
   ...
 }:
 # T3.2: cursor themes ride X11/GTK/Wayland — darwin owns its own
-# cursor via Aqua; skip the whole module on macOS. (Body under
+# cursor via Aqua; skip the whole module on darwin. (Body under
 # `config = mkIf` — module-position mkIf is illegal.)
 {
   config = lib.mkIf shared.caps.linux-family {

@@ -53,7 +53,7 @@ in outer;
 
 ### 2.4 Darwin 特殊处理
 
-macOS (Darwin) 系统的 `stdenv` 更复杂，需要专门的擦洗列表。Darwin 测试会导入一个单独的 `darwinScrublist.nix`，其中包含针对 macOS 特定软件包的擦洗定义。
+darwin (Darwin) 系统的 `stdenv` 更复杂，需要专门的擦洗列表。Darwin 测试会导入一个单独的 `darwinScrublist.nix`，其中包含针对 darwin 特定软件包的擦洗定义。
 
 ## 3. 环境搭建
 
