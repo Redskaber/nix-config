@@ -3,12 +3,13 @@
 # @datetime: 2025-12-12
 # @description: home::core::exp::app::editor::zed
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   programs.zed-editor = {
@@ -29,5 +30,3 @@
   };
 
 }
-
-

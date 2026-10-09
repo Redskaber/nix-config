@@ -12,41 +12,48 @@
 # programs.bash.enable = true is REQUIRED for HM to generate .bashrc.
 # programs.zsh.enable  = true is REQUIRED for HM to generate .zshrc.
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "zoxide: shell integration hook injected";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    programs.bash.enable = true;
-    programs.zsh.enable  = true;
+      programs.bash.enable = true;
+      programs.zsh.enable = true;
 
-    programs.zoxide = {
-      enable                = true;
-      enableBashIntegration = true;
-      enableZshIntegration  = true;
-    };
-  }];
+      programs.zoxide = {
+        enable = true;
+        enableBashIntegration = true;
+        enableZshIntegration = true;
+      };
+    }
+  ];
 
   tests = {
     "zoxide: .bashrc exists" = {
-      path   = ".bashrc";
+      path = ".bashrc";
       exists = true;
     };
 
     "zoxide: zoxide init in .bashrc" = {
-      path     = ".bashrc";
+      path = ".bashrc";
       contains = [ "zoxide init" ];
     };
 
     "zoxide: zoxide init in .zshrc" = {
-      path     = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       contains = [ "zoxide init" ];
     };
   };

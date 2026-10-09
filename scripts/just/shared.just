@@ -18,6 +18,7 @@ SHARED_TMPL_PATH := ROOT / "docs" / "tmpl" / "shared.nix.tmpl"
 SHARED_OUT_PATH  := ROOT / "shared.nix"
 
 # Generate shared.nix from template (overwrite). Only valid way to set username.
+[group('shared')]
 shared-generate username:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -35,6 +36,7 @@ shared-generate username:
     echo "Generated ${OUT} with username='${USERNAME}' from ${TMPL}"
 
 # Print username parsed from shared.nix (read-only diagnostic).
+[group('shared')]
 shared-show-username:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -50,7 +52,33 @@ shared-show-username:
     fi
     echo "Current username in ${OUT}: '${CURRENT}'"
 
+# Round-trip guard: regenerating shared.nix from the template must be a
+# no-op. Catches template/output drift (README principle: 生成不变).
+# Wire into CI or pre-commit after any edit to either side.
+# NOTE(fix): _assert-shared is a RECIPE DEPENDENCY (colon syntax), not a
+# shell call — the old in-body invocation died with "command not found"
+# under any just whose private recipes aren't on PATH (they never are).
+#
+# Verify shared.nix ⇄ template byte-identical roundtrip (regeneration gate).
+[group('shared')]
+shared-roundtrip: _assert-shared
+    #!/usr/bin/env bash
+    set -euo pipefail
+    TMPL="{{SHARED_TMPL_PATH}}"
+    OUT="{{SHARED_OUT_PATH}}"
+    U=$(grep -oP 'username\s*=\s*"\K[^"]+' "${OUT}")
+    TMP=$(mktemp)
+    trap 'rm -f "${TMP}"' EXIT
+    sed "s|__USERNAME__|${U}|g" "${TMPL}" > "${TMP}"
+    if diff -u "${OUT}" "${TMP}"; then
+        echo "OK: shared.nix is byte-identical to template output"
+    else
+        echo "FAIL: shared.nix drifted from template. Run: just shared-generate <username> and commit BOTH files." >&2
+        exit 1
+    fi
+
 # Verify template exists and contains at least one __USERNAME__ placeholder.
+[group('shared')]
 shared-validate:
     #!/usr/bin/env bash
     set -euo pipefail

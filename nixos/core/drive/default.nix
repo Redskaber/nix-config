@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::drive::default
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   # imports = [
@@ -18,5 +18,3 @@
   imports = builtins.map (drive: ./${drive}.nix) shared.drive.value;
 
 }
-
-

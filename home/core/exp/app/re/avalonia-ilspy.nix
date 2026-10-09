@@ -5,17 +5,15 @@
 # .NET assembly browser and decompiler
 # dotscope: Rust analyzing and reverse engineering
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [ avalonia-ilspy ];
 
-
 }
-
-

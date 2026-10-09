@@ -14,18 +14,21 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_base_sound";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
 
     services.pulseaudio.enable = false;
-    security.rtkit.enable      = true;
+    security.rtkit.enable = true;
     services.pipewire = {
-      enable             = true;
-      alsa.enable        = true;
-      alsa.support32Bit  = true;
-      pulse.enable       = true;
+      enable = true;
+      alsa.enable = true;
+      alsa.support32Bit = true;
+      pulse.enable = true;
       wireplumber.enable = true;
     };
     hardware.alsa.enablePersistence = true;

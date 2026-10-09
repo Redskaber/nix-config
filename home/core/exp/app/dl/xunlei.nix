@@ -3,18 +3,16 @@
 # @datetime: 2025-12-12
 # @description: home::core::exp::app::dl::xunlei
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
-  home.packages = with pkgs; [ xunlei-uos ];
+  # T3.2: linux-only package(s) — skipped on the darwin closure.
+  home.packages = lib.mkIf shared.caps.linux-family (with pkgs; [ xunlei-uos ]);
 
 }
-
-
-

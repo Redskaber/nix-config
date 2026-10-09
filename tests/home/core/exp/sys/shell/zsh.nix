@@ -22,7 +22,10 @@ let
 in
 {
   name = "home_core_exp_sys_shell_zsh";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
@@ -30,10 +33,10 @@ in
     programs.zsh.enable = true;
 
     users = {
-      mutableUsers    = false;
+      mutableUsers = false;
       defaultUserShell = pkgs.zsh;
       users.${testUser} = {
-        isNormalUser    = true;
+        isNormalUser = true;
         useDefaultShell = true;
         initialPassword = "test";
       };

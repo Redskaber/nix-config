@@ -3,13 +3,13 @@
 # @datetime: 2025-12-12
 # @description: home::core::exp::app::dl::downloader
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
@@ -29,5 +29,3 @@
   ];
 
 }
-
-

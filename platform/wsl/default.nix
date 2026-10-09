@@ -7,13 +7,13 @@
 # Platform dispatch: routes to arch-specific entry via shared.arch.tag.
 # Consistent with platform/nixos/ and platform/linux/ structure.
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [

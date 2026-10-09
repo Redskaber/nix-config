@@ -10,12 +10,18 @@
 { pkgs, lib, ... }:
 {
   name = "home_env_dev_nix_default";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 768;
 
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+    nix.settings.experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
 
     environment.systemPackages = with pkgs; [
       nixfmt

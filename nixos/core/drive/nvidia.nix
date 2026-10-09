@@ -3,16 +3,16 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::drive::nvidia
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
-  services.xserver.videoDrivers = ["nvidia"];
+  services.xserver.videoDrivers = [ "nvidia" ];
 
   hardware.graphics.extraPackages = with pkgs; [
     nvidia-vaapi-driver
@@ -33,5 +33,3 @@
   boot.blacklistedKernelModules = [ "nouveau" ];
 
 }
-
-

@@ -21,32 +21,34 @@
 #
 # Session-Level
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
-}:
 {
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
+}:
+# T3.2: cursor themes ride X11/GTK/Wayland — darwin owns its own
+# cursor via Aqua; skip the whole module on macOS. (Body under
+# `config = mkIf` — module-position mkIf is illegal.)
+{
+  config = lib.mkIf shared.caps.linux-family {
 
-  home.pointerCursor = {
-    enable = true;
-    package = pkgs.bibata-cursors;    # capitaine-cursors
-    name = shared.pointer-cursor.tag;
-    size = 24;
+    home.pointerCursor = {
+      enable = true;
+      package = pkgs.bibata-cursors; # capitaine-cursors
+      name = shared.pointer-cursor.tag;
+      size = 24;
 
-    x11.enable = true;
-    gtk.enable = true;
-    dotIcons.enable = true;
-    hyprcursor.enable = true;
-    sway.enable = false;
+      x11.enable = true;
+      gtk.enable = true;
+      dotIcons.enable = true;
+      hyprcursor.enable = true;
+      sway.enable = false;
+    };
+
+    xdg.dataFile."icons/default/index.theme".force = true;
+
   };
-
-  xdg.dataFile."icons/default/index.theme".force = true;
-
-
 }
-
-

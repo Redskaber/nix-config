@@ -4,13 +4,13 @@
 # @description: home::core::exp::sys::base::rbw
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.rbw.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   programs.rbw = {
@@ -33,5 +33,3 @@
   };
 
 }
-
-

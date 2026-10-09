@@ -4,13 +4,13 @@
 # @description: home::core::base::fonts
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.fonts.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -24,14 +24,16 @@
     vista-fonts-chs
     source-han-serif
     # custom
-    fira-code fira-code-symbols
+    fira-code
+    fira-code-symbols
     font-awesome
     hackgen-nf-font
     material-icons
     maple-mono.NF
     minecraftia
     powerline-fonts
-    roboto roboto-mono
+    roboto
+    roboto-mono
     symbola
     terminus_font
     victor-mono
@@ -45,5 +47,3 @@
     fontconfig.defaultFonts.emoji = [ "Noto Color Emoji" ];
   };
 }
-
-

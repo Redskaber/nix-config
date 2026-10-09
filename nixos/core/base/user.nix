@@ -4,18 +4,18 @@
 # @description: nixos::core::base::user
 # - log: 2026-02-27: sup `sops-nix` used hashedPasswordFile
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   programs.${shared.user.shell.tag}.enable = true;
 
-  # TODO: Configure your system-wide user settings (groups, etc), add more users as needed.
+  # System-wide user settings; add more users here as needed.
   users = {
     mutableUsers = false;
     defaultUserShell = pkgs.${shared.user.shell.tag};
@@ -25,23 +25,23 @@
         isNormalUser = true;
         useDefaultShell = true;
         description = shared.user.username;
-        # TODO: Add your SSH public key(s) here, if you plan on using SSH to connect
+        # SSH public keys go here when SSH access is needed
         openssh.authorizedKeys.keys = shared.user.openssh-authKeys;
-        # TODO: Be sure to add any other groups you need
+        # Add any other groups as needed
         # (such as networkmanager, audio, docker, etc)
         extraGroups = [
-          "wheel"             # Sudo / administrative access
-          "networkmanager"    # Manage network connections without root
-          "video"             # GPU & framebuffer devices (/dev/dri, /dev/fb)
-          "audio"             # Sound devices (/dev/snd)
-          "input"             # Input devices: keyboard, mouse, gamepad (/dev/input)
-          "tty"               # Virtual consoles & keyboard maps (required by dumpkeys)
-          "libvirtd"          # Libvirt virtual machine management
-          "scanner"           # Scanners
-          "lp"                # Printers
+          "wheel" # Sudo / administrative access
+          "networkmanager" # Manage network connections without root
+          "video" # GPU & framebuffer devices (/dev/dri, /dev/fb)
+          "audio" # Sound devices (/dev/snd)
+          "input" # Input devices: keyboard, mouse, gamepad (/dev/input)
+          "tty" # Virtual consoles & keyboard maps (required by dumpkeys)
+          "libvirtd" # Libvirt virtual machine management
+          "scanner" # Scanners
+          "lp" # Printers
         ];
-        packages = with pkgs; [  ];
-        # TODO: You can set an initial password for your user.
+        packages = with pkgs; [ ];
+        # An initial password can be set here (prefer sops-managed passwords)
         # If you do, you can skip setting a root password by passing '--no-root-passwd' to nixos-install.
         # Be sure to change it (using passwd) after rebooting!
         # entry: "nixos-enter --root /mnt -c 'passwd your-username'"
@@ -56,9 +56,6 @@
     };
   };
 
-  security.sudo.enable = true;    # wheel
-
+  security.sudo.enable = true; # wheel
 
 }
-
-

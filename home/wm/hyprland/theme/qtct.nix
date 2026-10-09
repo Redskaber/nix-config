@@ -4,13 +4,13 @@
 # @discription: home::wm::hyprland::theme::qtct
 # - minix(optional mod): qt and gtk theme
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -23,5 +23,3 @@
   ];
 
 }
-
-

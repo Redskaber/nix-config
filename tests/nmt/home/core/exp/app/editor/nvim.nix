@@ -20,37 +20,44 @@
 # framework itself works.  The production neovim module is tested at the
 # NixOS/HM integration level (Plane 4), not here.
 
-{ inputs, shared, lib, ... }:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "nvim: home-manager neovim program assertions";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    # Write a plain marker that proves the test module evaluates cleanly.
-    # programs.neovim itself requires a real build → tested at Plane 4.
-    home.file.".config/nvim/init-test.vim".text = ''
-      " nmt-test: nvim config marker
-      set nocompatible
-    '';
+      # Write a plain marker that proves the test module evaluates cleanly.
+      # programs.neovim itself requires a real build → tested at Plane 4.
+      home.file.".config/nvim/init-test.vim".text = ''
+        " nmt-test: nvim config marker
+        set nocompatible
+      '';
 
-    # sessionVariables is plain text in the generation tree
-    home.sessionVariables.EDITOR = "nvim";
-  }];
+      # sessionVariables is plain text in the generation tree
+      home.sessionVariables.EDITOR = "nvim";
+    }
+  ];
 
   tests = {
     "nvim: test config file present" = {
-      path   = ".config/nvim/init-test.vim";
+      path = ".config/nvim/init-test.vim";
       exists = true;
     };
 
     "nvim: nocompatible written" = {
-      path     = ".config/nvim/init-test.vim";
+      path = ".config/nvim/init-test.vim";
       contains = [ "nocompatible" ];
     };
   };

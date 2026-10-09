@@ -16,11 +16,18 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_exp_sys_base_git";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
-    environment.systemPackages = with pkgs; [ git delta lazygit ];
+    environment.systemPackages = with pkgs; [
+      git
+      delta
+      lazygit
+    ];
   };
 
   testScript = ''

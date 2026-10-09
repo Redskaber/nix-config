@@ -8,17 +8,23 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
-      lua55Packages.lua       # Standard Lua 5.5 (for general scripting)
-      lua55Packages.luacheck  # Lua Formatter
-      luajit                  # LuaJIT 2.1 (Lua 5.1 compatible, used by Neovim)
-      luarocks                # Package manager (use with caution in Nix env)
-      lua-language-server     # LSP (sumneko) — supports both Lua 5.1 and 5.4
-      stylua                  # Formatter (opinionated, fast, widely adopted)
+      lua55Packages.lua # Standard Lua 5.5 (for general scripting)
+      lua55Packages.luacheck # Lua Formatter
+      luajit # LuaJIT 2.1 (Lua 5.1 compatible, used by Neovim)
+      luarocks # Package manager (use with caution in Nix env)
+      lua-language-server # LSP (sumneko) — supports both Lua 5.1 and 5.4
+      stylua # Formatter (opinionated, fast, widely adopted)
     ];
 
     nativeBuildInputs = with shared.pkgs; [
@@ -49,8 +55,5 @@
       echo "[postShellHook]: lua shell!"
     '';
 
-
   };
 }
-
-

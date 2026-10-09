@@ -6,13 +6,13 @@
 # Routing mode (mode B: multi-select routing):
 #   Selects terminal modules based on shared.terminals list.
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = builtins.map (t: ./${t}.nix) shared.terminals;

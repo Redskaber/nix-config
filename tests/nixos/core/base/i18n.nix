@@ -12,14 +12,20 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_base_i18n";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
 
     i18n = {
-      defaultLocale    = "en_US.UTF-8";
-      extraLocales     = [ "en_US.UTF-8/UTF-8" "zh_CN.UTF-8/UTF-8" ];
+      defaultLocale = "en_US.UTF-8";
+      extraLocales = [
+        "en_US.UTF-8/UTF-8"
+        "zh_CN.UTF-8/UTF-8"
+      ];
     };
 
     time.timeZone = "Asia/Shanghai";

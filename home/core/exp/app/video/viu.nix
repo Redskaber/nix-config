@@ -3,17 +3,15 @@
 # @datetime: 2026-05-15
 # @description: home::core::exp::app::video::viu
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [ viu ];
 
 }
-
-

@@ -4,20 +4,18 @@
 # @description: home::core::exp::app::game::pokemmo
 # - Installer and Launcher for the PokeMMO emulator
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
-  home.packages = with shared.upkgs; [ 
+  home.packages = with shared.upkgs; [
 
   ];
 
 }
-
-

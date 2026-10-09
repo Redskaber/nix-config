@@ -12,21 +12,30 @@ concurrency:
   cancel-in-progress: true
 
 # ══════════════════════════════════════════════════════════════════════
-# Pipeline architecture (5 stages):
+# Pipeline architecture (7 stages):
 #
-#   STAGE 1: lint          — static analysis + shallow eval (no build)
-#   STAGE 2: nmt-plane     — HM dotfile assertions (pure Nix eval, no KVM)
-#   STAGE 3: devshells     — devShell dry-run matrix
-#   STAGE 4: security      — SOPS secret integrity audit
-#   STAGE 5: vm-tests      — NixOS/HM/Lib/Integration QEMU tests (KVM)
-#   STAGE 6: summary       — aggregate result report
+#   STAGE 1: lint          — static analysis (statix/nixfmt/deadnix) + shallow eval
+#   STAGE 2: deep-eval     — nix flake check --no-build (full tree)
+#   STAGE 3: nmt-plane     — HM dotfile assertions (pure Nix eval, no KVM)
+#   STAGE 4: devshells     — devShell dry-run matrix
+#   STAGE 5: security      — SOPS secret integrity audit
+#   STAGE 6: vm-tests      — NixOS/HM/Lib/Integration QEMU tests (KVM)
+#   STAGE 7: summary       — aggregate result report (gates ALL stages)
 #
-# Why we DON'T run `nix flake check` for nixosConfigurations:
-#   Deep eval reaches sopsFile = ../../../../secrets/chipr/**.yaml — a local
-#   path that becomes a separate store source. Under --no-build that source
-#   is never materialised → "path 'xxx-source' is not valid".
-#   We instead use targeted `nix eval` calls (attrNames only) for structure
-#   validation, and build checks by plane prefix for runtime validation.
+# Deep evaluation (STAGE 2):
+#   The old "sopsFile local path" blocker is GONE — deep eval of
+#   nixosConfigurations/homeConfigurations works in BOTH lifecycle
+#   states. Post-bootstrap (blobs committed): paths resolve in the store
+#   source. Pre-bootstrap (fresh clone, EMPTY state — no .sops.yaml, no
+#   blobs): lib/shared/shared/validate.nix tolerates a zero-blob tree at
+#   eval with a trace and leaves the hard failure to sops activation,
+#   where it belongs; once ANY blob exists the check is strict again
+#   (declared-but-not-provided dies at eval). What deep eval ACTUALLY
+#   caught when first wired: git-hooks.nix had removed the
+#   nixfmt-rfc-style hook alias AND changed `run` to return a derivation
+#   directly, so the old `//` merge dropped pre-commit-check from checks
+#   entirely while shallow attrNames eval stayed green. Deep eval is now
+#   a hard gate.
 #
 # KVM note:
 #   QEMU VM tests (Plane 1–4) require /dev/kvm. GitHub-hosted ubuntu-latest
@@ -105,8 +114,60 @@ jobs:
       - name: statix lint
         run: nix run nixpkgs#statix -- check .
 
+      # Formatting drift gate (same formatter the flake exports)
+      - name: nixfmt check
+        run: |
+          nix run nixpkgs#nixfmt -- --check \
+            $(git ls-files '*.nix' | grep -v -E '(^|/)([^/]*-config)/' || true)
+
+      # Dead-code gate — mirrors the pre-commit hook settings: the tree
+      # standardises on uniform module heads ({ inputs, shared, lib,
+      # config, pkgs, ... }) and overlay pairs (final: prev:), so unused
+      # lambda names/patterns are exempted; dead `let` bindings still fail.
+      - name: deadnix check
+        run: |
+          nix run nixpkgs#deadnix -- \
+            --no-lambda-pattern-names --no-lambda-arg --fail \
+            $(git ls-files '*.nix')
+
+      # The real three-hook gate (nixfmt + statix + deadnix over the whole
+      # tree, as one derivation). The prefix-driven vm-tests matrix cannot
+      # select `pre-commit-check`, so it is built here explicitly.
+      - name: Build pre-commit-check derivation
+        run: nix build .#checks.x86_64-linux.pre-commit-check --no-link
+
   # ─────────────────────────────────────────────────────────────
-  # STAGE 2: nmt-Plane (pure Nix eval — no KVM, fastest feedback)
+  # STAGE 2: Deep evaluation — nix flake check --no-build
+  # ─────────────────────────────────────────────────────────────
+  # Forces every flake output to a derivation OUTPATH: all test
+  # derivations (each instantiating its VM's NixOS config),
+  # nixosConfigurations toplevels, homeConfigurations activation
+  # packages, devShells, overlays, formatter. No builds, no KVM —
+  # pure evaluation. This is the stage that catches wiring rot that
+  # shallow attrNames eval cannot see.
+  deep-eval:
+    name: Deep Evaluation (flake check)
+    runs-on: ubuntu-latest
+    needs: lint
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v13
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            accept-flake-config = true
+
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@v7
+
+      - name: nix flake check --no-build
+        run: nix flake check --no-build
+
+  # ─────────────────────────────────────────────────────────────
+  # STAGE 3: nmt-Plane (pure Nix eval — no KVM, fastest feedback)
   # ─────────────────────────────────────────────────────────────
   # nmt tests evaluate HM module configuration and assert generated
   # dotfile content via bash scripts. No QEMU VM is involved.
@@ -175,7 +236,7 @@ jobs:
           SYS: ${{ steps.discover.outputs.system }}
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 3: Evaluate devShells (dry-run matrix)
+  # STAGE 4: Evaluate devShells (dry-run matrix)
   # ─────────────────────────────────────────────────────────────
   # devShells use self + "/home/core/dev" (materialised store path),
   # so path evaluation succeeds without the age private key.
@@ -204,7 +265,7 @@ jobs:
         run: nix build .#devShells.x86_64-linux.${{ matrix.shell }} --dry-run --no-link
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 4: Security Audit
+  # STAGE 5: Security Audit
   # ─────────────────────────────────────────────────────────────
   security:
     name: Security Audit
@@ -222,9 +283,16 @@ jobs:
       - name: Install SOPS
         run: nix profile install nixpkgs#sops
 
-      # Every file under secrets/chipr/ must be SOPS-encrypted (not plaintext)
+      # Every file under secrets/chipr/ must be SOPS-encrypted (not
+      # plaintext). EMPTY lifecycle state (fresh clone, pre-bootstrap):
+      # zero blobs is the ENTRY state — they are born from `just
+      # secrets-init` + `just secret-set`, never committed by hand.
       - name: Validate SOPS encrypted files
         run: |
+          if ! [ -d secrets/chipr ] || [ -z "$(find secrets/chipr -name '*.yaml' -print -quit 2>/dev/null)" ]; then
+            echo "OK: no encrypted blobs yet (EMPTY lifecycle state, pre-bootstrap)"
+            exit 0
+          fi
           COUNT=0
           FAILED=0
           find secrets/chipr -name "*.yaml" | while read f; do
@@ -240,7 +308,7 @@ jobs:
             find secrets/chipr -name "*.yaml" | xargs grep -rL "^sops:" 2>/dev/null
             exit 1
           fi
-          echo "All chipr secret files have sops metadata"
+          echo "All chipr secret files have sops metadata ($COUNT file(s))"
 
       # secrets/plan/ must never be tracked by git (plaintext secrets)
       - name: Check secrets/plan is not git-tracked
@@ -252,13 +320,57 @@ jobs:
           fi
           echo "OK: secrets/plan/ is not git-tracked"
 
-      # .sops.yaml must exist and contain an age key section
+      # ── T3.3: decrypt gate ─────────────────────────────────────────
+      # When the repo secret AGE_SECRET_KEY is provisioned (an age private
+      # key, AGE-SECRET-KEY-1…), every blob under secrets/ must decrypt
+      # end-to-end. This closes the loop the metadata check above can't:
+      # a blob can carry valid sops metadata AND still be undecryptable
+      # (rotated-away key, corrupted ciphertext, hierarchy drift).
+      # Without the secret the step is skipped — visible, not silent.
+      - name: Decrypt gate (AGE_SECRET_KEY)
+        env:
+          AGE_SECRET_KEY: ${{ secrets.AGE_SECRET_KEY }}
+        if: env.AGE_SECRET_KEY != ''
+        run: |
+          echo "::add-mask::$AGE_SECRET_KEY"
+          FAILED=0
+          for f in $(find secrets -name '*.yaml' 2>/dev/null | sort); do
+            if ! sops -d --output /dev/null "$f"; then
+              echo "::error file=$f::sops decrypt failed — key rotated away or ciphertext corrupted"
+              FAILED=1
+            fi
+          done
+          if (( FAILED )); then exit 1; fi
+          echo "decrypt gate: all secret blobs decrypt with the provisioned key."
+
+      - name: Decrypt gate (AGE_SECRET_KEY) — not provisioned
+        env:
+          AGE_SECRET_KEY: ${{ secrets.AGE_SECRET_KEY }}
+        if: env.AGE_SECRET_KEY == ''
+        run: |
+          echo "::warning::AGE_SECRET_KEY not provisioned — decrypt gate SKIPPED."
+          echo "Provision it (repo Settings → Secrets → Actions, name: AGE_SECRET_KEY) to enforce end-to-end decryptability."
+
+      # .sops.yaml is a GENERATED artifact (docs/tmpl/sops/sops-rules.yaml.tmpl
+      # → `just secrets-init`); the repo ships in the EMPTY pre-bootstrap
+      # state without it. Once bootstrapped it is committed (public keys
+      # only) and this validation turns strict.
       - name: Validate .sops.yaml structure
         run: |
-          [ -f .sops.yaml ] || { echo "::error::.sops.yaml missing" >&2; exit 1; }
+          if [ ! -f .sops.yaml ]; then
+            echo "OK: no .sops.yaml yet (EMPTY lifecycle state — generated by 'just secrets-init' from docs/tmpl/sops/sops-rules.yaml.tmpl)"
+            exit 0
+          fi
           grep -q "age:" .sops.yaml || { echo "::error::.sops.yaml missing age key section" >&2; exit 1; }
           grep -q "creation_rules:" .sops.yaml || { echo "::error::.sops.yaml missing creation_rules" >&2; exit 1; }
           echo "OK: .sops.yaml valid"
+
+      # Key hierarchy consistency: every secrets/**.yaml must be covered by a
+      # creation_rule (NO-RULE = plaintext risk) and its metadata recipients
+      # must equal that rule's key group (DRIFT = key change not yet applied).
+      # The script executes creation_rules AS DATA — zero domain hardcoding.
+      - name: Key hierarchy consistency (creation_rules vs blob recipients)
+        run: scripts/sh/secrets-rotate.sh check
 
       # Scan for accidental hardcoded credentials in .nix files
       - name: Scan for potential plaintext secrets
@@ -286,7 +398,7 @@ jobs:
           fi
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 5: VM-based Tests (NixOS / HM / Lib / Integration planes)
+  # STAGE 6: VM-based Tests (NixOS / HM / Lib / Integration planes)
   # ─────────────────────────────────────────────────────────────
   # These tests require QEMU KVM. GitHub-hosted ubuntu-latest runners
   # support nested virtualisation. The AGE_SECRET_KEY secret is injected
@@ -338,7 +450,7 @@ jobs:
           SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}
           PLANE: ${{ matrix.plane }}
         run: |
-          echo "::add-mask::$SOPS_AGE_KEY"
+          echo "::add-mask::$AGE_SECRET_KEY"
           SYS=$(nix eval --raw .#debug.test_system)
 
           # Map plane → prefix list
@@ -391,45 +503,49 @@ jobs:
           echo "All $COUNT checks in plane '$PLANE' passed."
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 6: CI Summary
+  # STAGE 7: CI Summary
   # ─────────────────────────────────────────────────────────────
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [lint, nmt-plane, evaluate-devshells, security, vm-tests]
+    needs: [lint, deep-eval, nmt-plane, evaluate-devshells, security, vm-tests]
     if: always()
     steps:
+      - uses: actions/checkout@v4
+
       - name: Write GitHub Step Summary
         run: |
-          cat >> $GITHUB_STEP_SUMMARY << 'EOF'
-          ## CI Results
-
-          | Stage                    | Status                                                       |
-          |--------------------------|--------------------------------------------------------------|
-          | Lint & Evaluate          | ${{ needs.lint.result }}                                     |
-          | nmt-Plane (HM dotfiles)  | ${{ needs.nmt-plane.result }}                                |
-          | devShells dry-run        | ${{ needs.evaluate-devshells.result }}                       |
-          | Security Audit           | ${{ needs.security.result }}                                 |
-          | VM Tests (QEMU)          | ${{ needs.vm-tests.result }}                                 |
-
-          ### Test Plane Reference
-
-          | Plane       | Prefix        | KVM  | Approx. Tests |
-          |-------------|---------------|------|---------------|
-          | Smoke       | `test_`       | ✓    | 1             |
-          | NixOS       | `nixos_`      | ✓    | 21            |
-          | HM + Lib    | `home_` `lib_`| ✓    | 38            |
-          | Integration | `integration_`| ✓    | 1             |
-          | nmt         | `nmt_`        | ✗    |   17          |
-
-          > nmt-Plane runs without QEMU — fastest feedback loop for HM module changes.
-          EOF
+          # Test plane counts come from the single source of truth —
+          # scripts/sh/test-count.sh parses the registries live, so the
+          # summary table can never drift from the actual tree.
+          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage                    | Status                                                       |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------------------------|--------------------------------------------------------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Lint & Evaluate          | ${{ needs.lint.result }}                                     |" >> $GITHUB_STEP_SUMMARY
+          echo "| Deep Evaluation          | ${{ needs.deep-eval.result }}                                |" >> $GITHUB_STEP_SUMMARY
+          echo "| nmt-Plane (HM dotfiles)  | ${{ needs.nmt-plane.result }}                                |" >> $GITHUB_STEP_SUMMARY
+          echo "| devShells dry-run        | ${{ needs.evaluate-devshells.result }}                       |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Audit           | ${{ needs.security.result }}                                 |" >> $GITHUB_STEP_SUMMARY
+          echo "| VM Tests (QEMU)          | ${{ needs.vm-tests.result }}                                 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Plane Reference (live from scripts/sh/test-count.sh)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          bash scripts/sh/test-count.sh >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> pre-commit-check (nixfmt/statix/deadnix) is built by the lint stage and deep-eval forces every output to a derivation outPath." >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if any required stage failed
         if: |
           needs.lint.result == 'failure' ||
+          needs.deep-eval.result == 'failure' ||
           needs.nmt-plane.result == 'failure' ||
-          needs.security.result == 'failure'
+          needs.evaluate-devshells.result == 'failure' ||
+          needs.security.result == 'failure' ||
+          needs.vm-tests.result == 'failure'
         run: |
           echo "One or more required stages failed."
+          echo "Note: mark all six as required status checks in branch protection."
           exit 1

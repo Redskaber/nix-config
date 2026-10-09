@@ -12,16 +12,25 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_base_nix";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 768;
 
     nix.settings = {
-      experimental-features = [ "nix-command" "flakes" ];
-      trusted-users         = [ "root" "@wheel" ];
-      auto-optimise-store   = true;
-      warn-dirty            = false;
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      trusted-users = [
+        "root"
+        "@wheel"
+      ];
+      auto-optimise-store = true;
+      warn-dirty = false;
     };
   };
 

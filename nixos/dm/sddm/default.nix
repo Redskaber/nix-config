@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::dm::sddm::default
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   services.displayManager = {
@@ -17,7 +17,7 @@
     sddm = {
       enable = true;
       package = pkgs.kdePackages.sddm;
-      extraPackages = [];
+      extraPackages = [ ];
       enableHidpi = true;
       autoNumlock = false;
       autoLogin = {
@@ -31,7 +31,4 @@
     };
   };
 
-
 }
-
-

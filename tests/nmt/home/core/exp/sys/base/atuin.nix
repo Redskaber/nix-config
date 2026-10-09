@@ -13,42 +13,49 @@
 # Strategy: assert file exists (symlink), and assert shell integration
 # hook is injected into the shell rc (which uses plain text).
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "atuin: config.toml content assertions";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
-
-    # zsh needed for shell integration hook assertion
-    programs.zsh.enable = true;
-
-    programs.atuin = {
-      enable = true;
-      enableZshIntegration = true;
-      settings = {
-        search_mode  = "fuzzy";
-        style        = "compact";
-        update_check = false;
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
       };
-    };
-  }];
+
+      # zsh needed for shell integration hook assertion
+      programs.zsh.enable = true;
+
+      programs.atuin = {
+        enable = true;
+        enableZshIntegration = true;
+        settings = {
+          search_mode = "fuzzy";
+          style = "compact";
+          update_check = false;
+        };
+      };
+    }
+  ];
 
   tests = {
     # formats.toml symlink exists
     "atuin: config.toml symlink present" = {
-      path   = ".config/atuin/config.toml";
+      path = ".config/atuin/config.toml";
       exists = true;
     };
 
     # shell integration: written as plain text in .zshrc
     "atuin: zsh integration present" = {
-      path     = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       contains = [ "atuin" ];
     };
   };

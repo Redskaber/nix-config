@@ -4,13 +4,13 @@
 # @description: home::core::exp::sys::base::just
 # - Handy way to save and run project-specific commands
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [
@@ -18,5 +18,3 @@
   ];
 
 }
-
-

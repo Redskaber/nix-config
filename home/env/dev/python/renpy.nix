@@ -8,21 +8,26 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  ...
+}:
+{
 
   # NIXPKGS_ALLOW_INSECURE=1 nix develop .#python-renpy --impure
   default = {
     shell = shared.user.shell.tag;
     # Core runtime & tools
     buildInputs = with shared.upkgs; [
-      python314         # Stable, reproducible base interpreter
-      uv                # Ultra-fast Python package installer & project manager
-      ruff              # All-in-one linter/formatter (replaces black/isort/flake8)
-      pyright           # Fast, Microsoft-backed LSP for Python
-      renpy             # Visual Novel Engine
+      python314 # Stable, reproducible base interpreter
+      uv # Ultra-fast Python package installer & project manager
+      ruff # All-in-one linter/formatter (replaces black/isort/flake8)
+      pyright # Fast, Microsoft-backed LSP for Python
+      renpy # Visual Novel Engine
 
-      unrpa             # github package nix
+      unrpa # github package nix
       inputs.unrpyc.packages.${shared.arch.tag}.default # github package nix
       # pyright depands
       nodejs_26
@@ -57,5 +62,3 @@
   };
 
 }
-
-

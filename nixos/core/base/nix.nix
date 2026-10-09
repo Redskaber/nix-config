@@ -4,13 +4,13 @@
 # @description: nixos::core::base::nix
 # @origin: https://search.nixos.org/options?channel=25.11&query=nix.
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 let
   flakeInputs = lib.filterAttrs (_: lib.isType "flake") inputs;
@@ -21,7 +21,7 @@ in
     package = pkgs.nix;
     checkConfig = true;
     channel.enable = false;
-    
+
     # nix access token to github dy imp
     extraOptions = ''
       !include ${config.sops.secrets.${shared.secrets.nixos.core.base.nix.user.github.access-token}.path}
@@ -37,9 +37,9 @@ in
       auto-optimise-store = true;
       # Enable flakes and new 'nix' command
       experimental-features = [
-        "nix-command"         # nix-shell
-        "flakes"              # flake
-        "pipe-operators"      # nix pipe |>
+        "nix-command" # nix-shell
+        "flakes" # flake
+        "pipe-operators" # nix pipe |>
       ];
       # Opinionated: disable global registry
       flake-registry = "";
@@ -71,9 +71,7 @@ in
     };
 
     # Opinionated: make flake registry and nix path match flake inputs
-    registry = lib.mapAttrs (_: flake: {inherit flake;}) flakeInputs;
+    registry = lib.mapAttrs (_: flake: { inherit flake; }) flakeInputs;
     nixPath = lib.mapAttrsToList (n: _: "${n}=flake:${n}") flakeInputs;
   };
 }
-
-

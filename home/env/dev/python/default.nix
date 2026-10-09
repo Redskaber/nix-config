@@ -8,18 +8,24 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
 
   # default: (readonly) : used nixos origin link
   default = {
     shell = shared.user.shell.tag;
     # Core runtime & tools
     buildInputs = with shared.upkgs; [
-      python314         # Stable, reproducible base interpreter
-      uv                # Ultra-fast Python package installer & project manager
-      ruff              # All-in-one linter/formatter (replaces black/isort/flake8)
-      pyright           # Fast, Microsoft-backed LSP for Python
+      python314 # Stable, reproducible base interpreter
+      uv # Ultra-fast Python package installer & project manager
+      ruff # All-in-one linter/formatter (replaces black/isort/flake8)
+      pyright # Fast, Microsoft-backed LSP for Python
       # mypy            # Static type checker
       # Optional: keep poetry if you need its plugin ecosystem
       # poetry
@@ -61,5 +67,3 @@
   };
 
 }
-
-

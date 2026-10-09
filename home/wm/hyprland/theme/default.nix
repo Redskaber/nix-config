@@ -3,13 +3,13 @@
 # @datetime: 2025-12-12
 # @description: home::wm::hyprland::theme::default
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -25,7 +25,4 @@
     ./wlogout.nix
   ];
 
-
 }
-
-

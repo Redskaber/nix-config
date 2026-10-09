@@ -14,23 +14,30 @@
 # - default   : (readonly   , global, default   ): minimal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 #
-# FIXME: clangd in NixOS header find is idiot, waiting fix Neovim lsp used non-nixos (mason false).
+# NOTE(roadmap): same clangd header-discovery caveat as home/env/dev/re/default.nix.
 
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       # Core LLVM toolchain (pure)
       llvmPackages_22.libcxxClang # Clang++ preconfigured wrapper
-      llvmPackages_22.libcxx      # provides libc++ and lib++abi
+      llvmPackages_22.libcxx # provides libc++ and lib++abi
       llvmPackages_22.clang-tools # clangd, clang-tidy, clang-format
-      llvmPackages_22.lld         # LLVM linker
-      llvmPackages_22.lldb        # LLVM debugger
-      llvmPackages_22.llvm        # opt, llc, etc.
+      llvmPackages_22.lld # LLVM linker
+      llvmPackages_22.lldb # LLVM debugger
+      llvmPackages_22.llvm # opt, llc, etc.
 
       # Build & analysis
-      bear                      # compile_commands.json
-      ccache                    # compiler cache
+      bear # compile_commands.json
+      ccache # compiler cache
 
       # Common modern C++ libraries (header-only or built against libc++)
       fmt
@@ -84,5 +91,3 @@
     '';
   };
 }
-
-

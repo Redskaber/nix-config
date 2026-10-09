@@ -3,18 +3,39 @@
 # @datetime: 2026-04-23
 # @description: lib::shared::shared::default — Phase 1 aggregator (no pkgs)
 
-{ self
-, inputs
-, ...
+{
+  self,
+  inputs,
+  ...
 }:
 let
-  const  = import ./const.nix;
+  const = import ./const.nix;
   schema = import ./schema.nix;
-  enum   = import ./enum.nix { inherit inputs; };
-  fn     = import ./fn.nix { inherit inputs enum const schema; };
-  tools  = import ./tools.nix { inherit inputs; };
-in {
+  enum = import ./enum.nix { inherit inputs; };
+  fn = import ./fn.nix {
+    inherit
+      inputs
+      enum
+      const
+      schema
+      ;
+  };
+  tools = import ./tools.nix { inherit inputs; };
+  validate = import ./validate.nix {
+    inherit
+      inputs
+      fn
+      ;
+  };
+in
+{
   inherit
-    const schema fn enum tools self
-  ;
+    const
+    schema
+    fn
+    enum
+    tools
+    validate
+    self
+    ;
 }

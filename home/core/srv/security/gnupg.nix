@@ -3,19 +3,17 @@
 # @datetime: 2026-05-05
 # @description: home::core::srv::security::gnupg
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
-    gnupg     # PGP signing/encryption, key management
+    gnupg # PGP signing/encryption, key management
   ];
 
 }
-
-

@@ -13,11 +13,17 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_exp_sys_base_direnv";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
-    environment.systemPackages = with pkgs; [ direnv nix-direnv ];
+    environment.systemPackages = with pkgs; [
+      direnv
+      nix-direnv
+    ];
   };
 
   testScript = ''

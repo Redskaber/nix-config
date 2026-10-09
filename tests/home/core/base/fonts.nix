@@ -12,7 +12,10 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_base_fonts";
-  meta = { maintainers = [ "redskaber" ]; timeout = 300; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 300;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 768;

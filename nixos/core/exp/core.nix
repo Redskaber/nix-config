@@ -3,28 +3,29 @@
 # @datetime: 2026-03-01
 # @description: nixos::core::exp::core
 
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
   environment.systemPackages = with pkgs; [
-    curl git vim wget
+    curl
+    git
+    vim
+    wget
     # sound
-      # pamixer
-      # pavucontrol
+    # pamixer
+    # pavucontrol
     # bluetooth
-      # overskride
+    # overskride
     # proxy
-      # clash-verge-rev
+    # clash-verge-rev
   ];
 
-
 }
-
-

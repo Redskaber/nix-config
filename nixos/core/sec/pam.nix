@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::sec::pam
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   security.pam.services.swaylock = {
@@ -18,7 +18,4 @@
     '';
   };
 
-
 }
-
-

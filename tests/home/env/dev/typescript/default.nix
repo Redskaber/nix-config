@@ -10,14 +10,17 @@
 { pkgs, lib, ... }:
 {
   name = "home_env_dev_typescript_default";
-  meta = { maintainers = [ "redskaber" ]; timeout = 300; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 300;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 1024;
 
     environment.systemPackages = with pkgs; [
       nodejs_24
-      # FIXME: pnpm, yarn, typescript-language-server from nodePackages move to header pattern
+      # NOTE: nodePackages.* live here until the header-pattern migration lands
       # nodePackages.pnpm
       # nodePackages.yarn
       # nodePackages.typescript-language-server

@@ -130,7 +130,7 @@ home/core/exp/sys/base/git.nix
 | ----------- | --------------- | ----------------------- |
 | `test_calc` | `test_calc.nix` | echo, 1+1=2, screenshot |
 
-### 3.1 NixOS-Plane (23 tests)
+### 3.1 NixOS-Plane (24 tests)
 
 | check                                                        | 验证点                                                      |
 | ------------------------------------------------------------ | ----------------------------------------------------------- |
@@ -138,21 +138,23 @@ home/core/exp/sys/base/git.nix
 | `nixos_core_drive_{amd,intel,nvidia}`                        | GPU driver toolchain                                        |
 | `nixos_core_sec_{pam,polkit,secret_cmd_age,secret_cmd_sops}` | PAM / polkit / age / sops                                   |
 | `nixos_core_srv_db_{mongodb,mysql,postgresql,redis}`         | service active + DB ops                                     |
-| `nixos_core_srv_desktop_flatpak`                             | flatpak version                                             |
 | `nixos_core_srv_hardware_{bluetooth,printing}`               | bluetoothd / cups                                           |
 | `nixos_core_srv_log_logrotate`                               | binary + timer                                              |
 | `nixos_core_srv_security_{ssh,keyring}`                      | sshd :22 / gnome-keyring                                    |
 
-> 合计：base(6) + drive(3) + sec(4) + db(4) + flatpak(1) + hardware(2) + log(1) + security(2) = **23**
+> 合计：base(6+2) + drive(3) + sec(4) + db(4) + monitor(1) + hardware(2) + log(1) + security(2) = **24**
 
-### 3.2 HM-Plane (36 tests)
+### 3.2 HM-Plane (41 tests)
 
 | check                                                                                           | 验证点                           |
 | ----------------------------------------------------------------------------------------------- | -------------------------------- |
-| `home_core_base_{fonts,i18n,portal}`                                                            | fc-list / fcitx5 / xdg-portal    |
+| `home_core_base_{fonts,i18n}`                                                                   | fc-list / fcitx5                 |
+| `home_core_base_i18n_source`                                                                    | T1.2 生产树 import（同源守卫） |
 | `home_core_exp_app_editor_nvim`                                                                 | nvim headless Lua                |
 | `home_core_exp_sys_base_{atuin,bat,direnv,eza,fd,fzf,git,jq,ripgrep,starship,tmux,yazi,zoxide}` | binary + version + workflow      |
+| `home_core_exp_sys_base_{fzf,git,starship}_source`                                               | T1.2 生产树 import（策略接线）   |
 | `home_core_exp_sys_shell_{zsh,fish}`                                                            | binary / compinit / abbr         |
+| `home_core_exp_sys_shell_zsh_source`                                                             | T1.2 生产树 import（shell 契约）|
 | `home_core_exp_sys_{monitor,media,fs}`                                                          | btop+htop / mpv+ffmpeg / duf+tar |
 | `home_core_sec`                                                                                 | module parses                    |
 | `home_core_srv_notify_mako`                                                                     | mako + makoctl                   |
@@ -206,7 +208,7 @@ tests/
 ├── nixos/core/{base,drive,sec,srv}/…
 ├── home/
 │   ├── core/
-│   │   ├── base/{fonts,i18n,portal}.nix
+│   │   ├── base/{fonts,i18n,i18n-source}.nix
 │   │   ├── exp/
 │   │   │   ├── app/editor/nvim.nix
 │   │   │   └── sys/
@@ -501,14 +503,14 @@ nix eval .#homeConfigurations  --apply builtins.attrNames --json
 nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 ```
 
-### 测试计数 (2026-05-13)
+### 测试计数 (2026-10-08)
 
 | 平面        | 数量   | KVM   | 备注                                                                    |
 | ----------- | ------ | ----- | ----------------------------------------------------------------------- |
 | Smoke       | 1      | ✓     |                                                                         |
-| NixOS       | 23     | ✓     | base(6)+drive(3)+sec(4)+db(4)+desktop(1)+hardware(2)+log(1)+security(2) |
-| HM          | 36     | ✓     | base(3)+editor(1)+sys/base(13)+shell(2)+sys(3)+sec(1)+srv(2)+dev(11)    |
-| Lib         | 3      | ✓     |                                                                         |
+| NixOS       | 26     | ✓     | base(8=6+i18n_source+samesource)+drive(3)+sec(4)+db(4)+hardware(2)+log(1)+security(2)+export(1)+monitor(1) |
+| HM          | 41     | ✓     | base(2)+i18n_source(1)+editor(1)+sys/base(13+3 source)+shell(2+1 source)+sys(3)+sec(1)+srv(2)+dev(11)+export(1) |
+| Lib         | 5      | ✓     | enum + fn + schema + caps（T4.0 能力表契约：真值表/策略选择/穷尽性）+ validate（T4.1 Result 铁路：ok/err 车道/前置优先级/边界 throw/EMPTY 容忍——fixture 双树：provisioned 严格 + empty 放行） |
 | Integration | 1      | ✓     |                                                                         |
 | **nmt**     | **15** | **✗** | base(7)+sys/base(3)+shell(2)+app/editor(1)+srv(2)                       |
-| **Total**   | **79** |       |                                                                         |
+| **Total**   | **89** |       | VM 74 + nmt 15（另有 1 个 pre-commit-check：nixfmt/statix/deadnix）→ 90 checks |

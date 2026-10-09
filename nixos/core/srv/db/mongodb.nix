@@ -19,17 +19,22 @@
 #   2. initialRootPasswordFile /run/secrets/mongodb-root
 #   3. via systemd serviceinstart toinsidefilesystem
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
-  environment.systemPackages = with pkgs; [ mongodb-ce mongosh ];
-
+  environment.systemPackages = lib.optionals shared.services.db.mongodb.install (
+    with pkgs;
+    [
+      mongodb-ce
+      mongosh
+    ]
+  );
 
   services.mongodb = {
     enable = shared.services.db.mongodb.install;
@@ -40,7 +45,8 @@
     quiet = false;
     enableAuth = true;
     dbpath = "/var/lib/mongodb";
-    initialRootPasswordFile = config.sops.secrets.${shared.secrets.nixos.core.srv.db.mongodb.user.password}.path;
+    initialRootPasswordFile =
+      config.sops.secrets.${shared.secrets.nixos.core.srv.db.mongodb.user.password}.path;
 
     # pidFile = "/run/mongodb.pid";
     # replSetName = "<name>";
@@ -48,14 +54,20 @@
   };
 
   # User `mongodb` visited /run/secrets => 'keys'
-  users.users.mongodb.extraGroups = [ "keys" ];
-
+  # (option-level mkIf: gating only the leaf value still registers the
+  # `mongodb` key inside the users.users attrsOf and materialises an
+  # incomplete user on hosts that do not install this db — found by the
+  # second-machine evaluation of the server-pg-only profile.)
+  users.users = lib.mkIf shared.services.db.mongodb.install {
+    mongodb.extraGroups = [ "keys" ];
+  };
 
   # Control autostart: clear wantedBy when autostart=false (install but not autostart)
-  systemd.services.mongodb.wantedBy =
-    lib.mkForce (
-      if shared.services.db.mongodb.autostart
-      then [ "multi-user.target" ]
-      else []
+  systemd.services = lib.mkIf shared.services.db.mongodb.install {
+    # T4.0: binding selection from service-profile strategy data —
+    # lib.optional, the same idiom virtual.nix uses (branchless).
+    mongodb.wantedBy = lib.mkForce (
+      lib.optional shared.services.db.mongodb.autostart "multi-user.target"
     );
+  };
 }

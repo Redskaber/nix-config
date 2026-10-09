@@ -10,7 +10,10 @@
 { pkgs, lib, ... }:
 {
   name = "home_env_dev_re_default";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;

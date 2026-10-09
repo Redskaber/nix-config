@@ -7,13 +7,13 @@
 #   Selects editor modules based on shared.editors list.
 #   Same pattern as nixos/core/drive/default.nix.
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = builtins.map (e: ./${e}.nix) shared.editors;

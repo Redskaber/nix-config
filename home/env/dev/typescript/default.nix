@@ -8,20 +8,26 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
-      nodejs_26                     # Runtime (includes npm)
-      pnpm                          # Recommended package manager
-      yarn                          # Alternative
+      nodejs_26 # Runtime (includes npm)
+      pnpm # Recommended package manager
+      yarn # Alternative
 
-      typescript                    # Global tsc (for quick checks or legacy projects)
-      typescript-language-server    # Official LSP for TS/JS
+      typescript # Global tsc (for quick checks or legacy projects)
+      typescript-language-server # Official LSP for TS/JS
 
       # Optional: execute TS scripts directly
-      tsx                           # Fast, modern alternative to ts-node
+      tsx # Fast, modern alternative to ts-node
       # ts-node                     # Traditional (slower, but widely used)
       # Optional: testing
       # vitest                      # Next-gen test runner with first-class TS support
@@ -45,5 +51,3 @@
     '';
   };
 }
-
-

@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::base::network
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   networking = {
@@ -23,11 +23,11 @@
     # logRefusedConnections = false;
 
     nameservers = [
-      "1.1.1.1"               # Cloudflare
-      "8.8.8.8"               # Google(main)
-      "8.8.4.4"               # Google(other)
-      "2606:4700:4700::1111"  # Cloudflare IPv6
-      "2001:4860:4860::8888"  # Google IPv6
+      "1.1.1.1" # Cloudflare
+      "8.8.8.8" # Google(main)
+      "8.8.4.4" # Google(other)
+      "2606:4700:4700::1111" # Cloudflare IPv6
+      "2001:4860:4860::8888" # Google IPv6
     ];
 
     # proxy.default = "http://user:password@proxy:port/";
@@ -39,13 +39,15 @@
     # Or disable the firewall altogether.
     firewall = {
       enable = true;
-      allowedTCPPorts = [ 22 80 443 ];
-      allowedUDPPorts = [];
+      allowedTCPPorts = [
+        22
+        80
+        443
+      ];
+      allowedUDPPorts = [ ];
     };
 
   };
 
   environment.systemPackages = with pkgs; [ networkmanagerapplet ];
 }
-
-

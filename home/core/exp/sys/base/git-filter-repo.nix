@@ -4,18 +4,16 @@
 # @diractory: home::core::exp::sys::base::git-filter-repo
 # Quickly rewrite git repository history
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
   home.packages = with pkgs; [ git-filter-repo ];
 
 }
-
-

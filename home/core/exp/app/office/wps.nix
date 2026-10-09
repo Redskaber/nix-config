@@ -4,12 +4,13 @@
 # @description: home::core::exp::app::office::wps
 # - Office suite, formerly Kingsoft Office
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [
@@ -17,6 +18,3 @@
   ];
 
 }
-
-
-

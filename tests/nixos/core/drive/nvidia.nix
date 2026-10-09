@@ -15,14 +15,17 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_drive_nvidia";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = { config, ... }: {
     virtualisation.memorySize = 512;
 
     # Cannot enable hardware.nvidia in VM (no PCIe GPU)
     # Instead verify nixGL and OpenGL tooling are available
-    services.xserver.videoDrivers = ["nvidia"];
+    services.xserver.videoDrivers = [ "nvidia" ];
 
     hardware.graphics.extraPackages = with pkgs; [
       nvidia-vaapi-driver
@@ -41,8 +44,6 @@
     };
 
     boot.blacklistedKernelModules = [ "nouveau" ];
-
-
 
     environment.systemPackages = with pkgs; [
       mesa-demos

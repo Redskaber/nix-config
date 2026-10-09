@@ -3,13 +3,13 @@
 # @datetime: 2025-12-12
 # @diescription: home::core::exp::app::browser::google-chrome
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
@@ -17,4 +17,3 @@
   ];
 
 }
-

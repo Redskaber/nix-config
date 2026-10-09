@@ -5,13 +5,13 @@
 # - A lightweight OSD tool designed specifically for
 #   Wayland (wlroots-based synthesizers such as Hyprland and Sway).
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [ swayosd ];
@@ -83,5 +83,3 @@
     }
   '';
 }
-
-

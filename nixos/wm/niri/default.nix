@@ -5,12 +5,13 @@
 # - tty: niri --session
 # - enable niri base
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -21,11 +22,11 @@
   };
 
   environment.systemPackages = with pkgs; [
-    openssl       # rain-border dep
-    libqalculate  # clac allocate dep
-    libnotify     # notify dep
-    bc            # wallpaper select dep
-    mpvpaper      # mp4 wallpaper dep
+    openssl # rain-border dep
+    libqalculate # clac allocate dep
+    libnotify # notify dep
+    bc # wallpaper select dep
+    mpvpaper # mp4 wallpaper dep
   ];
 
   environment.sessionVariables = {
@@ -37,7 +38,4 @@
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
   };
 
-
 }
-
-

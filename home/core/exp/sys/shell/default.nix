@@ -7,13 +7,13 @@
 #   Selects shell module based on shared.user.shell.tag.
 #   Consistent with nixos/wm/default.nix and nixos/dm/default.nix.
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [

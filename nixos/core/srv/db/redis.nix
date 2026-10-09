@@ -6,16 +6,16 @@
 #   > reds-cli ping
 #   PONG
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
-  environment.systemPackages = with pkgs; [ redis ];
-
+  environment.systemPackages = lib.optionals shared.services.db.redis.install (with pkgs; [ redis ]);
 
   services.redis = {
     package = pkgs.redis;
@@ -26,8 +26,8 @@
         enable = shared.services.db.redis.install;
         port = 6379;
         bind = "127.0.0.1";
-        user =  "redis-${shared.user.username}";
-        group = "redis-${shared.user.username}";  # auto-created => full-name
+        user = "redis-${shared.user.username}";
+        group = "redis-${shared.user.username}"; # auto-created => full-name
         syslog = true;
         # slaveOf = {ip=...,port=...};
         logfile = "/dev/null";
@@ -42,12 +42,12 @@
     };
   };
 
-
-  # Control autostart: clear wantedBy when autostart=false (install but not autostart)
-  systemd.services."redis-${shared.user.username}".wantedBy =
-    lib.mkForce (
-      if shared.services.db.redis.autostart
-      then [ "multi-user.target" ]
-      else []
+  # Control autostart: clear wantedBy when autostart=false (install but
+  # not autostart) — gated at the option level so no phantom unit is
+  # registered on hosts that do not install redis (T2.5 dividend).
+  systemd.services = lib.mkIf shared.services.db.redis.install {
+    "redis-${shared.user.username}".wantedBy = lib.mkForce (
+      lib.optional shared.services.db.redis.autostart "multi-user.target"
     );
+  };
 }

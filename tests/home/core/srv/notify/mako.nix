@@ -9,11 +9,17 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_srv_notify_mako";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
-    environment.systemPackages = with pkgs; [ mako libnotify ];
+    environment.systemPackages = with pkgs; [
+      mako
+      libnotify
+    ];
   };
 
   testScript = ''

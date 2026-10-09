@@ -1,17 +1,16 @@
-
 # @path: ~/projects/configs/nix-config/nixos/core/base/boot.nix
 # @author: redskaber
 # @datetime: 2026-01-13
 # @description: nixos::core::base::boot
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, modulesPath
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  modulesPath,
+  ...
 }:
 {
   # Bootloader
@@ -33,10 +32,10 @@
     kernelPackages = pkgs.linuxPackages_latest;
     kernelParams = [
       "systemd.mask=systemd-vconsole-setup.service"
-      "systemd.mask=dev-tpmrm0.device"    # this is to mask that stupid 1.5 mins systemd bug
+      "systemd.mask=dev-tpmrm0.device" # this is to mask that stupid 1.5 mins systemd bug
       "nowatchdog"
-      "modprobe.blacklist=sp5100_tco"     # watchdog for AMD
-      "modprobe.blacklist=iTCO_wdt"       # watchdog for Intel
+      "modprobe.blacklist=sp5100_tco" # watchdog for AMD
+      "modprobe.blacklist=iTCO_wdt" # watchdog for Intel
     ];
     supportedFilesystems = [ "ntfs" ];
 
@@ -61,7 +60,4 @@
     plymouth.enable = true;
   };
 
-
 }
-
-

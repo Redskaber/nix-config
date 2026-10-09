@@ -7,104 +7,110 @@
 # - default   : (readonly   , global, default   ): minimal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 #
-# FIXME: clangd in NixOS header find is idiot, waiting fix Neovim lsp used non-nixos (mason false).
+# NOTE(roadmap): clangd under NixOS header discovery is rough; consider mason-based (non-nixos) LSP in Neovim. See also home/env/dev/cpp/default.nix.
 
-{ pkgs, inputs, shared, dev, ... }:
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
 {
   default = {
-    shell = "zsh";
+    shell = shared.user.shell.tag;
 
     # 核心工具链
     buildInputs = with shared.upkgs; [
       # clang/llvm 反汇编支持
-      llvmPackages_22.libcxxClang  # clang++ preconfigured wrapper
-      llvmPackages_22.libcxx       # provides libc++ and lib++abi
-      llvmPackages_22.clang-tools  # clangd, clang-tidy, clang-format
-      llvmPackages_22.lld          # llvm linker
-      llvmPackages_22.lldb         # llvm debugger
-      llvmPackages_22.llvm         # opt, llc, etc.
-                                   # build & analysis
-      bear                         # compile_commands.json
-      ccache                       # compiler cache
-                                   # common modern c++ libraries (header-only or built against libc++)
+      llvmPackages_22.libcxxClang # clang++ preconfigured wrapper
+      llvmPackages_22.libcxx # provides libc++ and lib++abi
+      llvmPackages_22.clang-tools # clangd, clang-tidy, clang-format
+      llvmPackages_22.lld # llvm linker
+      llvmPackages_22.lldb # llvm debugger
+      llvmPackages_22.llvm
+      # opt, llc, etc.
+      # build & analysis
+      bear # compile_commands.json
+      ccache
+      # compiler cache
+      # common modern c++ libraries (header-only or built against libc++)
       fmt
       spdlog
       eigen
 
       # --- 反汇编/反编译 (静态分析) ---
-      radare2           # 核心框架 (r2, rasm2, rabin2)
-      cutter            # Radare2 官方 GUI (Qt)
-      binutils          # objdump, readelf, nm, strings
-      ghidra            # NSA 开源逆向平台
-      bloaty            # 二进制大小分析
-      cargo-bloat       # Rust 二进制分析
+      radare2 # 核心框架 (r2, rasm2, rabin2)
+      cutter # Radare2 官方 GUI (Qt)
+      binutils # objdump, readelf, nm, strings
+      ghidra # NSA 开源逆向平台
+      bloaty # 二进制大小分析
+      cargo-bloat # Rust 二进制分析
       binaryninja-free
       # ida-free          # https://my.hex-rays.com/dashboard/download-center/installers/release/9.2/ida-free
-                          # nix-store --add-fixed sha256 ida-free-pc_92_x64linux.run
-                          # nix-prefetch-url --type sha256 file:///path/to/ida-free-pc_92_x64linux.run
+      # nix-store --add-fixed sha256 ida-free-pc_92_x64linux.run
+      # nix-prefetch-url --type sha256 file:///path/to/ida-free-pc_92_x64linux.run
 
       # --- 调试/动态分析 ---
-      gdb               # GNU 调试器 (含 Python 脚本支持)
-      strace            # 系统调用追踪
-      ltrace            # 库函数调用追踪
-      volatility3       # 内存取证框架
-      frida-tools       # 动态插桩 (需配合 frida-server)
-      qemu_full         # 8.2+ (全系统模拟 + 用户态跨架构)
+      gdb # GNU 调试器 (含 Python 脚本支持)
+      strace # 系统调用追踪
+      ltrace # 库函数调用追踪
+      volatility3 # 内存取证框架
+      frida-tools # 动态插桩 (需配合 frida-server)
+      qemu_full # 8.2+ (全系统模拟 + 用户态跨架构)
       scanmem
 
       python312
-      python312Packages.pwntools          # CTF 核心框架
-      python312Packages.ropgadget         # ROP 链生成
-      python312Packages.pyelftools        # ELF 解析
-      python312Packages.capstone          # 反汇编框架
-      python312Packages.keystone-engine   # 汇编引擎
-      python312Packages.unicorn           # CPU 模拟
-      python312Packages.lief              # ELF/PE/Mach-O 操作
-      python312Packages.yara-python       # 规则引擎
+      python312Packages.pwntools # CTF 核心框架
+      python312Packages.ropgadget # ROP 链生成
+      python312Packages.pyelftools # ELF 解析
+      python312Packages.capstone # 反汇编框架
+      python312Packages.keystone-engine # 汇编引擎
+      python312Packages.unicorn # CPU 模拟
+      python312Packages.lief # ELF/PE/Mach-O 操作
+      python312Packages.yara-python # 规则引擎
       # python312Packages.uncompyle6      # Python 字节码反编译 (py3.12 non-sup)
-      python312Packages.apkinspector      # Android APK 分析
-      python312Packages.scapy             # network packet manipulation program and library
-
+      python312Packages.apkinspector # Android APK 分析
+      python312Packages.scapy # network packet manipulation program and library
 
       # --- 固件/嵌入式分析 ---
-      binwalk           # 含 entropy 分析
-      ubootTools        # mkimage, fw_printenv
-      flashrom          # SPI 闪存操作
+      binwalk # 含 entropy 分析
+      ubootTools # mkimage, fw_printenv
+      flashrom # SPI 闪存操作
 
       # --- Android 专项 ---
-      jadx              # Android APK 反编译 (Apache 2.0 但含 unfree 依赖)
-      apktool           # APK 重打包工具
-      android-tools     # adb, fastboot, aapt
+      jadx # Android APK 反编译 (Apache 2.0 但含 unfree 依赖)
+      apktool # APK 重打包工具
+      android-tools # adb, fastboot, aapt
 
       # --- 恶意软件分析 ---
-      yara              # 含官方规则库
-      clamav            # 基础扫描
-      exiftool          # 元数据提取
+      yara # 含官方规则库
+      clamav # 基础扫描
+      exiftool # 元数据提取
 
       # --- 网络/协议分析 ---
-      tshark            # 命令行抓包分析 (TShark)
+      tshark # 命令行抓包分析 (TShark)
       tcpdump
-      mitmproxy         # 10.3+ (HTTP/2, WebSocket)
+      mitmproxy # 10.3+ (HTTP/2, WebSocket)
 
       # --- 二进制工具 ---
-      imhex             # 现代十六进制编辑器 (GUI,Qt)
-      hexyl             # 命令行十六进制查看器
-      bvi               # 二进制可视化编辑器
-      ddrescue          # 损坏介质数据恢复
-      bchunk            # bin/cue 转换
-      srecord           # 二进制格式转换
+      imhex # 现代十六进制编辑器 (GUI,Qt)
+      hexyl # 命令行十六进制查看器
+      bvi # 二进制可视化编辑器
+      ddrescue # 损坏介质数据恢复
+      bchunk # bin/cue 转换
+      srecord # 二进制格式转换
 
       # --- 沙箱/隔离 (强制) ---
-      firejail          # 应用沙箱隔离
-      bubblewrap        # 低权限沙箱 (bwrap)
+      firejail # 应用沙箱隔离
+      bubblewrap # 低权限沙箱 (bwrap)
       nsjail
 
       # --- 辅助工具 ---
-      file              # 文件类型识别
-      jq                # JSON 处理 (分析元数据)
-      yq                # YAML 处理
-      exiftool          # 元数据提取
-      lrzip             # 高压缩率固件处理
+      file # 文件类型识别
+      jq # JSON 处理 (分析元数据)
+      yq # YAML 处理
+      lrzip # 高压缩率固件处理
     ];
 
     nativeBuildInputs = with pkgs; [
@@ -148,10 +154,6 @@
       echo "[postShellHook]: Reverse Engining shell!"
     '';
 
-
   };
 
-
 }
-
-

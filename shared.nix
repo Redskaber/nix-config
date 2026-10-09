@@ -14,23 +14,22 @@
 let
   username = "kilig";
 in
-shared.schema.shared
-{
-  arch  = shared.enum.arch.x86_64-linux;
+shared.schema.shared {
+  arch = shared.enum.arch.x86_64-linux;
   drive = shared.enum.drive-group.intel;
   platform = shared.enum.platform.nixos;
-  window-manager  = shared.enum.window-manager.hyprland;
+  window-manager = shared.enum.window-manager.hyprland;
   display-manager = shared.enum.display-manager.ly;
-  pointer-cursor  = shared.enum.pointer-cursor.Bibata-Modern-Classic;
+  pointer-cursor = shared.enum.pointer-cursor.Bibata-Modern-Classic;
   version = shared.enum.version.v26_05;
-  editor  = shared.enum.editor.nvim;
+  editor = shared.enum.editor.nvim;
   # Application sets (multi-select routing)
-  editor-set   = shared.enum.editor-set.dev;
+  editor-set = shared.enum.editor-set.dev;
   terminal-set = shared.enum.terminal-set.both;
-  browser-set  = shared.enum.browser-set.all;
+  browser-set = shared.enum.browser-set.all;
   # Service profile: controls install vs autostart
   service-profile = shared.enum.service-profile.dev-on-demand;
-  devDir  = "${shared.self}/home/env/dev";
+  devDir = "${shared.self}/home/env/dev";
   hostName = "nixos";
 
   user = {
@@ -57,9 +56,9 @@ shared.schema.shared
   };
 
   i18n = {
-    defaultLocale     = "en_US.UTF-8";
+    defaultLocale = "en_US.UTF-8";
     extraLocalSetting = "zh_CN.UTF-8";
-    extraLocales      = [ "zh_CN.UTF-8/UTF-8" ];
+    extraLocales = [ "zh_CN.UTF-8/UTF-8" ];
   };
 
   # Network config (incus bridge, etc.)
@@ -71,13 +70,15 @@ shared.schema.shared
   # sops age key paths derived from username (secrets paths follow username)
   secrets = {
     sshKeyPaths = [ "/home/${username}/.ssh/id_ed25519_github" ];
-    nixos.core.base.user.password                 = "nixos/core/base/user/${username}/password";
-    nixos.core.base.nix.user.github.access-token  = "nixos/core/base/nix/users/${username}/github/access-token";
-    nixos.core.srv.db.mongodb.user.password       = "nixos/core/srv/db/mongodb/users/${username}/password";
-    nixos.core.srv.db.mysql.root.password         = "nixos/core/srv/db/mysql/users/root/password";
-    nixos.core.srv.db.mysql.user.password         = "nixos/core/srv/db/mysql/users/${username}/password";
-    nixos.core.srv.db.postgresql.user.password    = "nixos/core/srv/db/postgresql/users/${username}/password";
-    nixos.core.srv.db.redis.user.password         = "nixos/core/srv/db/redis/users/redis-${username}/password";
+    nixos.core.base.user.password = "nixos/core/base/user/${username}/password";
+    nixos.core.base.nix.user.github.access-token =
+      "nixos/core/base/nix/users/${username}/github/access-token";
+    nixos.core.srv.db.mongodb.user.password = "nixos/core/srv/db/mongodb/users/${username}/password";
+    nixos.core.srv.db.mysql.root.password = "nixos/core/srv/db/mysql/users/root/password";
+    nixos.core.srv.db.mysql.user.password = "nixos/core/srv/db/mysql/users/${username}/password";
+    nixos.core.srv.db.postgresql.user.password =
+      "nixos/core/srv/db/postgresql/users/${username}/password";
+    nixos.core.srv.db.redis.user.password = "nixos/core/srv/db/redis/users/redis-${username}/password";
   };
 
   nixpkgs = {
@@ -104,8 +105,8 @@ shared.schema.shared
       allowUnfree = true;
       # Unsafe pkgs
       permittedInsecurePackages = [
-        "python3.12-ecdsa-0.19.1"  # python-renpy
-        "electron-41.10.7" 
+        "python3.12-ecdsa-0.19.1" # python-renpy
+        "electron-41.10.7"
       ];
     };
   };

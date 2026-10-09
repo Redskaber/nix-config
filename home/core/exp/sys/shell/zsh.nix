@@ -5,12 +5,13 @@
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.zsh.enable
 # @depends: eza, zoxide, direnv, fzf
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.sessionVariables = {
@@ -59,7 +60,7 @@
       ll = "eza -l --icons=always";
       la = "eza -la --icons=always";
       lt = "eza --tree --icons=always";
-      j  = "z";
+      j = "z";
       # Optional modern replacements
       # grep = "rg";
       # cat = "bat --paging=never";
@@ -69,7 +70,7 @@
       ".." = "cd ..";
       "..." = "cd ../..";
       "...." = "cd ../../..";
-      "nde" =  "nvim ./.envrc";
+      "nde" = "nvim ./.envrc";
       # git aliases
       g = "git";
       ga = "git add";
@@ -123,20 +124,34 @@
 
     # history find configured
     historySubstringSearch.enable = true;
-    historySubstringSearch.searchUpKey = [ "^[[A" "$terminfo[kcuu1]" ];
-    historySubstringSearch.searchDownKey = [ "^[[B" "$terminfo[kcud1]" ];
+    historySubstringSearch.searchUpKey = [
+      "^[[A"
+      "$terminfo[kcuu1]"
+    ];
+    historySubstringSearch.searchDownKey = [
+      "^[[B"
+      "$terminfo[kcud1]"
+    ];
 
     # command tips
     autosuggestion = {
       enable = true;
-      strategy = [ "history" "completion" ];
+      strategy = [
+        "history"
+        "completion"
+      ];
       highlight = "fg=#7c6f64";
     };
 
     # syntax-highlight
     syntaxHighlighting = {
       enable = true;
-      highlighters = [ "main" "brackets" "pattern" "cursor" ];
+      highlighters = [
+        "main"
+        "brackets"
+        "pattern"
+        "cursor"
+      ];
       patterns = {
         "rm -rf *" = "fg=white,bold,bg=red";
         "sudo rm -rf *" = "fg=white,bold,bg=red";
@@ -324,6 +339,4 @@
     '';
   };
 
-
 }
-

@@ -20,36 +20,43 @@
 # NOTE: assertFileContains needle must NOT start with "-".
 #       We test the option values without leading dash.
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "fzf: shell integration written to zshrc";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    programs.zsh = {
-      enable = true;
-    };
+      programs.zsh = {
+        enable = true;
+      };
 
-    programs.fzf = {
-      enable = true;
-      enableZshIntegration = true;
-    };
-  }];
+      programs.fzf = {
+        enable = true;
+        enableZshIntegration = true;
+      };
+    }
+  ];
 
   tests = {
     "fzf: .zshrc exists" = {
-      path   = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       exists = true;
     };
 
     "fzf: fzf key-bindings sourced in zshrc" = {
-      path   = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       regex = "fzf";
     };
 

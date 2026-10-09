@@ -4,13 +4,13 @@
 # @description: home::core::exp::sys::base::yazi::default
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 let
   settings = import ./settings.nix;
@@ -41,7 +41,4 @@ in
     '';
   };
 
-
 }
-
-

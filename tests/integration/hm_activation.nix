@@ -19,105 +19,129 @@
 # Backend: QEMU VM with home-manager NixOS module
 # Note: sops secrets NOT required; packages only.
 
-{ pkgs, inputs, shared, ... }:
+{
+  pkgs,
+  inputs,
+  shared,
+  ...
+}:
 let
   testUser = "hmintegtest";
 
   # home-manager NixOS module binding — injected only when inputs is available
   # (standalone `nix build .#checks...` always has inputs via flake.nix)
-  hmConfig = if inputs != null then {
-    imports = [ inputs.home-manager.nixosModules.home-manager ];
+  hmConfig =
+    if inputs != null then
+      {
+        imports = [ inputs.home-manager.nixosModules.home-manager ];
 
-    home-manager = {
-      useGlobalPkgs   = true;
-      useUserPackages = true;
-      users.${testUser} = {
-        home = {
-          username      = testUser;
-          homeDirectory = "/home/${testUser}";
-          stateVersion  = "${shared.version.value.stateVersion}";
+        home-manager = {
+          useGlobalPkgs = true;
+          useUserPackages = true;
+          users.${testUser} = {
+            home = {
+              username = testUser;
+              homeDirectory = "/home/${testUser}";
+              stateVersion = "${shared.version.value.stateVersion}";
 
-          # Representative packages from home/core + home/env/dev
-          packages = with pkgs; [
-            ripgrep
-            fd
-            bat
-            direnv
-            git
-            delta
-            python314
-            uv
-          ];
-        };
+              # Representative packages from home/core + home/env/dev
+              packages = with pkgs; [
+                ripgrep
+                fd
+                bat
+                direnv
+                git
+                delta
+                python314
+                uv
+              ];
+            };
 
-        programs = {
-          git = {
-            enable    = true;
-            settings = {
-              init = {
-                defaultBranch = shared.git.defaultBranch;
+            programs = {
+              git = {
+                enable = true;
+                settings = {
+                  init = {
+                    defaultBranch = shared.git.defaultBranch;
+                  };
+                  user = {
+                    name = shared.git.name;
+                    email = shared.git.email;
+                  };
+                  core.editor = shared.editor.tag;
+                  pull.rebase = true;
+                  push.autoSetupRemote = true;
+                };
               };
-              user = {
-                name = shared.git.name;
-                email = shared.git.email;
+              zsh = {
+                enable = true;
+                autosuggestion.enable = true;
+                syntaxHighlighting.enable = true;
               };
-              core.editor = shared.editor.tag;
-              pull.rebase = true;
-              push.autoSetupRemote = true;
+              direnv = {
+                enable = true;
+                nix-direnv.enable = true;
+              };
+              starship = {
+                enable = true;
+                enableZshIntegration = true;
+              };
+              atuin = {
+                enable = true;
+                enableZshIntegration = true;
+              };
+              tmux.enable = true;
             };
           };
-          zsh = {
-            enable            = true;
-            autosuggestion.enable = true;
-            syntaxHighlighting.enable = true;
-          };
-          direnv = {
-            enable            = true;
-            nix-direnv.enable = true;
-          };
-          starship = {
-            enable                 = true;
-            enableZshIntegration   = true;
-          };
-          atuin = {
-            enable                 = true;
-            enableZshIntegration   = true;
-          };
-          tmux.enable = true;
         };
-      };
-    };
-  } else {};
+      }
+    else
+      { };
 
 in
 {
   name = "integration_hm_activation";
-  meta = { maintainers = [ "redskaber" ]; timeout = 600; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 600;
+  };
 
-  nodes.machine = { config, ... }: {
-    virtualisation.memorySize = 1536;
+  nodes.machine =
+    { config, ... }:
+    {
+      virtualisation.memorySize = 1536;
 
-    programs.zsh.enable = true;
+      programs.zsh.enable = true;
 
-    nix.settings.experimental-features = [ "nix-command" "flakes" ];
+      nix.settings.experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
 
-    users = {
-      mutableUsers    = false;
-      defaultUserShell = pkgs.zsh;
-      users.${testUser} = {
-        isNormalUser    = true;
-        useDefaultShell = true;
-        initialPassword = "hmtest";
+      users = {
+        mutableUsers = false;
+        defaultUserShell = pkgs.zsh;
+        users.${testUser} = {
+          isNormalUser = true;
+          useDefaultShell = true;
+          initialPassword = "hmtest";
+        };
       };
-    };
 
-    environment.systemPackages = with pkgs; [
-      git direnv ripgrep fd bat
-      python314
-      uv
-      starship atuin tmux
-    ];
-  } // hmConfig;
+      environment.systemPackages = with pkgs; [
+        git
+        direnv
+        ripgrep
+        fd
+        bat
+        python314
+        uv
+        starship
+        atuin
+        tmux
+      ];
+    }
+    // hmConfig;
 
   testScript = ''
     start_all()

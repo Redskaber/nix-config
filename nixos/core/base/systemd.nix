@@ -3,20 +3,20 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::base::systemd
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   systemd.services.flatpak-repo = {
     description = "Add Flathub remote for Flatpak";
     # Oneshot: triggered manually via `just service-start flatpak-repo`
     # or on first boot via activation script
-    wantedBy = lib.mkForce [];
+    wantedBy = lib.mkForce [ ];
     after = [ "network-online.target" ];
     wants = [ "network-online.target" ];
     path = [ pkgs.flatpak ];
@@ -29,5 +29,3 @@
     '';
   };
 }
-
-

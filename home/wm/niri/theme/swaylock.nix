@@ -4,13 +4,13 @@
 # @description: home::wm::niri::theme::swaylock
 # - Lightweight screen lock tool designed specifically for the Wayland display protocol
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   programs.swaylock = {
@@ -60,5 +60,3 @@
   };
 
 }
-
-

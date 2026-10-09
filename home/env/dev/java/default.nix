@@ -8,14 +8,20 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
-      temurin-bin-21      # Eclipse Temurin JDK 21 (LTS, OpenJDK)
-      maven               # Build tool
-      gradle              # Build tool (alternative)
+      temurin-bin-21 # Eclipse Temurin JDK 21 (LTS, OpenJDK)
+      maven # Build tool
+      gradle # Build tool (alternative)
       jdt-language-server # Official Java LSP from Nixpkgs (preferred over jdt-language-server)
     ];
 
@@ -43,5 +49,3 @@
 
   };
 }
-
-

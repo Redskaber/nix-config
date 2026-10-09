@@ -13,22 +13,25 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_srv_security_ssh";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.server = {
     virtualisation.memorySize = 512;
 
     services.openssh = {
       enable = true;
-      ports  = [ 22 ];
+      ports = [ 22 ];
       settings = {
         PasswordAuthentication = false;
-        PermitRootLogin        = "no";
+        PermitRootLogin = "no";
       };
     };
 
     users.users.sshtest = {
-      isNormalUser    = true;
+      isNormalUser = true;
       initialPassword = "unused";
     };
   };

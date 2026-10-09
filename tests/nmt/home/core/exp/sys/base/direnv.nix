@@ -18,42 +18,49 @@
 #   eval "$(direnv hook zsh)"    in .zshrc
 # grep -qF "direnv hook" matches both.
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "direnv: dotfile content assertions";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    programs.bash.enable = true;
-    programs.zsh.enable  = true;
+      programs.bash.enable = true;
+      programs.zsh.enable = true;
 
-    programs.direnv = {
-      enable                = true;
-      nix-direnv.enable     = true;
-      enableBashIntegration = true;
-      enableZshIntegration  = true;
-    };
-  }];
+      programs.direnv = {
+        enable = true;
+        nix-direnv.enable = true;
+        enableBashIntegration = true;
+        enableZshIntegration = true;
+      };
+    }
+  ];
 
   tests = {
     "direnv: nix-direnv lib file exists" = {
-      path   = ".config/direnv/lib/hm-nix-direnv.sh";
+      path = ".config/direnv/lib/hm-nix-direnv.sh";
       exists = true;
     };
 
     "direnv: bash hook written" = {
-      path     = ".bashrc";
+      path = ".bashrc";
       contains = [ "direnv hook" ];
     };
 
     "direnv: zsh hook written" = {
-      path     = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       contains = [ "direnv hook" ];
     };
   };

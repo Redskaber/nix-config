@@ -3,12 +3,13 @@
 # @datetime: 2026-02-14
 # @description: home::core::exp::app::music::playerctld
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   # ===== MPRIS 代理 (统一媒体控制) =====
@@ -18,5 +19,3 @@
   };
 
 }
-
-

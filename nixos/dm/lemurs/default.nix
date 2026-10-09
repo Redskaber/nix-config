@@ -3,12 +3,13 @@
 # @datetime: 2026-04-23
 # @description: nixos::dm::lemurs::default
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   services.displayManager = {
@@ -20,7 +21,4 @@
     };
   };
 
-
 }
-
-

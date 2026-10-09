@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::srv::hardware::bluetooth
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   services = {
@@ -18,5 +18,3 @@
     blueman.enable = true;
   };
 }
-
-

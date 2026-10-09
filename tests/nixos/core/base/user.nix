@@ -16,7 +16,10 @@ let
 in
 {
   name = "nixos_core_base_user";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
@@ -24,14 +27,19 @@ in
     programs.zsh.enable = true;
 
     users = {
-      mutableUsers    = false;
+      mutableUsers = false;
       defaultUserShell = pkgs.zsh;
       users.${testUser} = {
-        isNormalUser    = true;
+        isNormalUser = true;
         useDefaultShell = true;
-        description     = testUser;
+        description = testUser;
         initialPassword = "nixtest";
-        extraGroups     = [ "wheel" "networkmanager" "video" "audio" ];
+        extraGroups = [
+          "wheel"
+          "networkmanager"
+          "video"
+          "audio"
+        ];
       };
     };
 
@@ -66,4 +74,3 @@ in
 
   '';
 }
-

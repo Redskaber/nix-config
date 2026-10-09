@@ -17,39 +17,46 @@
 #   setw -g mode-keys vi
 # so contains = [ "mode-keys" ] is safe.
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "tmux: config file content assertions";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    programs.tmux = {
-      enable       = true;
-      historyLimit = 50000;
-      keyMode      = "vi";
-      terminal     = "tmux-256color";
-    };
-  }];
+      programs.tmux = {
+        enable = true;
+        historyLimit = 50000;
+        keyMode = "vi";
+        terminal = "tmux-256color";
+      };
+    }
+  ];
 
   tests = {
     "tmux: config file exists" = {
-      path   = ".config/tmux/tmux.conf";
+      path = ".config/tmux/tmux.conf";
       exists = true;
     };
 
     "tmux: history-limit directive written" = {
-      path     = ".config/tmux/tmux.conf";
+      path = ".config/tmux/tmux.conf";
       contains = [ "history-limit" ];
     };
 
     "tmux: vi key-mode written" = {
-      path     = ".config/tmux/tmux.conf";
+      path = ".config/tmux/tmux.conf";
       contains = [ "mode-keys" ];
     };
   };

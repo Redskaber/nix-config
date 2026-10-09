@@ -1,31 +1,46 @@
+# sops key hierarchy — BOOTSTRAP BASELINE (user-only by default).
+#
+# Rendered by `just secrets-init` (or `just rules-reset`) via
+# _secrets-write-rules. This template is the ENTRY state of the key lifecycle,
+# not its steady state:
+#
+#   EMPTY ──secrets-init──▶ USER_ONLY ──key-add-host──▶ USER+HOST
+#   EMPTY ──secrets-init <alias> <age1…>──▶ USER+HOST (direct dual-key)
+#   USER+HOST ──key-remove──▶ USER_ONLY (then secrets-sync)
+#
+# Two render modes, decided by the bootstrap invocation:
+#   user-only   `just secrets-init`                  → host lines stripped
+#   dual-key    `just secrets-init <alias> <age1…>`     → host lines rendered
+#
+# After bootstrap this file is the POLICY TRUTH for key distribution: key
+# evolution (add host key, rotate, revoke) happens INCREMENTALLY through the
+# lifecycle verbs in scripts/just/secrets.just. The regen recipe refuses to
+# overwrite an evolved file unless forced — regeneration would reset the
+# hierarchy to the baseline and orphan every host-key recipient.
+#
+# creation_rules below IS the dispatch layer for key distribution (the only
+# one): a secret's recipients are decided by the FIRST rule whose path_regex
+# matches its path. Tooling (scripts/sh/secrets-rotate.sh check) executes
+# these rules as data — it carries no domain knowledge of its own.
+#
+#   user domain  — core/base/{user,nix}  → user key only
+#   srv domain   — core/srv/**           → user key + host keys (a server
+#                                           host decrypts without the user)
 keys:
-  - &age_kilig_key age12jctu8vuta9h5zwhjjle8uqdyjuwt760536y32hu32w6ap3ljswqvcajvt
+  - &user_kilig age12jctu8vuta9h5zwhjjle8uqdyjuwt760536y32hu32w6ap3ljswqvcajvt
+  - &host_nixos age15enx4lquy9skad9ugr2gf92ex49xhulujyjl3umpmh4288q9qu5szane6m
 creation_rules:
-  - path_regex: secrets/chipr/nixos/core/base/user/kilig/[^/]+\.(yaml|json|env|ini)$
+  # ── user domain: personal secrets, user key only ──────────────────────
+  - path_regex: secrets/chipr/nixos/core/base/(user|nix)/.*\.(yaml|json|env|ini)$
     key_groups:
       - age:
-          - *age_kilig_key
-  - path_regex: secrets/chipr/nixos/core/base/nix/users/kilig/github/[^/]+\.(yaml|json|env|ini)$
+          - *user_kilig
+  # ── srv domain: infrastructure secrets — user key in the baseline; the
+  #    host key joins this group via `just key-add-host <alias> age1…`
+  #    (incremental) or via the direct dual-key bootstrap, then
+  #    `just secrets-sync` re-encrypts existing blobs onto it.
+  - path_regex: secrets/chipr/nixos/core/srv/.*\.(yaml|json|env|ini)$
     key_groups:
       - age:
-          - *age_kilig_key
-  - path_regex: secrets/chipr/nixos/core/srv/db/mongodb/users/kilig/[^/]+\.(yaml|json|env|ini)$
-    key_groups:
-      - age:
-          - *age_kilig_key
-  - path_regex: secrets/chipr/nixos/core/srv/db/mysql/users/kilig/[^/]+\.(yaml|json|env|ini)$
-    key_groups:
-      - age:
-          - *age_kilig_key
-  - path_regex: secrets/chipr/nixos/core/srv/db/mysql/users/root/[^/]+\.(yaml|json|env|ini)$
-    key_groups:
-      - age:
-          - *age_kilig_key
-  - path_regex: secrets/chipr/nixos/core/srv/db/postgresql/users/kilig/[^/]+\.(yaml|json|env|ini)$
-    key_groups:
-      - age:
-          - *age_kilig_key
-  - path_regex: secrets/chipr/nixos/core/srv/db/redis/users/redis-kilig/[^/]+\.(yaml|json|env|ini)$
-    key_groups:
-      - age:
-          - *age_kilig_key
+          - *host_nixos
+          - *user_kilig

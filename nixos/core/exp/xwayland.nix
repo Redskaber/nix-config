@@ -3,12 +3,13 @@
 # @datetime: 2026-04-23
 # @description: nixos::core::exp::xwayland
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -17,7 +18,4 @@
     enable = true;
   };
 
-
 }
-
-

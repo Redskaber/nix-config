@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::dm::gdm::default
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -25,5 +25,3 @@
   };
 
 }
-
-

@@ -3,16 +3,16 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::drive::nvidia-prime
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
-  services.xserver.videoDrivers = ["nvidia"];
+  services.xserver.videoDrivers = [ "nvidia" ];
 
   hardware.graphics.extraPackages = with pkgs; [
     nvidia-vaapi-driver
@@ -27,9 +27,8 @@
     open = false;
 
     prime = {
-      # TODO: AUTO-READ-USER INFO
-      intelBusId = "PCI:0:2:0";  # 00:02.0
-      nvidiaBusId = "PCI:6:0:0"; # 06:00.0
+      # Bus IDs are machine fingerprints — they live in
+      # hosts/<hostName>/default.nix (host layer owns hardware identity).
 
       offload = {
         enable = true;
@@ -44,7 +43,4 @@
 
   boot.blacklistedKernelModules = [ "nouveau" ];
 
-
 }
-
-

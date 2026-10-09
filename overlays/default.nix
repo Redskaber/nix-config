@@ -22,16 +22,13 @@
           -e 's/\bSBK_CUTTERPLUGIN_IDX\b/SBK_CutterPlugin_IDX/g' \
           -e 's/\bSBK_CUTTERPLUGINMETADATA_IDX\b/SBK_CutterPluginMetadata_IDX/g' \
           src/plugins/PluginManager.cpp
-        '';
+      '';
     });
 
     # FIX: tests-suite error
     openldap = prev.openldap.overrideAttrs (old: {
-      doCheck = false;   # skip the failing test suite
+      doCheck = false; # skip the failing test suite
     });
   };
 
-
 }
-
-

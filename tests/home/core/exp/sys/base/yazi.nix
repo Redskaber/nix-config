@@ -9,7 +9,10 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_exp_sys_base_yazi";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
@@ -23,7 +26,6 @@
     with subtest("yazi: yazi binary present"):
         machine.succeed("which yazi")
 
-    # FIXME:
     #
     # ❯ yazi --version
     # TOML parse error at line 113, column 3

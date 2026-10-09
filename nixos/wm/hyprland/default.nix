@@ -3,25 +3,25 @@
 # @datetime: 2026-01-13
 # @description: nixos::wm::hyprland
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [
-    ./plugins     # plugins
+    ./plugins # plugins
   ];
 
   environment.systemPackages = with pkgs; [
-    openssl       # rain-border dep
-    libqalculate  # clac allocate dep
-    libnotify     # notify dep
-    bc            # wallpaper select dep
-    mpvpaper      # mp4 wallpaper dep
+    openssl # rain-border dep
+    libqalculate # clac allocate dep
+    libnotify # notify dep
+    bc # wallpaper select dep
+    mpvpaper # mp4 wallpaper dep
   ];
 
   programs.hyprland = {
@@ -45,7 +45,4 @@
     ELECTRON_OZONE_PLATFORM_HINT = "auto";
   };
 
-
 }
-
-

@@ -1,16 +1,15 @@
-# @path: ~/projects/configs/nix-config/home/core/exp/app/img/default.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/image/default.nix
 # @author: redskaber
 # @datetime: 2026-03-04
 # @description: home::core::exp::app::img::default
 
-
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -23,7 +22,4 @@
     ./tectonic.nix
   ];
 
-
 }
-
-

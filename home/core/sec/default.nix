@@ -16,13 +16,13 @@
 #   - GPG agent (user-level, if not in srv/security)
 #   - Keychain / secret-service integration
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [

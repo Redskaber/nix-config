@@ -3,15 +3,15 @@
 # @datetime: 2026-07-20
 # @description: home::core::exp::sys::ai::pi-coding-agent
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [ pi-coding-agent ];
 
 }
-

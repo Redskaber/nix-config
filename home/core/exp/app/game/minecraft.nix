@@ -4,18 +4,16 @@
 # @description: home::core::exp::app::game::minecraft
 # - prismlauncher: free, open source
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
   home.packages = with pkgs; [ prismlauncher ];
 
 }
-
-

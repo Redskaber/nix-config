@@ -33,6 +33,7 @@ _DEV_U_CMD := "grep -oP 'username\\s*=\\s*\"\\K[^\"]+' " + SHARED_NIX_PATH
 # --------------------------------------------------------------------------
 
 # Create all known language envs and composite variants.
+[group('devenv')]
 devenv-create-all:
     @just devenv-create       asm
     @just devenv-create       c
@@ -55,10 +56,12 @@ devenv-create-all:
     @just devenv-create       default
 
 # Delete all profile dirs (use before forced rebuild).
+[group('devenv')]
 devenv-delete-all:
     @rm -rf {{DEV_PROFILE_HOME}}/*
 
 # Delete and rebuild all envs.
+[group('devenv')]
 devenv-update-all:
     @just devenv-delete-all
     @just devenv-create-all
@@ -69,6 +72,7 @@ devenv-update-all:
 # --------------------------------------------------------------------------
 
 # Create a single-language profile (e.g. just devenv-create rust).
+[group('devenv')]
 devenv-create lang:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -80,6 +84,7 @@ devenv-create lang:
     cd "{{ROOT}}" && nix develop .#{{lang}} --profile "{{DEV_PROFILE_HOME}}/{{lang}}/${U}-{{lang}}"
 
 # Create a composite-language profile (e.g. just devenv-create-from python renpy).
+[group('devenv')]
 devenv-create-from lang class:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -91,10 +96,12 @@ devenv-create-from lang class:
     cd "{{ROOT}}" && nix develop .#{{lang}}-{{class}} --profile "{{DEV_PROFILE_HOME}}/{{lang}}/${U}-{{lang}}-{{class}}"
 
 # Delete a single-language profile dir.
+[group('devenv')]
 devenv-delete lang:
     @rm -rf {{DEV_PROFILE_HOME}}/{{lang}}
 
 # Delete a composite variant profile (keeps parent dir).
+[group('devenv')]
 devenv-delete-from lang class:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -105,11 +112,13 @@ devenv-delete-from lang class:
     rm -rf "{{DEV_PROFILE_HOME}}/{{lang}}/${U}-{{lang}}-{{class}}"*
 
 # Force-rebuild a single-language env.
+[group('devenv')]
 devenv-update lang:
     @just devenv-delete      {{lang}}
     @just devenv-create      {{lang}}
 
 # Force-rebuild a composite variant env.
+[group('devenv')]
 devenv-update-from lang class:
     @just devenv-delete-from {{lang}} {{class}}
     @just devenv-create-from {{lang}} {{class}}
@@ -120,6 +129,7 @@ devenv-update-from lang class:
 # --------------------------------------------------------------------------
 
 # Enter an existing single-language profile.
+[group('devenv')]
 devenv-use lang:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -130,6 +140,7 @@ devenv-use lang:
     cd "{{ROOT}}" && nix develop "{{DEV_PROFILE_HOME}}/{{lang}}/${U}-{{lang}}"
 
 # Enter an existing composite variant profile.
+[group('devenv')]
 devenv-use-from lang class:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -145,9 +156,11 @@ devenv-use-from lang class:
 # --------------------------------------------------------------------------
 
 # List all registered devShells in the flake.
+[group('devenv')]
 devenv-show:
     @cd {{ROOT}} && nix flake show | grep devShells -A25
 
 # Tree-list all created profiles.
+[group('devenv')]
 devenv-list:
     @eza --tree {{DEV_PROFILE_HOME}}

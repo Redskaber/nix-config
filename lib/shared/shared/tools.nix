@@ -29,10 +29,11 @@ let
 
   # pdshell: pipeline-driven dev shell manager
   pdshell-lib = inputs.pdshell.lib;
-in {
+in
+{
   # nix-types (short alias: nt)
   nix-types = nt;
-  nt = nt;  # convenience alias
+  nt = nt; # convenience alias
 
   # configuration-orchestrator (resolved per-arch at runtime)
   orc-raw = orc-lib;

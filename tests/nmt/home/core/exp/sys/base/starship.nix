@@ -14,35 +14,42 @@
 # Strategy: test file existence only.
 # The shell init hook (written as plain text) is also verified.
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "starship: dotfile content assertions";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    programs.starship = {
-      enable = true;
-      settings = {
-        add_newline = false;
-        format      = "$directory$git_branch$git_status$character";
-        character = {
-          success_symbol = "[>(bold green)";
-          error_symbol   = "[>(bold red)";
+      programs.starship = {
+        enable = true;
+        settings = {
+          add_newline = false;
+          format = "$directory$git_branch$git_status$character";
+          character = {
+            success_symbol = "[>(bold green)";
+            error_symbol = "[>(bold red)";
+          };
         };
       };
-    };
-  }];
+    }
+  ];
 
   tests = {
     # formats.toml symlink is present (assertFileExists passes)
     "starship: config symlink present" = {
-      path   = ".config/starship.toml";
+      path = ".config/starship.toml";
       exists = true;
     };
   };

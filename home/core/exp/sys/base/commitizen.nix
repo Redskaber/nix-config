@@ -4,12 +4,13 @@
 # @description: home::core::exp::sys::base::commitizen
 # depends: python + git
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
@@ -22,5 +23,3 @@
   };
 
 }
-
-

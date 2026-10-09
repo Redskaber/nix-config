@@ -1,12 +1,12 @@
 # @path: ~/projects/configs/nix-config/export/nixos/default.nix
 # @author: redskaber
-# @datetime: 2025-12-12
-# @description: export::nixos — placeholder for reusable NixOS modules
+# @datetime: 2026-10-08
+# @description: export::nixos — reusable NixOS modules (registry)
 
-
-# Add your reusable NixOS modules to this directory, on their own file (https://nixos.wiki/wiki/Module).
-# These should be stuff you would like to share with others, not your personal configurations.
+# Options-first standalone modules — no `shared` dependency, importable
+# from any external flake via `inputs.nix-config.nixosModules.<name>`.
+# Interface standards: docs/modules/interface-standards.md
 {
-  # List your module files here
-  # my-module = import ./my-module.nix;
+  portal = import ./portal.nix;
+  fcitx5 = import ./fcitx5.nix;
 }

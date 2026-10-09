@@ -3,13 +3,13 @@
 # @datetime: 2026-05-05
 # @description: home::core::srv::notify::default
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -17,7 +17,4 @@
     # ./mako.nix
   ];
 
-
 }
-
-

@@ -3,20 +3,16 @@
 # @datetime: 2026-03-04
 # @description: home::wm::default
 
-
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
   imports = [ ./${shared.window-manager.tag} ];
 
-
 }
-
-

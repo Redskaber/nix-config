@@ -5,21 +5,21 @@
 # - swaynotificationcenter
 # - Notification Center and Notification Daemon for wayland
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 let
-  swayncResult = shared.orc.mergeHomeFiles (
-    shared.orc.listFilesRecursive inputs.swaync-config ""
-  ) [
-    { include = [ "wallust/colors-wallust.css" ];
+  swayncResult = shared.orc.mergeHomeFiles (shared.orc.listFilesRecursive inputs.swaync-config "") [
+    {
+      include = [ "wallust/colors-wallust.css" ];
       emitter = "copy";
-      destPrefix = ".config/swaync"; }
+      destPrefix = ".config/swaync";
+    }
   ];
 in
 {
@@ -29,12 +29,10 @@ in
   ];
 
   xdg.configFile."swaync" = {
-    source = inputs.swaync-config;  # abs path
-    recursive = true;               # rec-link
+    source = inputs.swaync-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
   home.activation.swayncWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] swayncResult.activation;
 
 }
-
-

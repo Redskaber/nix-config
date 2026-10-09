@@ -3,13 +3,13 @@
 # @datetime: 2026-03-05
 # @description: home::wm::niri::default
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [
@@ -21,7 +21,4 @@
     ./wlogout.nix
   ];
 
-
 }
-
-

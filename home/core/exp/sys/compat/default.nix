@@ -4,12 +4,13 @@
 # @diractory: home::core::exp::sys::compat::default
 # - appimage-run: used run appimage
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [
@@ -17,6 +18,3 @@
   ];
 
 }
-
-
-

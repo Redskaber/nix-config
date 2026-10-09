@@ -14,7 +14,10 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_base_network";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
@@ -24,9 +27,13 @@
       networkmanager.enable = true;
       enableIPv6 = true;
       firewall = {
-        enable          = true;
-        allowedTCPPorts = [ 22 80 443 ];
-        allowedUDPPorts = [];
+        enable = true;
+        allowedTCPPorts = [
+          22
+          80
+          443
+        ];
+        allowedUDPPorts = [ ];
       };
     };
 

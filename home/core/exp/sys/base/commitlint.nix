@@ -4,12 +4,13 @@
 # @description: home::core::exp::sys::base::commitlint
 # depends node.js => from env::default sup (project level)
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
@@ -22,5 +23,3 @@
   };
 
 }
-
-

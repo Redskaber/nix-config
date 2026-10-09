@@ -4,29 +4,30 @@
 # @description: home::core::base::xdg
 # @directory: https://nix-community.github.io/home-manager/options/home-manager/xdg.html
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   xdg = {
-    enable = true;   # XDG Base Directory std (config: ~/.config; data: ~/.local/share)
+    enable = true; # XDG Base Directory std (config: ~/.config; data: ~/.local/share)
 
     # XDG user directories
     userDirs = {
       package = shared.pkgs.xdg-user-dirs;
-      enable = true;             # gen ~/.config/user-dirs.dirs
-      createDirectories = true;  # autocreate dir (not exist)
+      enable = true; # gen ~/.config/user-dirs.dirs
+      createDirectories = true; # autocreate dir (not exist)
       # home.homeDirectory（host/* define）
-      desktop     = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.desktop}";
-      documents   = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.documents}";
-      download    = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.download}";
-      music       = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.music}";
-      pictures    = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.pictures}";
-      videos      = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.videos}";
+      desktop = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.desktop}";
+      documents = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.documents}";
+      download = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.download}";
+      music = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.music}";
+      pictures = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.pictures}";
+      videos = "${config.home.homeDirectory}/${shared.const.xdg.userDirs.videos}";
       # publicShare = "${config.home.homeDirectory}/Public";
       # templates   = "${config.home.homeDirectory}/Templates";
       extraConfig = {
@@ -40,4 +41,3 @@
     # cacheFile   = { };   # use ~/.cache/<name>
   };
 }
-

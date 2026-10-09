@@ -1,4 +1,4 @@
-# @path: ~/projects/configs/nix-config/home/env/dev/nix/derivation/free.nix.nix
+# @path: ~/projects/configs/nix-config/home/env/dev/nix/derivation/free.nix
 # @author: redskaber
 # @datetime: 2026-05-05
 # @description: home::env::dev::nix::derivation::free
@@ -8,8 +8,13 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  ...
+}:
+{
 
   # nix-derivation custom shell attrset
   # === 开源项目构建环境 ===
@@ -17,23 +22,23 @@
   default = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
-      nix                          # 核心工具链（含 flakes 支持）
-      nixfmt-rfc-style             # RFC 109 官方格式化器
-      statix                       # 静态分析（检测反模式/未使用绑定）
-      alejandra                    # Format specifications
-      deadnix                      # 死代码清理
-      nil                          # 官方 LSP（支持 flakes/overlays）
+      nix # 核心工具链（含 flakes 支持）
+      nixfmt-rfc-style # RFC 109 官方格式化器
+      statix # 静态分析（检测反模式/未使用绑定）
+      alejandra # Format specifications
+      deadnix # 死代码清理
+      nil # 官方 LSP（支持 flakes/overlays）
 
       # 构建诊断与可视化
-      nix-output-monitor           # 实时构建输出可视化（CI/调试利器）
-      nix-tree                     # 交互式依赖树探索
-      nix-diff                     # derivation 差异对比
-      nvd                          # Nix/NixOS package version diff tool
+      nix-output-monitor # 实时构建输出可视化（CI/调试利器）
+      nix-tree # 交互式依赖树探索
+      nix-diff # derivation 差异对比
+      nvd # Nix/NixOS package version diff tool
 
       # 社区协作工具
-      nixpkgs-review               # PR 审查工作流（自动构建/测试）
-      nix-index                    # 快速包搜索（`nix-locate`）
-      nix-search                   # 增强版包搜索（支持正则）
+      nixpkgs-review # PR 审查工作流（自动构建/测试）
+      nix-index # 快速包搜索（`nix-locate`）
+      nix-search # 增强版包搜索（支持正则）
     ];
 
     preInputsHook = ''
@@ -65,5 +70,3 @@
   };
 
 }
-
-

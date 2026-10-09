@@ -5,16 +5,14 @@
 # - https://nix-community.github.io/home/options.xhtml#opt-programs.fish.enable
 # @depends: eza, zoxide, fzf, fisher, bat, ripgrep
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
-let
-  fish_path = "${config.home.profileDirectory}/bin/fish";
-in
 {
   programs.fish = {
     enable = true;
@@ -60,8 +58,14 @@ in
 
     # (fisher env)
     plugins = [
-      { name = "autopair"; src = pkgs.fishPlugins.autopair; }
-      { name = "fzf-fish"; src = pkgs.fishPlugins.fzf-fish; }
+      {
+        name = "autopair";
+        src = pkgs.fishPlugins.autopair;
+      }
+      {
+        name = "fzf-fish";
+        src = pkgs.fishPlugins.fzf-fish;
+      }
     ];
 
     functions = {
@@ -94,7 +98,4 @@ in
 
   # fish: /etc/shells (chsh)
 
-
 }
-
-

@@ -13,22 +13,25 @@
 { pkgs, lib, ... }:
 let
   testUser = "mysqltest";
-  testDb   = "devtest";
+  testDb = "devtest";
 in
 {
   name = "nixos_core_srv_db_mysql";
-  meta = { maintainers = [ "redskaber" ]; timeout = 300; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 300;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 1024;
 
     services.mysql = {
-      enable  = true;
+      enable = true;
       package = pkgs.mariadb;
 
       settings.mysqld = {
-        bind_address    = "127.0.0.1";
-        port            = 3306;
+        bind_address = "127.0.0.1";
+        port = 3306;
         max_connections = 64;
       };
 

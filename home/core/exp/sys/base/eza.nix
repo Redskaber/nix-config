@@ -4,13 +4,13 @@
 # @diractory: home::core::exp::sys::base::eza
 # - https://nix-community.github.io/home/options.xhtml#opt-programs.eza.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -18,5 +18,3 @@
     enable = true;
   };
 }
-
-

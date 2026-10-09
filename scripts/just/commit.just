@@ -5,6 +5,7 @@
 
 
 # Deploy global commitlint rules and optional commitizen config to home
+[group('commit')]
 commit-global-rules:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -28,6 +29,7 @@ commit-global-rules:
 
 
 # Copy commitlint and commitizen configs to a project (self-contained)
+[group('commit')]
 commit-project-rules dir=".":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -53,6 +55,7 @@ commit-project-rules dir=".":
 
 
 # Install husky hooks for a Git repo (no config files)
+[group('commit')]
 commit-husky-install dir=".":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -83,6 +86,7 @@ commit-husky-install dir=".":
 
 
 # Deploy rules + hooks for the nix-config repo
+[group('commit')]
 commit-setup:
     @just commit-project-rules "{{ROOT}}"
     @just commit-husky-install "{{ROOT}}"

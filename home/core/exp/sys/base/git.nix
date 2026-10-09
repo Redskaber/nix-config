@@ -4,8 +4,14 @@
 # @description: home::core::exp::sys::base::git
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.git.enable
 
-
-{ inputs, shared, lib, config, pkgs,... }:
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
+}:
 {
   programs.git = {
     enable = true;
@@ -15,7 +21,7 @@
       };
       user = {
         name = shared.git.name;
-	      email = shared.git.email;
+        email = shared.git.email;
       };
       core.editor = shared.editor.tag;
       pull.rebase = true;
@@ -23,9 +29,9 @@
     };
     ignores = [
       ".DS_Store"
-      ".direnv"     # direnv
-      ".cache"      # devShell
-      ".venv"       # uv
+      ".direnv" # direnv
+      ".cache" # devShell
+      ".venv" # uv
       "*.swp"
       "*~"
     ];
@@ -63,17 +69,20 @@
       gui = {
         theme = {
           lightTheme = false;
-          activeBorderColor = [ "cyan" "bold" ];
-          inactiveBorderColor = [ "240" ];  # 深灰色
-          selectedLineBgColor = [ "236" ];  # 暗灰色背景
-          optionsTextColor = [ "skyblue"];
+          activeBorderColor = [
+            "cyan"
+            "bold"
+          ];
+          inactiveBorderColor = [ "240" ]; # 深灰色
+          selectedLineBgColor = [ "236" ]; # 暗灰色背景
+          optionsTextColor = [ "skyblue" ];
         };
         scrollHeight = 2;
         scrollPastBottom = true;
         showListFooter = true;
 
-        nerdFontsVersion = "3";               # 启用 Nerd Font 图标
-        timeFormat = "02 Jan 06 15:04 MST";   # 人类可读时间格式
+        nerdFontsVersion = "3"; # 启用 Nerd Font 图标
+        timeFormat = "02 Jan 06 15:04 MST"; # 人类可读时间格式
       };
 
       git = {
@@ -82,20 +91,17 @@
           manualCommit = false;
           args = "-Xdiff-algorithm=histogram";
         };
-        skipHookPrefix = "WIP";  # 跳过含此前缀的提交钩子
+        skipHookPrefix = "WIP"; # 跳过含此前缀的提交钩子
       };
 
       # 文件操作增强
       os = {
-        editCommand = "nvim {filename}:{line}";  # 精确跳转到行号
+        editCommand = "nvim {filename}:{line}"; # 精确跳转到行号
         editCommandTemplate = "";
       };
     };
-    shellWrapperName = shared.git.lazygit.name;  # 通过 `lg` 命令启动
+    shellWrapperName = shared.git.lazygit.name; # 通过 `lg` 命令启动
     package = pkgs.lazygit;
   };
 
-
 }
-
-

@@ -4,13 +4,13 @@
 # @diractory: https://search.nixos.org/options?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=hyprland
 # @description: nixos::core::base::portal
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   # base(wayland)
@@ -29,5 +29,3 @@
   };
 
 }
-
-

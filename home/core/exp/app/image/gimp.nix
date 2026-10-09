@@ -1,20 +1,19 @@
-# @path: ~/projects/configs/nix-config/home/core/exp/app/img/gimp.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/image/gimp.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: home::core::exp::app::img::gimp
 # - open source image edit
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
-  home.packages = with pkgs; [ gimp ];
+  # T3.2: linux-only package(s) — skipped on the darwin closure.
+  home.packages = lib.mkIf shared.caps.linux-family (with pkgs; [ gimp ]);
 
 }
-
-

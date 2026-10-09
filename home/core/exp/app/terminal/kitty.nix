@@ -1,24 +1,24 @@
-# @path: ~/projects/configs/nix-config/home/core/exp/app/kitty.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/terminal/kitty.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: home::core::exp::app::kitty
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.kitty.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 let
-  kittyResult = shared.orc.mergeHomeFiles (
-    shared.orc.listFilesRecursive inputs.kitty-config ""
-  ) [
-    { include = [ "kitty-themes/01-Wallust.conf" ];
+  kittyResult = shared.orc.mergeHomeFiles (shared.orc.listFilesRecursive inputs.kitty-config "") [
+    {
+      include = [ "kitty-themes/01-Wallust.conf" ];
       emitter = "copy";
-      destPrefix = ".config/kitty"; }
+      destPrefix = ".config/kitty";
+    }
   ];
 in
 {
@@ -31,12 +31,10 @@ in
 
   # Used user config:
   xdg.configFile."kitty" = {
-    source = inputs.kitty-config;   # abs path
-    recursive = true;               # rec-link
+    source = inputs.kitty-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
   home.activation.kittyWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] kittyResult.activation;
 
 }
-
-

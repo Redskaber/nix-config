@@ -11,7 +11,10 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_exp_app_editor_nvim";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 768;

@@ -12,21 +12,27 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_srv_db_mongodb";
-  meta = { maintainers = [ "redskaber" ]; timeout = 300; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 300;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 1536;
 
     services.mongodb = {
-      enable     = true;
-      package    = pkgs.mongodb-ce;
-      bind_ip    = "127.0.0.1";
-      enableAuth = false;   # no sops in unit tests
-      quiet      = false;
-      dbpath     = "/var/lib/mongodb";
+      enable = true;
+      package = pkgs.mongodb-ce;
+      bind_ip = "127.0.0.1";
+      enableAuth = false; # no sops in unit tests
+      quiet = false;
+      dbpath = "/var/lib/mongodb";
     };
 
-    environment.systemPackages = with pkgs; [ mongodb-ce mongosh ];
+    environment.systemPackages = with pkgs; [
+      mongodb-ce
+      mongosh
+    ];
   };
 
   testScript = ''

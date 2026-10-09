@@ -11,19 +11,24 @@
 # - The option definition `programs.adb' in `/nix/store/b3qxh150g0ni445dyx40c249xmjyr230-source/nixos/core/base/virtual.nix' no longer has any effect; please remove it.
 # This option is no longer needed as systemd 258 handles uaccess rules automatically. Please add `pkgs.android-tools` to your system packages to get the adb command.
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
-shared.version.value.adb // {
+shared.version.value.adb
+// {
   # Add user to libvirtd incus-admin waydroid group
   # NOTE: These groups are created by their respective virtualisation services.
   #       They are safe to declare here because the services are enabled below.
-  users.users.${shared.user.username}.extraGroups = [ "libvirtd" "incus-admin" "waydroid" ];
+  users.users.${shared.user.username}.extraGroups = [
+    "libvirtd"
+    "incus-admin"
+    "waydroid"
+  ];
 
   ## For AMD CPU, add "kvm-amd" to kernelModules.
   # boot.kernelModules = ["kvm-amd"];
@@ -34,8 +39,7 @@ shared.version.value.adb // {
   # boot.extraModprobeConfig = "options kvm_intel nested=1"; # for intel cpu
 
   # GPU through
-  boot.kernelModules =
-    lib.optional (builtins.elem "nvidia-prime" shared.drive.value) "vfio-pci";
+  boot.kernelModules = lib.optional (builtins.elem "nvidia-prime" shared.drive.value) "vfio-pci";
 
   # zfs sup
   # generate hostId（terminal exec-once）：
@@ -70,7 +74,7 @@ shared.version.value.adb // {
     # zfs
 
     # v26.05
-    android-tools   # programs.adb remove
+    android-tools # programs.adb remove
   ];
 
   # Manage the virtualisation services
@@ -84,7 +88,7 @@ shared.version.value.adb // {
         package = pkgs.qemu;
         swtpm.enable = true; # secure boot support
         runAsRoot = false; # secure
-        vhostUserPackages = [ pkgs.virtiofsd]; # filesystem
+        vhostUserPackages = [ pkgs.virtiofsd ]; # filesystem
       };
       nss = {
         enable = true; # network service switch
@@ -150,16 +154,16 @@ shared.version.value.adb // {
       preseed = {
         config = {
           "core.https_address" = "[::]:8443";
-          "core.trust_ca_certificates" = "false";   # 不自动信任CA签名的客户端
+          "core.trust_ca_certificates" = "false"; # 不自动信任CA签名的客户端
           "images.auto_update_cached" = "true";
-          "images.auto_update_interval" = "168";    # 每24*7小时检查更新
-          "images.remote_cache_expiry" = "10";      # 10天后清理未使用缓存
-          "instances.nic.host_name" = "random";     # 随机生成主机接口名
+          "images.auto_update_interval" = "168"; # 每24*7小时检查更新
+          "images.remote_cache_expiry" = "10"; # 10天后清理未使用缓存
+          "instances.nic.host_name" = "random"; # 随机生成主机接口名
         };
         storage_pools = [
           {
             name = "default";
-            driver = "dir";  # zfs
+            driver = "dir"; # zfs
             config = {
               source = "/var/lib/incus/storage-pools/default";
             };
@@ -183,13 +187,13 @@ shared.version.value.adb // {
           {
             name = "default";
             devices = {
-              # 
+              #
               root = {
                 type = "disk";
                 pool = "default"; # mustname
                 path = "/";
               };
-              # 
+              #
               eth0 = {
                 type = "nic";
                 nictype = "bridged";
@@ -220,7 +224,11 @@ shared.version.value.adb // {
         root = "/var/lib/containers/storage";
       };
       # config
-      registries.search = [ "docker.io" "ghcr.io" "quay.io" ];
+      registries.search = [
+        "docker.io"
+        "ghcr.io"
+        "quay.io"
+      ];
     };
 
     # auxiliary features
@@ -228,11 +236,11 @@ shared.version.value.adb // {
   };
 
   services.spice-vdagentd.enable = true; # clipboard/resolution sharing
-  programs.virt-manager = { # libvirtGUI management
+  programs.virt-manager = {
+    # libvirtGUI management
     enable = true;
     package = pkgs.virt-manager;
   };
-
 
   # config - support
   networking = {
@@ -242,30 +250,47 @@ shared.version.value.adb // {
     firewall = {
       enable = true;
       # libvirtand
-      allowedUDPPorts = [ 53 67 547 5353 ];
-      allowedTCPPorts = [ 53 68 546 5353 8443 ];   # Incus UI: 8443
+      allowedUDPPorts = [
+        53
+        67
+        547
+        5353
+      ];
+      allowedTCPPorts = [
+        53
+        68
+        546
+        5353
+        8443
+      ]; # Incus UI: 8443
     };
   };
 
-
   # Waydroidconfig (whenenable)
   environment.etc."waydroid/waydroid.cfg".text =
-    if config.virtualisation.waydroid.enable then ''
-      [properties]
-      persist.waydroid.width = 1280
-      persist.waydroid.height = 720
-      persist.waydroid.dummy_fps = 60
-      persist.waydroid.multi_windows = true
-    '' else "";
+    if config.virtualisation.waydroid.enable then
+      ''
+        [properties]
+        persist.waydroid.width = 1280
+        persist.waydroid.height = 720
+        persist.waydroid.dummy_fps = 60
+        persist.waydroid.multi_windows = true
+      ''
+    else
+      "";
 
   # Virtualization service autostart control (install but not autostart = clear wantedBy)
-  systemd.services.libvirtd.wantedBy =
-    lib.mkForce (lib.optional shared.services.virt.libvirtd.autostart "multi-user.target");
-  systemd.services.incusd.wantedBy =
-    lib.mkForce (lib.optional shared.services.virt.incus.autostart "multi-user.target");
-  systemd.services.waydroid-container.wantedBy =
-    lib.mkForce (lib.optional shared.services.virt.waydroid.autostart "multi-user.target");
-  systemd.services.podman.wantedBy =
-    lib.mkForce (lib.optional shared.services.virt.podman.autostart "multi-user.target");
+  systemd.services.libvirtd.wantedBy = lib.mkForce (
+    lib.optional shared.services.virt.libvirtd.autostart "multi-user.target"
+  );
+  systemd.services.incusd.wantedBy = lib.mkForce (
+    lib.optional shared.services.virt.incus.autostart "multi-user.target"
+  );
+  systemd.services.waydroid-container.wantedBy = lib.mkForce (
+    lib.optional shared.services.virt.waydroid.autostart "multi-user.target"
+  );
+  systemd.services.podman.wantedBy = lib.mkForce (
+    lib.optional shared.services.virt.podman.autostart "multi-user.target"
+  );
 
 }

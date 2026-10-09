@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::sec::polkit
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   security = {
@@ -34,7 +34,4 @@
     '';
   };
 
-
 }
-
-

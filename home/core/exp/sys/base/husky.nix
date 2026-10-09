@@ -4,12 +4,13 @@
 # @description: home::core::exp::sys::base::husky
 # depends node.js => from env::default sup
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
@@ -17,5 +18,3 @@
   ];
 
 }
-
-

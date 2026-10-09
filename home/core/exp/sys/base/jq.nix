@@ -5,17 +5,15 @@
 # @description: home::core::exp::sys::base::jq
 # - terminal data json set
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   programs.jq.enable = true;
 
 }
-
-

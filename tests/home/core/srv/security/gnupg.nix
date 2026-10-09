@@ -12,21 +12,24 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_srv_security_gnupg";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
 
     programs.gnupg.agent = {
-      enable            = true;
-      enableSSHSupport  = true;
-      pinentryPackage   = pkgs.pinentry-tty;
+      enable = true;
+      enableSSHSupport = true;
+      pinentryPackage = pkgs.pinentry-tty;
     };
 
     environment.systemPackages = with pkgs; [ gnupg ];
 
     users.users.gpgtest = {
-      isNormalUser    = true;
+      isNormalUser = true;
       initialPassword = "test";
     };
   };

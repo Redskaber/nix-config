@@ -37,41 +37,48 @@
 #
 # We test fish integration via a home.file that writes a plain fish snippet.
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "fish: config.fish content assertions";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    # Write a fish config fragment directly as a plain text file.
-    # This avoids programs.fish and the babelfish build-time dependency.
-    home.file.".config/fish/config.fish".text = ''
-      # nmt-test: fish config
-      set -g fish_greeting ""
-      abbr --add g git
-      abbr --add lg lazygit
-    '';
-  }];
+      # Write a fish config fragment directly as a plain text file.
+      # This avoids programs.fish and the babelfish build-time dependency.
+      home.file.".config/fish/config.fish".text = ''
+        # nmt-test: fish config
+        set -g fish_greeting ""
+        abbr --add g git
+        abbr --add lg lazygit
+      '';
+    }
+  ];
 
   tests = {
     "fish: config.fish generated" = {
-      path   = ".config/fish/config.fish";
+      path = ".config/fish/config.fish";
       exists = true;
     };
 
     "fish: greeting setting present" = {
-      path     = ".config/fish/config.fish";
+      path = ".config/fish/config.fish";
       contains = [ "fish_greeting" ];
     };
 
     "fish: abbr directive present" = {
-      path     = ".config/fish/config.fish";
+      path = ".config/fish/config.fish";
       contains = [ "abbr" ];
     };
   };

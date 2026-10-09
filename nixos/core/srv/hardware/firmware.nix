@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::srv::hardware::firmware
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   services = {
@@ -17,7 +17,4 @@
     fwupd.enable = true;
   };
 
-
 }
-
-

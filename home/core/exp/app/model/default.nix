@@ -3,13 +3,13 @@
 # @datetime: 2026-05-14
 # @description: home::core::exp::app::model::default
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -17,7 +17,4 @@
     ./blender.nix
   ];
 
-
 }
-
-

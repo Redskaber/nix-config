@@ -6,12 +6,13 @@
 # Routing mode (mode B: multi-select routing):
 #   Selects browser modules based on shared.browsers list.
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = builtins.map (b: ./${b}.nix) shared.browsers;

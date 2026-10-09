@@ -12,40 +12,47 @@
 #   ignores = [ ".git/" "*.bak" ];
 # HM writes each entry on its own line.
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "fd: ignore file written";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    programs.fd = {
-      enable  = true;
-      ignores = [
-        ".git/"
-        "*.bak"
-      ];
-    };
-  }];
+      programs.fd = {
+        enable = true;
+        ignores = [
+          ".git/"
+          "*.bak"
+        ];
+      };
+    }
+  ];
 
   tests = {
     "fd: ignore file exists" = {
-      path   = ".config/fd/ignore";
+      path = ".config/fd/ignore";
       exists = true;
     };
 
     "fd: .git/ entry written" = {
-      path     = ".config/fd/ignore";
+      path = ".config/fd/ignore";
       contains = [ ".git/" ];
     };
 
     "fd: *.bak entry written" = {
-      path     = ".config/fd/ignore";
+      path = ".config/fd/ignore";
       contains = [ "*.bak" ];
     };
   };

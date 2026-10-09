@@ -4,18 +4,18 @@
 # @diractory: home::core::exp::sys::compat::appimage-run
 # - appimage-run: used run appimage
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
-  home.packages = with pkgs; [ appimage-run ];
+  # T3.2: linux-only package(s) — skipped on the darwin closure.
+
+  home.packages = lib.mkIf shared.caps.linux-family (with pkgs; [ appimage-run ]);
 
 }
-
-
-

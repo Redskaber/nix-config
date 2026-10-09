@@ -4,18 +4,17 @@
 # @description: home::core::exp::app::music::cnmplayer
 # A TUI Netease Cloud Music Player, with audio visualization and almost complete functions.
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
-    inputs.cnmplayer.packages.${shared.arch.tag}.default  # github package nix
+    inputs.cnmplayer.packages.${shared.arch.tag}.default # github package nix
   ];
 
 }
-
-

@@ -7,16 +7,15 @@
 #   Standard configuration for game hacking / RE on single-user desktops.
 #   Not recommended for server environments.
 
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   boot.kernel.sysctl."kernel.yama.ptrace_scope" = 0;
 
 }
-
-

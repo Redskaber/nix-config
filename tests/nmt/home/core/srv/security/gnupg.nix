@@ -19,49 +19,58 @@
 #   - .gnupg/gpg-agent.conf exists
 #   - default-cache-ttl written
 
-{ inputs, shared, lib, ... }:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "gnupg: package-only module evaluates cleanly";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    programs.gpg = {
-      enable   = true;
-      settings = { use-agent = true; };
-    };
+      programs.gpg = {
+        enable = true;
+        settings = {
+          use-agent = true;
+        };
+      };
 
-    services.gpg-agent = {
-      enable          = true;
-      defaultCacheTtl = 600;
-      maxCacheTtl     = 7200;
-      # pinentryPackage intentionally omitted — scrubbed default is fine
-    };
-  }];
+      services.gpg-agent = {
+        enable = true;
+        defaultCacheTtl = 600;
+        maxCacheTtl = 7200;
+        # pinentryPackage intentionally omitted — scrubbed default is fine
+      };
+    }
+  ];
 
   tests = {
     "gnupg: gpg.conf generated" = {
-      path   = ".gnupg/gpg.conf";
+      path = ".gnupg/gpg.conf";
       exists = true;
     };
 
     "gnupg: use-agent written" = {
-      path     = ".gnupg/gpg.conf";
+      path = ".gnupg/gpg.conf";
       contains = [ "use-agent" ];
     };
 
     "gnupg: gpg-agent.conf generated" = {
-      path   = ".gnupg/gpg-agent.conf";
+      path = ".gnupg/gpg-agent.conf";
       exists = true;
     };
 
     "gnupg: default-cache-ttl key written" = {
-      path     = ".gnupg/gpg-agent.conf";
+      path = ".gnupg/gpg-agent.conf";
       contains = [ "default-cache-ttl" ];
     };
   };

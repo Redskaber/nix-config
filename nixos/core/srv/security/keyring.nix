@@ -9,13 +9,13 @@
 # - gnome: pinentry-gnome3
 # - hyprland: pinentry-bemenu
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
 
@@ -39,5 +39,3 @@
   # services.gnome.gnome-keyring.enable = true;
 
 }
-
-

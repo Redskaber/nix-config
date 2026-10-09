@@ -8,8 +8,13 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  ...
+}:
+{
 
   default = {
     shell = shared.user.shell.tag;
@@ -50,7 +55,7 @@
 
     nativeBuildInputs = with shared.pkgs; [
       pkg-config
-      gcc  # Required for building C extensions (e.g., via uv pip install)
+      gcc # Required for building C extensions (e.g., via uv pip install)
     ];
 
     preInputsHook = ''
@@ -116,5 +121,3 @@
   };
 
 }
-
-

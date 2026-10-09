@@ -1,14 +1,14 @@
 # @path: ~/projects/configs/nix-config/export/home/default.nix
 # @author: redskaber
-# @datetime: 2025-12-12
-# @description: export::home — placeholder for reusable Home Manager modules
+# @datetime: 2026-10-08
+# @description: export::home — reusable Home Manager modules (registry)
 
-
-# Add your reusable home-manager modules to this directory, on their own file (https://nixos.wiki/wiki/Module).
-# These should be stuff you would like to share with others, not your personal configurations.
+# Options-first standalone modules — no `shared` dependency, importable
+# from any external flake via `inputs.nix-config.homeModules.<name>`.
+# Interface standards: docs/modules/interface-standards.md
 {
-  # List your module files here
-  # my-module = import ./my-module.nix;
+  fcitx5 = import ./fcitx5.nix;
+  shell = import ./shell.nix;
+  waybar = import ./waybar.nix;
+  yazi = import ./yazi.nix;
 }
-
-

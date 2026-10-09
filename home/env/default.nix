@@ -3,17 +3,16 @@
 # @datetime: 2026-05-05
 # @diractory: home::env::default
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [
     ./base
   ];
 }
-
-

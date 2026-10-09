@@ -6,25 +6,33 @@
 #
 # User-level XDG portal configuration (standalone HM only).
 # On NixOS, portal is managed by nixos/core/base/portal.nix via system config.
-# xdg.portal.enable is gated on !shared.isNixOS to avoid double-configuration.
+# xdg.portal.enable is gated on the resolved capability facts (T4.0):
+# !caps.nixos-system (system layer owns it) && desktop-session (a real
+# desktop session exists to mediate) — no predicate calls, no tag strings.
 #
 # Portal strategy is data-driven from shared.window-manager enum:
 #   hyprland → [ "hyprland" "gtk" ]  (xdg-desktop-portal-hyprland + gtk)
 #   niri     → [ "wlr" "gtk" ]       (xdg-desktop-portal-wlr + gtk)
 #   gnome    → [ "gtk" ]             (xdg-desktop-portal-gtk)
+#   none     → portal disabled       (T3.1/T3.2: headless hosts — enabling
+#             a portal with zero backends trips HM's own assertion; the
+#             none strategy means "no windowing stack to mediate at all")
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   xdg.portal = {
-    enable = !shared.isNixOS;
-    xdgOpenUsePortal = true;
+    # Gate on BOTH resolved facts (T3.1 fix, T4.0 capability-routed):
+    # the NixOS system layer manages portals there, and a headless
+    # strategy means no desktop session — nothing to mediate.
+    enable = !shared.caps.nixos-system && shared.window-manager.value.desktop-session;
+    xdgOpenUsePortal = shared.window-manager.value.desktop-session;
 
     config = {
       common.default = [ "gtk" ];

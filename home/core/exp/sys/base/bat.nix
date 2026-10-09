@@ -3,13 +3,13 @@
 # @datetime: 2026-05-05
 # @description: home::core::exp::sys::base::bat
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   programs.bat = {
@@ -27,5 +27,3 @@
   };
 
 }
-
-

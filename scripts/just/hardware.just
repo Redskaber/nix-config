@@ -23,6 +23,7 @@
 _HOSTNAME_CMD := "grep -oP 'hostName\\s*=\\s*\"\\K[^\"]+' " + SHARED_NIX_PATH
 
 # Detect hardware and write hardware.nix for the current host (overwrites).
+[group('hardware')]
 hardware-generate:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -42,6 +43,7 @@ hardware-generate:
     echo "Generated ${HW_PATH} for host '${HOSTNAME}'"
 
 # Print current hardware.nix for the current host (read-only diagnostic).
+[group('hardware')]
 hardware-show:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -63,5 +65,6 @@ hardware-show:
     cat "${HW_PATH}"
 
 # List all configured hosts (directories under hosts/).
+[group('hardware')]
 hardware-list:
     @ls -1 "{{ROOT}}/hosts/"

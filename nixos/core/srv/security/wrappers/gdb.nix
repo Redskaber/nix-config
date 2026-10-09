@@ -8,7 +8,14 @@
 #   - sudo.extraRules: NOPASSWD covers all /nix/store/*/bin/gdb variants
 #     since pince's bundled gdb path differs from pkgs.gdb at runtime.
 
-{ inputs, shared, config, lib, pkgs, ... }:
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 {
   systemd.tmpfiles.rules = [
     "L+ /bin/gdb - - - - ${pkgs.gdb}/bin/gdb"
@@ -18,9 +25,27 @@
     {
       users = [ shared.user.username ];
       commands = [
-        { command = "/bin/gdb";                        options = [ "NOPASSWD" "SETENV" ]; }
-        { command = "/run/current-system/sw/bin/gdb";  options = [ "NOPASSWD" "SETENV" ]; }
-        { command = "/nix/store/*/bin/gdb";            options = [ "NOPASSWD" "SETENV" ]; }
+        {
+          command = "/bin/gdb";
+          options = [
+            "NOPASSWD"
+            "SETENV"
+          ];
+        }
+        {
+          command = "/run/current-system/sw/bin/gdb";
+          options = [
+            "NOPASSWD"
+            "SETENV"
+          ];
+        }
+        {
+          command = "/nix/store/*/bin/gdb";
+          options = [
+            "NOPASSWD"
+            "SETENV"
+          ];
+        }
       ];
     }
   ];

@@ -7,7 +7,10 @@
 { pkgs, lib, ... }:
 {
   name = "home_env_dev_lua_default";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;

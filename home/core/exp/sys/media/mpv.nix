@@ -4,13 +4,13 @@
 # @description: home::core::exp::sys::media::mpv
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.mpv.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -21,12 +21,9 @@
 
   # Used user config:
   xdg.configFile."mpv" = {
-    source = inputs.mpv-config;     # abs path
-    recursive = true;               # rec-link
+    source = inputs.mpv-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
 
 }
-
-
-

@@ -11,7 +11,7 @@
     maintainers = [ "redskaber" ];
   };
 
-  nodes.machine = {}; # test obj
+  nodes.machine = { }; # test obj
   testScript = ''
     start_all()
 

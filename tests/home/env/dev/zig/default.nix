@@ -7,13 +7,16 @@
 { pkgs, lib, ... }:
 {
   name = "home_env_dev_zig_default";
-  meta = { maintainers = [ "redskaber" ]; timeout = 300; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 300;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 768;
     environment.systemPackages = with pkgs; [
       zig
-      zls   # Zig Language Server
+      zls # Zig Language Server
     ];
   };
 

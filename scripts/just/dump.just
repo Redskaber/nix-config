@@ -1,4 +1,5 @@
 # Dump current project file tree + concat to stored/
+[group('maintenance')]
 dump:
   @mkdir -p tmp
   @bash scripts/sh/grep_paths.sh -l -e "*.sh" -e "*.just" -e "justfile" -x ".cache/*" -o tmp/scripts_paths.txt

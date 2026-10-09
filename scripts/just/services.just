@@ -38,56 +38,69 @@
 # ==============================================================================
 
 # Start a systemd service (immediate, not persistent across reboot).
+[group('services')]
 service-start name:
     @sudo systemctl start {{name}}
 
 # Stop a systemd service (immediate, not persistent across reboot).
+[group('services')]
 service-stop name:
     @sudo systemctl stop {{name}}
 
 # Enable a systemd service for autostart on boot (persistent, survives rebuild).
+[group('services')]
 service-enable name:
     @sudo systemctl enable {{name}}
     @echo "✓ {{name}} will autostart on boot (persistent across rebuilds)"
 
 # Disable a systemd service from autostart on boot (persistent, survives rebuild).
+[group('services')]
 service-disable name:
     @sudo systemctl disable {{name}}
     @echo "✓ {{name}} will NOT autostart on boot (persistent across rebuilds)"
 
 # Check if a systemd service is enabled for autostart.
+[group('services')]
 service-is-enabled name:
     @systemctl is-enabled {{name}} 2>&1
 
 # Check status of a systemd service.
+[group('services')]
 service-status name:
     @systemctl status {{name}} --no-pager 2>&1 | head -15
 
 # Restart a systemd service.
+[group('services')]
 service-restart name:
     @sudo systemctl restart {{name}}
 
 # List all database services (installed, from shared.nix).
+[group('services')]
 db-list:
     @echo "Database services (from shared.nix service-profile):"
     @nix eval .#nixosConfigurations.kilig-nixos.config.systemd.services --apply 'svc: builtins.filter (n: builtins.match ".*(mysql|postgres|redis|mongodb).*" n != null) (builtins.attrNames svc)' --json 2>/dev/null | jq -r '.[]' || echo "  (run from project root)"
 
 # Start a database service (alias for service-start).
+[group('services')]
 db-start name:
     @just service-start {{name}}
 
 # Stop a database service (alias for service-stop).
+[group('services')]
 db-stop name:
     @just service-stop {{name}}
 
 # Enable a database service for autostart (alias for service-enable).
+[group('services')]
 db-enable name:
     @just service-enable {{name}}
 
 # Disable a database service from autostart (alias for service-disable).
+[group('services')]
 db-disable name:
     @just service-disable {{name}}
 
 # List all services enabled for autostart (systemctl is-enabled).
+[group('services')]
 autostart-list:
     @systemctl list-unit-files --type=service --state=enabled --no-pager 2>&1 | head -30

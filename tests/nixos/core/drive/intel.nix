@@ -15,7 +15,10 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_drive_intel";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;

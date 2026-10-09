@@ -4,13 +4,13 @@
 # @diractory: home::core::exp::sys::base::fastfetch
 # - https://nix-community.github.io/home/options.xhtml#opt-programs.fastfetch.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -18,10 +18,8 @@
 
   # Used user config:
   xdg.configFile."fastfetch" = {
-    source = inputs.fastfetch-config;   # abs path
-    recursive = true;                   # rec-link
+    source = inputs.fastfetch-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
 }
-
-

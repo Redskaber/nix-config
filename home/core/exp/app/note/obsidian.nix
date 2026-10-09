@@ -1,19 +1,17 @@
-# @path: ~/projects/configs/nix-config/home/core/exp/app/obsidian.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/app/note/obsidian.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.obsidian.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
   home.packages = with pkgs; [ obsidian ];
 }
-
-

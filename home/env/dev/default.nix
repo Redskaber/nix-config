@@ -11,8 +11,14 @@
 #
 # dev.<lang> == dev.<lang>.default
 
-
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
 
   # (readonly)
   default = {
@@ -33,8 +39,8 @@
       dev.typescript
       dev.zig
     ];
-    buildInputs = with shared.upkgs; [];
-    nativeBuildInputs = with shared.pkgs; [];
+    buildInputs = with shared.upkgs; [ ];
+    nativeBuildInputs = with shared.pkgs; [ ];
     preInputsHook = ''
       echo "[preInputsHook]: default shell!"
     '';
@@ -57,8 +63,8 @@
       dev.cpp
       dev.python
     ];
-    buildInputs = with shared.upkgs; [];
-    nativeBuildInputs = with shared.pkgs; [];
+    buildInputs = with shared.upkgs; [ ];
+    nativeBuildInputs = with shared.pkgs; [ ];
     preInputsHook = ''
       echo "[preInputsHook]: cpython shell!"
     '';
@@ -105,7 +111,11 @@
       dev.asm
       dev.c
     ];
-    buildInputs = with shared.upkgs; [ zsh qemu_full just ];
+    buildInputs = with shared.upkgs; [
+      zsh
+      qemu_full
+      just
+    ];
     nativeBuildInputs = with shared.pkgs; [ ];
 
     preInputsHook = ''
@@ -156,5 +166,3 @@
     '';
   };
 }
-
-

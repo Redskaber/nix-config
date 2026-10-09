@@ -9,17 +9,24 @@
 # - default   : (readonly   , global, default   ): Minimal Zig toolchain + essential dev utilities
 # - <variant> : (custom     , custom, optional  ): Version-specific or feature-rich configurations
 
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
     # === Core Toolchain ===
     buildInputs = with shared.upkgs; [
-      zig             # Zig compiler (nixpkgs stable, usually the latest LTS)
-      zls             # Zig Language Server (Official LSP, IDE Smart Support)
+      zig # Zig compiler (nixpkgs stable, usually the latest LTS)
+      zls # Zig Language Server (Official LSP, IDE Smart Support)
     ];
 
     nativeBuildInputs = with shared.pkgs; [
-      pkg-config      # C library dependency discovery (required when Zig calls C code)
+      pkg-config # C library dependency discovery (required when Zig calls C code)
     ];
 
     preInputsHook = ''
@@ -38,5 +45,3 @@
     '';
   };
 }
-
-

@@ -4,21 +4,19 @@
 # @description: home::wm::niri::theme::satty
 # - edit screenshot and label tag
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
-    satty  # 截图编辑
-    grim   # 截图后端
-    slurp  # 区域选择
+    satty # 截图编辑
+    grim # 截图后端
+    slurp # 区域选择
   ];
 
 }
-
-

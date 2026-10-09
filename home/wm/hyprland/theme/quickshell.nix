@@ -6,32 +6,33 @@
 # - qml
 # - or used ags (unrecommend)
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 let
-  quickResult = shared.orc.mergeHomeFiles (
-    shared.orc.listFilesRecursive inputs.quickshell-config ""
-  ) [
-    { include = [ "qml_color.json" ];
-      emitter = "copy";
-      destPrefix = ".config/quickshell"; }
-  ];
+  quickResult =
+    shared.orc.mergeHomeFiles (shared.orc.listFilesRecursive inputs.quickshell-config "")
+      [
+        {
+          include = [ "qml_color.json" ];
+          emitter = "copy";
+          destPrefix = ".config/quickshell";
+        }
+      ];
 in
 {
   home.packages = with pkgs; [ quickshell ];
 
   xdg.configFile."quickshell" = {
-    source = inputs.quickshell-config;    # abs path
-    recursive = true;                     # rec-link
+    source = inputs.quickshell-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
   home.activation.quickWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] quickResult.activation;
 
 }
-
-

@@ -9,17 +9,23 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
     # Core Rust toolchain (stable, from nixpkgs)
     buildInputs = with shared.upkgs; [
-      rustc                # Rust compiler
-      cargo                # Package manager & build tool
-      rustfmt              # Code formatter (RFC-compliant)
-      clippy               # Linter for best practices and correctness
-      rust-analyzer        # Official LSP server (used by VS Code, Neovim, etc.)
+      rustc # Rust compiler
+      cargo # Package manager & build tool
+      rustfmt # Code formatter (RFC-compliant)
+      clippy # Linter for best practices and correctness
+      rust-analyzer # Official LSP server (used by VS Code, Neovim, etc.)
       # Optional debugging tools:
       # lldb              # LLVM debugger (lightweight alternative to gdb)
       # gdb               # GNU debugger (for advanced debugging)
@@ -49,5 +55,3 @@
     '';
   };
 }
-
-

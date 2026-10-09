@@ -8,20 +8,26 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
 
   # base attrset
   default = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
-      nix                        # Core runtime (with flakes, experimental features)
-      nixfmt                     # Formatter(RFC 109): Officially endorsed formatter
-      statix                     # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
-      alejandra                  # Format specifications
-      deadnix                    # Dead-code-eliminayion: Removes unused definitions
-      nil                        # Language-Server-Protocol: Fast, official LSP by NixOS team (supports flakes, overlays, etc.)
-      nvd                        # Nix/NixOS package version diff tool
+      nix # Core runtime (with flakes, experimental features)
+      nixfmt # Formatter(RFC 109): Officially endorsed formatter
+      statix # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
+      alejandra # Format specifications
+      deadnix # Dead-code-eliminayion: Removes unused definitions
+      nil # Language-Server-Protocol: Fast, official LSP by NixOS team (supports flakes, overlays, etc.)
+      nvd # Nix/NixOS package version diff tool
 
       # Optional but useful:
       # nix-output-monitor       # Visualize build outputs (great for CI/debugging)
@@ -50,15 +56,15 @@
   nonfmt = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
-      nix                        # Core runtime (with flakes, experimental features)
-      statix                     # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
-      deadnix                    # Dead-code-eliminayion: Removes unused definitions
-      nil                        # Language-Server-Protocol: Fast, official LSP by NixOS team (supports flakes, overlays, etc.)
-      nvd                        # Nix/NixOS package version diff tool
+      nix # Core runtime (with flakes, experimental features)
+      statix # Linter(static analysis): Detects anti-patterns, unused bindings, etc.
+      deadnix # Dead-code-eliminayion: Removes unused definitions
+      nil # Language-Server-Protocol: Fast, official LSP by NixOS team (supports flakes, overlays, etc.)
+      nvd # Nix/NixOS package version diff tool
 
       # Optional but useful:
       # nix-output-monitor       # Visualize build outputs (great for CI/debugging)
-      nix-tree                   # Explore closure dependencies interactively
+      nix-tree # Explore closure dependencies interactively
     ];
 
     nativeBuildInputs = with shared.pkgs; [
@@ -80,7 +86,6 @@
 
   };
 
-
   derivation-free-security = {
     shell = shared.user.shell.tag;
     combinFrom = [
@@ -89,7 +94,7 @@
 
     # extras
     buildInputs = with shared.upkgs; [
-      vulnix                            # NixOS vulnerability scanner
+      vulnix # NixOS vulnerability scanner
     ];
 
     preInputsHook = ''

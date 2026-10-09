@@ -8,22 +8,29 @@
 # - default   : (readonly   , global, default   ): minimal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
 
     buildInputs = with shared.upkgs; [
       # core common lisp runtime
-      sbcl                      # primary common lisp implementation
+      sbcl # primary common lisp implementation
 
       # repl / interaction
-      rlwrap                    # better repl line editing/history
-      clinfo                    # common lisp implementation info (optional utility)
+      rlwrap # better repl line editing/history
+      clinfo # common lisp implementation info (optional utility)
 
       # build / integration helpers
-      pkg-config                # for ffi/native deps discovery
-      gcc                       # fallback native toolchain for ffi / compiled deps
-      gnumake                   # build helper for native deps
+      pkg-config # for ffi/native deps discovery
+      gcc # fallback native toolchain for ffi / compiled deps
+      gnumake # build helper for native deps
     ];
 
     nativeBuildInputs = with shared.pkgs; [
@@ -62,5 +69,3 @@
     '';
   };
 }
-
-

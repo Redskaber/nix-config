@@ -3,17 +3,15 @@
 # @datetime: 2026-05-05
 # @description: home::core::exp::sys::ai::kiro-cli
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [ kiro-cli ];
 
-
 }
-
-

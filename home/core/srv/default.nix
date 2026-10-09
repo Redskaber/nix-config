@@ -3,13 +3,13 @@
 # @datetime: 2026-05-05
 # @description: home::core::srv::default
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -19,7 +19,4 @@
     ./security
   ];
 
-
 }
-
-

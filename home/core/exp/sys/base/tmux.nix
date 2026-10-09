@@ -4,26 +4,24 @@
 # @description: home::core::exp::sys::base::tmux
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.tmux.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   programs.tmux.enable = true;
 
   # Used user config:
   xdg.configFile."tmux" = {
-    source = inputs.tmux-config;   # abs path
-    recursive = true;              # rec-link
+    source = inputs.tmux-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
 
   # Put tx on PATH for ALL shells (zsh, fish, bash) — the Nix side's job
   home.sessionPath = [ "${config.xdg.configHome}/tmux/bin" ];
 }
-
-

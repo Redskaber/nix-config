@@ -1,22 +1,21 @@
-# @path: ~/projects/configs/nix-config/home/core/sys/htop.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/sys/monitor/htop.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @description: home::core::sys:htop
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.htop.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   programs.htop = {
     enable = true;
-    settings =
-    {
+    settings = {
       color_scheme = 6;
       cpu_count_from_one = 0;
       delay = 15;
@@ -37,22 +36,25 @@
       highlight_base_name = 1;
       highlight_megabytes = 1;
       highlight_threads = 1;
-    } // (with config.lib.htop;
+    }
+    // (
+      with config.lib.htop;
       leftMeters [
         (bar "AllCPUs2")
         (bar "Memory")
         (bar "Swap")
         (text "Zram")
-    ]) // (with config.lib.htop;
+      ]
+    )
+    // (
+      with config.lib.htop;
       rightMeters [
         (text "Tasks")
         (text "LoadAverage")
         (text "Uptime")
         (text "Systemd")
-    ]);
+      ]
+    );
   };
 
-
 }
-
-

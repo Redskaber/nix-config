@@ -6,12 +6,13 @@
 # Design: uses shared.tools.nix-types match on shared.version for exhaustiveness.
 # Adding a new version variant forces explicit handling here (no silent else).
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = (shared.tools.nix-types.match shared.version) {

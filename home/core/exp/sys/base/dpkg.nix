@@ -4,17 +4,15 @@
 # @diractory: home::core::exp::sys::base::dpkg
 # - https://nix-community.github.io/home/options.xhtml#opt-programs.eza.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
   home.packages = with shared.upkgs; [ dpkg ];
 }
-
-

@@ -7,7 +7,10 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_srv_log_logrotate";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
@@ -17,16 +20,16 @@
       enable = true;
       settings = {
         header = {
-          frequency  = "daily";
-          rotate     = 7;
-          compress   = true;
-          missingok  = true;
+          frequency = "daily";
+          rotate = 7;
+          compress = true;
+          missingok = true;
           notifempty = true;
         };
         "/var/log/test.log" = {
-          frequency    = "daily";
-          rotate       = 3;
-          compress     = true;
+          frequency = "daily";
+          rotate = 3;
+          compress = true;
           copytruncate = true;
         };
       };

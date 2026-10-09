@@ -1,4 +1,4 @@
-# @path: ~/projects/configs/nix-config/nixos/configuration.nix
+# @path: ~/projects/configs/nix-config/nixos/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
 # @description:
@@ -6,13 +6,13 @@
 # - Help is available in the configuration.nix(5) man page,
 # - on https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   # You can import other NixOS modules here
@@ -52,7 +52,4 @@
 
   system.stateVersion = shared.version.value.stateVersion;
 
-
 }
-
-

@@ -11,12 +11,18 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_srv_security_keyring";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
     services.gnome.gnome-keyring.enable = true;
-    environment.systemPackages = with pkgs; [ gnome-keyring libsecret ];
+    environment.systemPackages = with pkgs; [
+      gnome-keyring
+      libsecret
+    ];
   };
 
   testScript = ''

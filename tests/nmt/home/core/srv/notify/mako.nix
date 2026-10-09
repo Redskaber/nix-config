@@ -16,42 +16,49 @@
 #
 # The settings attrset is also set so the module evaluates correctly.
 
-{ inputs, shared, lib, ... }:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "mako: config file content assertions";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
-
-    services.mako = {
-      enable = true;
-      settings = {
-        font             = "JetBrainsMono Nerd Font 10";
-        border-radius    = 8;
-        default-timeout  = 5000;
-        layer            = "overlay";
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
       };
-      # extraConfig is a plain text string → always written verbatim
-      extraConfig = ''
-        # nmt-test-marker: mako config active
-      '';
-    };
-  }];
+
+      services.mako = {
+        enable = true;
+        settings = {
+          font = "JetBrainsMono Nerd Font 10";
+          border-radius = 8;
+          default-timeout = 5000;
+          layer = "overlay";
+        };
+        # extraConfig is a plain text string → always written verbatim
+        extraConfig = ''
+          # nmt-test-marker: mako config active
+        '';
+      };
+    }
+  ];
 
   tests = {
     "mako: config file generated" = {
-      path   = ".config/mako/config";
+      path = ".config/mako/config";
       exists = true;
     };
 
     # extraConfig is plain text — always present regardless of scrubbing
     "mako: extraConfig marker present" = {
-      path     = ".config/mako/config";
+      path = ".config/mako/config";
       contains = [ "nmt-test-marker" ];
     };
   };

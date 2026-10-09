@@ -51,16 +51,17 @@
 # | PostgreSQL pg_hba.conf          | 明文或 SCRAM            | `postgres` 命令       |
 #
 
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   imports = [
-    inputs.sops-nix.nixosModules.sops                                     # import sops-nix
+    inputs.sops-nix.nixosModules.sops # import sops-nix
     ./cmd/age.nix
     ./cmd/sops.nix
     ./cmd/ssh-to-age.nix
@@ -70,69 +71,82 @@
   sops = {
     age = {
       generateKey = true;
-      keyFile     = "/home/${shared.user.username}/.config/sops/age/keys.txt";  # age publish key file position 600
+      keyFile = "/home/${shared.user.username}/.config/sops/age/keys.txt"; # age publish key file position 600
       sshKeyPaths = shared.secrets.sshKeyPaths;
     };
     secrets = {
       ${shared.secrets.nixos.core.base.user.password} = {
-        neededForUsers = true;                                            # user create before execute
-        format    = "yaml";
-        sopsFile  = shared.sopsFile shared.secrets.nixos.core.base.user.password;
-        mode      = shared.const.mode.ownerOnly; # 0400
-        owner     = config.users.users.root.name;
-        group     = config.users.users.root.group;
-        path      = shared.sopsUserPath shared.secrets.nixos.core.base.user.password;
+        neededForUsers = true; # user create before execute
+        format = "yaml";
+        sopsFile = shared.sopsFile shared.secrets.nixos.core.base.user.password;
+        mode = shared.const.mode.ownerOnly; # 0400
+        owner = config.users.users.root.name;
+        group = config.users.users.root.group;
+        path = shared.sopsUserPath shared.secrets.nixos.core.base.user.password;
       };
       ${shared.secrets.nixos.core.base.nix.user.github.access-token} = {
-        format    = "yaml";
-        sopsFile  = shared.sopsFile shared.secrets.nixos.core.base.nix.user.github.access-token;
-        mode      = shared.const.mode.ownerOnly;
-        owner     = config.users.users.${shared.user.username}.name;
-        group     = config.users.users.${shared.user.username}.group;
-        path      = shared.sopsPath shared.secrets.nixos.core.base.nix.user.github.access-token;
+        format = "yaml";
+        sopsFile = shared.sopsFile shared.secrets.nixos.core.base.nix.user.github.access-token;
+        mode = shared.const.mode.ownerOnly;
+        owner = config.users.users.${shared.user.username}.name;
+        group = config.users.users.${shared.user.username}.group;
+        path = shared.sopsPath shared.secrets.nixos.core.base.nix.user.github.access-token;
       };
-      ${shared.secrets.nixos.core.srv.db.mongodb.user.password} = {
-        format    = "yaml";
-        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.mongodb.user.password;
-        mode      = shared.const.mode.ownerOnly;
-        owner     = config.users.users.mongodb.name;
-        group     = config.users.users.mongodb.group;
-        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.mongodb.user.password;
-      };
-      ${shared.secrets.nixos.core.srv.db.mysql.root.password} = {
-        format    = "yaml";
-        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.mysql.root.password;
-        mode      = shared.const.mode.ownerOnly;
-        owner     = config.users.users.root.name;
-        group     = config.users.users.root.group;
-        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.mysql.root.password;
-      };
-      ${shared.secrets.nixos.core.srv.db.mysql.user.password} = {
-        format    = "yaml";
-        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.mysql.user.password;
-        mode      = shared.const.mode.groupRead; # 0440
-        owner     = config.users.users.root.name;
-        group     = config.users.users.mysql.group;
-        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.mysql.user.password;
-      };
-      ${shared.secrets.nixos.core.srv.db.postgresql.user.password} = {
-        format    = "yaml";
-        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.postgresql.user.password;
-        mode      = shared.const.mode.groupRead;
-        owner     = config.users.users.root.name;
-        group     = config.users.users.postgres.group;
-        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.postgresql.user.password;
-      };
-      ${shared.secrets.nixos.core.srv.db.redis.user.password} = {
-        format    = "yaml";
-        sopsFile  = shared.sopsFile shared.secrets.nixos.core.srv.db.redis.user.password;
-        mode      = shared.const.mode.groupRead;
-        owner     = config.users.users.root.name;
-        group     = config.users.users."redis-${shared.user.username}".group;
-        path      = shared.sopsPath shared.secrets.nixos.core.srv.db.redis.user.password;
-      };
+      # db service secrets are gated on their service-profile install flag
+      # and reference users/group by LITERAL name: `config.users.users.<db>`
+      # would force-instantiate the (incomplete) user on hosts that do not
+      # install the service — found by the second-machine evaluation of the
+      # server-pg-only profile (multi-host dividend, T2.5).
+      ${shared.secrets.nixos.core.srv.db.mongodb.user.password} =
+        lib.mkIf shared.services.db.mongodb.install
+          {
+            format = "yaml";
+            sopsFile = shared.sopsFile shared.secrets.nixos.core.srv.db.mongodb.user.password;
+            mode = shared.const.mode.ownerOnly;
+            owner = "mongodb";
+            group = "mongodb";
+            path = shared.sopsPath shared.secrets.nixos.core.srv.db.mongodb.user.password;
+          };
+      ${shared.secrets.nixos.core.srv.db.mysql.root.password} =
+        lib.mkIf shared.services.db.mysql.install
+          {
+            format = "yaml";
+            sopsFile = shared.sopsFile shared.secrets.nixos.core.srv.db.mysql.root.password;
+            mode = shared.const.mode.ownerOnly;
+            owner = config.users.users.root.name;
+            group = config.users.users.root.group;
+            path = shared.sopsPath shared.secrets.nixos.core.srv.db.mysql.root.password;
+          };
+      ${shared.secrets.nixos.core.srv.db.mysql.user.password} =
+        lib.mkIf shared.services.db.mysql.install
+          {
+            format = "yaml";
+            sopsFile = shared.sopsFile shared.secrets.nixos.core.srv.db.mysql.user.password;
+            mode = shared.const.mode.groupRead; # 0440
+            owner = config.users.users.root.name;
+            group = "mysql";
+            path = shared.sopsPath shared.secrets.nixos.core.srv.db.mysql.user.password;
+          };
+      ${shared.secrets.nixos.core.srv.db.postgresql.user.password} =
+        lib.mkIf shared.services.db.postgresql.install
+          {
+            format = "yaml";
+            sopsFile = shared.sopsFile shared.secrets.nixos.core.srv.db.postgresql.user.password;
+            mode = shared.const.mode.groupRead;
+            owner = config.users.users.root.name;
+            group = "postgres";
+            path = shared.sopsPath shared.secrets.nixos.core.srv.db.postgresql.user.password;
+          };
+      ${shared.secrets.nixos.core.srv.db.redis.user.password} =
+        lib.mkIf shared.services.db.redis.install
+          {
+            format = "yaml";
+            sopsFile = shared.sopsFile shared.secrets.nixos.core.srv.db.redis.user.password;
+            mode = shared.const.mode.groupRead;
+            owner = config.users.users.root.name;
+            group = "redis-${shared.user.username}";
+            path = shared.sopsPath shared.secrets.nixos.core.srv.db.redis.user.password;
+          };
     };
   };
 }
-
-

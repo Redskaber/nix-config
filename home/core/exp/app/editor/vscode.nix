@@ -3,13 +3,13 @@
 # @datetime: 2025-12-12
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.vscode.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 # let
 #   vscode-no-sandbox = pkgs.writeShellScriptBin "code" ''
@@ -24,11 +24,8 @@
   # Used user config:
   xdg.configFile."Code/User" = {
     source = inputs.vscode-config; # abs path
-    recursive = true;              # rec-link
+    recursive = true; # rec-link
     force = true;
   };
 
 }
-
-
-

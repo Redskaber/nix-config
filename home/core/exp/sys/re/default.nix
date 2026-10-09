@@ -3,13 +3,13 @@
 # @datetime: 2026-05-05
 # @diractory: home::core::exp::sys::re::default
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [
@@ -17,5 +17,3 @@
   ];
 
 }
-
-

@@ -4,12 +4,13 @@
 # @description: nixos::core::exp::clash-verge
 # - google-chrome-stable --proxy-server=127.0.0.1:7897
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -22,7 +23,4 @@
     package = pkgs.clash-verge-rev;
   };
 
-
 }
-
-

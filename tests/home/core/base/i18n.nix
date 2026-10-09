@@ -14,16 +14,22 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_base_i18n";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 768;
 
     i18n = {
-      defaultLocale    = "en_US.UTF-8";
-      extraLocales     = [ "en_US.UTF-8/UTF-8" "zh_CN.UTF-8/UTF-8" ];
+      defaultLocale = "en_US.UTF-8";
+      extraLocales = [
+        "en_US.UTF-8/UTF-8"
+        "zh_CN.UTF-8/UTF-8"
+      ];
       inputMethod = {
-        type   = "fcitx5";
+        type = "fcitx5";
         enable = true;
         fcitx5.addons = with pkgs; [
           qt6Packages.fcitx5-chinese-addons
@@ -32,7 +38,7 @@
     };
 
     users.users.hmtest = {
-      isNormalUser    = true;
+      isNormalUser = true;
       initialPassword = "test";
     };
   };

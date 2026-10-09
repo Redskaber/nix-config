@@ -3,12 +3,13 @@
 # @datetime: 2026-05-22
 # @description: home::core::exp::app::reader::default
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -19,5 +20,3 @@
   ];
 
 }
-
-

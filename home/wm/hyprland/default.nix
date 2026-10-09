@@ -34,24 +34,26 @@
 # - wl-clip-persist : Keep Wayland clipboard even after programs close
 # - swayosd (option): GTK based on screen display for keyboard shortcuts
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 let
-  hyprResult = shared.orc.mergeHomeFiles (
-    shared.orc.listFilesRecursive inputs.hypr-config ""
-  ) [
-    { include = [ "sys/policy/wallust/wallust-hyprland.lua" ];
+  hyprResult = shared.orc.mergeHomeFiles (shared.orc.listFilesRecursive inputs.hypr-config "") [
+    {
+      include = [ "sys/policy/wallust/wallust-hyprland.lua" ];
       emitter = "copy";
-      destPrefix = ".config/hypr"; }
-    { include = [ ".deps_cache.sh" ];
+      destPrefix = ".config/hypr";
+    }
+    {
+      include = [ ".deps_cache.sh" ];
       emitter = "copy";
-      destPrefix = ".config/hypr"; }
+      destPrefix = ".config/hypr";
+    }
   ];
 in
 {
@@ -81,33 +83,35 @@ in
   ];
 
   # hyprland through system enable
-  wayland.windowManager.hyprland = let
-    inherit (shared.tools.nix-types) match;
-    hmHyprlandPkgs = {
-      package = inputs.hyprland.packages.${shared.arch.tag}.hyprland;
-      portalPackage = inputs.hyprland.packages.${shared.arch.tag}.xdg-desktop-portal-hyprland;
-    };
-  in {
-    enable = true;
-    package = match shared.platform {
-      nixos = _: null;
-      _     = _: hmHyprlandPkgs.package;
-    };
-    portalPackage = match shared.platform {
-      nixos = _: null;
-      _     = _: hmHyprlandPkgs.portalPackage;
-    };
-    xwayland.enable = true;
-    systemd = {
+  wayland.windowManager.hyprland =
+    let
+      inherit (shared.tools.nix-types) match;
+      hmHyprlandPkgs = {
+        package = inputs.hyprland.packages.${shared.arch.tag}.hyprland;
+        portalPackage = inputs.hyprland.packages.${shared.arch.tag}.xdg-desktop-portal-hyprland;
+      };
+    in
+    {
       enable = true;
-      enableXdgAutostart = true;    # auto-enable: ~/.config/autostart/
+      package = match shared.platform {
+        nixos = _: null;
+        _ = _: hmHyprlandPkgs.package;
+      };
+      portalPackage = match shared.platform {
+        nixos = _: null;
+        _ = _: hmHyprlandPkgs.portalPackage;
+      };
+      xwayland.enable = true;
+      systemd = {
+        enable = true;
+        enableXdgAutostart = true; # auto-enable: ~/.config/autostart/
+      };
     };
-  };
 
   # Used Hyprland config
   xdg.configFile."hypr" = {
-    source = inputs.hypr-config;    # abs path
-    recursive = true;               # rec-link
+    source = inputs.hypr-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
   home.activation.hyprWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] hyprResult.activation;
@@ -118,6 +122,4 @@ in
     XDG_CURRENT_DESKTOP = "Hyprland";
   };
 
-
 }
-

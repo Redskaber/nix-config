@@ -8,12 +8,13 @@
 # - ps: nvim-config is used xdg.configFile import, handle build and install path assue
 # - warining: nix-ld un-sup 32 bit app
 
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
 
@@ -30,5 +31,3 @@
   ];
 
 }
-
-

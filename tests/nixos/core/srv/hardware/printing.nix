@@ -12,7 +12,10 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_srv_hardware_printing";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;

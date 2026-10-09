@@ -4,24 +4,22 @@
 # @discription: home::wm::niri::theme::waybar
 # - this file is window status-bar
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
   home.packages = with pkgs; [ waybar ];
 
   xdg.configFile."waybar" = {
-    source = inputs.waybar-config;  # abs path
-    recursive = true;               # rec-link
+    source = inputs.waybar-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
 
 }
-
-

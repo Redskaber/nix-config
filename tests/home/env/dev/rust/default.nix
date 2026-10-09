@@ -11,11 +11,14 @@
 { pkgs, lib, ... }:
 {
   name = "home_env_dev_rust_default";
-  meta = { maintainers = [ "redskaber" ]; timeout = 600; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 600;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 2048;
-    virtualisation.diskSize   = 4096;
+    virtualisation.diskSize = 4096;
 
     environment.systemPackages = with pkgs; [
       rustc

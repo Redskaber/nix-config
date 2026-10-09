@@ -4,18 +4,15 @@
 # @description: home::core::exp::sys::ai::cursor-cli
 # terminal: cursor-agent
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [ cursor-cli ];
 
-
 }
-
-

@@ -8,20 +8,26 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
-      nodejs_24               # LTS-ish (Node 24 is current active release)
-      yarn                    # Yarn Classic or Berry
-      pnpm                    # Fast, disk-efficient package manager
+      nodejs_24 # LTS-ish (Node 24 is current active release)
+      yarn # Yarn Classic or Berry
+      pnpm # Fast, disk-efficient package manager
 
-      typescript-language-server  # LSP for JS/TS (works with Neovim/VS Code)
+      typescript-language-server # LSP for JS/TS (works with Neovim/VS Code)
 
       # Choose ONE formatting/linting stack:
       # Option A: Modern all-in-one (recommended)
-      biome                   # Lint, format, check, organize — replaces ESLint+Prettier
+      biome # Lint, format, check, organize — replaces ESLint+Prettier
       # Option B: Traditional (uncomment if needed)
       # eslint
       # prettier

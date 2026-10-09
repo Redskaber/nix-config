@@ -3,18 +3,16 @@
 # @datetime: 2026-05-14
 # @description: home::core::exp::app::model::blender
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
   home.packages = with shared.upkgs; [ blender ];
 
 }
-
-

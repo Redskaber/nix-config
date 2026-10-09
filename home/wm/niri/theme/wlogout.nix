@@ -5,24 +5,22 @@
 # - A graphical logout/shutdown menu tool designed specifically for
 #   Wayland desktop environments (such as Hyprland and Sway).
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
   home.packages = with pkgs; [ wlogout ];
 
   xdg.configFile."wlogout" = {
-    source = inputs.wlogout-config;   # abs path
-    recursive = true;                 # rec-link
+    source = inputs.wlogout-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
 
 }
-
-

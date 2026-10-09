@@ -6,12 +6,13 @@
 # - qpdf: C++ library and set of programs that inspect and manipulate the structure of PDF files
 # - ocrmypdf: Adds an OCR text layer to scanned PDF files, allowing them to be searched
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
@@ -21,6 +22,3 @@
   ];
 
 }
-
-
-

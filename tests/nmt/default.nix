@@ -71,61 +71,77 @@
 #   programs.yazi.initLua   → ~/.config/yazi/init.lua     (plain text → assertable)
 #   Only existence check for TOML files; content assertions on init.lua only.
 
-{ inputs
-, shared
-, ...
+{
+  inputs,
+  shared,
+  ...
 }:
 
 let
   pkgs = shared.pkgs;
-  lib  = pkgs.lib;
+  lib = pkgs.lib;
 
-  nmtSrc    = inputs.nmt;
-  hmPath    = inputs.home-manager;
-  hmLib     = import "${hmPath}/modules/lib/stdlib-extended.nix" pkgs.lib;
+  nmtSrc = inputs.nmt;
+  hmPath = inputs.home-manager;
+  hmLib = import "${hmPath}/modules/lib/stdlib-extended.nix" pkgs.lib;
   hmModules = import "${hmPath}/modules/modules.nix" {
-    lib   = hmLib;
-    pkgs  = pkgs;
+    lib = hmLib;
+    pkgs = pkgs;
     check = false;
   };
 
   # ── package scrubbing ─────────────────────────────────────────────────
-  scrubDerivation = _name: value:
+  scrubDerivation =
+    _name: value:
     let
       scrubbedValue = scrubDerivations value;
-      newDrvAttrs   = {
-        buildScript     = abort "no build allowed in nmt tests";
-        outPath         = "@${lib.getName value}@";
+      newDrvAttrs = {
+        buildScript = abort "no build allowed in nmt tests";
+        outPath = "@${lib.getName value}@";
         outputSpecified = true;
-        __spliced       = { buildHost = value; hostTarget = value; };
+        __spliced = {
+          buildHost = value;
+          hostTarget = value;
+        };
       };
     in
-      if lib.isAttrs value
-      then (if lib.isDerivation value then scrubbedValue // newDrvAttrs else scrubbedValue)
-      else value;
+    if lib.isAttrs value then
+      (if lib.isDerivation value then scrubbedValue // newDrvAttrs else scrubbedValue)
+    else
+      value;
 
   scrubDerivations = lib.mapAttrs scrubDerivation;
 
   # Real packages kept for activation/assertion scripts.
   whitelist = _self: _super: {
     inherit (pkgs)
-      coreutils diffutils findutils gnugrep gnused
-      gettext glibcLocales
-      babelfish fish          # fish: hm-session-vars.fish needs real babelfish
-      delta nix-direnv;      # delta: wrapper binary; nix-direnv: source path
+      coreutils
+      diffutils
+      findutils
+      gnugrep
+      gnused
+      gettext
+      glibcLocales
+      babelfish
+      fish # fish: hm-session-vars.fish needs real babelfish
+      delta
+      nix-direnv
+      ; # delta: wrapper binary; nix-direnv: source path
   };
 
   scrubbedPkgs =
-    let raw = lib.makeExtensible (_: scrubDerivations pkgs);
-    in raw.extend whitelist;
+    let
+      raw = lib.makeExtensible (_: scrubDerivations pkgs);
+    in
+    raw.extend whitelist;
 
   # ── base module ───────────────────────────────────────────────────────
   baseModule = {
-    _module.args.pkgs  = lib.mkForce scrubbedPkgs;
-    xdg.enable             = lib.mkDefault true;  # use ~/.config/<xxx>
-    home.username          = lib.mkDefault "testuser";
-    home.homeDirectory     = lib.mkDefault "/home/testuser";
-    home.stateVersion      = lib.mkDefault "${shared.version.value.stateVersion}";
+    _module.args.pkgs = lib.mkForce scrubbedPkgs;
+    xdg.enable = lib.mkDefault true; # use ~/.config/<xxx>
+    home.username = lib.mkDefault "testuser";
+    home.homeDirectory = lib.mkDefault "/home/testuser";
+    home.stateVersion = lib.mkDefault "${shared.version.value.stateVersion}";
     manual.manpages.enable = lib.mkDefault false;
   };
 
@@ -139,83 +155,96 @@ let
   #     contains ? [];      → assertFileContains  (fixed-string; NO "-" prefix!)
   #     regex    ? null;    → assertFileRegex     (ERE; NO "-" prefix!)
   #   }
-  buildHomeManagerTest = testSpec:
+  buildHomeManagerTest =
+    testSpec:
     let
-      mkScript = _name: t:
+      mkScript =
+        _name: t:
         let
-          existsLine =
-            if t ? exists && t.exists
-            then ''assertFileExists "home-files/${t.path}"''
-            else "";
+          existsLine = if t ? exists && t.exists then ''assertFileExists "home-files/${t.path}"'' else "";
 
-          absentLine =
-            if t ? absent && t.absent
-            then ''assertPathNotExists "home-files/${t.path}"''
-            else "";
+          absentLine = if t ? absent && t.absent then ''assertPathNotExists "home-files/${t.path}"'' else "";
 
           containsLines =
-            if t ? contains
-            then lib.concatMapStringsSep "\n"
-              (needle: ''assertFileContains "home-files/${t.path}" ${lib.escapeShellArg needle}'')
-              t.contains
-            else "";
+            if t ? contains then
+              lib.concatMapStringsSep "\n" (
+                needle: ''assertFileContains "home-files/${t.path}" ${lib.escapeShellArg needle}''
+              ) t.contains
+            else
+              "";
 
           regexLine =
-            if t ? regex && t.regex != null
-            then ''assertFileRegex "home-files/${t.path}" ${lib.escapeShellArg t.regex}''
-            else "";
+            if t ? regex && t.regex != null then
+              ''assertFileRegex "home-files/${t.path}" ${lib.escapeShellArg t.regex}''
+            else
+              "";
         in
-          lib.concatStringsSep "\n"
-            (lib.filter (s: s != "") [ existsLine absentLine containsLines regexLine ]);
+        lib.concatStringsSep "\n" (
+          lib.filter (s: s != "") [
+            existsLine
+            absentLine
+            containsLines
+            regexLine
+          ]
+        );
 
-      fullScript = lib.concatStringsSep "\n\n"
-        (lib.mapAttrsToList mkScript testSpec.tests);
+      fullScript = lib.concatStringsSep "\n\n" (lib.mapAttrsToList mkScript testSpec.tests);
 
       nmtTestModule = {
         nmt.description = testSpec.description or "";
-        nmt.script      = fullScript;
+        nmt.script = fullScript;
       };
 
       result = import nmtSrc {
         inherit pkgs;
-        lib            = hmLib;
-        modules        = hmModules ++ [ baseModule ] ++ (testSpec.modules or []);
-        testedAttrPath = [ "home" "activationPackage" ];
-        tests          = {
+        lib = hmLib;
+        modules = hmModules ++ [ baseModule ] ++ (testSpec.modules or [ ]);
+        testedAttrPath = [
+          "home"
+          "activationPackage"
+        ];
+        tests = {
           ${testSpec.description or "test"} = nmtTestModule;
         };
       };
     in
-      result.build.${testSpec.description or "test"};
+    result.build.${testSpec.description or "test"};
 
-  libWithNmt = lib.extend (_: _: {
-    nmt.buildHomeManagerTest = buildHomeManagerTest;
-  });
+  libWithNmt = lib.extend (
+    _: _: {
+      nmt.buildHomeManagerTest = buildHomeManagerTest;
+    }
+  );
 
-  buildTest = path: import path { inherit inputs shared; lib = libWithNmt; };
+  buildTest =
+    path:
+    import path {
+      inherit inputs shared;
+      lib = libWithNmt;
+    };
 
 in
 {
   # ── core/exp/app/edito ───────────────────────────────────────────────
-  nmt_home_core_exp_app_editor_nvim   = buildTest ./home/core/exp/app/editor/nvim.nix;
+  nmt_home_core_exp_app_editor_nvim = buildTest ./home/core/exp/app/editor/nvim.nix;
 
   # ── core/exp/sys/base ────────────────────────────────────────────────
-  nmt_home_core_exp_sys_base_atuin    = buildTest ./home/core/exp/sys/base/atuin.nix;
-  nmt_home_core_exp_sys_base_bat      = buildTest ./home/core/exp/sys/base/bat.nix;
-  nmt_home_core_exp_sys_base_direnv   = buildTest ./home/core/exp/sys/base/direnv.nix;
-  nmt_home_core_exp_sys_base_fd       = buildTest ./home/core/exp/sys/base/fd.nix;
-  nmt_home_core_exp_sys_base_fzf      = buildTest ./home/core/exp/sys/base/fzf.nix;
-  nmt_home_core_exp_sys_base_git      = buildTest ./home/core/exp/sys/base/git.nix;
+  nmt_home_core_exp_sys_base_atuin = buildTest ./home/core/exp/sys/base/atuin.nix;
+  nmt_home_core_exp_sys_base_bat = buildTest ./home/core/exp/sys/base/bat.nix;
+  nmt_home_core_exp_sys_base_direnv = buildTest ./home/core/exp/sys/base/direnv.nix;
+  nmt_home_core_exp_sys_base_fd = buildTest ./home/core/exp/sys/base/fd.nix;
+  nmt_home_core_exp_sys_base_fzf = buildTest ./home/core/exp/sys/base/fzf.nix;
+  nmt_home_core_exp_sys_base_git = buildTest ./home/core/exp/sys/base/git.nix;
   nmt_home_core_exp_sys_base_starship = buildTest ./home/core/exp/sys/base/starship.nix;
-  nmt_home_core_exp_sys_base_tmux     = buildTest ./home/core/exp/sys/base/tmux.nix;
-  nmt_home_core_exp_sys_base_yazi     = buildTest ./home/core/exp/sys/base/yazi.nix;
-  nmt_home_core_exp_sys_base_zoxide   = buildTest ./home/core/exp/sys/base/zoxide.nix;
+  nmt_home_core_exp_sys_base_tmux = buildTest ./home/core/exp/sys/base/tmux.nix;
+  nmt_home_core_exp_sys_base_yazi = buildTest ./home/core/exp/sys/base/yazi.nix;
+  nmt_home_core_exp_sys_base_zoxide = buildTest ./home/core/exp/sys/base/zoxide.nix;
 
   # ── core/exp/sys/shell ───────────────────────────────────────────────
-  nmt_home_core_exp_sys_shell_fish    = buildTest ./home/core/exp/sys/shell/fish.nix;
-  nmt_home_core_exp_sys_shell_zsh     = buildTest ./home/core/exp/sys/shell/zsh.nix;
+  nmt_home_core_exp_sys_shell_fish = buildTest ./home/core/exp/sys/shell/fish.nix;
+  nmt_home_core_exp_sys_shell_zsh = buildTest ./home/core/exp/sys/shell/zsh.nix;
 
   # ── core/srv ─────────────────────────────────────────────────────────
-  nmt_home_core_srv_security_gnupg    = buildTest ./home/core/srv/security/gnupg.nix;
-  nmt_home_core_srv_notify_mako       = buildTest ./home/core/srv/notify/mako.nix;
+  nmt_home_core_srv_security_gnupg = buildTest ./home/core/srv/security/gnupg.nix;
+  nmt_home_core_srv_notify_mako = buildTest ./home/core/srv/notify/mako.nix;
 }

@@ -735,6 +735,23 @@
         "type": "github"
       }
     },
+    "nix-darwin": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783744694,
+        "narHash": "sha256-2cp6N3rrwnGYLTx9l6N+NI+kwrCWxvJUbj5WJhvB29A=",
+        "type": "tarball",
+        "url": "https://github.com/LnL7/nix-darwin/archive/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://github.com/LnL7/nix-darwin/archive/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74.tar.gz"
+      }
+    },
     "nix-types": {
       "locked": {
         "lastModified": 1786354024,
@@ -1034,6 +1051,7 @@
         "kitty-config": "kitty-config",
         "mpv-config": "mpv-config",
         "niri-config": "niri-config",
+        "nix-darwin": "nix-darwin",
         "nix-types": "nix-types",
         "nixgl": "nixgl",
         "nixpkgs": "nixpkgs_3",

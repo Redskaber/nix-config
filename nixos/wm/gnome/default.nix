@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::wm::gnome
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   # Enable Gnome
@@ -17,5 +17,3 @@
   # services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 }
-
-

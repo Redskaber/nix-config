@@ -4,15 +4,15 @@
 # @description: home::wm::niri::default
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml
 # - niri user custom configurations
-# TODO: waiting workspace custom design
+# NOTE(roadmap): workspace bindings await a custom design pass
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [
@@ -21,13 +21,13 @@
 
   home.packages = with pkgs; [
     # alacritty     # niri default terminal
-    kitty           # terminal
-    fuzzel          # niri default app nemu
+    kitty # terminal
+    fuzzel # niri default app nemu
     # swaylock      # niri default window lock, this used swaylock-effetcs
-    orca            # niri default window reader
-    brightnessctl   # niri default light-changer
+    orca # niri default window reader
+    brightnessctl # niri default light-changer
 
-   (shared.version.value.swww pkgs)
+    (shared.version.value.swww pkgs)
     swaybg
     yad
     hyprpicker
@@ -42,8 +42,8 @@
 
   # Used niri config
   xdg.configFile."niri" = {
-    source = inputs.niri-config;    # abs path
-    recursive = true;               # rec-link
+    source = inputs.niri-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
 
@@ -53,7 +53,4 @@
     XDG_CURRENT_DESKTOP = "niri";
   };
 
-
 }
-
-

@@ -4,13 +4,13 @@
 # @description: home::core::exp::sys::base::zoxide
 # @diractory: https://nix-community.github.io/home/options.xhtml#opt-programs.zoxide.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -20,5 +20,3 @@
     # options = [ "--no-cmd" ];
   };
 }
-
-

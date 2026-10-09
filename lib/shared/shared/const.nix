@@ -13,35 +13,35 @@
   # Nix store secrets runtime mount points (sops-nix convention)
   secrets = {
     # Secrets store Base path from project
-    chipr         = "secrets/chipr";
+    chipr = "secrets/chipr";
     # Secrets available before user creation (neededForUsers = true)
-    forUsersPath  = "/run/secrets-for-users";
+    forUsersPath = "/run/secrets-for-users";
     # Standard runtime secrets path
-    runtimePath   = "/run/secrets";
+    runtimePath = "/run/secrets";
   };
 
   # Default file permission modes (octal strings, as used by sops-nix)
   mode = {
-    ownerOnly  = "0400";   # r--------  owner read-only
-    groupRead  = "0440";   # r--r-----  owner+group read
-    ownerWrite = "0600";   # rw-------  owner read-write
+    ownerOnly = "0400"; # r--------  owner read-only
+    groupRead = "0440"; # r--r-----  owner+group read
+    ownerWrite = "0600"; # rw-------  owner read-write
   };
 
   # XDG base directory names (relative, not absolute paths)
   xdg = {
     config = ".config";
-    data   = ".local/share";
-    state  = ".local/state";
-    cache  = ".cache";
+    data = ".local/share";
+    state = ".local/state";
+    cache = ".cache";
     userDirs = {
-      desktop     = "Desktop";
-      documents   = "Documents";
-      download    = "Downloads";
-      music       = "Music";
-      pictures    = "Pictures";
+      desktop = "Desktop";
+      documents = "Documents";
+      download = "Downloads";
+      music = "Music";
+      pictures = "Pictures";
       publicShare = "Public";
-      templates   = "Templates";
-      videos      = "Videos";
+      templates = "Templates";
+      videos = "Videos";
     };
   };
 }

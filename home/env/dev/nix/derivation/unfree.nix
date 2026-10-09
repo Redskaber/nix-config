@@ -8,8 +8,13 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  ...
+}:
+{
 
   # === 闭源/专有软件构建环境 ===
   # 专注：二进制封装、许可证合规、非自由依赖处理、安全交付
@@ -17,15 +22,15 @@
     shell = "zsh";
     buildInputs = with shared.upkgs; [
       nix
-      patchelf                     # ELF 二进制重定向（关键！修复 RPATH/interpreter）
-      chrpath                      # 修改二进制 RPATH（轻量替代 patchelf）
-      makeself                     # 创建自解压安装包（.run 格式）
-      appimage-run                 # 运行 AppImage 时支持
-      fpm                          # 多格式包转换（deb/rpm等）
-      hawkeye                      # 依赖许可证扫描（合规审计）
-      jq                           # 许可证元数据处理
-      gnupg                        # 签名/验证（交付物完整性）
-      sbomnix                      # 生成 SPDX SBOM（软件物料清单）
+      patchelf # ELF 二进制重定向（关键！修复 RPATH/interpreter）
+      chrpath # 修改二进制 RPATH（轻量替代 patchelf）
+      makeself # 创建自解压安装包（.run 格式）
+      appimage-run # 运行 AppImage 时支持
+      fpm # 多格式包转换（deb/rpm等）
+      hawkeye # 依赖许可证扫描（合规审计）
+      jq # 许可证元数据处理
+      gnupg # 签名/验证（交付物完整性）
+      sbomnix # 生成 SPDX SBOM（软件物料清单）
     ];
 
     preInputsHook = ''
@@ -69,5 +74,3 @@
   };
 
 }
-
-

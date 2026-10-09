@@ -9,13 +9,16 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_sec_pam";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
     security.sudo.enable = true;
     users.users.pamtest = {
-      isNormalUser    = true;
+      isNormalUser = true;
       initialPassword = "testpam";
     };
   };

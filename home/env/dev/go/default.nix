@@ -7,21 +7,28 @@
 # - default   : (readonly, global, default): Minimal base env with proxy resilience
 # - <variant> : (custom, custom, optional): Project-specific overrides
 
-{ pkgs, inputs, shared, dev,... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
-    shell = shared.user.shell.tag; 
+    shell = shared.user.shell.tag;
     # 🌐 core toolchain（Go 1.22+ ）
     buildInputs = with shared.upkgs; [
       go
-      gopls                       # 官方 LSP（2026 已深度集成 generics 支持）
-      delve                       # 调试器（支持 generics 断点）
-      go-tools                    # 静态分析（含 generics 检查）
-      golangci-lint               # 聚合 linter（预配置 modern 规则集）
-      gofumpt                     # 严格格式化（比 gofmt 更符合 2026 社区规范）
-      gotests                     # 智能测试生成
-      gomodifytags                # Struct tags 管理
-      impl                        # 接口实现生成
-      richgo                      # 彩色测试输出（提升可读性）
+      gopls # 官方 LSP（2026 已深度集成 generics 支持）
+      delve # 调试器（支持 generics 断点）
+      go-tools # 静态分析（含 generics 检查）
+      golangci-lint # 聚合 linter（预配置 modern 规则集）
+      gofumpt # 严格格式化（比 gofmt 更符合 2026 社区规范）
+      gotests # 智能测试生成
+      gomodifytags # Struct tags 管理
+      impl # 接口实现生成
+      richgo # 彩色测试输出（提升可读性）
     ];
 
     preInputsHook = ''
@@ -57,7 +64,4 @@
 
   };
 
-
 }
-
-

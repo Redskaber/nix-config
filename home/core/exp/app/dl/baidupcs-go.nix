@@ -4,17 +4,15 @@
 # @description: home::core::app::dl::baidupcs-go
 # - baidu-networkdisk => upkgs
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [ baidupcs-go ];
 
 }
-
-

@@ -18,22 +18,25 @@ let
 in
 {
   name = "nixos_core_srv_db_postgresql";
-  meta = { maintainers = [ "redskaber" ]; timeout = 300; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 300;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 1024;
 
     services.postgresql = {
-      enable      = true;
-      package     = pkgs.postgresql;
+      enable = true;
+      package = pkgs.postgresql;
       enableTCPIP = true;
 
       settings = {
-       listen_addresses     = lib.mkForce "127.0.0.1";
-        port                = 5432;
-        max_connections     = 64;
+        listen_addresses = lib.mkForce "127.0.0.1";
+        port = 5432;
+        max_connections = 64;
         password_encryption = "scram-sha-256";
-        shared_buffers      = "64MB";
+        shared_buffers = "64MB";
       };
 
       authentication = lib.mkOverride 10 ''
@@ -53,9 +56,11 @@ in
       ensureDatabases = [ testUser ];
       ensureUsers = [
         {
-          name              = testUser;
+          name = testUser;
           ensureDBOwnership = true;
-          ensureClauses     = { login = true; };
+          ensureClauses = {
+            login = true;
+          };
         }
       ];
     };

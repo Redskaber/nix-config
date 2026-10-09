@@ -6,17 +6,15 @@
 # - kiro-fhs: Wrapped variant of kiro which launches in a FHS compatible environment,
 #             should allow for easy usage of extensions without nix-specific patches
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [ kiro-fhs ];
 
-
 }
-
-

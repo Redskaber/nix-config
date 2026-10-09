@@ -4,16 +4,15 @@
 # @description: home::core::exp::app::re::cutter
 # use `nixpkgs-unstable.overlays.patches.cutter_patched`
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [ cutter_patched ];
 
-
 }
-

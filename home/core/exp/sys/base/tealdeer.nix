@@ -9,12 +9,13 @@
 # - TLDR shows only the most common and useful uses, making it ideal for quick daily reference.
 # - ps: tldr tar
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   programs.tealdeer = {
@@ -28,5 +29,3 @@
   };
 
 }
-
-

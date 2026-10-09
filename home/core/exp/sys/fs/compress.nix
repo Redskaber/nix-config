@@ -1,15 +1,15 @@
-# @path: ~/projects/configs/nix-config/home/core/sys/compress.nix
+# @path: ~/projects/configs/nix-config/home/core/exp/sys/fs/compress.nix
 # @author: redskaber
 # @datetime: 2025-12-12
 # @diractory: home::core::sys::compress
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -27,5 +27,3 @@
     lz4
   ];
 }
-
-

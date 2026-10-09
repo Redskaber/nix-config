@@ -14,11 +14,18 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_sec_secret_cmd_sops";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
-    environment.systemPackages = with pkgs; [ sops ssh-to-age age ];
+    environment.systemPackages = with pkgs; [
+      sops
+      ssh-to-age
+      age
+    ];
   };
 
   testScript = ''

@@ -44,13 +44,13 @@
 #   sudo rm -rf /var/lib/postgresql/${config.services.postgresql.package.psqlSchema}
 #   sudo systemctl start postgresql
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   # 创建 SSL 证书（开发环境自签名，生产环境应替换）
@@ -60,29 +60,30 @@
   #   "f /var/lib/postgresql/server.key 0600 postgres postgres - ${builtins.readFile ./server.key}"
   # ];
 
-  environment.systemPackages = with pkgs; [ postgresql ];
-
+  environment.systemPackages = lib.optionals shared.services.db.postgresql.install (
+    with pkgs; [ postgresql ]
+  );
 
   services.postgresql = {
     enable = shared.services.db.postgresql.install;
     package = pkgs.postgresql;
     dataDir = "/var/lib/postgresql/${config.services.postgresql.package.psqlSchema}";
-    enableJIT = true;     # 性能优化
-    enableTCPIP = true;   # Allow TCP
-    checkConfig = true;   # 编译检查配置
+    enableJIT = true; # 性能优化
+    enableTCPIP = true; # Allow TCP
+    checkConfig = true; # 编译检查配置
 
     # 核心配置
     settings = {
       # 连接设置
-      listen_addresses = lib.mkForce "127.0.0.1";  # 仅本地访问（生产环境可扩展）
+      listen_addresses = lib.mkForce "127.0.0.1"; # 仅本地访问（生产环境可扩展）
       port = 5432;
       max_connections = 128;
 
       # 认证设置
-      password_encryption = "scram-sha-256";  # 现代密码哈希算法
+      password_encryption = "scram-sha-256"; # 现代密码哈希算法
 
       # 内存设置
-      shared_buffers = "128MB";               # 约为系统内存的 25%
+      shared_buffers = "128MB"; # 约为系统内存的 25%
       effective_cache_size = "384MB";
       work_mem = "4MB";
       maintenance_work_mem = "64MB";
@@ -94,16 +95,16 @@
 
       # 查询规划
       default_statistics_target = 100;
-      random_page_cost = 1.1;                   # SSD 优化
+      random_page_cost = 1.1; # SSD 优化
 
       # 日志（开发环境详细，生产环境精简）
       logging_collector = true;
       log_filename = "postgresql-%Y-%m-%d.log";
       log_truncate_on_rotation = true;
       log_rotation_age = "1d";
-      log_statement = "ddl";                    # 生产环境应为 "ddl"，调试环境可设为 "all"
-      log_line_prefix = "%m [%p] %q%u@%d ";     # 丰富日志前缀
-      log_timezone = shared.time.timeZone;      # "Asia/Shanghai"
+      log_statement = "ddl"; # 生产环境应为 "ddl"，调试环境可设为 "all"
+      log_line_prefix = "%m [%p] %q%u@%d "; # 丰富日志前缀
+      log_timezone = shared.time.timeZone; # "Asia/Shanghai"
 
       # 本地化
       default_text_search_config = "pg_catalog.english";
@@ -188,15 +189,16 @@
 
     # 第三方扩展
     # 内置扩展 (pg_trgm/uuid-ossp) 由 postgresql-contrib 提供
-    extensions = ps: with ps; [
-      pgvector   # 向量搜索（AI 应用）
-    ];
+    extensions =
+      ps: with ps; [
+        pgvector # 向量搜索（AI 应用）
+      ];
 
     # initdb 额外参数（增强可靠性）
     initdbArgs = [
       "--locale=en_US.UTF-8"
       "--encoding=UTF8"
-      "--data-checksums"  # 启用数据校验（防止静默损坏）
+      "--data-checksums" # 启用数据校验（防止静默损坏）
       "--auth-host=scram-sha-256"
       "--auth-local=peer"
     ];
@@ -210,92 +212,99 @@
 
     # 系统调用过滤
     systemCallFilter = {
-      "@default"    = true;   # 启用默认过滤
-      "@network-io" = true;   # 允许网络 IO
-      "@file-system"= true;   # 允许文件系统访问
-      "@clock"      = true;   # 允许时钟访问
+      "@default" = true; # 启用默认过滤
+      "@network-io" = true; # 允许网络 IO
+      "@file-system" = true; # 允许文件系统访问
+      "@clock" = true; # 允许时钟访问
       "@privileged" = false;
-      "@debug"      = false;
-      "@module"     = false;
+      "@debug" = false;
+      "@module" = false;
     };
   };
 
+  # 🔒 专用服务：安全注入密码（运行时）— gated on the service-profile
+  # install flag: the unit reads the postgresql sops secret, which only
+  # exists where postgresql is installed (second-machine dividend, T2.5).
+  systemd.services = lib.mkIf shared.services.db.postgresql.install {
+    postgresql-set-user-passwords = {
+      description = "Inject PostgreSQL user passwords from sops secrets";
+      after = [ "postgresql.service" ];
+      partOf = [ "postgresql.service" ];
+      restartIfChanged = false;
+      # T4.0: on-demand units stay bound to their parent service;
+      # autostarted ones ride the boot target — expressed branchless
+      # (service-profile is the dispatch layer for services).
+      wantedBy = lib.mkForce (
+        lib.optionals shared.services.db.postgresql.autostart [ "multi-user.target" ]
+        ++ lib.optionals (!shared.services.db.postgresql.autostart) [ "postgresql.service" ]
+      );
 
-  # 🔒 专用服务：安全注入密码（运行时）
-  systemd.services.postgresql-set-user-passwords = {
-    description = "Inject PostgreSQL user passwords from sops secrets";
-    after = [ "postgresql.service" ];
-    partOf = [ "postgresql.service" ];
-    restartIfChanged = false;
-    wantedBy = lib.mkForce (
-      if shared.services.db.postgresql.autostart
-      then [ "multi-user.target" ]
-      else [ "postgresql.service" ]
+      path = with pkgs; [ postgresql ];
+      script = ''
+        # Guard: 数据库没运行时跳过（防止 switch 时误触发）
+        if ! systemctl is-active postgresql.service 2>/dev/null; then
+          echo "PostgreSQL is not running, skipping password injection"
+          exit 0
+        fi
+
+        # Wait for PostgreSQL ready (with timeout)
+        for i in $(seq 1 10); do
+          pg_isready -q 2>/dev/null && break
+          sleep 1
+        done
+        if ! pg_isready -q 2>/dev/null; then
+          echo "PostgreSQL not ready after 10s, skipping"
+          exit 0
+        fi
+
+        user_pwd=$(cat ${
+          config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path
+        })
+
+        psql -d postgres <<SQL_EOF
+        ALTER USER ${shared.user.username} WITH PASSWORD '$user_pwd';
+        SELECT '✅ Password injected for ${shared.user.username}' AS status;
+        SQL_EOF
+      '';
+
+      serviceConfig = {
+        Type = "oneshot";
+        User = "postgres";
+        # 🌐 最小权限三重锁
+        ReadOnlyPaths = [
+          "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}"
+        ];
+        # 🛡️ 深度加固
+        PrivateTmp = true;
+        NoNewPrivileges = true;
+        CapabilityBoundingSet = "";
+        RestrictAddressFamilies = "AF_UNIX"; # 仅允许 Unix socket
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        StandardOutput = "journal";
+        StandardError = "journal";
+        UMask = "0077"; # 临时文件权限加固
+      };
+      unitConfig.RequiresMountsFor = [
+        "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}"
+      ];
+    };
+
+    # Control autostart: clear wantedBy when autostart=false (install but
+    # not autostart) — branchless selection (T4.0).
+    postgresql.wantedBy = lib.mkForce (
+      lib.optional shared.services.db.postgresql.autostart "multi-user.target"
     );
 
-    path = with pkgs; [ postgresql ];
-    script = ''
-      # Guard: 数据库没运行时跳过（防止 switch 时误触发）
-      if ! systemctl is-active postgresql.service 2>/dev/null; then
-        echo "PostgreSQL is not running, skipping password injection"
-        exit 0
-      fi
-
-      # Wait for PostgreSQL ready (with timeout)
-      for i in $(seq 1 10); do
-        pg_isready -q 2>/dev/null && break
-        sleep 1
-      done
-      if ! pg_isready -q 2>/dev/null; then
-        echo "PostgreSQL not ready after 10s, skipping"
-        exit 0
-      fi
-
-      user_pwd=$(cat ${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path})
-
-      psql -d postgres <<SQL_EOF
-      ALTER USER ${shared.user.username} WITH PASSWORD '$user_pwd';
-      SELECT '✅ Password injected for ${shared.user.username}' AS status;
-      SQL_EOF
-    '';
-
-    serviceConfig = {
-      Type = "oneshot";
-      User = "postgres";
-      # 🌐 最小权限三重锁
-      ReadOnlyPaths = [ "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}" ];
-      # 🛡️ 深度加固
-      PrivateTmp = true;
-      NoNewPrivileges = true;
-      CapabilityBoundingSet = "";
-      RestrictAddressFamilies = "AF_UNIX";  # 仅允许 Unix socket
-      ProtectSystem = "strict";
-      ProtectHome = true;
-      StandardOutput = "journal";
-      StandardError = "journal";
-      UMask = "0077";  # 临时文件权限加固
-    };
-    unitConfig.RequiresMountsFor = [ "${config.sops.secrets.${shared.secrets.nixos.core.srv.db.postgresql.user.password}.path}" ];
+    # ⚠️ NixOS 26.05 PG module creates postgresql.target wanted by multi-user.target
+    # Must also override the target, otherwise it pulls in postgresql.service at boot
   };
 
-
-  # Control autostart: clear wantedBy when autostart=false (install but not autostart)
-  systemd.services.postgresql.wantedBy =
-    lib.mkForce (
-      if shared.services.db.postgresql.autostart
-      then [ "multi-user.target" ]
-      else []
+  # target stays gated alongside the service above
+  systemd.targets = lib.mkIf shared.services.db.postgresql.install {
+    postgresql.wantedBy = lib.mkForce (
+      lib.optional shared.services.db.postgresql.autostart "multi-user.target"
     );
-
-  # ⚠️ NixOS 26.05 PG module creates postgresql.target wanted by multi-user.target
-  # Must also override the target, otherwise it pulls in postgresql.service at boot
-  systemd.targets.postgresql.wantedBy =
-    lib.mkForce (
-      if shared.services.db.postgresql.autostart
-      then [ "multi-user.target" ]
-      else []
-    );
+  };
 
 }
-
-

@@ -5,13 +5,13 @@
 # - swaynotificationcenter
 # - Notification Center and Notification Daemon for wayland
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -20,11 +20,9 @@
   ];
 
   xdg.configFile."swaync" = {
-    source = inputs.swaync-config;  # abs path
-    recursive = true;               # rec-link
+    source = inputs.swaync-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
 
 }
-
-

@@ -4,13 +4,13 @@
 # @diractory: https://nix-community.github.io/home-manager/options.xhtml#opt-programs.emacs.enable
 # @description: home::core::exp::app::editor::emacs
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -21,11 +21,9 @@
 
   # Used user config:
   xdg.configFile."emacs" = {
-    source = inputs.emacs-config;   # abs path
-    recursive = true;               # rec-link
+    source = inputs.emacs-config; # abs path
+    recursive = true; # rec-link
     force = true;
   };
 
-
 }
-

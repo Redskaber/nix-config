@@ -4,19 +4,16 @@
 # @diractory: home::core::exp::sys::base::ripgrep
 # - https://nix-community.github.io/home/options.xhtml#opt-programs.ripgrep.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
   programs.ripgrep.enable = true;
 
-
 }
-
-

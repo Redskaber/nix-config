@@ -10,14 +10,17 @@
 { pkgs, lib, ... }:
 {
   name = "home_env_dev_c_default";
-  meta = { maintainers = [ "redskaber" ]; timeout = 300; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 300;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 768;
     environment.systemPackages = with pkgs; [
       gcc
       gdb
-      clang-tools   # provides clangd
+      clang-tools # provides clangd
       cmake
       gnumake
     ];
@@ -64,4 +67,3 @@
         """)
   '';
 }
-

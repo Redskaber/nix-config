@@ -1,18 +1,38 @@
-# @path: ~/projects/configs/nix-config/platform/linux/x86_64-linux.nix
+# @path: ~/projects/configs/nix-config/platform/wsl/x86_64-linux.nix
 # @author: redskaber
-# @datetime: 2026-03-07
-# @description: host::linux::x86_64-linux
+# @datetime: 2026-10-08
+# @description: platform::wsl::x86_64-linux — WSL2 real specialisation (T3.1)
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
+#
+# WAS a byte-for-byte copy of platform/linux (review finding); now a real
+# fork. What stays from generic-Linux: nixGL (WSLg/directx offload for
+# GUI apps) and the home core/env imports. What WSL adds on top:
+#
+#   ── Windows interop (user space side) ─────────────────────────────
+#   * wslu: wslview/clip.exe/explorer.exe wrappers — xdg-open points at
+#     wslview so "open file" lands in the Windows shell, not a missing
+#     browser inside WSL.
+#   * WSLENV session variable: white-lists the vars that cross the WSL
+#     boundary into Windows processes (wayland display handoff etc.).
+#   * HOME fixups: WSL sets USERPROFILE to a Windows path; keep tools
+#     that expect it happy by re-exporting from WSL's own view.
+#
+#   ── What this file deliberately does NOT do ───────────────────────
+#   System-level WSL facts (wsl.conf, systemd-in-WSL, binfmt registration
+#     for .exe, appendWindowsPath) belong to the NixOS layer and live in
+#     nixos/core/base/wsl.nix — kept separate so a WSL host running a
+#     non-Nix distro (Ubuntu + home-manager) still evaluates this file.
+#
+# The wm import is unconditional (T3.1/T3.2 Null-Object pattern): the
+# window-manager strategy routes to home/wm/none on console hosts.
 
-
-# This is your home-manager configuration file
-# Use this to configure your home environment (it replace ~/.config/nixpkgs/home.nix)
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   # linux non-nixos environment inject
@@ -45,10 +65,31 @@
   # used user custom inxpkgs
   nixpkgs = shared.nixpkgs;
 
+  # ── WSL2 user-space specialisation (T3.1) ─────────────────────────
+  # wslview = in-tree shim (pkgs/wslview) — wslu was removed upstream.
+  home.packages = [ pkgs.wslview ];
+
+  home.sessionVariables = {
+    # Vars allowed to cross into Windows processes launched from WSL.
+    # "/u" = share as-is (no path translation needed for these).
+    WSLENV = lib.concatStringsSep ":" [
+      "WAYLAND_DISPLAY/u"
+      "XDG_SESSION_TYPE/u"
+    ];
+    # WSL injects USERPROFILE (a /mnt/c/... path) — normalise for tools
+    # that assume it points at a usable home.
+    USERPROFILE = "\${HOME}";
+  };
+
+  # Route "open link" to the Windows side: wslview(1) from wslu forwards
+  # URLs/files to the Windows default handler. (xdg.portal itself stays
+  # managed by home/core/base/portal.nix — the none-portal strategy it
+  # resolves to already installs zero portal backends, so there is
+  # nothing to fight over here.)
+  xdg.enable = true;
+  home.sessionVariables.BROWSER = "wslview";
+
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
 
-
 }
-
-

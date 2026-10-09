@@ -8,20 +8,27 @@
 # - default   : (readonly   , global, default   ): baseline assembly toolchain
 # - <variant> : (custom     , custom, optional  ): specific feature or version
 
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
-      nasm                     # Netwide Assembler (primary assembler)
-      nasmfmt                  # Netwide Assembler formatter
-      binutils                 # Provides ld (linker), objdump, readelf, etc.
-      gdb                      # GNU debugger (for assembly-level debugging)
+      nasm # Netwide Assembler (primary assembler)
+      nasmfmt # Netwide Assembler formatter
+      binutils # Provides ld (linker), objdump, readelf, etc.
+      gdb # GNU debugger (for assembly-level debugging)
       # (Optional) gcc         # Only if you need libc or C runtime for linking
     ];
 
     nativeBuildInputs = with shared.pkgs; [
       pkg-config
-      gnumake                  # Optional build automation (for Makefile projects)
+      gnumake # Optional build automation (for Makefile projects)
     ];
 
     preInputsHook = ''

@@ -12,16 +12,19 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_srv_db_redis";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
 
     services.redis.servers."" = {
       enable = true;
-      bind   = "127.0.0.1";
-      port   = 6379;
-      save   = [];   # disable persistence for speed
+      bind = "127.0.0.1";
+      port = 6379;
+      save = [ ]; # disable persistence for speed
     };
 
     environment.systemPackages = with pkgs; [ redis ];

@@ -3,13 +3,13 @@
 # @datetime: 2026-05-11
 # @description: nixos::core::srv::security::wrappers::default
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   imports = [
@@ -17,7 +17,4 @@
     ./gdb.nix
   ];
 
-
 }
-
-

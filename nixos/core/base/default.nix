@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::base::default
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   imports = [
@@ -25,9 +25,8 @@
     ./systemd.nix
     ./user.nix
     ./virtual.nix
+    # WSL2 system declaration (T3.1) — mkIf shared.caps.wsl inside (T4.0).
+    ./wsl.nix
   ];
 
-
 }
-
-

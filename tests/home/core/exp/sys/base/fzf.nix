@@ -7,7 +7,10 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_exp_sys_base_fzf";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;

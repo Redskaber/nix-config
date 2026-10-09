@@ -3,13 +3,13 @@
 # @datetime: 2026-01-13
 # @description: nixos::core::srv::default
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   imports = [
@@ -17,10 +17,11 @@
     ./desktop
     ./hardware
     ./log
+    # T3.4 observability plane: exporters/prometheus/loki/grafana +
+    # two-layer db healthcheck (self-heal + 30s liveness timers),
+    # all gated on the service-profile monitor policy.
+    ./monitor
     ./security
   ];
 
-
 }
-
-

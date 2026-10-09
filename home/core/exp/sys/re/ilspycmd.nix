@@ -4,17 +4,15 @@
 # @description: home::core::exp::sys::re::ilspycmd
 # - Tool for decompiling .NET assemblies and generating portable PDBs
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with shared.upkgs; [ ilspycmd ];
 
 }
-
-

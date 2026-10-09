@@ -19,62 +19,69 @@
 # source command line IS written in .zshrc as plain text (just with broken path).
 # grep -qF "zsh-autosuggestions" finds the scrubbed placeholder string.
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "zsh: .zshrc content assertions";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
+      };
 
-    programs.zsh = {
-      enable = true;
-      autosuggestion.enable         = true;
-      syntaxHighlighting.enable     = true;
-      historySubstringSearch.enable = true;
-      history = {
-        size = 50000;
-        save = 50000;
+      programs.zsh = {
+        enable = true;
+        autosuggestion.enable = true;
+        syntaxHighlighting.enable = true;
+        historySubstringSearch.enable = true;
+        history = {
+          size = 50000;
+          save = 50000;
+        };
+        shellAliases = {
+          vi = "nvim";
+          vim = "nvim";
+          ll = "ls -la";
+        };
       };
-      shellAliases = {
-        vi  = "nvim";
-        vim = "nvim";
-        ll  = "ls -la";
-      };
-    };
-  }];
+    }
+  ];
 
   tests = {
     "zsh: .zshrc generated" = {
-      path   = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       exists = true;
     };
 
     # HM writes HISTSIZE=N in the generated .zshrc
     "zsh: HISTSIZE present" = {
-      path   = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       contains = [ "HISTSIZE" ];
     };
 
     # plugin source line contains scrubbed placeholder "@zsh-autosuggestions@"
     # grep -qF "zsh-autosuggestions" finds it
     "zsh: autosuggestions sourced" = {
-      path   = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       contains = [ "zsh-autosuggestions" ];
     };
 
     "zsh: syntax-highlighting sourced" = {
-      path   = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       contains = [ "zsh-syntax-highlighting" ];
     };
 
     # alias written as: vi='nvim' or vi = 'nvim'
     "zsh: nvim alias present" = {
-      path   = ".config/zsh/.zshrc";
+      path = ".config/zsh/.zshrc";
       contains = [ "nvim" ];
     };
   };

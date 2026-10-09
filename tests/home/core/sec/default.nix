@@ -11,7 +11,10 @@
 { pkgs, lib, ... }:
 {
   name = "home_core_sec";
-  meta = { maintainers = [ "redskaber" ]; timeout = 60; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 60;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 256;

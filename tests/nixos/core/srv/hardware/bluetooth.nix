@@ -12,14 +12,17 @@
 { pkgs, lib, ... }:
 {
   name = "nixos_core_srv_hardware_bluetooth";
-  meta = { maintainers = [ "redskaber" ]; timeout = 120; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 120;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 512;
 
     hardware.bluetooth = {
-      enable      = true;
-      powerOnBoot = false;  # VM — no real BT hardware, avoid hang
+      enable = true;
+      powerOnBoot = false; # VM — no real BT hardware, avoid hang
       settings = {
         General = {
           Experimental = true;
@@ -27,7 +30,10 @@
       };
     };
 
-    environment.systemPackages = with pkgs; [ bluez bluez-tools ];
+    environment.systemPackages = with pkgs; [
+      bluez
+      bluez-tools
+    ];
   };
 
   testScript = ''

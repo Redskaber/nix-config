@@ -4,17 +4,15 @@
 # @description: home::core::exp::sys::base::yq
 # - terminal data yaml/toml/xml set; jq wrapper
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [ yq-go ];
 
 }
-
-

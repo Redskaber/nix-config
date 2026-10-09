@@ -8,23 +8,29 @@
 # - default   : (readonly   , global, default   ): niminal version and global base runtime environment.
 # - <variant> : (custom     , custom, optional  ): specific feature or version configuration items for the language
 
-
-{ pkgs, inputs, shared, dev, ... }: {
+{
+  pkgs,
+  inputs,
+  shared,
+  dev,
+  ...
+}:
+{
   default = {
     shell = shared.user.shell.tag;
     buildInputs = with shared.upkgs; [
       # gcc                     # GNU toolchain (fallback or specific needs)
-      glibc                     # C Library (macos musl)
+      glibc # C Library (darwin musl)
 
-      llvmPackages_22.clang     # Primary C compiler (recommended)
+      llvmPackages_22.clang # Primary C compiler (recommended)
       llvmPackages_22.clang-tools # Provides clangd (LSP), clang-tidy, etc.
-      llvmPackages_22.lld       # Fast LLVM linker (optional but recommended)
-      llvmPackages_22.lldb      # LLVM debugger
+      llvmPackages_22.lld # Fast LLVM linker (optional but recommended)
+      llvmPackages_22.lldb # LLVM debugger
       # llvmPackages_22.libc    # LLVM STD libc
 
       # Build & analysis
-      bear                      # Generates compile_commands.json for LSP/tools
-      ccache                    # Compiler cache (transparent speedup)
+      bear # Generates compile_commands.json for LSP/tools
+      ccache # Compiler cache (transparent speedup)
     ];
 
     nativeBuildInputs = with shared.pkgs; [
@@ -59,5 +65,3 @@
     '';
   };
 }
-
-

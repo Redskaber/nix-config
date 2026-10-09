@@ -1,19 +1,81 @@
 # @path: ~/projects/configs/nix-config/tests/lib/shared/shared/fn.nix
 # @author: redskaber
-# @datetime: 2026-05-09
+# @datetime: 2026-10-08
 # @description: tests::lib::shared::shared::fn
 # @source: lib/shared/shared/fn.nix
 #
-# Validates lib functions via nix-instantiate:
-#   - isNixOS  : platform == "nixos" → true; else false
-#   - homeDir  : /home/<user> for nixos/linux; /Users/<user> for macos
-#   - sopsRuntimePath : base + "/" + key
-#   - sopsFile (path composition)
+# T1.1 (test-truthfulness): asserts run against the REAL production
+# sources — lib/shared/shared/{enum,const,fn}.nix are imported and
+# evaluated at CHECK-BUILD time. If any production function regresses,
+# evaluation fails before a VM ever boots.
+#
+# T4.0 (dispatch-layer convergence): the isNixOS/isLinux/isMacOS/isWSL
+# tag-comparison predicates are GONE from fn.nix — platform semantics
+# live in the enum.nix dispatch table now, and this test asserts the
+# new contract instead of the old predicates:
+#
+#   - fn.homeDir: pure interpolation over the platform table's
+#     home-prefix payload (no branching to mutate into a lie)
+#   - enum instance shape for multi-select groups (tag + value list)
+#   - sameSource: the dual-source governance guard still throws on
+#     mixed fingerprint scopes (the 995d8c9 class)
+#
+# The capability-table contract itself (caps vectors, strategy
+# lambdas, Null-Object rows) lives in caps.nix beside this file.
 
-{ pkgs, lib, ... }:
+{
+  inputs,
+  pkgs,
+  lib,
+  ...
+}:
+let
+  # ── REAL production imports (no mocks, no copies) ─────────────────
+  realEnum = import ../../../../lib/shared/shared/enum.nix { inherit inputs; };
+  realConst = import ../../../../lib/shared/shared/const.nix;
+  realFn = import ../../../../lib/shared/shared/fn.nix { };
+
+  dg = realEnum.drive-group.amd-nvidia;
+
+  # Marker scopes for the sameSource guard (T2.6): distinct
+  # lib.trivial.version fingerprints stand in for stable/unstable.
+  stableScope = {
+    lib.trivial.version = "26.05";
+  };
+  unstableScope = {
+    lib.trivial.version = "26.11pre-mock";
+  };
+
+  # ── Eval-time assertions (fail the check build, not just the VM) ──
+  evalAssertions =
+    # homeDir: data-driven via the platform table's home-prefix row —
+    # each platform answers for itself, no branch can drift.
+    assert realFn.homeDir realEnum.platform.darwin "kilig" == "/Users/kilig";
+    assert realFn.homeDir realEnum.platform.nixos "kilig" == "/home/kilig";
+    assert realFn.homeDir realEnum.platform.linux "kilig" == "/home/kilig";
+    assert realFn.homeDir realEnum.platform.wsl "kilig" == "/home/kilig";
+    # the prefix is payload data, asserted per row (mutation target)
+    assert realEnum.platform.darwin.value.home-prefix == "/Users";
+    assert realEnum.platform.nixos.value.home-prefix == "/home";
+    # predicates are truly gone: the dispatch table owns platform facts
+    assert !(realFn ? isNixOS) && !(realFn ? isMacOS) && !(realFn ? isWSL) && !(realFn ? isLinux);
+    assert
+      realFn.sopsFile "/self" realConst.secrets.chipr "user/kilig/password"
+      == "/self/secrets/chipr/user/kilig/password.yaml";
+    assert realFn.sopsRuntimePath "/run/secrets" "db/pg" == "/run/secrets/db/pg";
+    # sameSource: matching fingerprints pass through, mismatched throw
+    assert realFn.sameSource "test" stableScope stableScope == stableScope;
+    assert !(builtins.tryEval (realFn.sameSource "test" stableScope unstableScope)).success;
+    assert dg ? tag && dg.tag == "amd-nvidia";
+    assert builtins.isList dg.value && builtins.length dg.value == 2;
+    "eval-assertions-passed";
+in
 {
   name = "lib_shared_shared_fn";
-  meta = { maintainers = [ "redskaber" ]; timeout = 60; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 60;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 256;
@@ -23,61 +85,9 @@
     start_all()
     machine.wait_for_unit("multi-user.target")
 
-    with subtest("fn: isNixOS(\"nixos\") = true"):
-        out = machine.succeed(
-            "nix-instantiate --eval -E '"
-            "  let isNixOS = p: p == \"nixos\";"
-            "  in isNixOS \"nixos\"'"
-        ).strip()
-        assert out == "true", f"isNixOS nixos should be true: {out}"
-
-    with subtest("fn: isNixOS(\"linux\") = false"):
-        out = machine.succeed(
-            "nix-instantiate --eval -E '"
-            "  let isNixOS = p: p == \"nixos\";"
-            "  in isNixOS \"linux\"'"
-        ).strip()
-        assert out == "false", f"isNixOS linux should be false: {out}"
-
-    with subtest("fn: homeDir nixos → /home/<user>"):
-        out = machine.succeed(
-            "nix-instantiate --eval -E '"
-            "  let homeDir = platform: user:"
-            "    if platform == \"macos\" then \"/Users/\" + user"
-            "    else \"/home/\" + user;"
-            "  in homeDir \"nixos\" \"kilig\"'"
-        ).strip().strip('"')
-        assert out == "/home/kilig", f"homeDir nixos mismatch: {out}"
-
-    with subtest("fn: homeDir macos → /Users/<user>"):
-        out = machine.succeed(
-            "nix-instantiate --eval -E '"
-            "  let homeDir = platform: user:"
-            "    if platform == \"macos\" then \"/Users/\" + user"
-            "    else \"/home/\" + user;"
-            "  in homeDir \"macos\" \"kilig\"'"
-        ).strip().strip('"')
-        assert out == "/Users/kilig", f"homeDir macos mismatch: {out}"
-
-    with subtest("fn: sopsRuntimePath base + key composition"):
-        out = machine.succeed(
-            "nix-instantiate --eval -E '"
-            "  let sopsRuntimePath = base: key: base + \"/\" + key;"
-            "  in sopsRuntimePath"
-            "    \"/run/secrets\""
-            "    \"nixos/core/base/user/kilig/password\"'"
-        ).strip().strip('"')
-        expected = "/run/secrets/nixos/core/base/user/kilig/password"
-        assert out == expected, f"sopsPath mismatch: {out}"
-
-    with subtest("fn: const secrets paths match naming convention"):
-        out = machine.succeed(
-            "nix-instantiate --eval -E '"
-            "  let chipr = \"secrets/chipr\";"
-            "      user  = \"kilig\";"
-            "  in chipr + \"/nixos/core/base/user/\" + user + \"/password\"'"
-        ).strip().strip('"')
-        assert out == "secrets/chipr/nixos/core/base/user/kilig/password", \
-            f"chipr path mismatch: {out}"
+    with subtest("fn: production sources evaluated with all assertions"):
+        # The heavy lifting happened at evaluation time (${evalAssertions});
+        # the VM only proves the check boots.
+        machine.succeed("true")
   '';
 }

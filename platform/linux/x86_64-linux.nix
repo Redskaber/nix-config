@@ -1,18 +1,18 @@
-# @path: ~/projects/configs/nix-config/host/linux/x86_64-linux.nix
+# @path: ~/projects/configs/nix-config/platform/linux/x86_64-linux.nix
 # @author: redskaber
 # @datetime: 2026-03-07
 # @description: host::linux::x86_64-linux
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
 
-
 # This is your home-manager configuration file
 # Use this to configure your home environment (it replace ~/.config/nixpkgs/home.nix)
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   # linux non-nixos environment inject
@@ -48,7 +48,4 @@
   # Nicely reload system units when changing configs
   systemd.user.startServices = "sd-switch";
 
-
 }
-
-

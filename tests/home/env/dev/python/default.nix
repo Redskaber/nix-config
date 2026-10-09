@@ -12,13 +12,16 @@
 { pkgs, lib, ... }:
 {
   name = "home_env_dev_python_default";
-  meta = { maintainers = [ "redskaber" ]; timeout = 180; };
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 180;
+  };
 
   nodes.machine = {
     virtualisation.memorySize = 768;
 
     environment.systemPackages = with pkgs; [
-      python314 # FIXME: python312 doc err
+      python314 # NOTE: python312 attr is doc-broken on this nixpkgs rev; 314 pins fine
       uv
       ruff
       pyright

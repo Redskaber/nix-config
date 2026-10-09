@@ -4,13 +4,13 @@
 # @diractory: home::core::exp::sys::base::direnv
 # - https://nix-community.github.io/home/options.xhtml#opt-programs.direnv.enable
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
 
@@ -22,5 +22,3 @@
     # stdlib = "# Managed by Home Manager - enables nix-direnv";
   };
 }
-
-

@@ -4,12 +4,13 @@
 # @description: home::core::exp::app::browser::w3m
 # - terminal web browser
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   home.packages = with pkgs; [
@@ -17,5 +18,3 @@
   ];
 
 }
-
-

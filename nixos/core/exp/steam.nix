@@ -4,13 +4,13 @@
 # @description: nixos::core::exp::steam
 # - steam in nixos core, becuase steam need firewall and system mod exp
 
-
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   programs.steam.enable = true;
@@ -42,8 +42,4 @@
   # Optional: open extest（used Steam inputer test）
   programs.steam.extest.enable = true;
 
-
 }
-
-
-

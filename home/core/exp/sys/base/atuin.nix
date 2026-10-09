@@ -5,13 +5,13 @@
 # - Atuin — Magical shell history with sync, search & stats
 # @reference: https://docs.atuin.sh
 
-
-{ inputs
-, shared
-, config
-, lib
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  config,
+  lib,
+  pkgs,
+  ...
 }:
 {
   programs.atuin = shared.shellIntegrations // {
@@ -22,13 +22,13 @@
     settings = {
       # Search behavior
       search_mode = "fuzzy";
-      filter_mode = "host";  # Only show history from this machine
-      style = "compact";     # Clean UI that fits small terminals
+      filter_mode = "host"; # Only show history from this machine
+      style = "compact"; # Clean UI that fits small terminals
 
       # Sync (opt-in via `atuin login`)
       auto_sync = true;
       sync_frequency = "10m";
-      update_check = false;  # Disable update nag (you manage via Nix)
+      update_check = false; # Disable update nag (you manage via Nix)
 
       # UI/UX
       show_preview = true;
@@ -76,5 +76,3 @@
     # };
   };
 }
-
-

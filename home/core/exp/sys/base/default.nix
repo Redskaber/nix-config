@@ -3,12 +3,13 @@
 # @datetime: 2026-05-05
 # @description: home::core::exp::sys::base::default
 
-{ inputs
-, shared
-, lib
-, config
-, pkgs
-, ...
+{
+  inputs,
+  shared,
+  lib,
+  config,
+  pkgs,
+  ...
 }:
 {
   imports = [
@@ -43,7 +44,4 @@
     ./zoxide.nix
   ];
 
-
 }
-
-

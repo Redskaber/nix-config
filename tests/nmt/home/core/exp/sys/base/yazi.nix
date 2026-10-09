@@ -22,61 +22,72 @@
 # The production plugin configuration (yaziPlugins.*) requires real package
 # closures → tested at Plane 2 (QEMU VM). Here we use a plain initLua only.
 
-{ inputs, shared, lib, ...}:
+{
+  inputs,
+  shared,
+  lib,
+  ...
+}:
 
 lib.nmt.buildHomeManagerTest {
   description = "yazi: config files present";
 
-  modules = [{
-    home = {
-      username      = "testuser";
-      homeDirectory = "/home/testuser";
-      stateVersion  = "${shared.version.value.stateVersion}";
-    };
-
-    programs.yazi = {
-      enable            = true;
-      shellWrapperName  = "yy";
-
-      settings = {
-        mgr = {
-          ratio         = [ 1 4 3 ];
-          sort_by       = "alphabetical";
-          sort_dir_first = true;
-          show_hidden   = false;
-          show_symlink  = true;
-          scrolloff     = 5;
-        };
+  modules = [
+    {
+      home = {
+        username = "testuser";
+        homeDirectory = "/home/testuser";
+        stateVersion = "${shared.version.value.stateVersion}";
       };
 
-      # Plain text — assertable after scrubbing
-      initLua = ''
-        -- nmt-test marker
-        require("full-border"):setup()
-      '';
-    };
-  }];
+      programs.yazi = {
+        enable = true;
+        shellWrapperName = "yy";
+
+        settings = {
+          mgr = {
+            ratio = [
+              1
+              4
+              3
+            ];
+            sort_by = "alphabetical";
+            sort_dir_first = true;
+            show_hidden = false;
+            show_symlink = true;
+            scrolloff = 5;
+          };
+        };
+
+        # Plain text — assertable after scrubbing
+        initLua = ''
+          -- nmt-test marker
+          require("full-border"):setup()
+        '';
+      };
+    }
+  ];
 
   tests = {
     # TOML files are scrubbed derivations → only existence check
     "yazi: yazi.toml symlink present" = {
-      path   = ".config/yazi/yazi.toml";
+      path = ".config/yazi/yazi.toml";
       exists = true;
     };
 
     # initLua is plain text → content assertable
     "yazi: init.lua exists" = {
-      path   = ".config/yazi/init.lua";
+      path = ".config/yazi/init.lua";
       exists = true;
     };
 
     "yazi: init.lua marker written" = {
-      path     = ".config/yazi/init.lua";
+      path = ".config/yazi/init.lua";
       contains = [ "nmt-test marker" ];
     };
 
     "yazi: full-border require written" = {
-      path     = ".config/yazi/init.lua";
+      path = ".config/yazi/init.lua";
       contains = [ "full-border" ];
     };
   };
