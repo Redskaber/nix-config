@@ -163,7 +163,15 @@ jobs:
     name: Deep Evaluation (flake check)
     runs-on: ubuntu-latest
     needs: lint
-    timeout-minutes: 90
+    # 120 min (T13.2, run #338 evidence): the first no-MNC run's cold
+    # path — 46 inputs materialised from upstream tarballs, 95 checks
+    # incl. 6 closures forced to drvPath on a 2-core runner — exceeded
+    # the old 90-minute window and was cancelled at exactly 90:00
+    # mid-evaluation with NO infrastructure signature in the log (the
+    # retry below covers command exits; a timeout kills the job before
+    # any retry logic can fire — that is by design, this is the honest
+    # remedy: give the cold path its window, keep the bound).
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -713,17 +721,23 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "> pre-commit-check (nixfmt/statix/deadnix) is built by the lint stage and deep-eval forces every output to a derivation outPath." >> $GITHUB_STEP_SUMMARY
 
-      - name: Fail if any required stage failed
+      - name: Fail if any required stage did not succeed
+        # T13.2 (run #338): the gate used to test only == 'failure' — a
+        # leg CANCELLED by its own timeout (deep-eval hit 90:00 exactly)
+        # escaped the gate entirely and the summary went green under a
+        # cancelled run. '!= success' catches that class AND the
+        # skipped-by-upstream-failure class (a cancelled lint starves the
+        # legs that need it; skipped is not green either).
         if: |
-          needs.lint.result == 'failure' ||
-          needs.deep-eval.result == 'failure' ||
-          needs.nmt-plane.result == 'failure' ||
-          needs.evaluate-devshells.result == 'failure' ||
-          needs.output-faces.result == 'failure' ||
-          needs.security.result == 'failure' ||
-          needs.vm-tests.result == 'failure' ||
-          needs.host-toplevels.result == 'failure'
+          needs.lint.result != 'success' ||
+          needs.deep-eval.result != 'success' ||
+          needs.nmt-plane.result != 'success' ||
+          needs.evaluate-devshells.result != 'success' ||
+          needs.output-faces.result != 'success' ||
+          needs.security.result != 'success' ||
+          needs.vm-tests.result != 'success' ||
+          needs.host-toplevels.result != 'success'
         run: |
-          echo "One or more required stages failed."
+          echo "One or more required stages did not succeed (failure or cancelled or skipped)."
           echo "Note: mark all eight as required status checks in branch protection."
           exit 1
