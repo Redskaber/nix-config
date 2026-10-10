@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 # ══════════════════════════════════════════════════════════════════════
-# Pipeline architecture (7 stages):
+# Pipeline architecture (8 stages):
 #
 #   STAGE 1: lint          — static analysis (statix/nixfmt/deadnix) + shallow eval
 #   STAGE 2: deep-eval     — nix flake check --no-build (full tree)
@@ -20,6 +20,7 @@ concurrency:
 #   STAGE 4: devshells     — devShell dry-run matrix
 #   STAGE 5: security      — SOPS secret integrity audit
 #   STAGE 6: vm-tests      — NixOS/HM/Lib/Integration QEMU tests (KVM)
+#   STAGE 6.5: host-toplevels — system closure builds (T8.2, no KVM)
 #   STAGE 7: summary       — aggregate result report (gates ALL stages)
 #
 # Deep evaluation (STAGE 2):
@@ -127,6 +128,14 @@ jobs:
       # select `pre-commit-check`, so it is built here explicitly.
       - name: Build pre-commit-check derivation
         run: nix build .#checks.x86_64-linux.pre-commit-check --no-link
+
+      # T8.1: the docs-SSOT contract — same plane-less situation as
+      # pre-commit-check (deep-eval only EVALUATES it; the anchor
+      # assertions fire at build time), so it is built here, right
+      # next to its sibling repo-hygiene gate. A count that drifts in
+      # README.md or docs/tests/test-matrix.md turns this step red.
+      - name: Build docs-ssot-check derivation (T8.1)
+        run: nix build .#checks.x86_64-linux.docs-ssot-check --no-link
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 2: Deep evaluation — nix flake check --no-build
@@ -423,12 +432,62 @@ jobs:
             --flake ".#api.checks.planes.${{ matrix.plane }}"
 
   # ─────────────────────────────────────────────────────────────
+  # STAGE 6.5: Host toplevels — closure-level build depth (T8.2)
+  # ─────────────────────────────────────────────────────────────
+  # The Mic92-parity move the T7.3 verdict deferred: building the real
+  # system closures (not just test planes) in CI. Feasible on stock
+  # runners because almost every path substitutes from
+  # cache.nixos.org (same locked nixpkgs rev); magic-nix-cache covers
+  # the repo's own derivations across runs. The build face is
+  # data-driven — .#api.host-toplevels enumerates the inventory's
+  # nixosHosts, so a new NixOS host joins this leg by construction.
+  # darwin (aarch64-darwin) is evaluated only: building it needs a
+  # darwin runner or a cross toolchain (eval-only step below).
+  host-toplevels:
+    name: Host Toplevels (closure build)
+    runs-on: ubuntu-latest
+    needs: [lint, deep-eval]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v13
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            accept-flake-config = true
+
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@v7
+
+      # T8.2: same tool + same determinism as the plane legs —
+      # nix-fast-build from the LOCKED nixpkgs, whole-face handoff,
+      # --skip-cached turns cache hits (cache.nixos.org substitution +
+      # magic-nix-cache) into no-ops; -j explicit (see vm-tests note).
+      - name: Build host toplevels (nix-fast-build)
+        run: |
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          nix run "$PKGS#nix-fast-build" -- \
+            --no-nom --skip-cached -j "$(nproc)" \
+            --flake ".#api.host-toplevels"
+
+      # Cross-system closure: evaluation is the depth we can afford on
+      # an x86_64-linux runner (deep-eval already forces it; this makes
+      # the intent and the attrpath explicit at the leg that owns
+      # closure depth). A darwin runner (or cross toolchain) upgrades
+      # this to a build step — the path is prepared, the environment
+      # is the gate.
+      - name: Evaluate darwin system closure (cross-system, eval-only)
+        run: nix eval --raw .#darwinConfigurations.darwin.system.drvPath
+
+  # ─────────────────────────────────────────────────────────────
   # STAGE 7: CI Summary
   # ─────────────────────────────────────────────────────────────
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [lint, deep-eval, nmt-plane, evaluate-devshells, security, vm-tests]
+    needs: [lint, deep-eval, nmt-plane, evaluate-devshells, security, vm-tests, host-toplevels]
     if: always()
     steps:
       - uses: actions/checkout@v4
@@ -448,6 +507,7 @@ jobs:
           echo "| devShells dry-run        | ${{ needs.evaluate-devshells.result }}                       |" >> $GITHUB_STEP_SUMMARY
           echo "| Security Audit           | ${{ needs.security.result }}                                 |" >> $GITHUB_STEP_SUMMARY
           echo "| VM Tests (QEMU)          | ${{ needs.vm-tests.result }}                                 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Host Toplevels (T8.2)   | ${{ needs.host-toplevels.result }}                           |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Plane Reference (live from scripts/sh/test-count.sh)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -464,8 +524,9 @@ jobs:
           needs.nmt-plane.result == 'failure' ||
           needs.evaluate-devshells.result == 'failure' ||
           needs.security.result == 'failure' ||
-          needs.vm-tests.result == 'failure'
+          needs.vm-tests.result == 'failure' ||
+          needs.host-toplevels.result == 'failure'
         run: |
           echo "One or more required stages failed."
-          echo "Note: mark all six as required status checks in branch protection."
+          echo "Note: mark all seven as required status checks in branch protection."
           exit 1

@@ -2,10 +2,15 @@
 # @path: ~/projects/configs/nix-config/scripts/sh/test-count.sh
 # @author: redskaber
 # @datetime: 2026-10-08
-# @description: scripts::sh::test-count — single source of truth for test counts
+# @description: scripts::sh::test-count — local quick counter for test counts
 #
-# README numbers and the CI summary table MUST come from this script.
-# (Kills the "77 vs 79 vs 21/38/17" three-way drift.)
+# T8.1: the machine-enforced authority is now tests/docs-ssot.nix (a
+# checks member — README/test-matrix count anchors asserted against
+# live evaluation at build time, red CI on drift). This script stays
+# as the zero-eval local quick lookup for humans; its output must
+# agree with the check's live facts (they count the same tree).
+#
+# README numbers and the CI summary table align with this script.
 #
 # Counting semantics mirror CI discovery (attrName prefixes):
 #   tests/default.nix      registry planes 0-4  (runner: nixosTest — the
@@ -51,12 +56,12 @@ print(len(keys))
 PY
 )"
 
-echo "Test counts (single source of truth):"
+echo "Test counts (local quick lookup — machine-enforced authority: tests/docs-ssot.nix):"
 echo "$planes"
 echo "  plane5_nmt: ${nmt}"
 echo "  pre_commit_hooks: ${hooks} (inside 1 pre-commit-check derivation)"
 python3 -c "
 vm=$(echo "$planes" | awk -F': ' '/vm_subtotal/{print $2}')
 print(f'  tests_total: {vm}+$nmt = {vm+$nmt}')
-print(f'  checks_total: {vm}+$nmt+1 = {vm+$nmt+1}')  # + pre-commit-check drv
+print(f'  checks_total: {vm}+$nmt+2 = {vm+$nmt+2}')  # + pre-commit-check + docs-ssot-check drvs
 "

@@ -284,6 +284,18 @@
       pkgs = shared.pkgs;
       devDir = shared.devDir;
 
+      # T8.1: hoisted so tests/docs-ssot.nix can count shell names
+      # without re-calling pdshells — one construction, two consumers
+      # (the devShells output below and the docs-SSOT check).
+      pdsh = shared.pdshells {
+        inherit
+          pkgs
+          inputs
+          shared
+          devDir
+          ;
+      };
+
       # ── Test matrix, imported ONCE (T7.3) ─────────────────────
       # tests/default.nix returns two faces over the SAME member
       # thunks: the flat `checks` attrset (what checks.${system}
@@ -311,19 +323,46 @@
       # 2.34.3, both bundled in the locked nixpkgs 26.05).
       api.checks.planes = tests.planes;
 
+      # T8.2: the host-closure build face — the Linux system
+      # toplevels, data-driven from the inventory (a new NixOS host
+      # joins by construction). CI hands this whole face to
+      # nix-fast-build for closure-level build depth (the Mic92-parity
+      # move); darwin is aarch64-darwin and stays eval-only in CI —
+      # building it needs a darwin runner or a cross toolchain.
+      api.host-toplevels = builtins.listToAttrs (
+        builtins.map (h: {
+          name = h;
+          value = targets.nixosConfigurations.${h}.config.system.build.toplevel;
+        }) targets.inventory.nixosHosts
+      );
+
       # debug information
       # Available through 'nix eval .#debug.test_system'
       debug.test_system = pkgs.stdenv.hostPlatform.system;
       debug.test_devDir = devDir;
 
       # checks
-      # Test planes 0–5 + the pre-commit eval gate (see
-      # tests/pre-commit.nix for the git-hooks half and its history).
+      # Test planes 0–5 + the two repo-hygiene gates: the pre-commit
+      # eval gate (see tests/pre-commit.nix for the git-hooks half
+      # and its history) and the docs-SSOT contract (tests/docs-ssot.nix,
+      # T8.1 — README/test-matrix count anchors asserted against live
+      # facts at BUILD time, which is why CI STAGE 1 builds both).
       # T7.3: the FLAT face only — `nix flake check` requires each
       # attribute here to be a derivation, so the planes grouping
       # lives behind api.checks.planes, never inside this output.
       checks.${shared.arch.tag} =
-        tests.checks // (import ./tests/pre-commit.nix { inherit inputs self shared; });
+        tests.checks
+        // (import ./tests/pre-commit.nix { inherit inputs self shared; })
+        // (import ./tests/docs-ssot.nix {
+          inherit
+            inputs
+            self
+            shared
+            tests
+            ;
+          inventory = targets.inventory;
+          devShellNames = builtins.attrNames pdsh;
+        });
 
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc
@@ -355,15 +394,10 @@
       nixos = import ./export/nixos;
       home = import ./export/home;
 
-      # devShells loader
-      devShells.${shared.arch.tag} = shared.pdshells {
-        inherit
-          pkgs
-          inputs
-          shared
-          devDir
-          ;
-      };
+      # devShells loader (T8.1: the pdsh construction lives in the
+      # let above — hoisted once so the docs-SSOT check counts the
+      # same attrset the output exposes)
+      devShells.${shared.arch.tag} = pdsh;
 
       # ── Host closures — HOST-KEYED (T2.4), CAPABILITY-ROUTED (T4.0),
       # PRODUCED by lib/shared/targets.nix (T5.1) ────────────────────

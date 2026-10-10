@@ -109,7 +109,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 92 tests + pre-commit-check = 93 checks          │
+│  6 平面 · 92 tests + pre-commit + docs-ssot = 94 checks    │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -313,7 +313,7 @@ nix-config/
 ├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（wslview —— wslu 归档后的最小 shim）
 │
-├── tests/                  # 测试层（6 平面，92 tests + 1 pre-commit-check = 93 checks）
+├── tests/                  # 测试层（6 平面，92 tests + 2 仓库卫生 checks = 94 checks）
 │   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks（nixosTest runner）
 │   ├── test_calc.nix       # Plane 0: Smoke 基线
 │   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM，29 tests）
@@ -352,8 +352,8 @@ nix-config/
 │
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml          # 7 阶段 CI 流水线（lint → deep-eval → nmt → devshells
-│       │                   #   → security → vm-tests → summary）
+│       ├── ci.yml          # 8 阶段 CI 流水线（lint → deep-eval → nmt → devshells
+│       │                   #   → security → vm-tests → host-toplevels → summary）
 │       └── update-flake.yml# 每周日自动更新 flake inputs 并开 PR
 │
 └── justfile                # 任务自动化入口（ROOT 变量 + import 子模块 + 裸 just 地图）
@@ -484,6 +484,8 @@ api.inputs  = inputs;            # 全部 flake inputs（just 脚本动态枚举
 api.shared  = targets.base;      # 基策略 IR 句柄（与分发层共读一个实例，T5.10）
 api.targets = targets.inventory; # { hostNames nixosHosts darwinHosts standaloneHosts }
 api.checks.planes = ...;         # 测试矩阵的平面分组（T7.3）——CI 整面交接 nix-fast-build
+api.host-toplevels = ...;        # Linux 主机系统闭包（T8.2）——inventory 驱动，
+                                 #   CI 闭包级构建整面交接（darwin 跨系统仅求值）
 
 # 示例：
 nix eval .#api.inputs --json | jq -r 'keys'
@@ -637,7 +639,7 @@ default = {
 };
 ```
 
-**可用 devShells 速查（24 个，`nix eval .#devShells.x86_64-linux --apply builtins.attrNames`）：**
+**可用 devShells 速查（25 个，`nix eval .#devShells.x86_64-linux --apply builtins.attrNames`）：**
 
 | Shell 名称                     | 组合内容                              | 特性                          |
 | ------------------------------ | ------------------------------------- | ----------------------------- |
@@ -664,6 +666,7 @@ default = {
 | `default`                      | 全语言 combinFrom 合并                | 综合开发环境                  |
 | `cpython`                      | C + C++ + Python 组合                 |                               |
 | `godot`                        | C + C++ + Python + godot              | 游戏开发                      |
+| `makeOs`                       | asm + c + qemu_full + just            | OS 实验环境                   |
 | `rs_compiler_dev`              | rust + 编译原理工具链                  | rs 开发                       |
 
 ### 5. 安全层 — SOPS + Age（分层管理）
@@ -888,7 +891,7 @@ platform/<platform>/home/<arch>.nix
 （另两个 `flake = false` 输入非配置仓库：`nmt` 是测试框架 mirror，见[测试体系](#测试体系)。）
 
 **CI 覆盖与职责边界**：这些仓库以 flake.lock 锁定 revision 被消费，本仓 CI
-对它们的集成正确性已全覆盖——deep-eval 硬门禁求值 93 checks 强制 fetch 全部
+对它们的集成正确性已全覆盖——deep-eval 硬门禁求值 94 checks 强制 fetch 全部
 输入（仓库消失/移动即失败）、nmt 平面物料化 home 激活（配置树实际写入）、
 VM 平面真实启动含这些配置的系统；外部仓库的坏提交在 update-flake.yml 开出
 的 PR 上即被拦截。各仓库自身的语言级 lint（stylua 等）归各仓库自己的 CI——
@@ -922,7 +925,7 @@ just commit-global-rules
 
 ### 10. 多主机支持 — hosts/
 
-`hosts/` 目录实现多主机分发，每台机器独立硬件事实 + 可选 `shared.nix` 覆盖。
+`hosts/` 目录实现多主机分发，每台机器独立硬件事实 + 可选 `shared.nix` 覆盖。当前承载 **5 台主机**（nixos · vm · darwin · wsl · nixos-wsl）。
 
 **机器事实的三个文件（T5.12 + T5.13 + T5.14 — 数据 + 解释器路线）：**
 
@@ -1074,12 +1077,12 @@ just db-disable postgresql            # = service-disable
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — `nix flake check --no-build` 对全部 93 checks 做完整 eval（含 8 闭包）
+2. **深层求值** — `nix flake check --no-build` 对全部 94 checks 做完整 eval（含 8 闭包）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
 4. **测试覆盖** — 92 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
-### 实际 Pipeline（7 阶段，最大并行）
+### 实际 Pipeline（8 阶段，最大并行）
 
 ```
 push / PR
@@ -1092,10 +1095,11 @@ push / PR
     │       ├── nix eval .#checks.* attrNames + 平面计数
     │       ├── statix check .                       (Nix 反模式检查)
     │       ├── nixfmt check / deadnix check
-    │       └── Build pre-commit-check derivation
+    │       ├── Build pre-commit-check derivation
+    │       └── Build docs-ssot-check derivation     (T8.1：文档计数锚点)
     │
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁）
-    │       └── nix flake check --no-build            (93 checks 全量 eval；
+    │       └── nix flake check --no-build            (94 checks 全量 eval；
     │           含 6 closure 求值——validate.nix 对无 blob 状态宽容，
     │           出现 blob 后转严 declared-but-not-provided)
     │
@@ -1119,6 +1123,13 @@ push / PR
             ├── home         — HM 模块（41）
             ├── lib          — lib 纯表达式（5）
             └── integration  — NixOS + HM 联合激活（1）
+
+    └─► [STAGE 6.5: Host Toplevels]   系统闭包构建（T8.2，无 KVM）
+            ├── .#api.host-toplevels 整面交 nix-fast-build（inventory 驱动：
+            │   nixos · vm · nixos-wsl——新 NixOS 主机按构造入列；
+            │   cache.nixos.org 替代 + magic-nix-cache 跨次缓存）
+            └── darwin 闭包跨系统仅求值（aarch64-darwin——构建需
+                darwin runner/交叉工具链，环境门控）
 
     └─► [STAGE 7: Summary]             汇总报告（always，即使前序失败）
 ```
@@ -1202,7 +1213,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **93 checks = 92 tests + 1 pre-commit-check**（计数单一来源：`scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **94 checks = 92 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
@@ -1799,7 +1810,7 @@ just secrets-destroy-all      # 以上全部（明文实例+密文+规则+key �
 
 | 平台         | 系统层 | 用户层 | 开发环境               |
 | ------------ | ------ | ------ | ---------------------- |
-| NixOS x86_64 | 完整   | 完整   | 全部（24 devShells）  |
+| NixOS x86_64 | 完整   | 完整   | 全部（25 devShells）  |
 | Linux x86_64 | —      | 完整（+ nixGL） | 全部          |
 | macOS ARM64  | nix-darwin 闭包（eval 级验收，activation 待真机） | 完整（module mode；lean app-set） | CLI 为主 |
 | WSL2         | NixOS-WSL 闭包（eval 级验收，T7.1；activation 待 Windows 宿主） | 完整（+ wslview shim，caps.wsl 门控于共享树） | 全部（需启用 systemd） |
@@ -2047,6 +2058,8 @@ flake.nix（46 inputs）
 - [ ] macOS 完整支持（darwin-specific modules，nix-darwin 集成）（T3.2：darwinConfigurations.darwin 全闭包求值级验收完成——nix-darwin 26.05 + hm module mode；activation 待真实 Mac）
 - [x] 策略表补全（T7.2：**vm 瘦身**〔债 #6〕——hosts/vm/shared.nix 覆写 wm/dm 两行 none：server-pg-only 形态不再携带永不启动的桌面闭包，桌面栈整体减除〔hyprland·ly·portal 中介·flatpak·gvfs·tumbler〕、机器故事无损〔btrfs ephemeral root / /persistent / pg 探针逐一保持〕、vm 求值 12.4s→9.6s〔−23%，桌面模块树离开选项宇宙〕、hm-vm 包集 140→114〔−26〕；**standalone 发射器按主机 arch 解析 pkgs**〔债 #5〕——mkHomeSystem 改读主机自身策略实例的 hshared.pkgs〔运行时层本就按 arch 实例化 nixpkgs〕，aarch64-linux standalone 从此可表达；三个未动 HM 闭包 drv 字节一致〔nqvaivz·8b0srg82·sd3d2kx9〕——可表达性修复零行为变化；**策略行巡检三发现**——① portal.nix 无 desktop-session 门〔控制台形态携带 xdg-desktop-portal+wlr portal，与 home 侧 none 策略的设计矛盾〕→ 门控于 window-manager 枚举的 desktop-session 能力位〔T4.0 定律：读已解析事实，非原始 tag 比较〕；② srv/desktop/ 组〔flatpak+file-manage〕同为桌面会话服务，且 flatpak 的 nixpkgs 断言硬依赖 xdg.portal.enable〔门控 portal 后断言立刻爆出——求值级验证电池抓到的真缺陷，两模块共读同一能力位修复〕；③ sound 栈无门控但刻意缓议〔WSLg/QEMU 音频语义需真机裁决，新债 #9〕；**新测试 nixos_core_base_portal**〔export-modules 模式：desktop 形态门开 + 真实 vm 机经 mkShared 同构构造——门控双律 + 债 #6 减除全谱 + 机器故事存活；断言强制经变异验证〕；93 checks〔92 tests + 1 pre-commit〕；裸金属 nixos 探针字节一致〔门控对桌面形态=恒等——mkIf true 语义〕；T7.1 的两处枚举成员表残留顺手修复〔platform 行补 nixos-wsl、display-manager 行 none 注记〕）
 - [x] CI 构建深度（T7.3：**测试矩阵双面化 + nix-fast-build 整面交接**——tests/default.nix 返回值从单一平铺 attrset 升级为 `{ checks, planes }` 双面〔同一组成员 thunk、两种寻址零额外求值——T5.10 单实例化纪律〕：平铺面仍由 `checks.${system}` 消费〔`nix flake check` 要求每属性恰一个 derivation——中断会话留下的嵌套结构会让 checks 输出含非 derivation 成员，硬门禁必炸〕，平面面经 `api.checks.planes` 暴露〔六平面分组 = 分类法自身的分组〕；**CI 两阶段转换**——STAGE 3 nmt-plane 与 STAGE 6 vm-tests 的前缀发现 + 顺序循环全删〔python 前缀过滤 + 逐个 nix build 共约 90 行〕，改为 `nix-fast-build --flake .#api.checks.planes.<plane>`〔nix-eval-jobs 并行求值 + 流水线构建；`--skip-cached` 对接 magic-nix-cache；`-j $(nproc)` 显式并行——1.4.0 默认继承 Nix max-jobs=1，不传即退化串行〕；**确定性供应链**——nix-fast-build 从锁定 nixpkgs 解析〔`nix eval --raw .#api.inputs.nixpkgs.outPath` → store path 作 flake ref〕，与 flake 同一 revision，零 registry 漂移、零新输入〔T6.3 裁决的采纳落地；1.4.0 + 捆绑 nix-eval-jobs 2.34.3，`-f` 任意 attrpath / `--force-recurse` 递归 / 无 system 后缀逻辑——语义经知识搜索对上游 1.4.0 tag 源码核实〕；**矩阵 4→5 腿**——home-lib 合并腿拆开〔每腿恰一平面，平面面成为 CI 分区 SSOT——新测试按构造落位其平面，CI 侧零维护〕；lint 阶段平面计数同改读 planes 面〔不再前缀重推导〕；**顺手修复**——vm-tests 的 `::add-mask::$AGE_SECRET_KEY` 引用错误〔env 实为 SOPS_AGE_KEY——旧代码掩码的一直是空串〕；**验证**——等价断言〔平铺−pre-commit ≡ 六平面之并且逐平面 ≡ 旧前缀过滤结果，无交叠分区：1+29+41+5+1+15=92〕、六平面可独立寻址、93 checks 深层求值全绿、YAML 解析通过、锁定 nix-fast-build `--help` 实测旗标齐备〔--no-nom/--skip-cached/-j/-f〕；对标 Mic92 CI 的构建深度达成——闭包级构建（真 toplevel 构建深度）仍属环境门控〔CI 无 KVM 全档或自托管 runner 时再议〕）
+- [x] docs-SSOT 计数契约（T8.1：**计数从「人工同步」升级为「机器强制」**——tests/docs-ssot.nix 入列 checks 第 94 员〔pre-commit-check 的同位仓库卫生门〕：活值从求值取〔tests 92 / 平面 1+29+41+5+1+15 / inputs 46〔`@inputs` 捕获含 self 注入故扣除〕/ devShells 25 / hosts 5——attrNames 与 mapAttrs，永不解析散文〕，19 个规范锚点在 README 与 test-matrix 构建期断言〔散文锚 grep -F、表格行 grep -E 填充容错〕；模式来源 wimpy `checks.assistant-catalogue` 的逆向适配——断言内嵌而非生成对拍〔本仓 README 是手写散文非生成物，只锚规范声明、刻意不锚每处散文提及——锚全部句子会让 README 不可编辑〕；**设计期即抓四处真实漂移**〔devShells 速查表缺 makeOs 行而活值 25、test-matrix 3.1 节头滞留 24、3.3 节头滞留 3、3.2 节合计 36 缺 export 行〕——全部修复；**构建期强制**〔deep-eval 只求值〔runCommand 恒构造〕，锚点断言在 build 时触发——CI STAGE 1 在 pre-commit-check 旁显式构建，计数漂移即红灯〕；flake.nix 接线〔checks = tests // pre-commit // docs-ssot 三段合并 + pdsh hoist 单次构造双消费 + inventory/devShellNames 传参——键级求值零额外成本，T5.10 纪律〕；**验证电池抓真缺陷**：首版裸返回派生体 → `//` 把 drv 属性泼进 checks 面〔outPath/__structuredAttrs/userHook 混入且成员丢失——pre-commit.nix 头警示过的同类〕→ 面求值 138 员立刻暴露 → 包裹 `{ docs-ssot-check = …; }` 修复后恰 94 员零泼洒；变异验证〔box 94→93 → 构建 FAIL 带可操作信息；复原 → 绿〕；五闭包字节一致〔nqvaivz·s61py9qg·8b0srg82·sd3d2kx9·dqhyw65——检查对主机/HM 闭包零扰动〕；test-count.sh 权威让位〔本地速查保留，公式 +1→+2〕；钉版 pre-commit-check 构建绿）
+- [x] CI 主机闭包构建腿（T8.2：**构建深度从「测试平面」升级到「真系统闭包」**——api.host-toplevels 第五 api 面〔inventory 数据驱动：nixosHosts 枚举——nixos · vm · nixos-wsl，新 NixOS 主机按构造入列，零 CI 侧维护；成员 = `nixosConfigurations.<h>.config.system.build.toplevel`——与深求值同一 thunk，T5.10 单实例化〕；CI STAGE 6.5 新腿〔needs lint+deep-eval；与平面腿同工具同纪律——锁定 nixpkgs 解析 nix-fast-build、整面交接、`--skip-cached -j $(nproc)`；可行性依据：cache.nixos.org 同 revision 替代 + magic-nix-cache 跨次缓存〔Mic92/wimpy 同型先例〕；darwin 跨系统闭包显式求值步〔aarch64-darwin 构建需 darwin runner/交叉工具链——环境门控，路径已备〕〕；**T7.3 裁决升级**〔当时「闭包级构建属环境门控」的缓议，经 8-a 评分刷新认定 stock runner + 替代缓存即够——缓议条件不成立故升级，非推翻〕；summary 表 + 分支保护清单同步；流水线 7→8 阶段（ci.yml 头注释 + README 三处）；api.* 接口文档补第五面；验证：api.host-toplevels 三成员求值绿 + 与深求值同源、五闭包字节不变、YAML 解析 + bash -n、nixfmt + 钉版 pre-commit 绿〕
 - [x] nixos-facter 替代 nixos-generate-config（声明式硬件发现）（T5.12：硬件事实从「生成的 NixOS 模块」升级为「数据 + 解释器」——hosts/&lt;h&gt;/facter.json 是标准 facter 报告〔schema version 1，与锁定 nixpkgs 的 nixos-facter 0.4.4 一致〕，由 nixpkgs 默认模块表内的 `hardware.facter` 模块解释，主机入口一行接线——零 import、零 flake input；**模块上游化裁决**：nixos-facter-modules 仓库已弃用并入 nixpkgs，本项目不加输入直接消费；hosts/vm 全量迁移〔VM 硬件本是被定义的：QEMU x86_64 PCI guest——kvm 虚拟化、virtio-blk 盘 + 存储控制器、virtio-net 网卡、无 vmx/svm 的 vCPU；报告由声明而非探测产生，字段与真实报告逐一对齐〕；解释器职责边界固化：fileSystems 非报告职责〔上游留待 disko〕、network_interface 刻意不列〔NetworkManager 策略拥有 DHCP——CONTROLLER 在报告中，驱动照样进 initrd〕；真实机器〔hosts/nixos〕迁移路径落地：`just hardware-facter`〔root 扫描生成报告〕+ README 迁移指南；求值级等价验证：vm 配置 diff 穷尽闭合于三处 facter 解释，其余四闭包 drv 哈希字节一致）
 - [x] disko 声明式磁盘分区（替代 hardware.nix 里的 fileSystems 硬编码）（T5.13：磁盘事实从「手写 option 赋值」升级为「数据 + 解释器」——hosts/&lt;h&gt;/disk.nix 是 disko 布局声明〔GPT + EF02 BIOS boot 1MiB + root ext4 100%，上游 gpt-bios-compat 形态〕，由 disko 模块解释为 fileSystems + swapDevices + boot.loader.grub.devices；**注册裁决**：disko 不在 nixpkgs〔已对锁定 26.05 树核实〕，新增 flake input〔tarball-pinned 至 v1.13.0；follows 本仓 nixpkgs 单通道〕，模块 import 落 platform/nixos/core/base/disk.nix——能力归平台结构树、数据归 hosts/，分发层与发射器零改动；hosts/vm 全量迁移 + 引导策略对齐〔grub on / systemd-boot off〕；求值级验证：vm 配置 diff 穷尽闭合于六处，hosts/nixos 配置零变化〔模块惰性〕；四闭包字节一致；构建级探针：formatMount 脚本真实构建成功；顺带修复存量缺陷：T5.2 改名残留的四处测试引用 + 两处文档引用〔nix flake check 自 T5.2 起即坏〕，89/89 checks 现全绿；just 新增 disk 组动词〔disk-show/disk-format〕）
 - [x] Option/Result 类型化错误处理（T4.1：secret 路径校验用 result.andThen —— nix-types Result 铁路〔shared/validate.nix〕：形状检查前置 pass 折叠 + 文件系统存在性 resolution pass + unwrapOrElse 单一边界 throw；声明而缺失的 secret 在 eval 期报「declared but not provided」；变异验证 ×2 + home×3/darwin drv 字节一致）

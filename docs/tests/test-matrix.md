@@ -130,19 +130,24 @@ home/core/exp/sys/base/git.nix
 | ----------- | --------------- | ----------------------- |
 | `test_calc` | `test_calc.nix` | echo, 1+1=2, screenshot |
 
-### 3.1 NixOS-Plane (24 tests)
+### 3.1 NixOS-Plane (29 tests)
 
 | check                                                        | 验证点                                                      |
 | ------------------------------------------------------------ | ----------------------------------------------------------- |
 | `nixos_core_base_{boot,i18n,network,nix,sound,user}`         | systemd-boot / locale / networkd / flakes / pipewire / user |
+| `nixos_core_base_{i18n_source,i18n_samesource}`              | T1.2 生产树 import（同源守卫） |
+| `nixos_core_base_{wsl,portal}`                                | T7.1 WSL 表单求值 / T7.2 portal 能力门双律 |
+| `nixos_core_base_impermanence`                                | T5.14 回滚配方/单元排序/设备门/惰性律 |
 | `nixos_core_drive_{amd,intel,nvidia}`                        | GPU driver toolchain                                        |
 | `nixos_core_sec_{pam,polkit,secret_cmd_age,secret_cmd_sops}` | PAM / polkit / age / sops                                   |
 | `nixos_core_srv_db_{mongodb,mysql,postgresql,redis}`         | service active + DB ops                                     |
 | `nixos_core_srv_hardware_{bluetooth,printing}`               | bluetoothd / cups                                           |
 | `nixos_core_srv_log_logrotate`                               | binary + timer                                              |
+| `nixos_core_srv_monitor_policy`                               | 监控策略（export-modules 模式） |
 | `nixos_core_srv_security_{ssh,keyring}`                      | sshd :22 / gnome-keyring                                    |
+| `nixos_export_modules`                                        | T5.3 export/ 模块语义求值        |
 
-> 合计：base(6+2) + drive(3) + sec(4) + db(4) + monitor(1) + hardware(2) + log(1) + security(2) = **24**
+> 合计：base(10 = 6 + i18n_source + samesource + wsl + portal) + impermanence(1) + drive(3) + sec(4) + db(4) + monitor(1) + hardware(2) + log(1) + security(2) + export(1) = **29**
 
 ### 3.2 HM-Plane (41 tests)
 
@@ -160,10 +165,11 @@ home/core/exp/sys/base/git.nix
 | `home_core_srv_notify_mako`                                                                     | mako + makoctl                   |
 | `home_core_srv_security_gnupg`                                                                  | gpg + gpg-agent                  |
 | `home_env_dev_{c,cpp,rust,go,python,typescript,java,lua,zig,nix,re}`                            | toolchain binary + hello-world   |
+| `home_export_modules`                                                                          | T5.3 export/ 模块语义求值        |
 
-> 合计：base(3) + editor(1) + sys/base(13) + shell(2) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(11) = **36**
+> 合计：base(2) + i18n_source(1) + editor(1) + sys/base(13 + 3 source) + shell(2 + 1 source) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(11) + export(1) = **41**
 
-### 3.3 Lib-Plane (3 tests)
+### 3.3 Lib-Plane (5 tests)
 
 | check                                | 验证点                            |
 | ------------------------------------ | --------------------------------- |
@@ -503,7 +509,7 @@ nix eval .#homeConfigurations  --apply builtins.attrNames --json
 nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 ```
 
-### 测试计数 (2026-10-10，SSOT: `scripts/sh/test-count.sh`)
+### 测试计数 (2026-10-10，机器强制：`tests/docs-ssot.nix` — T8.1；本地速查：`scripts/sh/test-count.sh`)
 
 | 平面        | 数量   | KVM   | 备注                                                                    |
 | ----------- | ------ | ----- | ----------------------------------------------------------------------- |
@@ -513,4 +519,4 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 | Lib         | 5      | ✓     | enum + fn + schema + caps（T4.0 能力表契约：真值表/策略选择/穷尽性）+ validate（T4.1 Result 铁路：ok/err 车道/前置优先级/边界 throw/EMPTY 容忍——fixture 双树：provisioned 严格 + empty 放行） |
 | Integration | 1      | ✓     |                                                                         |
 | **nmt**     | **15** | **✗** | base(7)+sys/base(3)+shell(2)+app/editor(1)+srv(2)                       |
-| **Total**   | **92** |       | VM 77 + nmt 15（另有 1 个 pre-commit-check：nixfmt/statix/deadnix）→ 93 checks（T7.2 +1：nixos_core_base_portal——portal 能力门双律 + vm 控制台翻转全谱） |
+| **Total**   | **92** |       | VM 77 + nmt 15（另有 2 个仓库卫生 checks：pre-commit-check〔nixfmt/statix/deadnix〕+ docs-ssot-check〔T8.1：文档计数锚点契约〕）→ 94 checks（T7.2 +1：nixos_core_base_portal——portal 能力门双律 + vm 控制台翻转全谱） |
