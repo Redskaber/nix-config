@@ -103,23 +103,34 @@ jobs:
             --apply 'p: builtins.mapAttrs (_: v: builtins.length (builtins.attrNames v)) p' \
             --json | python3 -m json.tool
 
-      # Static analysis (Nix anti-patterns)
+      # Static analysis (Nix anti-patterns). T9.1: statix from the LOCKED
+      # nixpkgs — the same revision the flake pins and its own
+      # pre-commit-check builds against. A registry ref resolves to
+      # nixpkgs-unstable on the runner and drifts mid-pipeline: the same
+      # run could disagree with the flake's own hooks. Same shape as the
+      # T7.3 nix-fast-build legs (store-path flake ref, zero registry).
       - name: statix lint
-        run: nix run nixpkgs#statix -- check .
+        run: |
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          nix run "$PKGS#statix" -- check .
 
-      # Formatting drift gate (same formatter the flake exports)
+      # Formatting drift gate (same formatter the flake exports).
+      # T9.1: locked-nixpkgs nixfmt — registry ref retired (statix note).
       - name: nixfmt check
         run: |
-          nix run nixpkgs#nixfmt -- --check \
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          nix run "$PKGS#nixfmt" -- --check \
             $(git ls-files '*.nix' | grep -v -E '(^|/)([^/]*-config)/' || true)
 
       # Dead-code gate — mirrors the pre-commit hook settings: the tree
       # standardises on uniform module heads ({ inputs, shared, lib,
       # config, pkgs, ... }) and overlay pairs (final: prev:), so unused
       # lambda names/patterns are exempted; dead `let` bindings still fail.
+      # T9.1: locked-nixpkgs deadnix (statix note).
       - name: deadnix check
         run: |
-          nix run nixpkgs#deadnix -- \
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          nix run "$PKGS#deadnix" -- \
             --no-lambda-pattern-names --no-lambda-arg --fail \
             $(git ls-files '*.nix')
 
@@ -249,8 +260,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
 
+      # T9.1: sops from the LOCKED nixpkgs (statix note in the lint job) —
+      # a registry sops could change decrypt semantics mid-pipeline.
       - name: Install SOPS
-        run: nix profile install nixpkgs#sops
+        run: |
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          nix profile install "$PKGS#sops"
 
       # Every file under secrets/chipr/ must be SOPS-encrypted (not
       # plaintext). EMPTY lifecycle state (fresh clone, pre-bootstrap):
