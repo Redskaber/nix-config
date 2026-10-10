@@ -296,12 +296,20 @@ jobs:
       # a blob can carry valid sops metadata AND still be undecryptable
       # (rotated-away key, corrupted ciphertext, hierarchy drift).
       # Without the secret the step is skipped — visible, not silent.
+      #
+      # The env NAME must be sops's identity lookup, not the secret's
+      # name: sops reads ONLY SOPS_AGE_KEY / SOPS_AGE_KEY_FILE /
+      # SOPS_AGE_KEY_CMD (+ ssh/file fallbacks) — injecting the private
+      # key under any other variable reproduces "failed to load age
+      # identities" with the key present (the 2026-10 incident this
+      # block was fixed from; vm-tests below already used the correct
+      # name). AGE_SECRET_KEY stays the REPO SECRET name only.
       - name: Decrypt gate (AGE_SECRET_KEY)
         env:
-          AGE_SECRET_KEY: ${{ secrets.AGE_SECRET_KEY }}
-        if: env.AGE_SECRET_KEY != ''
+          SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}
+        if: env.SOPS_AGE_KEY != ''
         run: |
-          echo "::add-mask::$AGE_SECRET_KEY"
+          echo "::add-mask::$SOPS_AGE_KEY"
           FAILED=0
           for f in $(find secrets -name '*.yaml' 2>/dev/null | sort); do
             if ! sops -d --output /dev/null "$f"; then
@@ -314,8 +322,8 @@ jobs:
 
       - name: Decrypt gate (AGE_SECRET_KEY) — not provisioned
         env:
-          AGE_SECRET_KEY: ${{ secrets.AGE_SECRET_KEY }}
-        if: env.AGE_SECRET_KEY == ''
+          SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}
+        if: env.SOPS_AGE_KEY == ''
         run: |
           echo "::warning::AGE_SECRET_KEY not provisioned — decrypt gate SKIPPED."
           echo "Provision it (repo Settings → Secrets → Actions, name: AGE_SECRET_KEY) to enforce end-to-end decryptability."

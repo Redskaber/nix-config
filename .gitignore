@@ -10,6 +10,7 @@ tmp
 !.husky
 !.cz.toml
 !.envrc
+!.github
 
 # custom library old impl
 lib/old
