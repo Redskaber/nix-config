@@ -145,7 +145,8 @@ nix-config/
 │   │                       #   · dependency-graph.md（T13.1 分层重构迁出）
 │   ├── ci/                 # pipeline.md（CI/CD 深度手册：预检/部署/世代/自动化）
 │   ├── guides/             # quickstart.md（六 Phase 全程）· extending.md（扩展指南）
-│   ├── just/               # reference.md（82 recipe × 13 组全参考）
+│   │                       #   · sound-adjudication.md（债 #9 语义半部裁决卷宗，T17.1）
+│   ├── just/               # reference.md（84 recipe × 13 组全参考）
 │   ├── preview/            # 截图预览
 │   ├── modules/            # export/ 模块接口规范（interface-standards.md）
 │   ├── secrets/            # rotation.md（轮换 runbook）· scenarios.md（九情景手册）

@@ -1,10 +1,10 @@
-# just 命令全参考 — 82 recipe × 13 组
+# just 命令全参考 — 84 recipe × 13 组
 
 > 本文是 README「justfile 命令参考」节的完整版（T13.1 分层重构时从 README 原样迁出）。
 > `just --list` 在终端给出同源入口；日常速查（deploy / devenv / secrets 三高频组）见
 > [README](../../README.md#日常操作速查)。
 
-> 全量动词面共 82 个 recipe，`[group]` 注解分 13 组（bootstrap / commit / deploy /
+> 全量动词面共 84 个 recipe，`[group]` 注解分 13 组（bootstrap / commit / deploy /
 > devenv / disk / flake / hardware / keys / maintenance / rules / secrets / services /
 > shared）——`just --list` 给出按组组织的全部入口；裸 `just`（无参数）打印
 > start-here 地图；secrets 侧的生命周期地图从 `just secrets-guide` 进入。
@@ -66,6 +66,9 @@ just hardware-facter           # 生成 hosts/<hostname>/facter.json（声明式
 just hardware-generate         # 生成 hosts/<hostname>/hardware.nix（legacy 路线，nixos-generate-config）
 just hardware-show             # 显示当前 hardware.nix 内容
 just hardware-list             # 列出所有已配置主机
+just sound-audit               # 只读：采集本机音频形态证据（债 #9 语义半部，T17.1）——
+                               # 按运行时事实探测形态（WSL / 虚机 / 裸金属），打印匹配的
+                               # 裁决矩阵行与建议翻转（卷宗 docs/guides/sound-adjudication.md）
 ```
 
 ### disk — 磁盘布局应用 + 状态策略检视（T5.13 + T5.14）

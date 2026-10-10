@@ -23,6 +23,14 @@
   window-manager = shared.enum.window-manager.none;
   display-manager = shared.enum.display-manager.none;
 
+  # Debt #9 semantic half — pre-ruled flip, staged (T17.1 dossier
+  # docs/guides/sound-adjudication.md §A): the declared facter report
+  # carries no audio device and the machine story is server-form, so
+  # the pre-ruling is the Null-Object row. Uncomment AFTER `just
+  # sound-audit` confirms on the booted machine (the whole stack —
+  # pipewire + wireplumber + rtkit + mixers — subtracts with it):
+  # sound = shared.enum.sound.none;
+
   # Virtual display adapter — no NVIDIA/Prime on a QEMU guest.
   drive = shared.enum.drive-group.amd;
 

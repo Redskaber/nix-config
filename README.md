@@ -24,7 +24,7 @@
 14. [深入文档](#深入文档)
 
 > 深度内容按受众分层至 `docs/`（[文末索引](#深入文档)）：架构内幕 · 六 Phase 全程 ·
-> 九情景 secrets 手册 · 82 recipe 全参考 · CI 深度手册——README 只保留入口层。
+> 九情景 secrets 手册 · 84 recipe 全参考 · CI 深度手册——README 只保留入口层。
 
 ---
 
@@ -478,7 +478,7 @@ push / PR
 
 ## 日常操作速查
 
-> 全量动词面共 82 个 recipe，`[group]` 注解分 13 组——终端 `just --list` 或
+> 全量动词面共 84 个 recipe，`[group]` 注解分 13 组——终端 `just --list` 或
 > [docs/just/reference.md](docs/just/reference.md)；裸 `just` 打印 start-here 地图。
 
 ### deploy — 部署动词（nixos-rebuild 三语义 + HM）
@@ -607,16 +607,19 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
    nixos_core_base_impermanence 锁定，formatMount 真实构建，但「每次启动根被归档重建」
    本身需要一次真实 btrfs 启动）、macOS activation（真 Mac）、hosts/nixos 的 disk.nix
    应用（重装时机）——四者都已有完整路径，等待对应环境。
-9. **sound 栈门控：机械半部已落地（T10.1），语义裁决待真机。** sound
-   现在是独立策略轴（enum `sound`：`pipewire` 全栈 / `none` Null-Object，
-   携带 `sound-server` 位与 `mixers` 工具带），sound.nix 读已解析事实
-   门控（T4.0 定律），schema 将其列为必需键——每条策略链必须回答该轴。
-   `nixos_core_base_sound_gate` 锁定双律（pipewire 形全栈 / none 形
-   整体减除）。全部现有主机保持 pipewire 行：五个 HM/darwin 闭包字节
-   一致，三个 NixOS toplevel 值面探针全同（drv 哈希的移动通道见 #10）。
-   剩余语义半部仍是环境门控：vm（QEMU 音频设备）与 nixos-wsl（WSLg
-   经 pulse 的 Windows 桥）是否翻none 行，待首次真机验收裁决——
-   届时翻转 = 每主机一行数据，非文件编辑。
+9. **sound 栈门控：机械半部已落地（T10.1），语义半部已预裁决待真机确认
+   （T17.1 卷宗）。** sound 现在是独立策略轴（enum `sound`：`pipewire`
+   全栈 / `none` Null-Object，携带 `sound-server` 位与 `mixers`
+   工具带），sound.nix 读已解析事实门控（T4.0 定律），schema 将其列为
+   必需键——每条策略链必须回答该轴。`nixos_core_base_sound_gate`
+   锁定双律（pipewire 形全栈 / none 形整体减除）。语义半部的裁决
+   卷宗已成文（[docs/guides/sound-adjudication.md](docs/guides/sound-adjudication.md)：
+   范围 / 架构事实 / 探针 / 裁决矩阵 / 翻转后验证），两台控制台主机
+   的预裁决均为 `none`——一行翻转已以注释预置在 hosts/vm 与
+   hosts/nixos-wsl 的 shared.nix，`just sound-audit`（只读）在真机上
+   机械采集证据。剩余门控不变：首次真机验收（vm 的 QEMU 音频设备 /
+   nixos-wsl 的 WSLg Windows 侧 pulse 桥）后解注翻转，届时仍是
+   每主机一行数据，非文件编辑。
 10. **NixOS toplevel 的 drv 哈希追踪源树内容。** `nix.registry` 的 self
    条目（nix.nix 的 `registry = mapAttrs (_: flake: { inherit flake; })
    flakeInputs`，含 self）把 flake 源树的 narHash/lastModified 写进
@@ -693,6 +696,8 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 - [x] CI 深层求值面分片化（T15.1：**单进程内存地板的结构性破解**——证据链：run #338 deep-eval 90 分钟超时〔无 infra 签名，重试结构不可及——超时在任何重试前杀 job〕；首个 120m 窗 run 同树 49min+ 仍在求值；本地 4GB 沙箱复现 OOM：`nix flake check --no-build` 单进程累积全部 95 checks 活跃求值态，第 9 个 derivation 处 anon-rss ~2GB 且持续增长〔dmesg 实录〕；同树同日 output-faces 腿 1m52s 完成——短命进程的内存形态证明。**设计（编译器管道类比：单遍全量检查 → 分面 pass 管道）**：deep-eval 腿从单进程 flake check 重构为四面部序列，每面短命 nix 进程〔实测单 attr toplevel 峰值 RSS ~1017MB，进程退出即释放〕：①api 信封 attrNames〔无他腿拥有的面〕②nixosConfigurations 逐主机 toplevel drvPath〔host-toplevels 构建腿的求值基础——needs 绿门语义更精确〕③杂项 checks〔docs-ssot/pre-commit drvPath；其余 93 员由 vm-tests 构建级拥有——更强〕④**完备性对账**〔flake check 隐式「遍历一切」兑底的显式化：checks attrNames〔形状级，无成员 thunk 强制，实测亚秒零 RSS〕必须被平面成员并集或杂项清单拥有——新测试文件逃逸平面注册即红；对冲官方语义退役的漂移风险〕；infra 签名重试保留于面粒度〔T12.1 策略〕；timeout 120→45m。**面→腿拥有矩阵**：api=deep-eval / nixosConfigurations=deep-eval+host-toplevels / packages·home·darwin=output-faces / devShells=evaluate-devshells / formatter=lint / checks 93=vm-tests〔构建级〕。**验证**：本地 rootless nix 全面部实测绿〔api 5 键 / 4 主机 toplevel drv / 杂项 2 员 / 对账 95=93+2 双向空集〕+ 对账负路径〔人造未注册 attr 被点名〕+ 单 attr 内存监控〔进程树 RSS 采样 1017MB〕+ YAML 结构断言〔timeout 45/门语义 != success ×8 不变/needs 链不变/MNC 4 构建腿不变〕+ bash -n + stub-nix 四分支运行时模拟〔全绿 / 树侧失败立即红且不继续后续主机 / infra 退避 61s 重试绿 / 对账红点名〕——**模拟器再抓真缺陷**：首版 `set -o pipefail` 无 -e，force() return 1 被静默吞〔与 T11.1 同型教训〕→ 显式 `set -eo pipefail` 不依赖 runner shell 默认值；eval-cache 预热方案被实验否决〔nix eval 写入 eval-cache 但 flake check 不消费 checks 面预热——两次复现同样在 1.9GB 处 OOM〕）
 - [x] 供应链 actions SHA 钉版（T16.1：**全部 action 引用从可变 tag 迁移到不可变 40-hex commit SHA + 机器契约**——证据链：run #341〔ba66225〕注解在野点名 `actions/checkout@v4` / `nix-installer-action@v13` 仍为标签引用〔同 run 另有 Node.js 20 弃用警告——v4/v13 声明 node20 被 runner 强制跑在 node24，v5 级升级另行候选〕；移动 tag 的供应链风险是结构性的：owner 强推/删除/重指 tag 即静默改换 CI 所执行代码，上游仓库沦陷 = 本流水线沦陷〔26 处引用面：ci.yml 9×checkout + 8×installer + 4×MNC，update-flake.yml 1×checkout + 1×installer + 1×MNC + 1×create-pull-request〕。**钉版即锁现状**：4 个 action 经 `git ls-remote` 解析〔2026-10-10，git 协议直连绕开 api 限流〕——checkout v4→`11d5960a`〔恰为 v4.4.0 发布 tag，注释记全语义版本〕、nix-installer v13→`ab6bcb2d`〔DeterminateSystems 只发主版本移动 tag，注释记 v13〕、magic-nix-cache v7→`b46e247b`、create-pull-request v6→`c5a78066`〔恰为 v6.1.0〕；尾注释为人类与 Dependabot 而写〔SHA 可被 dependabot 按注释版本号原位升级〕。**契约入腿不入记忆**：Security Audit 腿新增 fail-fast 步〔纯 grep，先于 nix/sops 安装〕——全部 `uses:` 行必须匹配 `owner/repo@40hex(# 注释)` 或本地 `./` 豁免，未钉版引用点名红灯，新引用不钉版不能绿〔与 docs-ssot 同型：约定→机器强制〕。**验证**：YAML 双文件解析 + 结构断言〔26 处 uses 全 SHA 化 / 零 `@v` 残留 / job 数与 needs 链不变 / 契约步在位〕+ 契约脚本独立双路径实跑〔正路径全绿 / 负路径注入 `foo/bar@v1` 与 `@master` 双违例被点名〕+ bash -n + docs-ssot-check 复建绿〔19 锚点〕；已知边界：DeterminateSystems 两 action 只有移动 tag，钉 SHA 后跨 minor 升级需手动 ls-remote 重解析〔Dependabot 对无语义版本的仓库跟踪受限〕）
 
+- [x] sound 语义半部裁决卷宗（T17.1：**债 #9 的环境门控部分从「等待真机」推进为「到机即决」**——[docs/guides/sound-adjudication.md](docs/guides/sound-adjudication.md) 成文：裁决范围〔vm/nixos-wsl 两台待裁决；nixos 工作站默认即正确；wsl standalone 与 darwin 出范围〕+ 架构事实〔QEMU 客机音频设备是域定义产物——裸 CLI 无、virt-manager 默认挂 ich9-intel-hda；本仓 facter 声明侧已无音频设备；WSLg 音频中介运行于 Windows 侧 system distro——socket 投影 + PULSE_SERVER 预配置 + RDP 通道往返，用户发行版内核无音频硬件可服务——一手来源 microsoft/wslg README 三节引文〕+ 探针清单 + 裁决矩阵〔两主机各两行，结论均为 none；nixos-wsl 两行同归 none——证据只影响归因措辞〕+ 翻转后验证〔三 toplevel 值面探针 + sound_gate 双律正交性说明〕。**预裁决一行翻转已预置**：hosts/vm 与 hosts/nixos-wsl 的 shared.nix 各带注释形式的 `sound = shared.enum.sound.none;`——真机验收确认后解注即一行数据变更〔零行为变化设计：注释不进求值，五闭包字节不变〕。**`just sound-audit`（hardware 组，只读）**：按运行时事实探测形态〔kernel release microsoft 旗标 / systemd-detect-virt 回退 cpuinfo hypervisor 旗标——动词层的 T4.0 定律：读已解析机器不读声明〕，跑该形态的探针电池，打印匹配矩阵行与建议翻转；SSH 会话不继承 WSLg env 的探针语义在输出里就地说明。**验证**：bash -n + stub 三形态四分支运行时模拟〔WSL 形（socket 缺席负路径）/ 客机形无音频 / 客机形带 hda 设备 / 裸金属形〕+ 五闭包 drvPath 前后字节一致 + nixfmt 两主机文件零重排 + docs-ssot-check 复建绿；**recipe 计数校准 82→84 全树六处同步〔README×3 + reference×2 + tree×1——计数本身抓到存量漂移：T10.2 的 nixos-boot 入列时未同步计数头，文档 82 / 活值 83；just --summary 活值为准〕**）
+
 ### 被拒绝的路线图项（裁决记录）
 
 路线图只保留真话——被拒绝的项在这里留下证据链，而不是静默消失（"让树说真话"的同一纪律）。
@@ -725,7 +730,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 | 理解依赖全景 | [docs/architecture/dependency-graph.md](docs/architecture/dependency-graph.md) — inputs 全图 |
 | 从 0 部署一台机器 | [docs/guides/quickstart.md](docs/guides/quickstart.md) — 六 Phase 全程 |
 | 管理 secrets | [docs/secrets/scenarios.md](docs/secrets/scenarios.md) 九情景 · [docs/secrets/rotation.md](docs/secrets/rotation.md) 轮换 |
-| 找一个 just 动词 | [docs/just/reference.md](docs/just/reference.md) — 82 recipe × 13 组 |
+| 找一个 just 动词 | [docs/just/reference.md](docs/just/reference.md) — 84 recipe × 13 组 |
 | 了解 CI 为什么这样设计 | [docs/ci/pipeline.md](docs/ci/pipeline.md) — 缘起 · 预检 · 部署 · 世代 |
 | 扩展这个仓库 | [docs/guides/extending.md](docs/guides/extending.md) — 应用/环境/secret/策略四模式 |
 | 理解测试怎么写 | [docs/tests/test-matrix.md](docs/tests/test-matrix.md) · [nixosTest.md](docs/tests/nixosTest.md) · [nmt.md](docs/tests/nmt.md) |

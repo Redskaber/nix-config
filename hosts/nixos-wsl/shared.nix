@@ -31,6 +31,15 @@
   window-manager = shared.enum.window-manager.none;
   display-manager = shared.enum.display-manager.none;
 
+  # Debt #9 semantic half — pre-ruled flip, staged (T17.1 dossier
+  # docs/guides/sound-adjudication.md §B): WSLg's audio mediation runs
+  # in the Windows-side system distro (socket projected, PULSE_SERVER
+  # preconfigured, no audio hardware in the user distro), so the
+  # pre-ruling is the Null-Object row. Uncomment AFTER `just
+  # sound-audit` confirms inside the booted distro (from a WSLg
+  # terminal, not over SSH):
+  # sound = shared.enum.sound.none;
+
   # No NVIDIA/Prime inside the WSL kernel interface.
   drive = shared.enum.drive-group.amd;
 
