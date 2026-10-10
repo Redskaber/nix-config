@@ -1,6 +1,6 @@
 # @path: ~/projects/configs/nix-config/hosts/vm/shared.nix
 # @author: redskaber
-# @datetime: 2026-10-08
+# @datetime: 2026-10-10
 # @description: hosts::vm::shared — second-machine policy overrides
 #
 # The second machine of the multi-host design (T2.3/T2.5): a virtual
@@ -12,6 +12,17 @@
 
 { shared, inputs, ... }:
 {
+  # Console machine (T7.2, debt #6): a server-form VM runs no
+  # compositor and greets no login screen — wm/dm flip to the
+  # Null-Object rows, and the closure stops carrying the desktop
+  # stack it never started (hyprland + ly + their pull rode the
+  # evaluation-level host since T2.3). The base policy's defaults
+  # stay with the base host: this is a host override, not a policy
+  # change — the same wholesale-flip grammar hosts/wsl and
+  # hosts/nixos-wsl use for their console shapes.
+  window-manager = shared.enum.window-manager.none;
+  display-manager = shared.enum.display-manager.none;
+
   # Virtual display adapter — no NVIDIA/Prime on a QEMU guest.
   drive = shared.enum.drive-group.amd;
 

@@ -111,12 +111,31 @@ let
     };
     inherit (strategies) home-prefix btop trace-tools;
   };
+  # NixOS-WSL (T7.1): the NixOS system form hosted inside a WSL2
+  # distro — a full NixOS system layer that runs under the Windows
+  # host's kernel. A fifth row, not a mutation of `nixos`: capability
+  # cells the plain nixos row answers false are answered true here
+  # (wsl), and the customs that row selects (platform/nixos-wsl/ —
+  # the nixos customs + the NixOS-WSL interpreter) differ from the
+  # bare-metal ones the way the caps differ. The sibling `wsl` row
+  # stays what it was: a WSL distro whose system layer this flake
+  # does NOT own (standalone HM only, hosts/wsl).
+  nixos-wsl = {
+    caps = {
+      linux-family = true;
+      nixos-system = true; # the NixOS system layer, WSL-hosted
+      wsl = true; # interop + dual-kernel clock-drift realities
+      darwin = false;
+    };
+    inherit (strategies) home-prefix btop trace-tools;
+  };
   platform = enum "platform" {
     inherit
       linux
       darwin
       nixos
       wsl
+      nixos-wsl
       ;
   };
   arch = enum "arch" [
@@ -198,6 +217,11 @@ let
     "lemurs"
     "ly"
     "sddm"
+    # T7.1: the Null-Object row — no display manager. Console hosts
+    # (WSL, headless servers) select it; platform/nixos/dm/none/ is
+    # the deliberately-empty module that keeps the dm router
+    # unconditional (same pattern as window-manager none).
+    "none"
   ];
   # drive           = enum "drive"          [ "amd" "intel" "nvidia" "nvidia-prime" ];
   drive-group = enum "driveGroup" {

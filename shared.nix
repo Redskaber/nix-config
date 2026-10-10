@@ -1,10 +1,13 @@
 # @path: ~/projects/configs/nix-config/docs/tmpl/shared.nix.tmpl
 # @author: redskaber
-# @description: self::shared — policy layer template
+# @description: self::shared — base policy (template → live instance)
 #
-# NOTE: This is a template. Do not import it directly into Nix.
-#       Run `just shared-generate <username>` to substitute kilig
-#       and overwrite shared.nix. Edit this file, not shared.nix.
+# NOTE: repo-root shared.nix is the LIVE base policy (loaded by
+#       lib/shared/default.nix via scfpath). It is generated from this
+#       template: `just shared-generate <username>` renders it, and
+#       `just shared-roundtrip` gates regeneration as byte-identical.
+#       Edit the template, not the output; host-scoped overrides live
+#       in hosts/<h>/shared.nix.
 #
 # Single source of truth:
 #   username appears only here; propagated to shared.nix via generation,

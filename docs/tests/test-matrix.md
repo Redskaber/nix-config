@@ -1,7 +1,7 @@
 # NixOS Config — Test Matrix
 
 > `docs/tests/test-matrix.md`
-> Updated: 2026-05-13
+> Updated: 2026-10-10
 
 ---
 
@@ -503,14 +503,14 @@ nix eval .#homeConfigurations  --apply builtins.attrNames --json
 nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 ```
 
-### 测试计数 (2026-10-08)
+### 测试计数 (2026-10-10，SSOT: `scripts/sh/test-count.sh`)
 
 | 平面        | 数量   | KVM   | 备注                                                                    |
 | ----------- | ------ | ----- | ----------------------------------------------------------------------- |
 | Smoke       | 1      | ✓     |                                                                         |
-| NixOS       | 26     | ✓     | base(8=6+i18n_source+samesource)+drive(3)+sec(4)+db(4)+hardware(2)+log(1)+security(2)+export(1)+monitor(1) |
+| NixOS       | 29     | ✓     | base(10=6+i18n_source+samesource+wsl+portal)+drive(3)+sec(4)+db(4)+hardware(2)+log(1)+security(2)+export(1)+monitor(1)+impermanence(1，T5.14：三组独立 nixosSystem 求值锁定回滚配方/单元排序/设备门/neededForBoot/bind mounts/惰性律) |
 | HM          | 41     | ✓     | base(2)+i18n_source(1)+editor(1)+sys/base(13+3 source)+shell(2+1 source)+sys(3)+sec(1)+srv(2)+dev(11)+export(1) |
 | Lib         | 5      | ✓     | enum + fn + schema + caps（T4.0 能力表契约：真值表/策略选择/穷尽性）+ validate（T4.1 Result 铁路：ok/err 车道/前置优先级/边界 throw/EMPTY 容忍——fixture 双树：provisioned 严格 + empty 放行） |
 | Integration | 1      | ✓     |                                                                         |
 | **nmt**     | **15** | **✗** | base(7)+sys/base(3)+shell(2)+app/editor(1)+srv(2)                       |
-| **Total**   | **89** |       | VM 74 + nmt 15（另有 1 个 pre-commit-check：nixfmt/statix/deadnix）→ 90 checks |
+| **Total**   | **92** |       | VM 77 + nmt 15（另有 1 个 pre-commit-check：nixfmt/statix/deadnix）→ 93 checks（T7.2 +1：nixos_core_base_portal——portal 能力门双律 + vm 控制台翻转全谱） |

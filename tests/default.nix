@@ -74,11 +74,17 @@ let
     nixos_core_base_i18n_samesource = nixosTest ./nixos/core/base/i18n-samesource.nix;
     # T5.14: the ephemeral-root interpreter (eval-guard, two machines).
     nixos_core_base_impermanence = nixosTest ./nixos/core/base/impermanence.nix;
+    # T7.1: the NixOS-WSL fifth system form (the customs door + the
+    # chrony delta + the inert law).
+    nixos_core_base_wsl = nixosTest ./nixos/core/base/wsl.nix;
 
     # ── export (T2.1: external-flake import acceptance) ────────────
     nixos_export_modules = nixosTest ./nixos/export-modules.nix;
     nixos_core_base_network = nixosTest ./nixos/core/base/network.nix;
-    nixos_core_base_nix = nixosTest ./nixos/core/base/nix.nix;
+    nixos_core_base_nix = nixosTest ./nixos/core/base/nix.n;
+    # T7.2: the portal capability gate (desktop on / console off)
+    # + the vm console flip's whole subtraction, on the real machine.
+    nixos_core_base_portal = nixosTest ./nixos/core/base/portal.nix;
     nixos_core_base_sound = nixosTest ./nixos/core/base/sound.nix;
     nixos_core_base_user = nixosTest ./nixos/core/base/user.nix;
 
@@ -215,11 +221,32 @@ let
 in
 # Explicit plane composition via lib.foldl.
 # If two planes share a key, the later plane wins (no silent override).
-lib.foldl (a: b: a // b) { } [
-  plane0_smoke
-  plane1_nixos
-  plane2_home
-  plane3_lib
-  plane4_integration
-  plane5_nmt
-]
+#
+# Two faces, one evaluation (T7.3): the flat `checks` attrset is
+# what checks.${system} consumes (unchanged shape — one derivation
+# per attr, exactly what `nix flake check` expects); the `planes`
+# groups expose the SAME derivations under the taxonomy's own
+# grouping so CI stages can hand a whole plane to nix-eval-jobs-
+# based builders (nix-fast-build -f .#api.checks.planes.nixos)
+# instead of discovering members and building them one at a time.
+# Members are shared thunks — addressing them twice costs nothing
+# (the T5.10 single-instantiation discipline).
+{
+  checks = lib.foldl (a: b: a // b) { } [
+    plane0_smoke
+    plane1_nixos
+    plane2_home
+    plane3_lib
+    plane4_integration
+    plane5_nmt
+  ];
+
+  planes = {
+    smoke = plane0_smoke;
+    nixos = plane1_nixos;
+    home = plane2_home;
+    lib = plane3_lib;
+    integration = plane4_integration;
+    nmt = plane5_nmt;
+  };
+}

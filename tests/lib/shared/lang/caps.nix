@@ -47,6 +47,7 @@ let
     darwin
     nixos
     wsl
+    nixos-wsl
   ];
 
   # Marker scopes: strategy lambdas must be selection functions, so the
@@ -75,15 +76,19 @@ let
     assert realEnum.platform.linux.value.caps.linux-family;
     assert realEnum.platform.nixos.value.caps.linux-family;
     assert realEnum.platform.wsl.value.caps.linux-family;
+    assert realEnum.platform.nixos-wsl.value.caps.linux-family;
     assert !realEnum.platform.darwin.value.caps.linux-family;
     assert realEnum.platform.nixos.value.caps.nixos-system;
+    assert realEnum.platform.nixos-wsl.value.caps.nixos-system;
     assert !realEnum.platform.linux.value.caps.nixos-system;
     assert !realEnum.platform.wsl.value.caps.nixos-system;
     assert !realEnum.platform.darwin.value.caps.nixos-system;
     assert realEnum.platform.wsl.value.caps.wsl;
+    assert realEnum.platform.nixos-wsl.value.caps.wsl;
     assert !realEnum.platform.nixos.value.caps.wsl;
     assert realEnum.platform.darwin.value.caps.darwin;
     assert !realEnum.platform.nixos.value.caps.darwin;
+    assert !realEnum.platform.nixos-wsl.value.caps.darwin;
     # 3a. btop strategy: Linux family selects the GPU-stack build,
     #     darwin selects stock — asserted by VALUE through markers.
     assert
@@ -98,6 +103,11 @@ let
       };
     assert
       realEnum.platform.wsl.value.btop gpuMarker == {
+        rocmSupport = true;
+        cudaSupport = true;
+      };
+    assert
+      realEnum.platform.nixos-wsl.value.btop gpuMarker == {
         rocmSupport = true;
         cudaSupport = true;
       };
@@ -121,6 +131,7 @@ let
         linux
         nixos
         wsl
+        nixos-wsl
       ]
     );
     # 4. window-manager capability bits: only the Null-Object row has

@@ -14,7 +14,7 @@ policy. This document defines the interface contract that closes that gap.
 
 | Tree | Audience | Contract |
 | --- | --- | --- |
-| `nixos/`, `home/` | this user, this machine | consumes `shared` directly; policy-driven, no `enable` needed |
+| `platform/`, `home/` | this user, this machine | consumes `shared` directly; policy-driven, no `enable` needed |
 | `export/` | **any external flake** | standalone, options-first, zero `shared` dependency |
 
 Production modules stay policy-driven (that is their value: one `shared.nix`
@@ -104,7 +104,9 @@ break at runtime with an eval-healthy configuration — the fcitx5 incident
   host; keys replace wholesale (enum instances are attrsets — a recursive
   merge would corrupt their strategy payloads).
 - `hostName` inside the merged policy is force-aligned to the host whose
-  directory was loaded: the nixos tree routes hardware via
-  `../hosts/${shared.hostName}`.
-- Adding a machine = `mkdir hosts/<name>` + `default.nix` (+ optional
-  `shared.nix`); the flake enumerates `hosts/` itself.
+  directory was loaded: the platform customs route host facts via
+  `../../hosts/${shared.hostName}` (one level deeper since T5.7 moved the
+  system trees under `platform/`).
+- Adding a machine = `mkdir hosts/<name>` (+ optional `shared.nix` for policy
+  overrides, + machine-fact files as data: `facter.json` / `disk.nix` /
+  `persist.nix`, T5.12–T5.14); the flake enumerates `hosts/` itself.

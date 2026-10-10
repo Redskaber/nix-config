@@ -54,7 +54,6 @@ let
       inputs
       ;
   };
-  pkgs = shared.pkgs;
 
   # ── frontend: host inventory (T2.3/T2.4) ──────────────────────
   # Enumerated from hosts/ — adding a machine is mkdir + files. Each
@@ -195,7 +194,16 @@ let
       hshared = sharedByHost.${host};
     in
     inputs.home-manager.lib.homeManagerConfiguration {
-      inherit pkgs;
+      # Per-host pkgs (T7.2, debt #5): the policy instance already
+      # instantiates its nixpkgs for the host's OWN arch (the runtime
+      # synthesizes pkgs from pattrs = { system = arch.tag; } ⊕ the
+      # nixpkgs policy) — the emitter reads THAT handle instead of the
+      # base instance's, so a future aarch64-linux standalone host
+      # evaluates against its own arch instead of the base host's.
+      # Byte-identical for every current host (all standalone hosts
+      # are x86_64-linux today): this is the expressibility fix, not
+      # a behavior change — the closure hashes below prove it.
+      pkgs = hshared.pkgs;
       extraSpecialArgs = {
         inherit inputs;
         shared = hshared;

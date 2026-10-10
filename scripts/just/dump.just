@@ -1,4 +1,4 @@
-# Dump current project file tree + concat to stored/
+# Dump current project file tree + concat to tmp/
 [group('maintenance')]
 dump:
   @mkdir -p tmp

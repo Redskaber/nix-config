@@ -18,7 +18,6 @@
     ./core.nix
     ./obs.nix
     ./steam.nix
-    ./xwayland.nix
   ];
 
 }

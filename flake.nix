@@ -91,6 +91,19 @@
     impermanence.url = "https://github.com/nix-community/impermanence/archive/7b1d382faf603b6d264f58627330f9faa5cba149.tar.gz";
     impermanence.inputs.nixpkgs.follows = "nixpkgs";
 
+    # NixOS-WSL — the WSL2 interpreter for the nixos-wsl platform row
+    # (T7.1): the fifth system form, a NixOS system layer hosted
+    # inside a Windows-managed distro. Registered platform-side in
+    # platform/nixos-wsl/default.nix (the thin door that reuses the
+    # nixos customs); hosts/nixos-wsl/ carries the host's data.
+    # Tarball-pinned to the release-26.05 branch (release branches
+    # are nixpkgs-coupled since 2505.7.0 — main tracks unstable).
+    # The module owns the WSL surface (wsl.conf generation, systemd
+    # hosting, interop/binfmt, boot/kernel/loader subtraction); our
+    # platform/nixos/core/base/wsl.nix keeps only the true deltas.
+    nixos-wsl.url = "https://github.com/nix-community/NixOS-WSL/archive/b98199a76ab180be55f7a6a97bd4984a87c99964.tar.gz";
+    nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
+
     # Nix types expend from my costum
     nix-types.url = "github:Redskaber/nix-types";
 
@@ -270,12 +283,33 @@
       shared = targets.base;
       pkgs = shared.pkgs;
       devDir = shared.devDir;
+
+      # ── Test matrix, imported ONCE (T7.3) ─────────────────────
+      # tests/default.nix returns two faces over the SAME member
+      # thunks: the flat `checks` attrset (what checks.${system}
+      # below consumes — one derivation per attr, exactly what
+      # `nix flake check` expects) and the `planes` groups (the
+      # taxonomy's own grouping, exposed via api.checks.planes so
+      # CI hands a whole plane to nix-fast-build instead of
+      # discovering members by name prefix and building them one
+      # at a time). One import here = one evaluation; addressing a
+      # member through either face adds nothing (T5.10 discipline).
+      tests = import ./tests { inherit inputs shared; };
     in
     {
       # api
       api.inputs = inputs;
       api.shared = shared;
       api.targets = targets.inventory;
+      # T7.3: the planes face of the test matrix.
+      # `nix-fast-build --flake .#api.checks.planes.<plane>` is the
+      # CI handoff point — the fragment resolves to an attrset of
+      # derivations with the SAME shape as .#checks.${system}, so
+      # nix-eval-jobs evaluates the plane in parallel and nix-fast-
+      # build pipelines the builds (`--force-recurse` traversal,
+      # verified against nix-fast-build 1.4.0 / nix-eval-jobs
+      # 2.34.3, both bundled in the locked nixpkgs 26.05).
+      api.checks.planes = tests.planes;
 
       # debug information
       # Available through 'nix eval .#debug.test_system'
@@ -285,9 +319,11 @@
       # checks
       # Test planes 0–5 + the pre-commit eval gate (see
       # tests/pre-commit.nix for the git-hooks half and its history).
+      # T7.3: the FLAT face only — `nix flake check` requires each
+      # attribute here to be a derivation, so the planes grouping
+      # lives behind api.checks.planes, never inside this output.
       checks.${shared.arch.tag} =
-        (import ./tests { inherit inputs shared; })
-        // (import ./tests/pre-commit.nix { inherit inputs self shared; });
+        tests.checks // (import ./tests/pre-commit.nix { inherit inputs self shared; });
 
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc

@@ -95,20 +95,12 @@ jobs:
           echo "Total checks: $COUNT (system: $SYS)"
           [ "$COUNT" -gt 0 ] || { echo "ERROR: checks is empty" >&2; exit 1; }
 
-          # Print plane breakdown
-          echo "$CHECKS" | python3 -c "
-          import sys, json, collections
-          cs = json.load(sys.stdin)
-          planes = collections.Counter()
-          for c in cs:
-              for prefix in ['nmt_','nixos_','home_','lib_','integration_','test_']:
-                  if c.startswith(prefix):
-                      planes[prefix.rstrip('_')] += 1
-                      break
-              else:
-                  planes['other'] += 1
-          for k,v in sorted(planes.items()): print(f'  {k}: {v}')
-          "
+          # Print plane breakdown (T7.3: read the planes face of the
+          # test matrix — the partition SSOT — instead of re-deriving
+          # membership from name prefixes)
+          nix eval .#api.checks.planes \
+            --apply 'p: builtins.mapAttrs (_: v: builtins.length (builtins.attrNames v)) p' \
+            --json | python3 -m json.tool
 
       # Static analysis (Nix anti-patterns)
       - name: statix lint
@@ -190,50 +182,18 @@ jobs:
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@v7
 
-      - name: Discover nmt checks
-        id: discover
+      # T7.3: the plane address (.#api.checks.planes.nmt) replaces
+      # prefix discovery + the per-check python loop — nix-fast-build
+      # (from the LOCKED nixpkgs, the same revision the flake pins,
+      # no registry drift) evaluates and builds the whole plane in
+      # parallel. nmt derivations build without KVM (pure eval +
+      # bash assertions).
+      - name: Build nmt plane (nix-fast-build)
         run: |
-          SYS=$(nix eval --raw .#debug.test_system)
-          CHECKS=$(nix eval ".#checks.${SYS}" --apply \
-            'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
-            --json)
-          COUNT=$(echo "$CHECKS" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
-          echo "Found $COUNT nmt checks on $SYS"
-          echo "system=$SYS" >> $GITHUB_OUTPUT
-          echo "count=$COUNT" >> $GITHUB_OUTPUT
-          # Print names for visibility
-          echo "$CHECKS" | python3 -c "import sys,json; [print(' -', c) for c in json.load(sys.stdin)]"
-
-      - name: Build all nmt checks
-        run: |
-          SYS="${{ steps.discover.outputs.system }}"
-          NAMES=$(nix eval ".#checks.${SYS}" --apply \
-            'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
-            --json | python3 -c "import sys,json; print(' '.join(f'.#checks.${SYS}.{c}' for c in json.load(sys.stdin)))" \
-            SYS="$SYS")
-          # Build each check individually for clearer per-test failure reporting
-          nix eval ".#checks.${SYS}" \
-            --apply 'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
-            --json | python3 -c "
-          import sys, json, subprocess, os
-          sys_name = os.environ['SYS']
-          checks = json.load(sys.stdin)
-          failed = []
-          for c in checks:
-              installable = f'.#checks.{sys_name}.{c}'
-              print(f'::group::Building {c}')
-              r = subprocess.run(['nix', 'build', installable, '--no-link', '--print-build-logs'], capture_output=False)
-              print('::endgroup::')
-              if r.returncode != 0:
-                  failed.append(c)
-          if failed:
-              print(f'FAILED checks ({len(failed)}):')
-              for f in failed: print(f'  - {f}')
-              sys.exit(1)
-          print(f'All {len(checks)} nmt checks passed.')
-          " SYS="$SYS"
-        env:
-          SYS: ${{ steps.discover.outputs.system }}
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          nix run "$PKGS#nix-fast-build" -- \
+            --no-nom --skip-cached -j "$(nproc)" \
+            --flake ".#api.checks.planes.nmt"
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 4: Evaluate devShells (dry-run matrix)
@@ -404,14 +364,16 @@ jobs:
   # support nested virtualisation. The AGE_SECRET_KEY secret is injected
   # for SOPS decryption if available; tests that don't need it still pass.
   #
-  # Test planes run in parallel sub-jobs keyed by prefix:
-  #   nixos_        → Plane 1: NixOS module tests
-  #   home_ + lib_  → Plane 2+3: HM module + Lib pure tests
-  #   integration_  → Plane 4: Full NixOS+HM joint tests
-  #   test_         → Plane 0: Smoke
-  #
-  # Each sub-job discovers its checks dynamically so no manual list
-  # maintenance is needed when new tests are added.
+  # T7.3: one matrix leg per test PLANE. The planes face of the test
+  # matrix (.#api.checks.planes.<plane>) is the partition SSOT — CI no
+  # longer re-derives membership from name prefixes, so a new test
+  # rides its plane by construction (plane membership is asserted
+  # equal to the legacy prefix sets in the repo's verification
+  # battery). Each leg hands the WHOLE plane to nix-fast-build from
+  # the LOCKED nixpkgs (1.4.0 — same revision the flake pins, no
+  # registry drift, nix-eval-jobs bundled): evaluation parallelises
+  # and builds pipeline behind it; --skip-cached turns magic-nix-
+  # cache hits into no-ops.
   vm-tests:
     name: VM Tests (${{ matrix.plane }})
     runs-on: ubuntu-latest
@@ -419,10 +381,11 @@ jobs:
     strategy:
       matrix:
         plane:
-          - smoke # prefix: test_
-          - nixos # prefix: nixos_
-          - home-lib # prefix: home_ + lib_
-          - integration # prefix: integration_
+          - smoke # Plane 0: baseline VM sanity
+          - nixos # Plane 1: NixOS module tests
+          - home # Plane 2: HM module tests
+          - lib # Plane 3: lib/shared pure tests
+          - integration # Plane 4: NixOS+HM joint tests
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
@@ -445,62 +408,19 @@ jobs:
           sudo udevadm trigger --name-match=kvm
           ls -la /dev/kvm
 
-      - name: Discover & build ${{ matrix.plane }} checks
+      # T7.3: -j is explicit — nix-fast-build 1.4.0 otherwise inherits
+      # Nix's own max-jobs (1 on stock runners). Exit code 1 on any
+      # member failure; failures don't stop siblings (keep-going),
+      # failing members are listed in the log.
+      - name: Build ${{ matrix.plane }} plane (nix-fast-build)
         env:
           SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}
-          PLANE: ${{ matrix.plane }}
         run: |
-          echo "::add-mask::$AGE_SECRET_KEY"
-          SYS=$(nix eval --raw .#debug.test_system)
-
-          # Map plane → prefix list
-          case "$PLANE" in
-            smoke)       PREFIXES="test_" ;;
-            nixos)       PREFIXES="nixos_" ;;
-            home-lib)    PREFIXES="home_ lib_" ;;
-            integration) PREFIXES="integration_" ;;
-          esac
-
-          # Build filter expression
-          FILTER=$(python3 -c "
-          import sys
-          prefixes = sys.argv[1].split()
-          conds = ' || '.join(
-              f'(builtins.substring 0 {len(p)} n == \"{p}\")'
-              for p in prefixes
-          )
-          print(f'cs: builtins.attrNames (builtins.filterAttrs (n: _: {conds}) cs)')
-          " "$PREFIXES")
-
-          NAMES=$(nix eval ".#checks.${SYS}" --apply "$FILTER" --json)
-          COUNT=$(echo "$NAMES" | python3 -c "import sys,json; print(len(json.load(sys.stdin)))")
-          echo "Plane '$PLANE': $COUNT checks to build"
-          echo "$NAMES" | python3 -c "import sys,json; [print(' -', c) for c in json.load(sys.stdin)]"
-
-          if [ "$COUNT" -eq 0 ]; then
-            echo "No checks for plane $PLANE — skipping"
-            exit 0
-          fi
-
-          # Build all checks in this plane, continue on individual failures
-          FAILED=()
-          while IFS= read -r CHECK; do
-            INSTALLABLE=".#checks.${SYS}.${CHECK}"
-            echo "::group::$CHECK"
-            if ! nix build "$INSTALLABLE" --no-link --print-build-logs; then
-              echo "::error::FAILED: $CHECK"
-              FAILED+=("$CHECK")
-            fi
-            echo "::endgroup::"
-          done < <(echo "$NAMES" | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]")
-
-          if [ "${#FAILED[@]}" -gt 0 ]; then
-            echo ""
-            echo "FAILED checks (${#FAILED[@]}):"
-            printf '  - %s\n' "${FAILED[@]}"
-            exit 1
-          fi
-          echo "All $COUNT checks in plane '$PLANE' passed."
+          echo "::add-mask::$SOPS_AGE_KEY"
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          nix run "$PKGS#nix-fast-build" -- \
+            --no-nom --skip-cached -j "$(nproc)" \
+            --flake ".#api.checks.planes.${{ matrix.plane }}"
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 7: CI Summary

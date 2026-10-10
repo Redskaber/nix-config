@@ -109,8 +109,8 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 90 tests + pre-commit-check = 91 checks          │
-│         · nmt(零VM) + QEMU · CI 自动发现                   │
+│  6 平面 · 92 tests + pre-commit-check = 93 checks          │
+│         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
 
@@ -149,8 +149,8 @@ platform/nixos/{default.nix, home/{default,x86_64-linux}.nix} + core/ dm/ wm/ + 
 | **生命周期** | devShell 四阶段钩子：`preInputsHook → postInputsHook → preShellHook → postShellHook`                          |
 | **边界明确** | system layer 不感知用户配置；user layer 不直接操作硬件；host layer 是唯一的平台感知点                         |
 | **生成不变** | `shared.nix` 由模板生成（覆盖写入），不可 sed 原地 patch；`.sops.yaml` 同理                                   |
-| **数据驱动** | `secrets.just` 零硬编码路径，所有 secret 路径运行时从 `shared.nix` 读取；CI checks 按前缀动态发现            |
-| **通信协议** | 层间通过 `shared` attrset 传递（`specialArgs`/`extraSpecialArgs`）；`api.inputs` / `api.shared` / `api.targets` 暴露 flake 侧信息供脚本查询 |
+| **数据驱动** | `secrets.just` 零硬编码路径，所有 secret 路径运行时从 `shared.nix` 读取；CI checks 按平面整面交接（`api.checks.planes`，T7.3）    |
+| **通信协议** | 层间通过 `shared` attrset 传递（`specialArgs`/`extraSpecialArgs`）；`api.inputs` / `api.shared` / `api.targets` / `api.checks.planes` 暴露 flake 侧信息供脚本与 CI 查询 |
 | **数据与解释器分离** | 机器事实归 `hosts/`（facter.json 硬件数据 · disk.nix 磁盘布局 · persist.nix 状态策略），解释能力归平台结构树（nixpkgs facter 模块 · disko 注册 · impermanence + 回滚机制）；主机入口只做一行接线（T5.12/T5.13/T5.14） |
 
 ---
@@ -177,7 +177,7 @@ platform/<tag>/
 5. **海关只装配/路由，永不装内容。** payload 与系统树互不 import；`hosts/` 是唯一 per-host 差异点。
 6. **声明而不存在的路径在 eval 期响亮失败。** 目录路由是字符串插值（`./${shared.arch.tag}.nix`），落到不存在的行即报错——declared-but-absent 从 arch 文件扩展到整个文法。
 
-**四平台形态表：**
+**五平台形态表：**
 
 | platform | 系统形态 | 独立 HM 门 | 目录形态 |
 | -------- | -------- | ---------- | -------- |
@@ -185,6 +185,7 @@ platform/<tag>/
 | `darwin` | ✅ `default.nix`（单门折叠，HM 以 module mode 内乘） | ✗（payload 行仍驻 `home/`，由系统关挂载） | 单门单海关 |
 | `linux` | ✗ | ✅ `home/default.nix` | 整个平台目录即用户域 |
 | `wsl` | ✗（Windows 宿主持有内核侧） | ✅ `home/default.nix` | 整个平台目录即用户域 |
+| `nixos-wsl` | ✅ 薄门：`default.nix` = `../nixos` 复用 + NixOS-WSL 解释器（T7.1） | ✅ `home/default.nix`（payload 行回用 nixos 用户域） | 双门；系统海关即整个形态定义：读门即知「nixos customs + WSL 解释器」 |
 
 **子系统路由的两种形态（零 if-else）：**
 
@@ -240,13 +241,18 @@ nix-config/
 │   │                       #   = import ./home/${arch.tag}.nix 一体——系统门跨域引用，
 │   │                       #   路径可见；home/ 内无 default.nix——HM 非独立门，payload
 │   │                       #   行仍驻留，以 module mode 挂载）；home/<arch>.nix = HM payload
-│   └── wsl/                # WSL2：home/default.nix = 唯一海关（standalone HM + nixGL +
+│   ├── wsl/                # WSL2：home/default.nix = 唯一海关（standalone HM + nixGL +
 │                           #   genericLinux + systemd；无系统形态，顶层无 default.nix；
-│                           #   整个平台目录即用户域）
+│                           #   整个平台目录即用户域；WSL 用户空间 interop 由共享树
+│                           #   home/core/base/wsl.nix 按 caps.wsl 提供，T7.1）
+│   └── nixos-wsl/          # NixOS-WSL 第五形态（T7.1）：default.nix = 薄门——
+│                           #   ../nixos 复用 + NixOS-WSL 解释器；home/ = 用户域
+│                           #   （payload 行回用 nixos 用户域行；门即形态定义）
 │
 ├── home/                   # 用户层（Home Manager）—— 无根入口，仅由 payload 行导入
 │   ├── core/
 │   │   ├── base/           # 基础：字体 · i18n(fcitx5) · portal(wm 策略驱动) · XDG
+│   │                   #   · wsl（caps.wsl 门控的 WSL 用户空间 interop：wslview/WSLENV，T7.1）
 │   │   ├── exp/            # 扩展功能（可选模块）
 │   │   │   ├── app/        # GUI 应用（app-set 重量级路由，T5.10：
 │   │   │   │               #   full=全树 / lean=文档·阅读·逆向 / none=仅三选集目录）：
@@ -290,6 +296,9 @@ nix-config/
 │   │                      #   + shared.nix 策略覆盖（ephemeral root：/ 每次启动回滚清空，
 │   │                      #   /persistent · /nix · /boot 为同级 subvol 存续）
 │   ├── wsl/               # WSL 主机：shared.nix（platform=wsl 类翻转，无系统事实文件）
+│   ├── nixos-wsl/          # NixOS-WSL 主机（T7.1）：shared.nix（platform=nixos-wsl
+│                           #   第五行翻转 + dm/wm none + lean 集）+ default.nix（唯一机器
+│                           #   事实 = arch——无 facter/disk/persist，见文件头）
 │   └── darwin/            # darwin 主机：shared.nix（platform=darwin + aarch64-darwin）
 │                          #   + default.nix（eval 级主机入口，activation 待真机）
 │
@@ -304,10 +313,10 @@ nix-config/
 ├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（wslview —— wslu 归档后的最小 shim）
 │
-├── tests/                  # 测试层（6 平面，90 tests + 1 pre-commit-check = 91 checks）
+├── tests/                  # 测试层（6 平面，92 tests + 1 pre-commit-check = 93 checks）
 │   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks（nixosTest runner）
 │   ├── test_calc.nix       # Plane 0: Smoke 基线
-│   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM，27 tests）
+│   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM，29 tests）
 │   ├── home/               # Plane 2: HM-Plane（QEMU VM + packages，41 tests）
 │   ├── lib/                # Plane 3: Lib-Plane（纯 Nix eval，QEMU 256 MB minimal，5 tests）
 │   ├── integration/        # Plane 4: Integration-Plane（NixOS + HM 联合，1 test）
@@ -474,6 +483,7 @@ lib/shared/lang/tools.nix
 api.inputs  = inputs;            # 全部 flake inputs（just 脚本动态枚举，零硬编码）
 api.shared  = targets.base;      # 基策略 IR 句柄（与分发层共读一个实例，T5.10）
 api.targets = targets.inventory; # { hostNames nixosHosts darwinHosts standaloneHosts }
+api.checks.planes = ...;         # 测试矩阵的平面分组（T7.3）——CI 整面交接 nix-fast-build
 
 # 示例：
 nix eval .#api.inputs --json | jq -r 'keys'
@@ -484,6 +494,10 @@ nix eval .#api.targets --json
 
 # flake-update-not-sops 利用此接口排除 sops-nix：
 nix eval .#api.inputs --json | jq -r 'keys - ["sops-nix"] | join(" ")'
+
+# CI 构建阶段按平面整面交接（成员 = 同一求值的 thunk，零额外成本）：
+nix eval .#api.checks.planes --apply 'p: builtins.mapAttrs (_: builtins.length) p'
+# → { "home": 41, "integration": 1, "lib": 5, "nixos": 29, "nmt": 15, "smoke": 1 }
 ```
 
 ### 2. 策略层 — shared.nix 生成机制
@@ -509,9 +523,9 @@ platform/ · home/           通过 { shared, ... } 消费
 | 字段              | 合法值                                                                                                                                                                                                                                                                                                                                        |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `arch`            | `x86_64-linux` · `aarch64-linux` · `x86_64-darwin` · `aarch64-darwin` · `i686-linux`                                                                                                                                                                                                                                                          |
-| `platform`        | `nixos` · `linux` · `darwin` · `wsl`（每行携带 `caps` 能力向量与策略载荷）                                                                                                                                                                                                                                                                     |
+| `platform`        | `nixos` · `linux` · `darwin` · `wsl` · `nixos-wsl`（每行携带 `caps` 能力向量与策略载荷）                                                                                                                                                                                                                                                                     |
 | `window-manager`  | `hyprland` · `niri` · `gnome` · `none`（Null-Object；每个值携带 `portal` 策略）                                                                                                                                                                                                                                                               |
-| `display-manager` | `ly` · `gdm` · `sddm` · `lemurs`（无 `none` 行——见[已知边界](#已知边界与设计债)）                                                                                                                                                                                                                                                             |
+| `display-manager` | `ly` · `gdm` · `sddm` · `lemurs` · `none`（T7.1 Null-Object 行——控制台形态）                                                                                                                                                                                                                                                                  |
 | `drive-group`     | `intel` · `amd` · `nvidia` · `nvidia-prime` · `amd-nvidia` · `amd-nvidia-prime` · `intel-nvidia` · `intel-nvidia-prime`                                                                                                                                                                                                                       |
 | `shell`           | `zsh` · `fish` · `bash`（每行携带 `integrations` 集成真值表）                                                                                                                                                                                                                                                                                 |
 | `editor`          | `nvim` · `vim` · `code` · `zeditor`                                                                                                                                                                                                                                                                                                           |
@@ -874,7 +888,7 @@ platform/<platform>/home/<arch>.nix
 （另两个 `flake = false` 输入非配置仓库：`nmt` 是测试框架 mirror，见[测试体系](#测试体系)。）
 
 **CI 覆盖与职责边界**：这些仓库以 flake.lock 锁定 revision 被消费，本仓 CI
-对它们的集成正确性已全覆盖——deep-eval 硬门禁求值 91 checks 强制 fetch 全部
+对它们的集成正确性已全覆盖——deep-eval 硬门禁求值 93 checks 强制 fetch 全部
 输入（仓库消失/移动即失败）、nmt 平面物料化 home 激活（配置树实际写入）、
 VM 平面真实启动含这些配置的系统；外部仓库的坏提交在 update-flake.yml 开出
 的 PR 上即被拦截。各仓库自身的语言级 lint（stylua 等）归各仓库自己的 CI——
@@ -924,6 +938,9 @@ hosts/
 │   ├── disk.nix             # disko 磁盘布局（磁盘事实的数据形态，T5.13；btrfs 四 subvol，T5.14）
 │   └── persist.nix          # 状态策略（ephemeral-root 声明 + 生存清单，T5.14）
 ├── wsl/                     # WSL 主机（shared.nix 唯一——standalone HM 无系统事实文件）
+├── nixos-wsl/               # NixOS-WSL 主机（T7.1：第五行翻转 + dm/wm none + lean 集；
+│                            #   default.nix 的唯一机器事实 = arch——无 facter/disk/persist，
+│                            #   三重缺省即三重声明：硬件/磁盘/状态各有其主）
 └── darwin/                  # darwin 主机（shared.nix + default.nix eval 级入口）
 ```
 
@@ -1057,9 +1074,9 @@ just db-disable postgresql            # = service-disable
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — `nix flake check --no-build` 对全部 91 checks 做完整 eval（含 6 闭包）
+2. **深层求值** — `nix flake check --no-build` 对全部 93 checks 做完整 eval（含 8 闭包）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-4. **测试覆盖** — 90 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 92 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（7 阶段，最大并行）
@@ -1078,12 +1095,12 @@ push / PR
     │       └── Build pre-commit-check derivation
     │
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁）
-    │       └── nix flake check --no-build            (91 checks 全量 eval；
+    │       └── nix flake check --no-build            (93 checks 全量 eval；
     │           含 6 closure 求值——validate.nix 对无 blob 状态宽容，
     │           出现 blob 后转严 declared-but-not-provided)
     │
     ├─► [STAGE 3: nmt-Plane]           HM dotfile 断言，纯 eval，无 KVM（< 1 min）
-    │       └── 动态发现 nmt_* checks → nix build 逐个验证
+    │       └── nix-fast-build --flake .#api.checks.planes.nmt（并行求值+构建，T7.3）
     │
     ├─► [STAGE 4: devShells dry-run]   devShell 矩阵（并行）
     │       └── rust · python · python-machine · nix · go · cpp · c · typescript · re …
@@ -1095,10 +1112,13 @@ push / PR
     │       └── .nix 文件扫描硬编码 token/password
     │
     └─► [STAGE 6: VM Tests]            QEMU 测试，按平面并行子矩阵（需 KVM）
-            ├── smoke        (test_*)        — 基线
-            ├── nixos        (nixos_*)       — 系统模块
-            ├── home-lib     (home_* lib_*)  — HM 模块 + lib 纯表达式
-            └── integration  (integration_*) — NixOS + HM 联合激活
+            ├── 每腿一平面，整面交 nix-fast-build（nix-eval-jobs 并行求值
+            │   + 流水线构建，--skip-cached 对接 magic-nix-cache，T7.3）：
+            ├── smoke        — 基线（1）
+            ├── nixos        — 系统模块（29）
+            ├── home         — HM 模块（41）
+            ├── lib          — lib 纯表达式（5）
+            └── integration  — NixOS + HM 联合激活（1）
 
     └─► [STAGE 7: Summary]             汇总报告（always，即使前序失败）
 ```
@@ -1182,12 +1202,12 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **91 checks = 90 tests + 1 pre-commit-check**（计数单一来源：`scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **93 checks = 92 tests + 1 pre-commit-check**（计数单一来源：`scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
 | Smoke       | `test_`        | 1      | QEMU           | 基本系统完整性                 | ~1 min   |
-| NixOS       | `nixos_`       | 26     | QEMU           | platform/nixos/* 模块 + 系统服务 | 2–10 min |
+| NixOS       | `nixos_`       | 29     | QEMU           | platform/nixos/* 模块 + 系统服务 | 2–10 min |
 | HM          | `home_`        | 41     | QEMU           | home/* 包安装 + 运行时行为     | 2–8 min  |
 | Lib         | `lib_`         | 5      | QEMU 256MB min | lib/shared 纯 Nix 表达式       | <1 min   |
 | Integration | `integration_` | 1      | QEMU full      | NixOS + HM 联合激活            | 5–15 min |
@@ -1207,13 +1227,16 @@ home/core/exp/sys/base/fd.nix
        fd --version, fd finds files by pattern
 ```
 
-**CI 动态发现（无需手动维护列表）：**
+**CI 平面整面交接（无需手动维护列表，T7.3）：**
 
 ```bash
-# 按前缀过滤 checks，新增测试自动被 CI 发现
-nix eval ".#checks.x86_64-linux" \
-  --apply 'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
-  --json
+# 平面成员由 tests/default.nix 的 planes 面声明——新测试按构造落位其平面；
+# CI 直接把整面交给 nix-fast-build（从锁定 nixpkgs 解析，零 registry 漂移）：
+nix-fast-build --no-nom --skip-cached -j "$(nproc)" \
+  --flake ".#api.checks.planes.nixos"
+
+# 平面分组可独立寻址（与 .#checks.<system> 同形态的 derivation 属性集）：
+nix eval ".#api.checks.planes.nmt" --apply builtins.attrNames --json
 ```
 
 **运行命令：**
@@ -1779,7 +1802,7 @@ just secrets-destroy-all      # 以上全部（明文实例+密文+规则+key �
 | NixOS x86_64 | 完整   | 完整   | 全部（24 devShells）  |
 | Linux x86_64 | —      | 完整（+ nixGL） | 全部          |
 | macOS ARM64  | nix-darwin 闭包（eval 级验收，activation 待真机） | 完整（module mode；lean app-set） | CLI 为主 |
-| WSL2         | —      | 完整（+ wslview shim） | 全部（需启用 systemd） |
+| WSL2         | NixOS-WSL 闭包（eval 级验收，T7.1；activation 待 Windows 宿主） | 完整（+ wslview shim，caps.wsl 门控于共享树） | 全部（需启用 systemd） |
 
 ---
 
@@ -1902,7 +1925,7 @@ EOF
 ## 依赖图
 
 ```
-flake.nix（44 inputs）
+flake.nix（46 inputs）
 ├── nixpkgs (nixos-26.05)
 │   └── nixpkgs-unstable         # 双通道（shared.upkgs，第二实例非 overlay）
 ├── home-manager (release-26.05)
@@ -1913,6 +1936,9 @@ flake.nix（44 inputs）
 ├── impermanence (7b1d382f)      # 声明式持久状态 / ephemeral root（tarball-pinned 至
 │                                #   master HEAD；解释器注册于
 │                                #   platform/nixos/core/base/impermanence.nix，T5.14）
+├── nixos-wsl (release-26.05)     # 第五系统形态的 WSL 解释器（tarball-pinned 至
+│                                #   release-26.05 分支；薄门注册于
+│                                #   platform/nixos-wsl/default.nix，T7.1）
 ├── nix-types                    # enum 类型系统（自建）
 ├── pdshell                      # devShell 管道引擎（自建；follows nix-types 单源）
 ├── configuration-orchestrator   # wallust 主题注入引擎（自建）
@@ -1920,7 +1946,6 @@ flake.nix（44 inputs）
 ├── nur                          # 社区包
 ├── hyprland                     # Wayland WM（最新版）
 │   └── hyprland-plugins
-├── zen-browser                  # 浏览器
 ├── pre-commit-hooks (git-hooks.nix)  # pre-commit-check derivation
 ├── wechat                       # 微信（自建 flake）
 ├── unrpyc                       # RenPy 反编译（自建 flake）
@@ -1941,28 +1966,36 @@ flake.nix（44 inputs）
 
 诚实清单——以下是当前已知的边界与待偿债务（修复均有明确路径，不阻塞使用）：
 
-1. **`platform/nixos/core/base/wsl.nix` 处于休眠态。** 其门是 `mkIf shared.caps.wsl`，
-   但 caps 按 platform 行固定（nixos 行 `wsl = false`；wsl 行无系统形态，永不被系统
-   发射器问津）——一个 NixOS-WSL 主机（该文件的文档化用例）当前无法表达，需要第五个
-   platform 行（如 `nixos-wsl`）或 caps 覆写机制。代码带着期望头注释休眠，等语义到来。
+1. ~~**`platform/nixos/core/base/wsl.nix` 处于休眠态。**~~ **已解决（T7.1）。**
+   第五 platform 行 `nixos-wsl` 落地（caps.wsl = true 的系统形态），caps 门首次被真实
+   主机点亮；同时手写的 WSL 面被移除（wsl.conf/binfmt/getty/resolv 由上游 NixOS-WSL
+   解释器单一持有，本仓只保留 chrony 时钟漂移防护的真差量），用户空间 interop 提升到
+   共享树（home/core/base/wsl.nix，caps.wsl 门控，两个 wsl 主机单地址消费）。
 2. **drive 指纹与策略不同步（hosts/nixos）。** 基策略声明 `drive-group.intel`（单），
    而 `hosts/nixos/default.nix` 仍携带完整的 NVIDIA-Prime offload 指纹块
    （`intelBusId`/`nvidiaBusId`）——它们要等一个 `*-nvidia-prime` drive-group 行被
    选中才会生效。指纹是无害的提前声明，但读者应知道它当前是惰性的。
-3. **display-manager 枚举无 `none` 行。** window-manager 有 Null-Object（`none/`），
-   display-manager 没有——一个 headless 的 nixos 主机目前没有"无 DM"的语法。
-   需要 headless 主机时加一行即可（路由是 `./${tag}` 插值，天然支持）。
+3. ~~**display-manager 枚举无 `none` 行。**~~ **已解决（T7.1）。** 枚举加行 +
+   `platform/nixos/dm/none/` Null-Object 模块（与 window-manager none 同构：存在性
+   保持路由无条件）；系统侧 wm/none 同步补齐——hosts/nixos-wsl 的控制台形态需要
+   「无 DM、无 WM」的完整语法。
 4. **darwin `system.stateVersion = 6` 是整数。** nix-darwin 的该选项接受整数
    （与 NixOS 的字符串不同），这是一个已知的类型怪癖，已在 hosts/darwin/default.nix
    注释中说明。
-5. **standalone HM 发射器的 pkgs 取自基策略实例。** 当前全部 standalone 主机都是
-   x86_64-linux，安全；未来若出现 aarch64-linux standalone 主机，
-   `mkHomeSystem` 的 pkgs 需要按主机 arch 解析（targets.nix 单行改动）。
-6. **vm 继承基策略的 hyprland + ly。** hosts/vm/shared.nix 未覆写 wm/dm——评估级
-   主机因此携带完整桌面闭包（求值成本，永不启动）。这是策略选择而非缺陷；
-   瘦身 = vm 的 shared.nix 加两行 `none` 覆写。
+5. ~~**standalone HM 发射器的 pkgs 取自基策略实例。**~~ **已解决（T7.2）。**
+   mkHomeSystem 现在读取主机自身策略实例的 pkgs（`pkgs = hshared.pkgs`，targets.nix）——
+   运行时层本就按主机 arch 实例化 nixpkgs（`pattrs = { system = arch.tag; } ⊕ nixpkgs
+   策略`），发射器如今与之对齐：未来的 aarch64-linux standalone 主机按自己的 arch 求值。
+   对现有全部主机字节恒等（三个未动 HM 闭包 drv 哈希逐一验证——本修复是可表达性，
+   不是行为变化；hm-vm 的偏移全部归因于同一提交的 wm 翻转）。
+6. ~~**vm 继承基策略的 hyprland + ly。**~~ **已解决（T7.2）。**
+   hosts/vm/shared.nix 覆写 wm/dm 两行 none：server-pg-only 形态不再携带永不启动的
+   桌面闭包。桌面栈整体减除（hyprland / ly / portal 中介 / flatpak / gvfs / tumbler
+   全 off），机器故事无损（btrfs ephemeral root、/persistent、postgresql 探针逐一
+   保持）；vm 求值 12.4s→9.6s，hm-vm 包集 140→114。
 7. **eval 成本记录。** nixos toplevel 求值 ~16.8s（disko extendModules 选项树
-   +1.5s 已记录在案）；六闭包顺序求值 ~65s（T5.10 后自 90s 降）。单进程
+   +1.5s 已记录在案）；vm toplevel 求值 ~9.6s（T7.2 控制台化后自 12.4s 降——桌面
+   模块树离开了 vm 的选项宇宙）；六闭包顺序求值 ~65s（T5.10 后自 90s 降）。单进程
    全输出 `nix flake check` 在 4GB 内存沙箱会 OOM（六 OS 级模块宇宙的内存地板，
    与策略实例数无关）——CI 以分 job 方式规避。
 8. **boot 级与真机验收待环境。** 第二台机器 boot 级验收（KVM/真机，含 T5.14 ephemeral
@@ -1970,6 +2003,10 @@ flake.nix（44 inputs）
    nixos_core_base_impermanence 锁定，formatMount 真实构建，但「每次启动根被归档重建」
    本身需要一次真实 btrfs 启动）、macOS activation（真 Mac）、hosts/nixos 的 disk.nix
    应用（重装时机）——四者都已有完整路径，等待对应环境。
+9. **sound 栈无能力位门控。** sound.nix 的 pipewire/alsa/pamixer/pavucontrol 不读
+   任何能力位——vm / nixos-wsl 控制台形态同样携带。T7.2 巡检发现但刻意缓议：音频
+   是否属于「无桌面会话也保留」的能力（QEMU 音频设备、WSLg 经 pulse 的 Windows
+   桥）需要真机语义裁决，与 #8 同属环境门控类；首次真机验收时一并决定门控与否。
 
 ---
 
@@ -2008,6 +2045,8 @@ flake.nix（44 inputs）
 - [x] 平台目录语法 v3：目录即域（T5.11：用户域获得自己的层级——platform/&lt;tag&gt;/home/ 子树〔唯一保留的顶层名〕，HM 海关 home/default.nix、payload home/&lt;arch&gt;.nix〔arch 轴在用户域内获得地址〕；darwin payload 归位用户域子树，系统关挂载行 `users.&lt;u&gt; = import ./home/${arch.tag}.nix` 使跨域引用在路径上可见；三发射器统一目录引用；hosts/ 驻留根的裁决固化〔前端源树 vs 后端能力树，层不倒置〕；求值级等价验证：四闭包 drv 哈希与基线字节一致，nixos/vm 差异漏斗溯源闭合于 flake self 快照〔树哈希因 rename 变化，语义零变化〕）
 - [x] export/ 模块完善（T2.1 首批五组：portal / fcitx5(nixos+home) / shell / waybar / yazi，options-first + 外部导入验收测试；接口规范见 docs/modules/interface-standards.md）
 - [ ] macOS 完整支持（darwin-specific modules，nix-darwin 集成）（T3.2：darwinConfigurations.darwin 全闭包求值级验收完成——nix-darwin 26.05 + hm module mode；activation 待真实 Mac）
+- [x] 策略表补全（T7.2：**vm 瘦身**〔债 #6〕——hosts/vm/shared.nix 覆写 wm/dm 两行 none：server-pg-only 形态不再携带永不启动的桌面闭包，桌面栈整体减除〔hyprland·ly·portal 中介·flatpak·gvfs·tumbler〕、机器故事无损〔btrfs ephemeral root / /persistent / pg 探针逐一保持〕、vm 求值 12.4s→9.6s〔−23%，桌面模块树离开选项宇宙〕、hm-vm 包集 140→114〔−26〕；**standalone 发射器按主机 arch 解析 pkgs**〔债 #5〕——mkHomeSystem 改读主机自身策略实例的 hshared.pkgs〔运行时层本就按 arch 实例化 nixpkgs〕，aarch64-linux standalone 从此可表达；三个未动 HM 闭包 drv 字节一致〔nqvaivz·8b0srg82·sd3d2kx9〕——可表达性修复零行为变化；**策略行巡检三发现**——① portal.nix 无 desktop-session 门〔控制台形态携带 xdg-desktop-portal+wlr portal，与 home 侧 none 策略的设计矛盾〕→ 门控于 window-manager 枚举的 desktop-session 能力位〔T4.0 定律：读已解析事实，非原始 tag 比较〕；② srv/desktop/ 组〔flatpak+file-manage〕同为桌面会话服务，且 flatpak 的 nixpkgs 断言硬依赖 xdg.portal.enable〔门控 portal 后断言立刻爆出——求值级验证电池抓到的真缺陷，两模块共读同一能力位修复〕；③ sound 栈无门控但刻意缓议〔WSLg/QEMU 音频语义需真机裁决，新债 #9〕；**新测试 nixos_core_base_portal**〔export-modules 模式：desktop 形态门开 + 真实 vm 机经 mkShared 同构构造——门控双律 + 债 #6 减除全谱 + 机器故事存活；断言强制经变异验证〕；93 checks〔92 tests + 1 pre-commit〕；裸金属 nixos 探针字节一致〔门控对桌面形态=恒等——mkIf true 语义〕；T7.1 的两处枚举成员表残留顺手修复〔platform 行补 nixos-wsl、display-manager 行 none 注记〕）
+- [x] CI 构建深度（T7.3：**测试矩阵双面化 + nix-fast-build 整面交接**——tests/default.nix 返回值从单一平铺 attrset 升级为 `{ checks, planes }` 双面〔同一组成员 thunk、两种寻址零额外求值——T5.10 单实例化纪律〕：平铺面仍由 `checks.${system}` 消费〔`nix flake check` 要求每属性恰一个 derivation——中断会话留下的嵌套结构会让 checks 输出含非 derivation 成员，硬门禁必炸〕，平面面经 `api.checks.planes` 暴露〔六平面分组 = 分类法自身的分组〕；**CI 两阶段转换**——STAGE 3 nmt-plane 与 STAGE 6 vm-tests 的前缀发现 + 顺序循环全删〔python 前缀过滤 + 逐个 nix build 共约 90 行〕，改为 `nix-fast-build --flake .#api.checks.planes.<plane>`〔nix-eval-jobs 并行求值 + 流水线构建；`--skip-cached` 对接 magic-nix-cache；`-j $(nproc)` 显式并行——1.4.0 默认继承 Nix max-jobs=1，不传即退化串行〕；**确定性供应链**——nix-fast-build 从锁定 nixpkgs 解析〔`nix eval --raw .#api.inputs.nixpkgs.outPath` → store path 作 flake ref〕，与 flake 同一 revision，零 registry 漂移、零新输入〔T6.3 裁决的采纳落地；1.4.0 + 捆绑 nix-eval-jobs 2.34.3，`-f` 任意 attrpath / `--force-recurse` 递归 / 无 system 后缀逻辑——语义经知识搜索对上游 1.4.0 tag 源码核实〕；**矩阵 4→5 腿**——home-lib 合并腿拆开〔每腿恰一平面，平面面成为 CI 分区 SSOT——新测试按构造落位其平面，CI 侧零维护〕；lint 阶段平面计数同改读 planes 面〔不再前缀重推导〕；**顺手修复**——vm-tests 的 `::add-mask::$AGE_SECRET_KEY` 引用错误〔env 实为 SOPS_AGE_KEY——旧代码掩码的一直是空串〕；**验证**——等价断言〔平铺−pre-commit ≡ 六平面之并且逐平面 ≡ 旧前缀过滤结果，无交叠分区：1+29+41+5+1+15=92〕、六平面可独立寻址、93 checks 深层求值全绿、YAML 解析通过、锁定 nix-fast-build `--help` 实测旗标齐备〔--no-nom/--skip-cached/-j/-f〕；对标 Mic92 CI 的构建深度达成——闭包级构建（真 toplevel 构建深度）仍属环境门控〔CI 无 KVM 全档或自托管 runner 时再议〕）
 - [x] nixos-facter 替代 nixos-generate-config（声明式硬件发现）（T5.12：硬件事实从「生成的 NixOS 模块」升级为「数据 + 解释器」——hosts/&lt;h&gt;/facter.json 是标准 facter 报告〔schema version 1，与锁定 nixpkgs 的 nixos-facter 0.4.4 一致〕，由 nixpkgs 默认模块表内的 `hardware.facter` 模块解释，主机入口一行接线——零 import、零 flake input；**模块上游化裁决**：nixos-facter-modules 仓库已弃用并入 nixpkgs，本项目不加输入直接消费；hosts/vm 全量迁移〔VM 硬件本是被定义的：QEMU x86_64 PCI guest——kvm 虚拟化、virtio-blk 盘 + 存储控制器、virtio-net 网卡、无 vmx/svm 的 vCPU；报告由声明而非探测产生，字段与真实报告逐一对齐〕；解释器职责边界固化：fileSystems 非报告职责〔上游留待 disko〕、network_interface 刻意不列〔NetworkManager 策略拥有 DHCP——CONTROLLER 在报告中，驱动照样进 initrd〕；真实机器〔hosts/nixos〕迁移路径落地：`just hardware-facter`〔root 扫描生成报告〕+ README 迁移指南；求值级等价验证：vm 配置 diff 穷尽闭合于三处 facter 解释，其余四闭包 drv 哈希字节一致）
 - [x] disko 声明式磁盘分区（替代 hardware.nix 里的 fileSystems 硬编码）（T5.13：磁盘事实从「手写 option 赋值」升级为「数据 + 解释器」——hosts/&lt;h&gt;/disk.nix 是 disko 布局声明〔GPT + EF02 BIOS boot 1MiB + root ext4 100%，上游 gpt-bios-compat 形态〕，由 disko 模块解释为 fileSystems + swapDevices + boot.loader.grub.devices；**注册裁决**：disko 不在 nixpkgs〔已对锁定 26.05 树核实〕，新增 flake input〔tarball-pinned 至 v1.13.0；follows 本仓 nixpkgs 单通道〕，模块 import 落 platform/nixos/core/base/disk.nix——能力归平台结构树、数据归 hosts/，分发层与发射器零改动；hosts/vm 全量迁移 + 引导策略对齐〔grub on / systemd-boot off〕；求值级验证：vm 配置 diff 穷尽闭合于六处，hosts/nixos 配置零变化〔模块惰性〕；四闭包字节一致；构建级探针：formatMount 脚本真实构建成功；顺带修复存量缺陷：T5.2 改名残留的四处测试引用 + 两处文档引用〔nix flake check 自 T5.2 起即坏〕，89/89 checks 现全绿；just 新增 disk 组动词〔disk-show/disk-format〕）
 - [x] Option/Result 类型化错误处理（T4.1：secret 路径校验用 result.andThen —— nix-types Result 铁路〔shared/validate.nix〕：形状检查前置 pass 折叠 + 文件系统存在性 resolution pass + unwrapOrElse 单一边界 throw；声明而缺失的 secret 在 eval 期报「declared but not provided」；变异验证 ×2 + home×3/darwin drv 字节一致）
@@ -2016,7 +2055,28 @@ flake.nix（44 inputs）
 - [x] 树卫生：让树说真话（T6.1：死模块清扫——platform/nixos/core/exp/xwayland.nix 自创建起从未被 imports〔全历史 -S 搜索证实〕，且 `programs.xwayland.enable` 本就是 nixpkgs 默认值、hyprland 行有自己的原生 xwayland 开关——三重冗余的不可达文件，删除〔其存在恰是 v3 文法"文件存在性=能力声明"的反面谎言〕；72 文件 @description 头部 de-drift——pre-T5.9 的 `system::` 段残留，@path 已更新而 @description 未随；SSOT 计数器修复——test-count.sh 自 T5.1〔hooks 块移入 tests/pre-commit.nix〕起即崩〔AttributeError〕，计数器跟随移动 + runner regex 清理〔runTest/nmtTest 已被 deadnix 移除〕，现输出与 CI summary 对账一致；flake.nix 陈旧注释修复——"unstable-packages overlay" 不存在，unstable 是 shared.upkgs 第二实例；chmod.sh / hosts/darwin/shared.nix @path 漂移修复。验证：四闭包〔hm-nixos nqvaivz · hm-vm ddm2ifj · hm-wsl 4ih8pc4 · darwin dqhyw65〕字节一致；vm/nixos 配置值探针全同〔hypr/ly/dm/fs/grub/sb/nm/pg/hs/xway/nvidia/state〕——注释级改动零配置影响，drv 变化经 self 树哈希归因；nixfmt 干净）
 - [x] README 全量重构（T6.2：三路勘察〔平台树 81 文件 / hosts+home+tests+scripts 全量清点 / 旧 README 逐行 gap 分析〕驱动的完整重建——保留精华段〔设计原则 / 架构总览 / 安全层 / hosts 故事 / 快速开始 / secrets 手册 / 路线图〕，修正全部陈旧点：计数对齐 SSOT〔90 checks = 89+1；平面 1/26/41/5/1/15；81 recipes / 13 组；24 devShells；43 inputs / 24 flake=false〕、删除已死 API〔isNixOS/isMacOS/isLinux/isWSL 谓词 T4.0 已删；mkDevShell 实为 mk-pdshell〕、路径全部指向 v3 文法位置、CI 从 6 阶段改为 7 阶段〔deep-eval 硬门禁——旧"CI 不跑 flake check"注意事项已被 validate.nix Result 铁路消除〕、devShells 表补全 24 行〔asm/makeOs/rs_compiler_dev/nix-nonfmt〕、依赖图 26.05 化 + 补 disko/nix-darwin/zen-browser/trae/z-library/zcode/pre-commit-hooks、EMPTY 态声明改为"仓库状态 vs 采纳者引导"的诚实框架〔本仓库携带维护者密文〕、部署示例统一 canonical `.#nixos`；新增三节：**目录语法**（文法六律 + 四平台形态表 + "为什么 nixos 不折叠双门"论证）、**分发层 targets.nix**（三段流水 + T5.10 单实例化故事，原散落在架构总览与路线图之间的机制知识首次获得自己的机制节）、**已知边界与设计债**（8 条诚实清单：wsl.nix 休眠态、drive 指纹惰性、DM 无 none 行、darwin stateVersion 整数怪癖、standalone pkgs 基实例 caveat、vm 桌面闭包、eval 成本记录、boot/真机验收待环境）；runtime 字段表补全 T4.0/T5.10 后的真实字段〔caps/i18nScope/services/appCategories/shellIntegrations/provenance/editors/terminals/browsers〕；fn 示例替换为真实导出面〔homeDir/sopsBase/sopsFile/sopsRuntimePath/pkgsFingerprint/sameSource〕；api.* 三接口成文〔inputs/shared/targets〕；`nix build .#module-docs` 入命令参考）
 - [x] impermanence 实验性 ephemeral root（btrfs subvol rollback）（T5.14：hosts/vm 升级为 ephemeral-root 机器——**第三事实对**：hosts/&lt;h&gt;/persist.nix 是状态策略数据〔「根是 ephemeral」的机器事实 + environment.persistence 生存清单〕，解释器 = `platform/nixos/core/base/impermanence.nix`（注册 impermanence 模块 + 从布局已声明事实**派生**回滚配方，无任何手抄脚本：device/fsType/subvol 读自 disko `_config` 输出〔IR 消费〕，retain-days 是唯一自由参数〔默认 30〕）；hosts/vm/disk.nix 同步升级 root ext4 → btrfs **四 subvol 四寿命**：root（/，ephemeral——每次启动归档到 old_roots/&lt;timestamp&gt; 并重建为空）/ persistent（/persistent，状态——PostgreSQL 数据等）/ nix（/nix，store 闭包存续 + compress=zstd）/ boot（/boot，引导链——内核与 grub.cfg 绝不随根蒸发〔本设计要避开的陷阱〕，grub 从 btrfs 顶层视图寻址 subvol 即目录）；**配方是上游权威内容**（impermanence README.org "BTRFS subvolumes" 节）+ 两处引用在案的结构化改造：事实插值化、顶层视图挂 `-o subvol=/`〔disko 自身 `_create` 的约定〕；**双 initrd 模式分派**（求值验证第一轮即抓到 vm 为 systemd stage 1 而 `postResumeCommands` 不存在于该模式——nixpkgs eval 期断言）：systemd 模式 = sysroot.mount 之前 oneshot〔门在根设备 unit 上，systemd-repart 先例；DefaultDependencies=false〕，classic 模式 = postResumeCommands〔根挂载循环之前，锁定 26.05 stage-1-init.sh 执行序已核实〕；btrfs-progs 进 initrd 零手接线（nixos btrfs task 模块从 fileSystems fsType 自动推导）；**上游化裁决**：impermanence 而非 preservation〔nixpkgs-track 后继者〕——两者均不在锁定 26.05 树，T5.12 零输入先例不适用，实验面向最实战验证模块，preservation 落地 nixpkgs 后按 T5.12 先例迁移〔清单数据与回滚机制不受影响〕；tarball-pinned master HEAD 7b1d382f + follows nixpkgs；解释器契约：上游「persistence 路径必须 neededForBoot」断言以 mkDefault 满足 + 本仓更严一条「persistence 路径必须是已声明 mount」〔布局缺口大声失败〕；测试 `nixos_core_base_impermanence`〔export-modules 模式：三组独立 nixosSystem 求值——systemd/classic/inert，求值期断言锁定配方插值/单元排序/设备门/neededForBoot/bind mounts/惰性律〕；just 新增 `persist-show`〔disk 组，82 recipes〕；求值级验证：vm 探针全绿〔btrfs+subvol=root/postResume 空/服务排序 dev-disk-by\\x2dpartlabel device unit/neededForBoot/bind mounts〕、hosts/nixos 配置探针零变化〔模块惰性〕、四闭包字节一致；构建级探针：formatMount 真实构建 + 产物抽查〔mkfs.btrfs by-partlabel + 4×subvolume create〕；91 checks〔90 tests + 1 pre-commit〕；boot 级验收待 KVM〔已知边界 #8〕）
+- [x] nixci 路线图项审查裁决（T6.3：**移除而非延期**——四点证据链：① 工具已被上游废弃，nixci 官方 README 顶部警告 "superseded by omnix"，后继能力是 `om ci`，社区对「并发构建全部 flake checks」的活跃推荐是 Mic92/nix-fast-build〔nix-eval-jobs 并行求值 + 构建，disko 案例 1:54 → 10s〕；② 范畴错配——上述工具的操作对象全部是 flake outputs〔packages/checks/nixosConfigurations…〕，而本仓 24 个 `flake = false` 输入是纯数据树〔无 flake.nix、无 outputs〕，「构建它们的 flake 产物」不存在可作用的对象〔原条目写作 "30+"，实际 24——一并修正〕；③ 真实需求已被覆盖——外置仓库以锁定 revision 被 25 个消费点引用〔`xdg.configFile."x".source = inputs.x-config` 形态，遍布 home/ 树〕，deep-eval 硬门禁求值 91 checks 即强制 fetch 全部输入，nmt 平面物料化 home 激活，VM 平面真实启动含这些配置的系统——update-flake.yml 开出的每个 PR 都跑这条流水线，外部仓库坏提交在合入前即被拦截；④ 职责边界——外置仓库自身的语言级 CI〔stylua/elisp lint 等〕归各仓库所有，本仓是消费者而非所有者，替 24 个异构语言仓库维护 CI 模板违反生产者-消费者边界；本仓自身闭包构建加速若成为痛点，采用项应是 nix-fast-build〔并发构建 checks，替代 CI 中顺序 while 循环〕，与外置输入无关；裁决记录见下方「被拒绝项」小节）
 - [x] nix-types 上游贡献（schema pattern matching 模式文档化）（T6.4：`docs/PATTERNS.md` 于 nix-types 仓库成文〔本地 clone commit 61bc6ce，基于 v3.5.0/815fc3f，440/440 测试通过后提交——沙箱无 GitHub 凭据，push 由仓库所有者一步完成〕——P1「Schema pattern matching」：enum-as-schema〔postable 变体携带 payload 记录，声明即封闭宇宙〕+ match-as-exhaustive-dispatch〔无通配站点必须回答每个变体，缺失 case = eval 期 throw 点名变体〕+ 可选 Result 铁路〔校验 pass 以 ok/err 值组合，单一 throw 在边界〕；**库保证 vs 使用纪律分离表**——穷尽性诊断/变体名通配与保留字拒绝/payload 逐字携带是库保证，payload 记录形状跨变体一致性是纪律〔由本仓 90 测试求值电池锁定为回归门〕；规则与反模式成文〔封闭集合专用；通配仅限刻意兜底；Null-Object 成员优于通配；叶子是 codegen；测试上锁〕；生产案例 = 本仓分发层骨干〔4 平台能力表 + 版本策略枚举 + secret 路径 Result 校验〕；**全部代码示例经真实求值验证**〔match 分派/payload 经 value 访问/foldl' 与 andThen 参数序/tryEval 穷尽拒绝探针〕；nix-types 侧同步：README 新增「Consumption patterns」节 + 项目布局条目 + CHANGELOG 3.5.1 条目〔纯文档，零库改动〕；nix-types 输入无需 bump——纯文档提交，库面零变化）
+- [x] NixOS-WSL 第五系统形态（T7.1：**评分驱动的下一阶段首项**——同类配置对比显示平台矩阵是最大可行动短板〔WSL2 行系统层为 —，同类旗舰 16–22 主机〕，且设计债 #1/#3 同根。**第五 platform 行而非主机级 caps 覆写**：enum.nix 能力表加 `nixos-wsl` 行〔caps：linux-family ✓ nixos-system ✓ wsl ✓ darwin ✗〕——schema 的文档化演进路径〔"新增平台 = 写一行"〕首次被完整行使；社区先例核实〔moni-dz 主机旗标模式、无旗舰运行 WSL 主机——但对本仓文法，行是 schema-忠实解，主机旗标会破坏"platform 行固定 caps"的 T4.0 不变量〕。**薄门设计**：platform/nixos-wsl/default.nix = `../nixos` 复用 + NixOS-WSL 解释器 + wsl.enable/defaultUser——读门即知形态定义〔nixos customs + WSL 解释器〕；home/ 用户域 payload 行回用 nixos 行〔wrapper：单行 re-export + fork-on-demand 缝〕。**所有权边界重划**：上游解释器拥有 wsl.conf/systemd 托管/interop+binfmt/boot 削减〔手写面全删——单一所有者规则〕；本仓真差量 = chrony 时钟漂移防护〔wsl.nix 瘦身〕；用户空间 interop〔wslview/WSLENV/USERPROFILE/BROWSER〕提升至共享树 home/core/base/wsl.nix〔caps.wsl 门控——两个 wsl 主机单地址消费，平台行只留 non-NixOS-Linux 事实：genericLinux+nixGL〕。**前置补全**：display-manager 枚举 none 行 + dm/none、wm/none 系统侧 Null-Object〔控制台形态的完整语法〕；boot.nix/memory.nix 裸金属值 mkDefault 化〔基础声明默认值、形态合法削减——优先级展开即设计〕。**主机数据**：hosts/nixos-wsl/ 五号机〔default.nix：唯一机器事实 = arch——无 facter〔硬件归 Windows 宿主〕/无 disk.nix〔rootfs 是 Windows 管理的 VHDX，disko 语义不适用〕/无 persist.nix〔WSL 根上 ephemeral 无意义——全部以缺省为数据〕；shared.nix：第五行翻转 + dm/wm none + lean 集〕。**零发射器改动**：分类/路由/双门全程由 caps 表驱动——nixosConfigurations.nixos-wsl 与 homeConfigurations.kilig@nixos-wsl 落地无一行 targets.nix 修改。**验证**：表单探针全绿〔wsl.enable/defaultUser/tarballBuilder/boot 削减〔grub·sdb·initrd·kernel·pm 全 false〕/chrony/无 DM·WM·xserver/hostName·stateVersion·user〕；26 项裸金属探针字节一致〔mkDefault 值保持验证〕；darwin·hm-nixos·hm-vm 三闭包字节一致；hm-wsl 偏移穷尽归因〔wslview 在 home.packages 合并序位 77→43，集合恒等，激活语义不变——模块真实迁移的预期位移〕；caps 真值表测试加第五行〔穷尽性+策略选择〕；新测试 nixos_core_base_wsl〔表单求值〔以 mkShared 同构构造真实主机策略链〕+ 惰性律；断言强制经变异验证〕；92 checks〔91 tests + 1 pre-commit〕；boot/activation 级验收待 Windows 宿主〔环境门控类，与 #8 同〕）
+
+### 被拒绝的路线图项（裁决记录）
+
+路线图只保留真话——被拒绝的项在这里留下证据链，而不是静默消失（"让树说真话"的同一纪律）。
+
+**nixci 统一管理 flake=false 外置配置仓库 CI**（2026-10 审查后移除）：
+
+1. **工具废弃。** nixci 官方 README 顶部警告："nixci has been superseded by
+   omnix; you should use `om ci` instead"。对「并发构建全部 checks」的社区活跃
+   推荐是 [Mic92/nix-fast-build](https://github.com/Mic92/nix-fast-build)
+   （nix-eval-jobs 并行求值 + 流水线式构建）。
+2. **范畴错配。** 这些工具的操作对象全部是 **flake outputs**；本仓 24 个
+   `flake = false` 输入是纯数据树（无 flake.nix）——不存在可构建的 flake 产物。
+3. **需求已被现有 CI 覆盖。** 外置仓库以锁定 revision 被 25 个消费点引用；
+   deep-eval 硬门禁求值 91 checks 强制 fetch 全部输入，nmt 平面物料化 home 激活，
+   VM 平面真实启动含这些配置的系统——update-flake.yml 的每个 PR 都跑这条流水线。
+4. **职责边界。** 各仓库自身的语言级 CI（stylua / elisp lint 等）归各仓库
+   所有者——消费者不拥有生产者的生命周期。本仓自身闭包的构建加速若未来成为
+   痛点，采用项是 nix-fast-build，与外置输入无关。
 
 ---
 
