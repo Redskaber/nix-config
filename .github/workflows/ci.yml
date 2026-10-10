@@ -15,7 +15,8 @@ concurrency:
 # Pipeline architecture (9 stages):
 #
 #   STAGE 1: lint          — static analysis (statix/nixfmt/deadnix) + shallow eval
-#   STAGE 2: deep-eval     — nix flake check --no-build (full tree)
+#   STAGE 2: deep-eval     — facet forcing: api envelope, host
+#                toplevels, misc checks + completeness audit (T15.1)
 #   STAGE 3: nmt-plane     — HM dotfile assertions (pure Nix eval, no KVM)
 #   STAGE 4: devshells     — devShell dry-run matrix
 #   STAGE 4.5: output-faces — drvPath-force the faces deep-eval alone
@@ -151,27 +152,44 @@ jobs:
         run: nix build .#checks.x86_64-linux.docs-ssot-check --no-link
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 2: Deep evaluation — nix flake check --no-build
+  # STAGE 2: Deep evaluation — facet forcing (T15.1)
   # ─────────────────────────────────────────────────────────────
-  # Forces every flake output to a derivation OUTPATH: all test
-  # derivations (each instantiating its VM's NixOS config),
-  # nixosConfigurations toplevels, homeConfigurations activation
-  # packages, devShells, overlays, formatter. No builds, no KVM —
-  # pure evaluation. This is the stage that catches wiring rot that
-  # shallow attrNames eval cannot see.
+  # The former `nix flake check --no-build` single-process walk was
+  # retired on evidence. It evaluates all 95 checks in ONE process,
+  # accumulating live evaluation state monotonically — the local 4GB
+  # sandbox OOMs at the 9th derivation (measured, anon-rss ~2GB and
+  # climbing), a 7GB runner sits at the cliff edge and crawls: run
+  # #338 hit the 90-min timeout mid-walk; the first 120-min-window
+  # run was STILL evaluating at 49min+ (same tree). Meanwhile the
+  # output-faces leg — same cold store, same inputs, same day —
+  # finishes in 1m52s because every member is a short-lived process.
+  # Facet forcing keeps the deep-eval CONTRACT (evaluation-level
+  # proof for every flake output face) but distributes it across
+  # short-lived processes (measured peak RSS ~1GB for the heaviest
+  # face — one host toplevel — which the process releases on exit):
+  #   api envelope         — this leg (no other leg owns this face)
+  #   nixosConfigurations  — this leg (the evaluation proof the
+  #                          host-toplevels BUILD leg gates on)
+  #   misc checks (2)      — this leg; the planes own the other 93
+  #                          (vm-tests BUILDS them — stronger)
+  #   packages/home/darwin — output-faces leg (T11.1)
+  #   devShells            — evaluate-devshells leg
+  #   formatter            — lint leg (pinned nixfmt, and runs it)
+  # The completeness audit (face 4) replaces flake check's implicit
+  # "walks everything" backstop with an explicit one: every check
+  # attr must be owned by a plane or the misc list, so a new test
+  # file that escapes the plane registry turns THIS leg red.
   deep-eval:
-    name: Deep Evaluation (flake check)
+    name: Deep Evaluation (facet forcing)
     runs-on: ubuntu-latest
     needs: lint
-    # 120 min (T13.2, run #338 evidence): the first no-MNC run's cold
-    # path — 46 inputs materialised from upstream tarballs, 95 checks
-    # incl. 6 closures forced to drvPath on a 2-core runner — exceeded
-    # the old 90-minute window and was cancelled at exactly 90:00
-    # mid-evaluation with NO infrastructure signature in the log (the
-    # retry below covers command exits; a timeout kills the job before
-    # any retry logic can fire — that is by design, this is the honest
-    # remedy: give the cold path its window, keep the bound).
-    timeout-minutes: 120
+    # 45 min (T15.1): one short-lived process per face member. Cold-path
+    # input materialisation happens once for the NixOS-side set (the
+    # toplevel forcings pull most of it); the audit faces are
+    # shape-level evals (attrNames — no member thunk forcing) and
+    # complete in seconds. The bound keeps ~2x headroom over the
+    # expected 15-25min cold-path wall clock.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
@@ -191,40 +209,101 @@ jobs:
       # checks.lib_shared_lang_validate; each proven green by its own
       # independent leg in the SAME run), and the stalled traversal ran
       # the job into its 90-minute timeout.
-      # This leg is PURE EVALUATION: --no-build forces derivations to
-      # drvPath, nothing substitutes — a build cache has nothing to
-      # offer, so its only effect was the failure surface itself. Flake
-      # input sources materialise from their upstream (github tarballs)
-      # regardless of substituters. The same reasoning removes the cache
-      # from the other two pure-eval legs (output-faces,
-      # evaluate-devshells). The BUILD legs (lint, nmt-plane, vm-tests,
-      # host-toplevels) keep it: there it substitutes real closures
-      # across runs and falls back to cache.nixos.org when throttled.
-      - name: nix flake check --no-build
+      # This leg is PURE EVALUATION: facet forcing evaluates
+      # derivations to drvPath, nothing substitutes — a build cache has
+      # nothing to offer, so its only effect was the failure surface
+      # itself. Flake input sources materialise from their upstream
+      # (github tarballs) regardless of substituters. The same reasoning
+      # removes the cache from the other two pure-eval legs
+      # (output-faces, evaluate-devshells). The BUILD legs (lint,
+      # nmt-plane, vm-tests, host-toplevels) keep it: there it
+      # substitutes real closures across runs and falls back to
+      # cache.nixos.org when throttled.
+      - name: Force output faces (api, toplevels, misc) + completeness audit
         run: |
-          set -o pipefail
-          LOG=/tmp/flake-check.log
-          for ATTEMPT in 1 2; do
-            if nix flake check --no-build 2>&1 | tee "$LOG"; then
-              echo "flake check green on attempt $ATTEMPT"
-              exit 0
-            fi
-            # Tree-side errors fail FAST: an undefined variable or a
-            # missing attr reproduces identically, retrying only burns
-            # the timeout window. Retry is reserved for the
-            # infrastructure signature class observed in the incident —
-            # substituter/network failures, not evaluation defects.
-            if [ "$ATTEMPT" -eq 1 ] && grep -qE \
-              'is not valid|unable to download|HTTP error|rate limit|ResourceExhausted|timed out|failed to fetch' \
-              "$LOG"; then
-              echo "::warning::infrastructure-class failure on attempt 1 — one retry after 60s backoff"
-              sleep 60
-              continue
-            fi
-            break
+          set -eo pipefail
+          LOG=/tmp/deep-eval.log
+          : > "$LOG"
+          # Infrastructure signature class (T12.1): substituter and
+          # network failures. Tree-side errors reproduce identically
+          # and fail fast — retrying them only burns the window.
+          INFRA_SIG='is not valid|unable to download|HTTP error|rate limit|ResourceExhausted|timed out|failed to fetch'
+
+          # force <description> <command…>
+          # One short-lived nix process per call. Infra-signature
+          # failures get a single retry after 60s backoff — the former
+          # whole-flake-check retry policy, now at facet granularity.
+          force() {
+            desc="$1"; shift
+            echo "── forcing: $desc"
+            start=$(wc -l < "$LOG")
+            for ATTEMPT in 1 2; do
+              if "$@" 2>&1 | tee -a "$LOG"; then
+                echo "   ok: $desc"
+                return 0
+              fi
+              if [ "$ATTEMPT" -eq 1 ] && tail -n +$((start + 1)) "$LOG" | grep -qE "$INFRA_SIG"; then
+                echo "::warning::infrastructure-class failure on '$desc' — one retry after 60s backoff"
+                sleep 60
+                continue
+              fi
+              break
+            done
+            echo "::error title=deep-eval: $desc failed::verbatim output above; infra-signature retry did not rescue it"
+            return 1
+          }
+
+          # Face 1 — the api envelope (no other leg owns this face).
+          force "api envelope attrNames" \
+            nix eval .#api --apply 'builtins.attrNames'
+
+          # Face 2 — nixosConfigurations toplevels, one short-lived
+          # process per host. This is the evaluation proof the
+          # host-toplevels BUILD leg (needs: deep-eval) stands on.
+          HOSTS=$(nix eval --json .#nixosConfigurations \
+                    --apply 'builtins.attrNames' | jq -r '.[]')
+          if [ -z "$HOSTS" ]; then
+            echo "::error title=deep-eval: empty nixosConfigurations::host enumeration returned nothing"
+            exit 1
+          fi
+          for H in $HOSTS; do
+            force "nixosConfigurations.$H.config.system.build.toplevel.drvPath" \
+              nix eval --raw ".#nixosConfigurations.$H.config.system.build.toplevel.drvPath"
           done
-          echo "::error title=flake check failed::verbatim output above; infra-signature retry did not rescue it"
-          exit 1
+
+          # Face 3 — the two misc checks. The planes own the other 93
+          # (vm-tests builds them — stronger than eval); these two are
+          # prefix-less, so this leg forces their evaluation level
+          # (the lint leg BUILDS them — even stronger).
+          for C in docs-ssot-check pre-commit-check; do
+            force "checks.x86_64-linux.$C.drvPath" \
+              nix eval --raw ".#checks.x86_64-linux.$C.drvPath"
+          done
+
+          # Face 4 — completeness audit: every check attr must be
+          # owned by a plane (the vm-tests matrix builds it) or the
+          # misc list above. A new test file not registered in a
+          # plane turns this red. Shape-level evals (attrNames only,
+          # no member thunk forcing — measured sub-second, ~0 RSS);
+          # they read only the checked-out tree, so no infra retry:
+          # a failure here is a tree-side defect and red is honest.
+          nix eval --json .#checks.x86_64-linux \
+            --apply 'builtins.attrNames' | jq -r '.[]' | sort > /tmp/all-checks.sorted
+          nix eval --json .#api.checks.planes \
+            --apply 'p: builtins.concatLists (builtins.map (k: builtins.attrNames p.${k}) (builtins.attrNames p))' \
+            | jq -r '.[]' | sort > /tmp/planed.sorted
+          { cat /tmp/planed.sorted
+            echo docs-ssot-check
+            echo pre-commit-check
+          } | sort -u > /tmp/owned.sorted
+          UNOWNED=$(comm -23 /tmp/all-checks.sorted /tmp/owned.sorted)
+          if [ -n "$UNOWNED" ]; then
+            echo "::error title=completeness audit failed::check attrs not owned by any plane or the misc list:"
+            echo "$UNOWNED" | sed 's/^/   /'
+            exit 1
+          fi
+          echo "   ok: completeness audit — all $(wc -l < /tmp/all-checks.sorted) check attrs owned"
+          echo "deep-eval: all facets forced green"
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 3: nmt-Plane (pure Nix eval — no KVM, fastest feedback)

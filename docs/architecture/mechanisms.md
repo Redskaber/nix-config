@@ -506,9 +506,10 @@ platform/<platform>/home/<arch>.nix
 （另两个 `flake = false` 输入非配置仓库：`nmt` 是测试框架 mirror，见[README 测试体系](../../README.md#测试体系)。）
 
 **CI 覆盖与职责边界**：这些仓库以 flake.lock 锁定 revision 被消费，本仓 CI
-对它们的集成正确性已全覆盖——deep-eval 硬门禁求值 95 checks 强制 fetch 全部
-输入（仓库消失/移动即失败）、nmt 平面物料化 home 激活（配置树实际写入）、
-VM 平面真实启动含这些配置的系统；外部仓库的坏提交在 update-flake.yml 开出
+对它们的集成正确性已全覆盖——deep-eval 硬门禁（T15.1 面分片形态）强制
+nixosConfigurations 逐主机 toplevel 求值（仓库消失/移动即失败），
+vm-tests 五平面在构建级物化含这些配置的系统（求值+构建双通过——更强）、
+output-faces 强制 packages/home/darwin 面；外部仓库的坏提交在 update-flake.yml 开出
 的 PR 上即被拦截。各仓库自身的语言级 lint（stylua 等）归各仓库自己的 CI——
 本仓是消费者而非所有者（裁决记录见[README 路线图](../../README.md#路线图)末节）。
 

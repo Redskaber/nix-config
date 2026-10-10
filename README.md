@@ -377,7 +377,7 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — `nix flake check --no-build` 对全部 95 checks 做完整 eval（含 8 闭包）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 95 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
 4. **测试覆盖** — 93 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
@@ -398,11 +398,13 @@ push / PR
     │       ├── Build pre-commit-check derivation
     │       └── Build docs-ssot-check derivation     (T8.1：文档计数锚点)
     │
-    ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁）
-    │       └── nix flake check --no-build            (95 checks 全量 eval；
-    │           含 6 closure 求值——validate.nix 对无 blob 状态宽容，
-    │           出现 blob 后转严 declared-but-not-provided；
-    │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1)
+    ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，T15.1 面分片形态）
+    │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
+    │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
+    │           （95 checks 必须被平面或杂项清单拥有——新测试
+    │           文件未注册平面即红；短命进程替换单进程 flake
+    │           check：内存安全 + 墙钟 120m→预计 15-25m；
+    │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1）
     │
     ├─► [STAGE 3: nmt-Plane]           HM dotfile 断言，纯 eval，无 KVM（< 1 min）
     │       └── nix-fast-build --flake .#api.checks.planes.nmt（并行求值+构建，T7.3）
@@ -448,6 +450,16 @@ push / PR
 > Result 铁路消除——eval 期对 secret 的检查改为「声明而缺失才报错」，与 store
 > 物化无关。深层求值现在是硬门禁（T5.13 曾靠它捕获过 T5.2 改名残留导致的
 > 四处坏测试引用）。
+>
+> **深层求值的面分片形态**（T15.1，run #338 + 首个 120m 窗 run 证据链）：单进程
+> `nix flake check` 在单进程内累积全部 95 checks 的活跃求值态——本地 4GB 沙箱
+> 在第 9 个 derivation 处 OOM（实测 anon-rss ~2GB 且持续增长），7GB runner 处于
+> 临界边缘慢爬（run #338 90 分钟超时；首个 120m 窗 run 在 49min+ 仍在求值）；
+> 同树同日的 output-faces 腿（同冷 store、同 inputs）1m52s 完成——因为每个
+> 成员都是短命进程。面分片保留深层求值契约（每个输出面的求值级证明）但
+> 分发到短命进程：api 信封 + 逐主机 toplevel（实测单 attr 峰值 RSS ~1GB，
+> 进程退出即释放）+ 杂项 checks + 完备性对账（flake check 隐式「遍历一切」
+> 兑底的显式化：新测试文件逃逸平面注册即红）。
 >
 > **缓存策略按腿类分发**（T12.1，2026-10 run #336 事故裁决）：构建腿
 > （lint / nmt-plane / vm-tests / host-toplevels）保留 magic-nix-cache——
@@ -586,7 +598,9 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
    +1.5s 已记录在案）；vm toplevel 求值 ~9.6s（T7.2 控制台化后自 12.4s 降——桌面
    模块树离开了 vm 的选项宇宙）；六闭包顺序求值 ~65s（T5.10 后自 90s 降）。单进程
    全输出 `nix flake check` 在 4GB 内存沙箱会 OOM（六 OS 级模块宇宙的内存地板，
-   与策略实例数无关）——CI 以分 job 方式规避。
+   与策略实例数无关；实测第 9 个 derivation 处 anon-rss ~2GB 且持续增长）——
+   CI 以**面分片短命进程**规避（T15.1：单 attr 峰值 ~1GB、进程退出即释放；
+   这也是 run #338 90 分钟超时的根因——7GB runner 在临界边缘慢爬）。
 8. **boot 级与真机验收待环境。** 第二台机器 boot 级验收（KVM/真机，含 T5.14 ephemeral
    root 的回滚真机验收——求值/构建级已全绿：配方派生/双 initrd 模式/惰性律由
    nixos_core_base_impermanence 锁定，formatMount 真实构建，但「每次启动根被归档重建」
@@ -675,6 +689,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
   inputs 计数/主机计数〕；全部内容原样迁出零删改，机制表/速查表/依赖速览在入口层重组；
   跨文件引用一次对齐〔3 处 §5 安全层 → mechanisms.md〕；docs-ssot-check 本地构建绿
   ——19 锚点契约在重构后成立）
+- [x] CI 深层求值面分片化（T15.1：**单进程内存地板的结构性破解**——证据链：run #338 deep-eval 90 分钟超时〔无 infra 签名，重试结构不可及——超时在任何重试前杀 job〕；首个 120m 窗 run 同树 49min+ 仍在求值；本地 4GB 沙箱复现 OOM：`nix flake check --no-build` 单进程累积全部 95 checks 活跃求值态，第 9 个 derivation 处 anon-rss ~2GB 且持续增长〔dmesg 实录〕；同树同日 output-faces 腿 1m52s 完成——短命进程的内存形态证明。**设计（编译器管道类比：单遍全量检查 → 分面 pass 管道）**：deep-eval 腿从单进程 flake check 重构为四面部序列，每面短命 nix 进程〔实测单 attr toplevel 峰值 RSS ~1017MB，进程退出即释放〕：①api 信封 attrNames〔无他腿拥有的面〕②nixosConfigurations 逐主机 toplevel drvPath〔host-toplevels 构建腿的求值基础——needs 绿门语义更精确〕③杂项 checks〔docs-ssot/pre-commit drvPath；其余 93 员由 vm-tests 构建级拥有——更强〕④**完备性对账**〔flake check 隐式「遍历一切」兑底的显式化：checks attrNames〔形状级，无成员 thunk 强制，实测亚秒零 RSS〕必须被平面成员并集或杂项清单拥有——新测试文件逃逸平面注册即红；对冲官方语义退役的漂移风险〕；infra 签名重试保留于面粒度〔T12.1 策略〕；timeout 120→45m。**面→腿拥有矩阵**：api=deep-eval / nixosConfigurations=deep-eval+host-toplevels / packages·home·darwin=output-faces / devShells=evaluate-devshells / formatter=lint / checks 93=vm-tests〔构建级〕。**验证**：本地 rootless nix 全面部实测绿〔api 5 键 / 4 主机 toplevel drv / 杂项 2 员 / 对账 95=93+2 双向空集〕+ 对账负路径〔人造未注册 attr 被点名〕+ 单 attr 内存监控〔进程树 RSS 采样 1017MB〕+ YAML 结构断言〔timeout 45/门语义 != success ×8 不变/needs 链不变/MNC 4 构建腿不变〕+ bash -n + stub-nix 四分支运行时模拟〔全绿 / 树侧失败立即红且不继续后续主机 / infra 退避 61s 重试绿 / 对账红点名〕——**模拟器再抓真缺陷**：首版 `set -o pipefail` 无 -e，force() return 1 被静默吞〔与 T11.1 同型教训〕→ 显式 `set -eo pipefail` 不依赖 runner shell 默认值；eval-cache 预热方案被实验否决〔nix eval 写入 eval-cache 但 flake check 不消费 checks 面预热——两次复现同样在 1.9GB 处 OOM〕）
 
 ### 被拒绝的路线图项（裁决记录）
 
