@@ -91,6 +91,11 @@ let
       platform,
       window-manager,
       display-manager,
+      # T10.1: the local sound server axis (enum sound: pipewire |
+      # none) — required like its dm/wm siblings so every policy
+      # chain answers it; the base policy declares the workstation
+      # default, hosts override wholesale per form.
+      sound,
       pointer-cursor,
       version,
       editor,

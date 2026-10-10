@@ -223,6 +223,37 @@ let
     # unconditional (same pattern as window-manager none).
     "none"
   ];
+  # T10.1: the local sound server as a strategy axis — the mechanical
+  # half of README known-debt #9. sound.nix stops being an
+  # unconditional burden on every system form: the rows answer "does
+  # this machine run a local sound server", and the mixer toolbelt
+  # rides the payload (the wm/portal pattern — strategy data in the
+  # row, leaves stay unconditional). Both current console hosts still
+  # select pipewire: the flip is deliberately env-gated (the debt's
+  # semantic half — QEMU audio devices, WSLg's Windows-side pulse
+  # server — awaits first real-machine acceptance) and stays a
+  # one-data-row change per host.
+  sound = enum "sound" {
+    # The workstation form: pipewire owns the server, the alsa/pulse
+    # compatibility layers ride it, wireplumber manages the session.
+    pipewire = {
+      sound-server = true;
+      mixers =
+        pkgs: with pkgs; [
+          pamixer
+          pavucontrol
+        ];
+    };
+    # Null-Object row: console/server forms where no local sound
+    # server has anything to serve — audio mediation, where it exists
+    # at all, belongs to the host environment (WSLg's Windows-side
+    # pulse server; a QEMU device decision). Expressed as a strategy
+    # value, never as call-site conditionals.
+    none = {
+      sound-server = false;
+      mixers = pkgs: [ ];
+    };
+  };
   # drive           = enum "drive"          [ "amd" "intel" "nvidia" "nvidia-prime" ];
   drive-group = enum "driveGroup" {
     amd = [ "amd" ];
@@ -662,6 +693,7 @@ in
     window-manager
     display-manager
     drive-group
+    sound
     shell
     editor-set
     terminal-set

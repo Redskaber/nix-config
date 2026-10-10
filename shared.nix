@@ -23,6 +23,10 @@ shared.schema.shared {
   platform = shared.enum.platform.nixos;
   window-manager = shared.enum.window-manager.hyprland;
   display-manager = shared.enum.display-manager.ly;
+  # T10.1: the local sound server (strategy axis, README debt #9's
+  # mechanical half) — the workstation default; console hosts flip
+  # this row to `none` when the real-machine adjudication lands.
+  sound = shared.enum.sound.pipewire;
   pointer-cursor = shared.enum.pointer-cursor.Bibata-Modern-Classic;
   version = shared.enum.version.v26_05;
   editor = shared.enum.editor.nvim;

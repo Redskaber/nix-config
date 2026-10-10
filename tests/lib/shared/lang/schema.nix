@@ -25,7 +25,7 @@
 #
 # Covered (real code paths):
 #   - schema.user / git / rbw / time / i18n identity on valid inputs
-#   - schema.shared requires all 17 mandatory keys (functionArgs)
+#   - schema.shared requires all 18 mandatory keys (functionArgs)
 #   - sub-schemas declare their mandatory keys (functionArgs)
 #   - optional keys with defaults (nixpkgs.overlays / config,
 #     i18n.nixpkgs-source — the T2.6 dual-source declaration)
@@ -49,6 +49,9 @@ let
     platform = "nixos";
     window-manager = "hyprland";
     display-manager = "ly";
+    # T10.1: the sound axis answers the schema like its dm/wm
+    # siblings — mandatory, so every policy chain declares it.
+    sound = "pipewire";
     pointer-cursor = "bibata";
     version = "v26_05";
     editor = "nvim";
@@ -100,6 +103,7 @@ let
     "platform"
     "window-manager"
     "display-manager"
+    "sound"
     "pointer-cursor"
     "version"
     "editor"

@@ -86,6 +86,10 @@ let
     # + the vm console flip's whole subtraction, on the real machine.
     nixos_core_base_portal = nixosTest ./nixos/core/base/portal.nix;
     nixos_core_base_sound = nixosTest ./nixos/core/base/sound.nix;
+    # T10.1: the sound strategy gate (pipewire form on / none form
+    # subtracted whole — the mechanism half of debt #9; the console-host
+    # flip stays env-gated).
+    nixos_core_base_sound_gate = nixosTest ./nixos/core/base/sound-gate.nix;
     nixos_core_base_user = nixosTest ./nixos/core/base/user.nix;
 
     # ── core/drive ────────────────────────────────────────────────────

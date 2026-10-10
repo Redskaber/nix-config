@@ -130,13 +130,14 @@ home/core/exp/sys/base/git.nix
 | ----------- | --------------- | ----------------------- |
 | `test_calc` | `test_calc.nix` | echo, 1+1=2, screenshot |
 
-### 3.1 NixOS-Plane (29 tests)
+### 3.1 NixOS-Plane (30 tests)
 
 | check                                                        | 验证点                                                      |
 | ------------------------------------------------------------ | ----------------------------------------------------------- |
 | `nixos_core_base_{boot,i18n,network,nix,sound,user}`         | systemd-boot / locale / networkd / flakes / pipewire / user |
 | `nixos_core_base_{i18n_source,i18n_samesource}`              | T1.2 生产树 import（同源守卫） |
 | `nixos_core_base_{wsl,portal}`                                | T7.1 WSL 表单求值 / T7.2 portal 能力门双律 |
+| `nixos_core_base_sound_gate`                                   | T10.1 sound 策略轴门双律（pipewire 全栈 / none 整体减除） |
 | `nixos_core_base_impermanence`                                | T5.14 回滚配方/单元排序/设备门/惰性律 |
 | `nixos_core_drive_{amd,intel,nvidia}`                        | GPU driver toolchain                                        |
 | `nixos_core_sec_{pam,polkit,secret_cmd_age,secret_cmd_sops}` | PAM / polkit / age / sops                                   |
@@ -147,7 +148,7 @@ home/core/exp/sys/base/git.nix
 | `nixos_core_srv_security_{ssh,keyring}`                      | sshd :22 / gnome-keyring                                    |
 | `nixos_export_modules`                                        | T5.3 export/ 模块语义求值        |
 
-> 合计：base(10 = 6 + i18n_source + samesource + wsl + portal) + impermanence(1) + drive(3) + sec(4) + db(4) + monitor(1) + hardware(2) + log(1) + security(2) + export(1) = **29**
+> 合计：base(11 = 6 + i18n_source + samesource + wsl + portal + sound_gate) + impermanence(1) + drive(3) + sec(4) + db(4) + monitor(1) + hardware(2) + log(1) + security(2) + export(1) = **30**
 
 ### 3.2 HM-Plane (41 tests)
 
@@ -514,9 +515,9 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 | 平面        | 数量   | KVM   | 备注                                                                    |
 | ----------- | ------ | ----- | ----------------------------------------------------------------------- |
 | Smoke       | 1      | ✓     |                                                                         |
-| NixOS       | 29     | ✓     | base(10=6+i18n_source+samesource+wsl+portal)+drive(3)+sec(4)+db(4)+hardware(2)+log(1)+security(2)+export(1)+monitor(1)+impermanence(1，T5.14：三组独立 nixosSystem 求值锁定回滚配方/单元排序/设备门/neededForBoot/bind mounts/惰性律) |
+| NixOS       | 30     | ✓     | base(11=6+i18n_source+samesource+wsl+portal+sound_gate)+drive(3)+sec(4)+db(4)+hardware(2)+log(1)+security(2)+export(1)+monitor(1)+impermanence(1，T5.14：三组独立 nixosSystem 求值锁定回滚配方/单元排序/设备门/neededForBoot/bind mounts/惰性律) |
 | HM          | 41     | ✓     | base(2)+i18n_source(1)+editor(1)+sys/base(13+3 source)+shell(2+1 source)+sys(3)+sec(1)+srv(2)+dev(11)+export(1) |
 | Lib         | 5      | ✓     | enum + fn + schema + caps（T4.0 能力表契约：真值表/策略选择/穷尽性）+ validate（T4.1 Result 铁路：ok/err 车道/前置优先级/边界 throw/EMPTY 容忍——fixture 双树：provisioned 严格 + empty 放行） |
 | Integration | 1      | ✓     |                                                                         |
 | **nmt**     | **15** | **✗** | base(7)+sys/base(3)+shell(2)+app/editor(1)+srv(2)                       |
-| **Total**   | **92** |       | VM 77 + nmt 15（另有 2 个仓库卫生 checks：pre-commit-check〔nixfmt/statix/deadnix〕+ docs-ssot-check〔T8.1：文档计数锚点契约〕）→ 94 checks（T7.2 +1：nixos_core_base_portal——portal 能力门双律 + vm 控制台翻转全谱） |
+| **Total**   | **93** |       | VM 78 + nmt 15（另有 2 个仓库卫生 checks：pre-commit-check〔nixfmt/statix/deadnix〕+ docs-ssot-check〔T8.1：文档计数锚点契约〕）→ 95 checks（T10.1 +1：nixos_core_base_sound_gate——sound 策略轴门双律，债 #9 机械半部） |

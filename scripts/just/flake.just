@@ -66,6 +66,16 @@ nixos-switch host:
 nixos-test host:
     @cd {{ROOT}} && sudo nixos-rebuild test --flake .#{{host}}
 
+# Set the boot generation WITHOUT activating (T10.2): build + register
+# the next-boot closure; the running system stays untouched until
+# reboot. The safer remote/rollback-flavoured deploy — wimpy's
+# push-host-boot pattern: flip the machine on your own schedule,
+# `nixos-rebuild list-generations` to inspect, rollback stays a
+# boot-menu entry away.
+[group('deploy')]
+nixos-boot host:
+    @cd {{ROOT}} && sudo nixos-rebuild boot --flake .#{{host}}
+
 # Home Manager switch for the policy user on a specific host
 # ('just home-switch nixos' → kilig@nixos).
 [group('deploy')]
