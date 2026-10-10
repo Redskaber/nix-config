@@ -21,7 +21,8 @@ concurrency:
 #   STAGE 4: devshells     — devShell dry-run matrix
 #   STAGE 4.5: output-faces — drvPath-force the faces deep-eval alone
 #                would cover only path-dependently (T11.1, no KVM)
-#   STAGE 5: security      — SOPS secret integrity audit
+#   STAGE 5: security      — SOPS secret integrity audit + supply-chain
+#                pinning contract (every action ref must be a 40-hex SHA)
 #   STAGE 6: vm-tests      — NixOS/HM/Lib/Integration QEMU tests (KVM)
 #   STAGE 6.5: host-toplevels — system closure builds (T8.2, no KVM)
 #   STAGE 7: summary       — aggregate result report (gates ALL stages)
@@ -55,17 +56,17 @@ jobs:
     name: Lint & Evaluate
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
       - name: Cache Nix store
-        uses: DeterminateSystems/magic-nix-cache-action@v7
+        uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
 
       - name: Verify formatter evaluates
         run: nix eval .#formatter.x86_64-linux.name
@@ -191,10 +192,10 @@ jobs:
     # expected 15-25min cold-path wall clock.
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -317,17 +318,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
       - name: Cache Nix store
-        uses: DeterminateSystems/magic-nix-cache-action@v7
+        uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
 
       # T7.3: the plane address (.#api.checks.planes.nmt) replaces
       # prefix discovery + the per-check python loop — nix-fast-build
@@ -356,10 +357,10 @@ jobs:
         shell: [rust, python, python-machine, nix, go, cpp, c, typescript, re]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -401,10 +402,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -471,10 +472,39 @@ jobs:
     runs-on: ubuntu-latest
     needs: lint
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      # T16.1: supply-chain pinning contract — fail-fast (pure grep, runs
+      # before nix/sops install). Every third-party action must be referenced
+      # by an immutable 40-hex commit SHA, with the tag the SHA was resolved
+      # from recorded as a trailing comment for humans and Dependabot.
+      # Moving tags (@v4, @main) are MUTABLE: an owner force-push or a
+      # deleted/retargeted tag silently changes what CI executes — a
+      # compromise of the upstream repo is a compromise of this pipeline.
+      # Local composite actions (./path) are exempt (in-tree code is already
+      # content-addressed by git). This makes the convention a machine-checked
+      # invariant: a new unpinned ref cannot land green.
+      - name: Enforce SHA-pinned action refs (T16.1)
+        run: |
+          set -euo pipefail
+          # The initial grep is ANCHORED to the YAML key form (line content is
+          # exactly "uses:" or "- uses:") on purpose: this script's own grep
+          # lines contain the literal string "uses:", and an unanchored match
+          # would make the contract flag itself and fail forever. Comment
+          # lines cannot match the anchor either, so no comment filter is
+          # needed — one grep, one responsibility.
+          VIOLATIONS=$(grep -rnE '^[[:space:]]*(-[[:space:]]*)?uses:' .github/workflows/*.yml \
+            | grep -vE "uses:[[:space:]]*[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@[0-9a-f]{40}([[:space:]]+#.+)?$|uses:[[:space:]]*\./" \
+            || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "::error::Action refs not pinned to a 40-hex commit SHA:"
+            echo "$VIOLATIONS"
+            exit 1
+          fi
+          echo "OK: every action ref is an immutable commit SHA (mutable tags rejected)"
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -644,17 +674,17 @@ jobs:
           - integration # Plane 4: NixOS+HM joint tests
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
       - name: Cache Nix store
-        uses: DeterminateSystems/magic-nix-cache-action@v7
+        uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
 
       - name: Enable KVM
         run: |
@@ -731,17 +761,17 @@ jobs:
     needs: [lint, deep-eval]
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Install Nix
-        uses: DeterminateSystems/nix-installer-action@v13
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
       - name: Cache Nix store
-        uses: DeterminateSystems/magic-nix-cache-action@v7
+        uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
 
       # T8.2: same tool + same determinism as the plane legs —
       # nix-fast-build from the LOCKED nixpkgs, whole-face handoff,
@@ -772,7 +802,7 @@ jobs:
     needs: [lint, deep-eval, nmt-plane, evaluate-devshells, output-faces, security, vm-tests, host-toplevels]
     if: always()
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Write GitHub Step Summary
         run: |

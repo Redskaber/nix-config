@@ -10,7 +10,9 @@
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
 2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 95 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
-3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
+3. **Secret 完整性 + 供应链** — 验证加密文件结构正确，`secrets/plan/` 未被提交；
+   全部 GitHub Actions 引用钉版为 40-hex commit SHA（T16.1 机器契约：
+   未钉版引用在 Security Audit 腿 fail-fast 红灯，上游 tag 被篡改不影响本流水线）
 4. **测试覆盖** — 93 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
