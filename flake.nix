@@ -14,7 +14,9 @@
     # You can access packages and modules from different nixpkgs revs
     # at the same time. Here's an working example:
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
-    # Also see the 'unstable-packages' overlay at 'overlays/default.nix'.
+    # Unstable is NOT an overlay here: it is a second nixpkgs instance
+    # imported in lib/shared/runtime and exposed as shared.upkgs (the
+    # overlays/ tree only carries additions + patches).
 
     # NixGl (handler non-nixos gl env depends inject)
     nixgl.url = "github:nix-community/nixGL";
@@ -28,16 +30,6 @@
     home-manager.url = "github:nix-community/home-manager/release-26.05";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
-    # ── nix-darwin (T3.2): darwin system closure ─────────────────────
-    # Tarball-pinned (github: short syntax would need API resolution;
-    # the archive URL fetches directly and pins the exact rev).
-    # Branch nix-darwin-26.05 — nix-darwin release-checks its branch
-    # against the nixpkgs release it is built for (26.05 here); master
-    # (26.11) would fail the eval-time assert.
-    # Home-manager integrates in module mode via darwinModules.
-    nix-darwin.url = "https://github.com/LnL7/nix-darwin/archive/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74.tar.gz";
-    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
-
     # NMT — Nix Module Test framework (Plane 5 nmt-Plane)
     # Mirror of git@git.sr.ht:~rycee/nmt (sourcehut returns HTTP 403 to Nix
     # fetchers due to bot-protection; github.com/Redskaber/nmt is accessible).
@@ -48,6 +40,16 @@
     # Sops-Nix
     sops-nix.url = "github:Mic92/sops-nix";
     sops-nix.inputs.nixpkgs.follows = "nixpkgs";
+
+    # ── nix-darwin (T3.2): darwin system closure ─────────────────────
+    # Tarball-pinned (github: short syntax would need API resolution;
+    # the archive URL fetches directly and pins the exact rev).
+    # Branch nix-darwin-26.05 — nix-darwin release-checks its branch
+    # against the nixpkgs release it is built for (26.05 here); master
+    # (26.11) would fail the eval-time assert.
+    # Home-manager integrates in module mode via darwinModules.
+    nix-darwin.url = "https://github.com/LnL7/nix-darwin/archive/c3e90c89649b07d1a96e4b9dd6cd0d6e44b91a74.tar.gz";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
     # Disko — declarative disk partitioning (T5.13): the interpreter for
     # hosts/<h>/disk.nix layouts. Unlike the facter module (upstreamed
@@ -67,6 +69,27 @@
     # registers producers, it does not assemble consumers.
     disko.url = "https://github.com/nix-community/disko/archive/56ef5e72fec74b993ad0973b2dfa4eadeb48ba41.tar.gz";
     disko.inputs.nixpkgs.follows = "nixpkgs";
+
+    # Impermanence — declarative persistent state on ephemeral roots
+    # (T5.14): the interpreter for hosts/<h>/persist.nix declarations.
+    # Same registration story as disko above (capability registered
+    # platform-side in platform/nixos/core/base/impermanence.nix, data
+    # as host facts). NOT in nixpkgs — checked against the locked
+    # nixos-26.05 tree, and neither is preservation, its nixpkgs-track
+    # successor (nix-community/preservation, nixpkgs#265640); the
+    # preservation migration path is recorded in that module's header
+    # (when it lands in nixpkgs, the T5.12 zero-input precedent applies).
+    # Pinned to master HEAD 7b1d382f (the repo ships no tags — rolling
+    # master only): reproducibility over chasing the head; the module
+    # surface we consume (environment.persistence submodule) is stable
+    # and the project is in slow maintenance mode. Tarball-pinned like
+    # disko (same sandbox reason: direct archive fetch, exact rev).
+    # nixpkgs IS followed so the module's lib evaluates against the
+    # same channel as everything else; impermanence's home-manager
+    # input is dev-only (its own checks) and left un-followed — we
+    # consume only nixosModules.
+    impermanence.url = "https://github.com/nix-community/impermanence/archive/7b1d382faf603b6d264f58627330f9faa5cba149.tar.gz";
+    impermanence.inputs.nixpkgs.follows = "nixpkgs";
 
     # Nix types expend from my costum
     nix-types.url = "github:Redskaber/nix-types";
@@ -281,7 +304,6 @@
           arch = shared.arch.tag;
         };
       };
-
       # Your custom packages and patches, exported as overlays
       overlays = shared.overlays;
       # Formatter choices

@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/wm/niri/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::wm::niri
+# @description: platform::nixos::wm::niri
 # - tty: niri --session
 # - enable niri base
 

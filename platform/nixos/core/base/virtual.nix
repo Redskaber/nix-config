@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/base/virtual.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::base::virtual
+# @description: platform::nixos::core::base::virtual
 #
 # - echo "fd42:$(openssl rand -hex 2):$(openssl rand -hex 2):$(openssl rand -hex 2):$(openssl rand -hex 2)::1/64"
 #   fd42:8bdd:fa83:9703:95b2::1/64

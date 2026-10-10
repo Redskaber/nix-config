@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/drive/amd.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::drive::amd
+# @description: platform::nixos::core::drive::amd
 #
 # Reachable via drive-group enum: amd / amd-nvidia / amd-nvidia-prime.
 # Intentionally empty: AMD GPUs work out of the box with Mesa/radeonsi

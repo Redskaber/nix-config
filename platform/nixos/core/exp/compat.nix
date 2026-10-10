@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/exp/compat.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::exp::compat
+# @description: platform::nixos::core::exp::compat
 # - nixos => non-nixos (compatiable)
 # - optional mod
 # - for me handle import references non-flake repo

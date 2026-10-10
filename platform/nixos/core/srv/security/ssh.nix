@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/security/ssh.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::srv::security::ssh
+# @description: platform::nixos::core::srv::security::ssh
 
 {
   inputs,

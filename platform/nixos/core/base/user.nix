@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/base/user.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::base::user
+# @description: platform::nixos::core::base::user
 # - log: 2026-02-27: sup `sops-nix` used hashedPasswordFile
 
 {

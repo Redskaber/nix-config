@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/wm/gnome/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::wm::gnome
+# @description: platform::nixos::wm::gnome
 
 {
   inputs,

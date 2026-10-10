@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/base/sound.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::base::sound
+# @description: platform::nixos::core::base::sound
 
 {
   inputs,

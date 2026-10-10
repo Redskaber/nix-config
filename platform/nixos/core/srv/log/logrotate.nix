@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-02-24
 # @directory: https://search.nixos.org/options?channel=25.11&query=services.logrotate
-# @description: platform::nixos::system::core::srv::log::logrotate
+# @description: platform::nixos::core::srv::log::logrotate
 # - logrotate.service is a log rotation service based on the logrotate tool in Linux systems.
 # - It is usually executed on a schedule via cron/anacron to automatically split, compress,
 # - and delete old logs to prevent the disk from being filled with log files.

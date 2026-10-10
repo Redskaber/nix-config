@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/sec/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::sec::default
+# @description: platform::nixos::core::sec::default
 
 {
   inputs,

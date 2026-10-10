@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/db/mysql.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: platform::nixos::system::core::srv::db::mysql - local MySQL service config (dev environment)
+# @description: platform::nixos::core::srv::db::mysql - local MySQL service config (dev environment)
 # @usage: initialize application user (run once on first deploy)
 #   sudo mysql
 #   CREATE USER 'redskaber'@'localhost' IDENTIFIED BY 'your_secure_password';

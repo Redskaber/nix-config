@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/db/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::srv::db::default
+# @description: platform::nixos::core::srv::db::default
 
 {
   inputs,

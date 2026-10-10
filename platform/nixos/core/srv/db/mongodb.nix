@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/db/mongodb.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: platform::nixos::system::core::srv::db::mongodb
+# @description: platform::nixos::core::srv::db::mongodb
 # @deploy: verify after first deployment:
 #   > mongosh "mongodb://<user>:<pwd>@<host>/admin"
 #

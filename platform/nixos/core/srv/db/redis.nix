@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/db/redis.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: platform::nixos::system::core::srv::db::redis
+# @description: platform::nixos::core::srv::db::redis
 # @usage:
 #   > reds-cli ping
 #   PONG

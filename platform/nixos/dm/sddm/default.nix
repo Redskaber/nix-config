@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/dm/sddm/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::dm::sddm::default
+# @description: platform::nixos::dm::sddm::default
 
 {
   inputs,

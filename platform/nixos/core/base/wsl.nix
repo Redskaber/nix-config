@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/base/wsl.nix
 # @author: redskaber
 # @datetime: 2026-10-08
-# @description: platform::nixos::system::core::base::wsl — NixOS-WSL system declaration (T3.1)
+# @description: platform::nixos::core::base::wsl — NixOS-WSL system declaration (T3.1)
 # @directory: https://github.com/nix-community/NixOS-WSL
 #
 # System-level WSL facts, kept in ONE place with an explicit boundary

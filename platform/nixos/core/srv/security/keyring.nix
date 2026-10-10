@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/security/keyring.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::srv::security::keyring
+# @description: platform::nixos::core::srv::security::keyring
 # - gnupg: https://search.nixos.org/options?channel=25.11&query=programs.gnupg
 # - gnome-keyring: https://search.nixos.org/options?channel=25.11&query=services.gnome.gnome-keyring
 # @usage:

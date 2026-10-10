@@ -8,9 +8,12 @@
 # (Kills the "77 vs 79 vs 21/38/17" three-way drift.)
 #
 # Counting semantics mirror CI discovery (attrName prefixes):
-#   tests/default.nix   registry planes 0-4  (runner: nixosTest/runTest)
-#   tests/nmt/default.nix  buildTest lines  (Plane 5, nmt_ prefix)
-#   flake.nix           pre-commit-hooks block (enabled hooks)
+#   tests/default.nix      registry planes 0-4  (runner: nixosTest — the
+#                          runTest/nmtTest helpers were deadnix-cleaned,
+#                          plane 5 wires its own harness via ./nmt)
+#   tests/nmt/default.nix   buildTest lines    (Plane 5, nmt_ prefix)
+#   tests/pre-commit.nix    hooks block       (enabled hooks, inside the
+#                          one pre-commit-check derivation)
 
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -22,7 +25,7 @@ blocks = re.split(r"(plane\d_\w+)\s*=\s*\{", s)
 total = 0
 for i in range(1, len(blocks), 2):
     name, body = blocks[i], blocks[i + 1].split("};")[0]
-    n = len(re.findall(r"^\s{4}[a-z][a-zA-Z0-9_]+\s*=\s*(?:nixosTest|nmtTest|runTest)", body, re.M))
+    n = len(re.findall(r"^\s{4}[a-z][a-zA-Z0-9_]+\s*=\s*nixosTest", body, re.M))
     total += n
     print(f"  {name}: {n}")
 print(f"  vm_subtotal: {total}")
@@ -31,7 +34,10 @@ PY
 nmt="$(grep -c '= buildTest ./' tests/nmt/default.nix)"
 hooks="$(python3 - << 'PY'
 import re
-s = open("flake.nix", encoding="utf-8").read()
+# T5.1 moved the git-hooks block out of flake.nix into its own module;
+# the counter follows the move (this was the 2026-10 AttributeError:
+# flake.nix no longer contains a `hooks = {` block to parse).
+s = open("tests/pre-commit.nix", encoding="utf-8").read()
 m = re.search(r"hooks\s*=\s*\{", s)
 i = s.index("{", m.start()); depth = 0
 for j in range(i, len(s)):

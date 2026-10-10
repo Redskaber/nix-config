@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/sec/secret/cmd/sops.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::sec::secret::cmd::sops
+# @description: platform::nixos::core::sec::secret::cmd::sops
 
 {
   inputs,

@@ -72,6 +72,8 @@ let
     nixos_core_base_i18n = nixosTest ./nixos/core/base/i18n.nix;
     nixos_core_base_i18n_source = nixosTest ./nixos/core/base/i18n-source.nix;
     nixos_core_base_i18n_samesource = nixosTest ./nixos/core/base/i18n-samesource.nix;
+    # T5.14: the ephemeral-root interpreter (eval-guard, two machines).
+    nixos_core_base_impermanence = nixosTest ./nixos/core/base/impermanence.nix;
 
     # ── export (T2.1: external-flake import acceptance) ────────────
     nixos_export_modules = nixosTest ./nixos/export-modules.nix;

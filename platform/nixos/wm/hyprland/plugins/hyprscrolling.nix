@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/wm/hyprland/plugins/hyprscrolling.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::wm::hyprland::plugins::hyprscrolling
+# @description: platform::nixos::wm::hyprland::plugins::hyprscrolling
 
 {
   inputs,

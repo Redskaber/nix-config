@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/security/ptrace.nix
 # @author: redskaber
 # @datetime: 2026-05-11
-# @description: platform::nixos::system::core::srv::security::ptrace
+# @description: platform::nixos::core::srv::security::ptrace
 # Note:
 #   ptrace_scope=0: any process may ptrace same-uid processes.
 #   Standard configuration for game hacking / RE on single-user desktops.

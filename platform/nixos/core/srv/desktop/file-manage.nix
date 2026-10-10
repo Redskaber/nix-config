@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/desktop/file-manage.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::srv::desktop::file-manage
+# @description: platform::nixos::core::srv::desktop::file-manage
 
 {
   inputs,

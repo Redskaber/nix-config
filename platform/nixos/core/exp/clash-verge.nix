@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/exp/clash-verge.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: platform::nixos::system::core::exp::clash-verge
+# @description: platform::nixos::core::exp::clash-verge
 # - google-chrome-stable --proxy-server=127.0.0.1:7897
 
 {

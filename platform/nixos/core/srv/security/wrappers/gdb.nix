@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/security/wrappers/gdb.nix
 # @author: redskaber
 # @datetime: 2026-05-11
-# @description: platform::nixos::system::core::srv::security::wrappers::gdb
+# @description: platform::nixos::core::srv::security::wrappers::gdb
 # Note:
 #   pince hardcodes /bin/gdb and calls `sudo gdb` via pexpect.
 #   - systemd.tmpfiles: exposes /bin/gdb for tools expecting FHS layout.

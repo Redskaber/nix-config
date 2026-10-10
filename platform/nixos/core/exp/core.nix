@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/exp/core.nix
 # @author: redskaber
 # @datetime: 2026-03-01
-# @description: platform::nixos::system::core::exp::core
+# @description: platform::nixos::core::exp::core
 
 {
   inputs,

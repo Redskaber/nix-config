@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/sec/secret/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::sec::secret::default
+# @description: platform::nixos::core::sec::secret::default
 #
 # By default secrets are owned by root:root.
 # Furthermore the parent directory /run/secrets.d is only owned by root and the keys group has read access to it.

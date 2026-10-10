@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/drive/intel.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::drive::intel
+# @description: platform::nixos::core::drive::intel
 
 {
   inputs,

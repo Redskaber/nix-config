@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/security/wrappers/dumpkeys.nix
 # @author: redskaber
 # @datetime: 2026-05-11
-# @description: platform::nixos::system::core::srv::security::wrappers::dumpkeys
+# @description: platform::nixos::core::srv::security::wrappers::dumpkeys
 
 {
   inputs,

@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/sec/pam.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::sec::pam
+# @description: platform::nixos::core::sec::pam
 
 {
   inputs,

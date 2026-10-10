@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# path: scripts/concat_files.sh
-# 用法: ./concat_files.sh <path_list_file> <output_file>
-# 示例: ./concat_files.sh paths.txt terminal.txt
+# @path: ~/projects/configs/nix-config/scripts/sh/chmod.sh
+# 用法: ./chmod.sh <path_list_file> <output_file>
+# 示例: ./chmod.sh paths.txt terminal.txt
 
 PATH_LIST="$1"
 

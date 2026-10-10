@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/monitor/default.nix
 # @author: redskaber
 # @datetime: 2026-10-08
-# @description: platform::nixos::system::core::srv::monitor — observability plane (T3.4)
+# @description: platform::nixos::core::srv::monitor — observability plane (T3.4)
 # @directory: https://search.nixos.org/options?channel=unstable&query=prometheus
 #
 # Metrics pipeline, strategy-driven like everything else in this tree:

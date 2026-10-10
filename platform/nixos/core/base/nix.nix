@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/base/nix.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::base::nix
+# @description: platform::nixos::core::base::nix
 # @origin: https://search.nixos.org/options?channel=25.11&query=nix.
 
 {

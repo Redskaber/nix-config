@@ -1,4 +1,4 @@
-# @path: ~/projects/nix-config/hosts/darwin/shared.nix
+# @path: ~/projects/configs/nix-config/hosts/darwin/shared.nix
 # @author: redskaber
 # @datetime: 2026-10-08
 # @description: hosts::darwin::shared — darwin host policy overrides (T3.2)

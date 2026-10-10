@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/exp/obs.nix
 # @author: redskaber
 # @datetime: 2026-03-01
-# @description: platform::nixos::system::core::exp::obs
+# @description: platform::nixos::core::exp::obs
 # - obs in nixos core, if you need vitural camera, else can home-manager impl.
 
 {

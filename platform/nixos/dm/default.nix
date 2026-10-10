@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/dm/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::dm::default
+# @description: platform::nixos::dm::default
 
 {
   inputs,

@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/hosts/vm/default.nix
 # @author: redskaber
 # @datetime: 2026-10-09
-# @description: hosts::vm — virtual machine host facts (facter path, T5.12)
+# @description: hosts::vm — virtual machine host facts (facter T5.12, disk T5.13, persist T5.14)
 #
 # Eval-level second machine (T2.5): this host exists to prove that one
 # flake evaluates two machines from two different policy files (see
@@ -37,6 +37,16 @@
 #   boot.loader.grub.devices (the BIOS-boot story; the loader policy
 #   override rides along in the same file — see its header).
 #
+#   ./persist.nix (T5.14 — impermanence): the state strategy as a
+#   declaration — that the root is ephemeral, and the inventory of
+#   what survives — interpreted by the impermanence module + the
+#   rollback machinery (registered platform-side in
+#   platform/nixos/core/base/impermanence.nix), imported below.
+#   Together with the btrfs subvolume layout in ./disk.nix this
+#   makes the guest an ephemeral-root machine: / is archived and
+#   re-created empty on every boot; /persistent, /nix and /boot are
+#   sibling subvolumes and survive.
+#
 # The real machine (hosts/nixos) migrates the same way ON the machine:
 # `just hardware-facter` for the report; for the disk layout, on the
 # next reinstall write hosts/nixos/disk.nix and apply it from the
@@ -48,6 +58,9 @@
   imports = [
     # T5.13 — the disk layout (disko data; interpreter platform-side).
     ./disk.nix
+    # T5.14 — the state strategy (impermanence data; interpreter
+    # platform-side).
+    ./persist.nix
   ];
 
   # Declarative hardware report — the nixpkgs facter module derives the

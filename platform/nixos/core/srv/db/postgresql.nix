@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/srv/db/postgresql.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: platform::nixos::system::core::srv::db::postgresql
+# @description: platform::nixos::core::srv::db::postgresql
 # @deploy: 验证安装:
 #   psql -U kilig -d dev -c "\dt"
 #   psql -h 127.0.0.1 -U redskaber -d dev -W   # 密码=1024

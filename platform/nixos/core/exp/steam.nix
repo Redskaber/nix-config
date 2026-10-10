@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/exp/steam.nix
 # @author: redskaber
 # @datetime: 2025-12-12
-# @description: platform::nixos::system::core::exp::steam
+# @description: platform::nixos::core::exp::steam
 # - steam in nixos core, becuase steam need firewall and system mod exp
 
 {

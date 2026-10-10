@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/base/i18n.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::core::base::i18n
+# @description: platform::nixos::core::base::i18n
 # fcitx5:
 #   1.terminal run fcitx5
 #   2.terminal run fcitx5-configtool

@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/core/base/disk.nix
 # @author: redskaber
 # @datetime: 2026-10-09
-# @description: platform::nixos::system::core::base::disk — the disk-layout interpreter registration (T5.13)
+# @description: platform::nixos::core::base::disk — the disk-layout interpreter registration (T5.13)
 #
 # THE CAPABILITY, NOT THE DATA. This file registers disko's NixOS module
 # for every nixos host; the LAYOUTS themselves live as host facts in

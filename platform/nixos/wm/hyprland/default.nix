@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/wm/hyprland/default.nix
 # @author: redskaber
 # @datetime: 2026-01-13
-# @description: platform::nixos::system::wm::hyprland
+# @description: platform::nixos::wm::hyprland
 
 {
   inputs,
