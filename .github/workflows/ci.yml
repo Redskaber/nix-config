@@ -444,15 +444,50 @@ jobs:
       # Nix's own max-jobs (1 on stock runners). Exit code 1 on any
       # member failure; failures don't stop siblings (keep-going),
       # failing members are listed in the log.
+      #
+      # Diagnose pass (2026-10 nixos-plane incident): nix-eval-jobs
+      # reports failures as "EVAL: N successes, M failures" plus the
+      # failing attr NAMES — but the verbatim error text scrolls past
+      # in a wall of parallel build output, so the log the incident
+      # arrived with had the failure and none of its cause. On a
+      # non-zero exit this step re-evaluates every member of the plane
+      # INDIVIDUALLY (same force depth nix-eval-jobs uses — .drvPath):
+      # a deterministic eval error reproduces with its full text right
+      # here; a plane whose members all evaluate cleanly in isolation
+      # points at build-side failures or transient workers (OOM), also
+      # stated right here. Either way the next failure carries its own
+      # diagnosis. Zero cost on the green path.
       - name: Build ${{ matrix.plane }} plane (nix-fast-build)
         env:
           SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}
         run: |
           echo "::add-mask::$SOPS_AGE_KEY"
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          set +e
           nix run "$PKGS#nix-fast-build" -- \
             --no-nom --skip-cached -j "$(nproc)" \
             --flake ".#api.checks.planes.${{ matrix.plane }}"
+          RC=$?
+          set -e
+          if [ "$RC" -ne 0 ]; then
+            echo "::warning::nix-fast-build exit $RC — re-evaluating each member individually to surface the verbatim error"
+            MEMBERS=$(nix eval ".#api.checks.planes.${{ matrix.plane }}" \
+              --apply builtins.attrNames --json \
+              | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')
+            FAILED_EVAL=0
+            for m in $MEMBERS; do
+              if ! nix eval --raw ".#api.checks.planes.${{ matrix.plane }}.$m.drvPath" \
+                   >/dev/null 2>"/tmp/eval_err_$m"; then
+                echo "::error title=eval failed::$m"
+                cat "/tmp/eval_err_$m"
+                FAILED_EVAL=1
+              fi
+            done
+            if [ "$FAILED_EVAL" -eq 0 ]; then
+              echo "::warning::every member evaluates cleanly in isolation — the failure was build-side or transient (eval worker OOM?). Full cause is in the nix-fast-build log above; a re-run of this job distinguishes transient from persistent."
+            fi
+            exit "$RC"
+          fi
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 6.5: Host toplevels — closure-level build depth (T8.2)
