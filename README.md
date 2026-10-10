@@ -1103,7 +1103,8 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁）
     │       └── nix flake check --no-build            (95 checks 全量 eval；
     │           含 6 closure 求值——validate.nix 对无 blob 状态宽容，
-    │           出现 blob 后转严 declared-but-not-provided)
+    │           出现 blob 后转严 declared-but-not-provided；
+    │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1)
     │
     ├─► [STAGE 3: nmt-Plane]           HM dotfile 断言，纯 eval，无 KVM（< 1 min）
     │       └── nix-fast-build --flake .#api.checks.planes.nmt（并行求值+构建，T7.3）
@@ -1149,6 +1150,15 @@ push / PR
 > Result 铁路消除——eval 期对 secret 的检查改为「声明而缺失才报错」，与 store
 > 物化无关。深层求值现在是硬门禁（T5.13 曾靠它捕获过 T5.2 改名残留导致的
 > 四处坏测试引用）。
+>
+> **缓存策略按腿类分发**（T12.1，2026-10 run #336 事故裁决）：构建腿
+> （lint / nmt-plane / vm-tests / host-toplevels）保留 magic-nix-cache——
+> 跨次缓存真闭包，被限流时回退 cache.nixos.org；纯求值腿（deep-eval /
+> output-faces / evaluate-devshells）不装——`--no-build`、drvPath 强制、
+> dry-run 都不替代任何闭包，构建缓存在此没有可提供的，只剩失败面
+> （GHAC ResourceExhausted → 418 narinfo → 源路径 mid-copy 死为
+> `path … is not valid` → 拖入 90 分钟超时）。deep-eval 另带 infra 签名
+> 单次重试：树侧错误立即红，基础设施类才退避重试。
 
 ### 本地预检清单（push 前）
 
@@ -2100,6 +2110,7 @@ flake.nix（46 inputs）
 - [x] NixOS-WSL 第五系统形态（T7.1：**评分驱动的下一阶段首项**——同类配置对比显示平台矩阵是最大可行动短板〔WSL2 行系统层为 —，同类旗舰 16–22 主机〕，且设计债 #1/#3 同根。**第五 platform 行而非主机级 caps 覆写**：enum.nix 能力表加 `nixos-wsl` 行〔caps：linux-family ✓ nixos-system ✓ wsl ✓ darwin ✗〕——schema 的文档化演进路径〔"新增平台 = 写一行"〕首次被完整行使；社区先例核实〔moni-dz 主机旗标模式、无旗舰运行 WSL 主机——但对本仓文法，行是 schema-忠实解，主机旗标会破坏"platform 行固定 caps"的 T4.0 不变量〕。**薄门设计**：platform/nixos-wsl/default.nix = `../nixos` 复用 + NixOS-WSL 解释器 + wsl.enable/defaultUser——读门即知形态定义〔nixos customs + WSL 解释器〕；home/ 用户域 payload 行回用 nixos 行〔wrapper：单行 re-export + fork-on-demand 缝〕。**所有权边界重划**：上游解释器拥有 wsl.conf/systemd 托管/interop+binfmt/boot 削减〔手写面全删——单一所有者规则〕；本仓真差量 = chrony 时钟漂移防护〔wsl.nix 瘦身〕；用户空间 interop〔wslview/WSLENV/USERPROFILE/BROWSER〕提升至共享树 home/core/base/wsl.nix〔caps.wsl 门控——两个 wsl 主机单地址消费，平台行只留 non-NixOS-Linux 事实：genericLinux+nixGL〕。**前置补全**：display-manager 枚举 none 行 + dm/none、wm/none 系统侧 Null-Object〔控制台形态的完整语法〕；boot.nix/memory.nix 裸金属值 mkDefault 化〔基础声明默认值、形态合法削减——优先级展开即设计〕。**主机数据**：hosts/nixos-wsl/ 五号机〔default.nix：唯一机器事实 = arch——无 facter〔硬件归 Windows 宿主〕/无 disk.nix〔rootfs 是 Windows 管理的 VHDX，disko 语义不适用〕/无 persist.nix〔WSL 根上 ephemeral 无意义——全部以缺省为数据〕；shared.nix：第五行翻转 + dm/wm none + lean 集〕。**零发射器改动**：分类/路由/双门全程由 caps 表驱动——nixosConfigurations.nixos-wsl 与 homeConfigurations.kilig@nixos-wsl 落地无一行 targets.nix 修改。**验证**：表单探针全绿〔wsl.enable/defaultUser/tarballBuilder/boot 削减〔grub·sdb·initrd·kernel·pm 全 false〕/chrony/无 DM·WM·xserver/hostName·stateVersion·user〕；26 项裸金属探针字节一致〔mkDefault 值保持验证〕；darwin·hm-nixos·hm-vm 三闭包字节一致；hm-wsl 偏移穷尽归因〔wslview 在 home.packages 合并序位 77→43，集合恒等，激活语义不变——模块真实迁移的预期位移〕；caps 真值表测试加第五行〔穷尽性+策略选择〕；新测试 nixos_core_base_wsl〔表单求值〔以 mkShared 同构构造真实主机策略链〕+ 惰性律；断言强制经变异验证〕；92 checks〔91 tests + 1 pre-commit〕；boot/activation 级验收待 Windows 宿主〔环境门控类，与 #8 同〕）
 - [x] sound 策略轴门控（T10.1：债 #9 机械半部——**独立策略轴而非 desktop-session 附庸**：音频是机器策略不是桌面属性〔无头 mpd 服务器可要音频、远程桌面会话可无音频——把门绑在 desktop-session 位上等于预答了债 #9 明确留白的问题〕，故 enum `sound`〔pipewire 全栈 / none Null-Object〕携带 `sound-server` 能力位 + `mixers` 工具带〔portal extraPortals 同型——策略数据在行上，叶子无条件〕，schema 列为必需键——每条策略链必须回答该轴；sound.nix 重构为 `config = mkIf shared.sound.value.sound-server`〔T4.0：读已解析事实，非原始 tag 比较〕；**语义半部刻意环境门控**：vm〔QEMU 音频设备〕/ nixos-wsl〔WSLg Windows 侧 pulse 桥〕的 none 翻转待首次真机裁决——届时 = 每主机一行数据。**新测试 nixos_core_base_sound_gate**〔export-modules 模式：pipewire 形〔基策略，全栈在——零漂移律〕+ none 形〔IR 级 wholesale 覆写，整体减除——翻转路径律〕+ 枚举载荷穷尽性断言；schema 测试同步第 18 必需键——**验证电池抓到真缺陷**：策略字面量缺 sound 参数，穷尽性按构造起效〕。**验证**：五闭包字节一致〔nqvaivz·s61py9qg·8b0srg82·sd3d2kx9·dqhyw65〕+ 三 toplevel config 探针全同〔14 探针 × 3 主机 × 双树对照——T7.2 探针方法论〕+ toplevel drv 漂移穷尽归因〔etc→activate→dry-activate 链，根因 = registry 23 条目中恰 1 条 self 的 narHash——已知边界 #10 新增记录：registry self 通道使 toplevel 哈希追踪树内容，字节一致性验证对 toplevel 不适用〕；95 checks〔93 tests + 2 仓库卫生〕；平面 1/30/41/5/1/15）
 - [x] 输出面独立强制腿（T11.1：**盲区类的结构性闭合**——T9.3 事故归因发现：无独立腿的输出面只被 deep-eval 传递覆盖，而 `nix flake check` 在第一个失败面即停，面覆盖是**路径依赖**的〔wslview 缺陷潜伏三个月正是此类：checks 面红→ packages 面从未被强制〕。新增 CI STAGE 4.5 `output-faces`：三面逐成员 drvPath 强制，每腿失败点名成员〔T9.2 归因哲学〕——`packages`〔2 员：wslview + module-docs——后者递归覆盖全部 export 模块体，经其文档求值〕、`homeConfigurations`〔4 员 activationPackage——home 平面测试是 nixosTest VM + HM module mode，从不触此面〕、`darwinConfigurations`〔system drvPath——host-toplevels 的 darwin 求值步被 deep-eval 绿门成本门控，本腿不受此门〕；成员枚举 = 面自身 attrNames〔新包/新主机按构造入列，零 CI 侧维护〕；无 secret〔路径在 store source 解析〕、无 KVM、纯 eval。**面覆盖矩阵审计**：checks=vm-tests 五平面 / nixosConfigurations=host-toplevels / devShells=独立矩阵 / formatter=lint / export=module-docs〔递归〕——恰三面无腿，本腿补齐。**验证**：本地 rootless nix 七成员 drvPath 全绿〔wslview 0wsws3vv / module-docs f04md2rw / HM×4 nqvaivz·sd3d2kx9·s61py9qg·8b0srg82 / darwin dqhyw65〕+ YAML 十九项结构断言 + bash -n + stub 三分支运行时模拟〔绿/失败成员点名/空面守卫〕——**模拟器抓到步骤真缺陷**：首版循环体 `nix eval` 失败后仍打印 ok 并计数〔plain bash 无 -e 时静默通过〕→ 修复为显式 `if ! nix eval; then ::error 点名; exit 1`，不依赖 runner shell 默认值；顺手修复 T11.2：security decrypt gate 的 find 范围补 `-not -path 'secrets/plan/*'`〔与 secrets-rotate.sh BLOB_FIND 排除语义对齐——plan/ 非 pipeline 成员；CI checkout 无 plan/ 故无行为变化，纯意图声明〕；summary 表 + 分支保护清单七→八；流水线 8→9 阶段（ci.yml 头注释 + README 两处））
+- [x] CI 纯求值腿基础设施解耦（T12.1：**run #336 deep-eval 事故的结构性闭环**——归因链：GitHub Actions Cache〔magic-nix-cache 的后端〕当日 ResourceExhausted〔Twirp 418〕→ 每个 narinfo 失败让 Nix 封禁 substituter 60 秒 → 物化中的源路径死为 `path … is not valid` → 三 attr 红〔nixosConfigurations.kilig-nixos / .nix、checks.lib_shared_lang_validate——三者均被同一 run 的独立腿或本地电池证明绿：vm-tests nixos 与 lib 平面、T9.3/T10.1 闭包电池；基础设施侧归因在案〕→ 拖入 90 分钟超时被取消。**裁决：缓存策略按腿类分发**——纯求值腿〔deep-eval / output-faces / evaluate-devshells〕不装 magic-nix-cache：`--no-build`、drvPath 强制、dry-run 都不替代任何闭包，构建缓存在此类腿上没有可提供的，只剩失败面本身〔flake 输入源经上游 tarball 物化，与 substituter 无关〕；构建腿〔lint / nmt-plane / vm-tests / host-toplevels〕保留——跨次缓存真闭包，被限流时回退 cache.nixos.org，与 GHAC 故障解耦。**deep-eval 加 infra 签名单次重试**：树侧错误〔未定义变量 / 缺属性〕确定性复现，立即红——重试只会烧超时窗口；日志命中基础设施签名类〔is not valid / unable to download / HTTP error / rate limit / ResourceExhausted / timed out / failed to fetch〕才 60 秒退避后重试一次。**顺手闭合 update-flake.yml 的 [skip ci] 矛盾**——PR 体自己的审查清单要求「合入前 CI 绿」、T6.3 证据链③依赖「每 PR 跑全流水线」，而 commit-message 里的 `[skip ci]` 模板残留恰好抑制了两者；顺删 summary 步骤死变量 BEFORE〔赋值后从未消费〕。**验证**：YAML 结构断言〔9 job 精确集 / 三纯求值腿无 MNC 步 / 四构建腿 MNC 保留 / needs 与 summary 八必查不变 / 重试步 pipefail+签名清单在位〕+ bash -n 全 run 块 + stub-nix 重试逻辑四分支运行时模拟〔首试绿 / infra 失败→退避重试绿 / 树侧失败立即红不重试 / 重试仍败→红〕+ docs-ssot-check 构建绿）
 
 ### 被拒绝的路线图项（裁决记录）
 

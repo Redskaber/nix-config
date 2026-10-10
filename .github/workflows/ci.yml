@@ -174,11 +174,49 @@ jobs:
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
-      - name: Cache Nix store
-        uses: DeterminateSystems/magic-nix-cache-action@v7
-
+      # NO magic-nix-cache here — deliberate (2026-10 run #336 incident).
+      # GitHub Actions Cache, the backend magic-nix-cache proxies, returned
+      # ResourceExhausted (Twirp 418) for narinfo queries. Every miss made
+      # Nix ban the substituter for 60 s, source paths mid-copy died as
+      # "path '/nix/store/…-source' is not valid" — three attrs went red
+      # (nixosConfigurations.kilig-nixos / .nixos,
+      # checks.lib_shared_lang_validate; each proven green by its own
+      # independent leg in the SAME run), and the stalled traversal ran
+      # the job into its 90-minute timeout.
+      # This leg is PURE EVALUATION: --no-build forces derivations to
+      # drvPath, nothing substitutes — a build cache has nothing to
+      # offer, so its only effect was the failure surface itself. Flake
+      # input sources materialise from their upstream (github tarballs)
+      # regardless of substituters. The same reasoning removes the cache
+      # from the other two pure-eval legs (output-faces,
+      # evaluate-devshells). The BUILD legs (lint, nmt-plane, vm-tests,
+      # host-toplevels) keep it: there it substitutes real closures
+      # across runs and falls back to cache.nixos.org when throttled.
       - name: nix flake check --no-build
-        run: nix flake check --no-build
+        run: |
+          set -o pipefail
+          LOG=/tmp/flake-check.log
+          for ATTEMPT in 1 2; do
+            if nix flake check --no-build 2>&1 | tee "$LOG"; then
+              echo "flake check green on attempt $ATTEMPT"
+              exit 0
+            fi
+            # Tree-side errors fail FAST: an undefined variable or a
+            # missing attr reproduces identically, retrying only burns
+            # the timeout window. Retry is reserved for the
+            # infrastructure signature class observed in the incident —
+            # substituter/network failures, not evaluation defects.
+            if [ "$ATTEMPT" -eq 1 ] && grep -qE \
+              'is not valid|unable to download|HTTP error|rate limit|ResourceExhausted|timed out|failed to fetch' \
+              "$LOG"; then
+              echo "::warning::infrastructure-class failure on attempt 1 — one retry after 60s backoff"
+              sleep 60
+              continue
+            fi
+            break
+          done
+          echo "::error title=flake check failed::verbatim output above; infra-signature retry did not rescue it"
+          exit 1
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 3: nmt-Plane (pure Nix eval — no KVM, fastest feedback)
@@ -240,9 +278,8 @@ jobs:
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
-      - name: Cache Nix store
-        uses: DeterminateSystems/magic-nix-cache-action@v7
-
+      # No magic-nix-cache: pure-eval leg (see the deep-eval incident
+      # note) — dry-run evaluates and never substitutes.
       - name: Dry-run devShells.${{ matrix.shell }}
         run: nix build .#devShells.x86_64-linux.${{ matrix.shell }} --dry-run --no-link
 
@@ -286,9 +323,8 @@ jobs:
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
-      - name: Cache Nix store
-        uses: DeterminateSystems/magic-nix-cache-action@v7
-
+      # No magic-nix-cache: pure-eval leg (see the deep-eval incident
+      # note) — drvPath forcing evaluates and never substitutes.
       # The system tag comes from the flake itself (debug face) — the
       # same pattern the lint stage's checks-count step uses.
       - name: Force packages face to derivation depth

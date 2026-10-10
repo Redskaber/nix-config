@@ -50,10 +50,6 @@ jobs:
           else
             echo "changed=true" >> $GITHUB_OUTPUT
 
-            # Extract changed inputs using nix flake metadata comparison
-            BEFORE=$(nix flake metadata --no-update-lock-file --json \
-              --override-input nixpkgs nixpkgs 2>/dev/null || echo '{}')
-
             # Simple diff report
             DIFF=$(diff flake.lock.before flake.lock || true)
             LINES=$(echo "$DIFF" | wc -l)
@@ -90,7 +86,14 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore(flake): update flake inputs [skip ci]"
+          # NO "[skip ci]" here: the update PR is exactly where the
+          # pipeline earns its keep — T6.3's evidence chain relies on
+          # "every PR opened by this workflow runs the full CI"
+          # (external-input breakage caught before merge), and the PR
+          # body's own checklist asks for "CI passes on this branch
+          # before merging". A skip marker would suppress both — the
+          # marker was template residue, not intent.
+          commit-message: "chore(flake): update flake inputs"
           title: "chore(flake): update flake inputs — ${{ github.run_id }}"
           body: ${{ steps.summary.outputs.body }}
           branch: automation/update-flake-inputs
