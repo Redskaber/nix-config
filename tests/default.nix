@@ -81,7 +81,7 @@ let
     # ── export (T2.1: external-flake import acceptance) ────────────
     nixos_export_modules = nixosTest ./nixos/export-modules.nix;
     nixos_core_base_network = nixosTest ./nixos/core/base/network.nix;
-    nixos_core_base_nix = nixosTest ./nixos/core/base/nix.n;
+    nixos_core_base_nix = nixosTest ./nixos/core/base/nix.nix;
     # T7.2: the portal capability gate (desktop on / console off)
     # + the vm console flip's whole subtraction, on the real machine.
     nixos_core_base_portal = nixosTest ./nixos/core/base/portal.nix;

@@ -129,7 +129,16 @@ let
     };
 
   runtime_shared = core_shared // {
-    packages = import "${core_shared.self}/pkgs" { inherit pkgs; };
+    # Positional call, matching the file's `pkgs: { ... }` signature and
+    # the other call site (overlays/default.nix additions: `import ../pkgs
+    # final.pkgs`). The 2026-10 audit caught this site passing
+    # `{ inherit pkgs; }` — a wrapper attrset — since the tree's oldest
+    # commit, so `packages.<system>.wslview` evaluated to
+    # "attribute 'callPackage' missing". Nothing forced it: no CI leg
+    # builds .#packages, and deep-eval had never survived earlier
+    # failures to reach the packages output. Both call sites now pass
+    # the real package set; both produce the same wslview derivation.
+    packages = import "${core_shared.self}/pkgs" pkgs;
     overlays = import "${core_shared.self}/overlays" { shared = core_shared; };
   };
 in
