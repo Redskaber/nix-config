@@ -178,7 +178,7 @@ jobs:
   # STAGE 2: Deep evaluation — facet forcing (T15.1)
   # ─────────────────────────────────────────────────────────────
   # The former `nix flake check --no-build` single-process walk was
-  # retired on evidence. It evaluates all 95 checks in ONE process,
+  # retired on evidence. It evaluates all 96 checks in ONE process,
   # accumulating live evaluation state monotonically — the local 4GB
   # sandbox OOMs at the 9th derivation (measured, anon-rss ~2GB and
   # climbing), a 7GB runner sits at the cliff edge and crawls: run
@@ -193,7 +193,7 @@ jobs:
   #   api envelope         — this leg (no other leg owns this face)
   #   nixosConfigurations  — this leg (the evaluation proof the
   #                          host-toplevels BUILD leg gates on)
-  #   misc checks (2)      — this leg; the planes own the other 93
+  #   misc checks (2)      — this leg; the planes own the other 94
   #                          (vm-tests BUILDS them — stronger)
   #   packages/home/darwin — output-faces leg (T11.1)
   #   devShells            — evaluate-devshells leg
@@ -309,7 +309,7 @@ jobs:
               nix eval --raw ".#nixosConfigurations.$H.config.system.build.toplevel.drvPath"
           done
 
-          # Face 3 — the two misc checks. The planes own the other 93
+          # Face 3 — the two misc checks. The planes own the other 94
           # (vm-tests builds them — stronger than eval); these two are
           # prefix-less, so this leg forces their evaluation level
           # (the lint leg BUILDS them — even stronger).

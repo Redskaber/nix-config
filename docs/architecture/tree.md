@@ -114,7 +114,7 @@ nix-config/
 ├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（wslview —— wslu 归档后的最小 shim）
 │
-├── tests/                  # 测试层（6 平面，93 tests + 2 仓库卫生 checks = 95 checks）
+├── tests/                  # 测试层（6 平面，94 tests + 2 仓库卫生 checks = 96 checks）
 │   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks（nixosTest runner）
 │   ├── test_calc.nix       # Plane 0: Smoke 基线
 │   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM，30 tests）
@@ -146,7 +146,7 @@ nix-config/
 │   ├── ci/                 # pipeline.md（CI/CD 深度手册：预检/部署/世代/自动化）
 │   ├── guides/             # quickstart.md（六 Phase 全程）· extending.md（扩展指南）
 │   │                       #   · sound-adjudication.md（债 #9 语义半部裁决卷宗，T17.1）
-│   ├── just/               # reference.md（84 recipe × 13 组全参考）
+│   ├── just/               # reference.md（85 recipe × 13 组全参考）
 │   ├── preview/            # 截图预览
 │   ├── modules/            # export/ 模块接口规范（interface-standards.md）
 │   ├── secrets/            # rotation.md（轮换 runbook）· scenarios.md（九情景手册）

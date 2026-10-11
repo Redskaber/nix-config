@@ -170,11 +170,12 @@ home/core/exp/sys/base/git.nix
 
 > 合计：base(2) + i18n_source(1) + editor(1) + sys/base(13 + 3 source) + shell(2 + 1 source) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(11) + export(1) = **41**
 
-### 3.3 Lib-Plane (5 tests)
+### 3.3 Lib-Plane (6 tests)
 
 | check                                | 验证点                            |
 | ------------------------------------ | --------------------------------- |
 | `lib_shared_shared_{enum,fn,schema}` | 枚举语义 / fn 逻辑 / schema merge |
+| `lib_shared_targets`                | 事实源普查（T19.1）：hosts/ × 分类器 caps——裸金属 NixOS 主机恰一事实源、宿主持有形态零源、双源即红（迁移自身的失败模式即 Law A） |
 
 ### 3.4 Integration-Plane (1 test)
 
@@ -517,7 +518,7 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 | Smoke       | 1      | ✓     |                                                                         |
 | NixOS       | 30     | ✓     | base(11=6+i18n_source+samesource+wsl+portal+sound_gate)+drive(3)+sec(4)+db(4)+hardware(2)+log(1)+security(2)+export(1)+monitor(1)+impermanence(1，T5.14：三组独立 nixosSystem 求值锁定回滚配方/单元排序/设备门/neededForBoot/bind mounts/惰性律) |
 | HM          | 41     | ✓     | base(2)+i18n_source(1)+editor(1)+sys/base(13+3 source)+shell(2+1 source)+sys(3)+sec(1)+srv(2)+dev(11)+export(1) |
-| Lib         | 5      | ✓     | enum + fn + schema + caps（T4.0 能力表契约：真值表/策略选择/穷尽性）+ validate（T4.1 Result 铁路：ok/err 车道/前置优先级/边界 throw/EMPTY 容忍——fixture 双树：provisioned 严格 + empty 放行） |
+| Lib         | 6      | ✓     | enum + fn + schema + caps（T4.0 能力表契约：真值表/策略选择/穷尽性）+ validate（T4.1 Result 铁路：ok/err 车道/前置优先级/边界 throw/EMPTY 容忍——fixture 双树：provisioned 严格 + empty 放行）+ targets（T19.1 事实源普查：三律——无双重声明/裸金属恰一/宿主代管零源） |
 | Integration | 1      | ✓     |                                                                         |
 | **nmt**     | **15** | **✗** | base(7)+sys/base(3)+shell(2)+app/editor(1)+srv(2)                       |
-| **Total**   | **93** |       | VM 78 + nmt 15（另有 2 个仓库卫生 checks：pre-commit-check〔nixfmt/statix/deadnix〕+ docs-ssot-check〔T8.1：文档计数锚点契约〕）→ 95 checks（T10.1 +1：nixos_core_base_sound_gate——sound 策略轴门双律，债 #9 机械半部） |
+| **Total**   | **94** |       | VM 79 + nmt 15（另有 2 个仓库卫生 checks：pre-commit-check〔nixfmt/statix/deadnix〕+ docs-ssot-check〔T8.1：文档计数锚点契约〕）→ 96 checks（T19.1 +1：lib_shared_targets——事实源普查三律，hosts/nixos facter 迁移的机器锁） |

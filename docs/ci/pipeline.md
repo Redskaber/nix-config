@@ -9,11 +9,11 @@
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 95 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 96 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性 + 供应链** — 验证加密文件结构正确，`secrets/plan/` 未被提交；
    全部 GitHub Actions 引用钉版为 40-hex commit SHA（T16.1 机器契约：
    未钉版引用在 Security Audit 腿 fail-fast 红灯，上游 tag 被篡改不影响本流水线）
-4. **测试覆盖** — 93 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 94 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ---
@@ -263,3 +263,55 @@ run 块 bash -n + stub-nix 四分支运行时模拟（绿：25 员全点名计�
 逐成员递减；矩阵形态的 9 份 nix 安装开销 ≈ 19 runner 分钟 vs 单作业
 形态 ≈ 12 分钟——覆盖从 9 → 25 员换约 3-4 分钟墙钟，runner 总分钟
 反而下降。
+
+### 事实源普查：hosts/nixos facter 迁移的机器锁（T19.1）— lib 平面 +1（2026-10-12 演进）
+
+**背景**：T5.12 把 hosts/vm 全量迁移到声明式 facter 报告后，
+hosts/nixos（真实机器）是最后一台仍在 legacy `hardware.nix` 上的主机。
+迁移本身是机上门控（root 探测 + 真硬件 + 重启验收——债务 #8 环境门控
+类），本仓能交付的是两件不依赖机器的事：
+
+**`just hardware-migrate`（hardware 组，第 85 recipe）**——迁移成为
+一条命令：
+
+- PROBE：同 `hardware-facter` 的 root 扫描（`nixpkgs#nixos-facter
+  -o hosts/<h>/facter.json`）。
+- MOVE：报告表达不了的事实**原样搬入**主机入口——fileSystems、
+  swapDevices、非空 `boot.kernelModules`（facter 从不生成挂载；disko
+  布局是最终归宿 T5.13；microcode 已由 drive 层 intel.nix 持有、
+  hostPlatform 由 report.system 派生——这些是 DERIVED，直接落）。
+- FLIP：模板 import 块（字节形校验，恰一次）换为
+  `hardware.facter.reportPath = ./facter.json;`。
+- RETIRE：hardware.nix 退役——git 历史即回滚（revert 迁移提交即
+  回到 legacy 接线）。
+
+三重 fail-loudly 守卫：已迁移则绿幂等；入口被手改则拒绝并打印手动
+翻转四步；hardware.nix 的每个 stanza 必须归类为 DERIVED 或 MOVED，
+未知 stanza（如未来 nixos-generate-config 新增输出形态）点名拒绝。
+验收地图内置 flake 语义：git add 报告先行（flakes 只看已跟踪文件）
+→ census 构建 → `just nixos-test`（激活不写 boot 条目）→ 重启即真门
+→ 单提交合入。
+
+**`lib_shared_targets`（Plane 3 第 6 员，全套第 94 test）**——终态成为
+机器锁：以 targets.nix mkShared 同构方式逐主机构造真实策略链
+（wsl.nix 先例），读分类器自己的 caps，对 hosts/ 树断言三律——
+
+- **Law A**：无主机同时携带 hardware.nix 与 facter.json（双重声明
+  即迁移自身的失败模式——这正是 migrate 把翻转与退役设计成同一
+  命令的原因）；
+- **Law B**：裸金属 NixOS（nixos-system ∧ ¬wsl）恰一源；
+- **Law C**：宿主持有形态（wsl 类 NixOS、darwin、standalone）零源
+  （无人消费的事实源文件是死数据）。
+
+文件存在即声明——普查不看接线，这正是它的牙齿。违规时 throw 点名
+主机与携带集（求值期即红，CI 的 lib 腿自动拥有该成员——平面成员
+按构造入腿，零 CI 侧改动）。
+
+**验证**（无 nix 沙箱，静态全过）：just 1.40.0 实测 `--summary`
+84→85；nixfmt 1.5.0（锁定 nixpkgs 的版本号，从 flake.lock rev 直取）
+两新/改文件全绿；bash -n；stub 仿真（伪 sudo + nixos-facter：挂载
+UUID 逐字一致 / nvidia 指纹块完好 / kvm-intel 搬迁 / 翻转后文件
+nixfmt 清洁 / 幂等重跑绿 / 无 legacy 拒绝 / 手改入口拒绝）；普查
+仿真（真 hosts/ 树 + 真 caps 表：现状全绿 + 删而不翻 → Law B 点名
+darwin 落杂文件 → Law C 点名 / 双源中间态 → Law A 点名 / 迁移终态
+→ 全绿）。计数同步 14 处（docs-ssot 四锚点同提交流）。

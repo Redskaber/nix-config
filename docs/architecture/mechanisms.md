@@ -583,6 +583,9 @@ impermanence 模块 + 回滚机制解释（同样不在 nixpkgs——已对锁�
 真实机器迁移（在目标机上执行；磁盘布局是重装时机——disko 应用即重分区，数据不可保留）：
 
 ```
+  0. just hardware-migrate   # T19.1 一键路径：下面 1-3 步的自动化（探测报告 +
+                             #   挂载/kernelModules 原样搬入主机入口 + 接线翻转 +
+                             #   legacy 退役；终态由 lib_shared_targets 普查锁定）
   1. just hardware-facter    # 生成 hosts/<hostname>/facter.json（root 扫描）
   2. 主机入口：imports = [ ./hardware.nix ] → hardware.facter.reportPath = ./facter.json;
   3. 删除 hardware.nix 中的 initrd/hostPlatform 行；fileSystems 走第 4 步

@@ -24,7 +24,7 @@
 14. [深入文档](#深入文档)
 
 > 深度内容按受众分层至 `docs/`（[文末索引](#深入文档)）：架构内幕 · 六 Phase 全程 ·
-> 九情景 secrets 手册 · 84 recipe 全参考 · CI 深度手册——README 只保留入口层。
+> 九情景 secrets 手册 · 85 recipe 全参考 · CI 深度手册——README 只保留入口层。
 
 ---
 
@@ -101,7 +101,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 93 tests + pre-commit + docs-ssot = 95 checks    │
+│  6 平面 · 94 tests + pre-commit + docs-ssot = 96 checks    │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -306,7 +306,7 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **95 checks = 93 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **96 checks = 94 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
@@ -377,9 +377,9 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 95 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 96 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-4. **测试覆盖** — 93 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 94 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（10 阶段，最大并行）
@@ -401,7 +401,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，T15.1 面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （95 checks 必须被平面或杂项清单拥有——新测试
+    │           （96 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1）
@@ -459,7 +459,7 @@ push / PR
 > 四处坏测试引用）。
 >
 > **深层求值的面分片形态**（T15.1，run #338 + 首个 120m 窗 run 证据链）：单进程
-> `nix flake check` 在单进程内累积全部 95 checks 的活跃求值态——本地 4GB 沙箱
+> `nix flake check` 在单进程内累积全部 96 checks 的活跃求值态——本地 4GB 沙箱
 > 在第 9 个 derivation 处 OOM（实测 anon-rss ~2GB 且持续增长），7GB runner 处于
 > 临界边缘慢爬（run #338 90 分钟超时；首个 120m 窗 run 在 49min+ 仍在求值）；
 > 同树同日的 output-faces 腿（同冷 store、同 inputs）1m52s 完成——因为每个
@@ -484,7 +484,7 @@ push / PR
 
 ## 日常操作速查
 
-> 全量动词面共 84 个 recipe，`[group]` 注解分 13 组——终端 `just --list` 或
+> 全量动词面共 85 个 recipe，`[group]` 注解分 13 组——终端 `just --list` 或
 > [docs/just/reference.md](docs/just/reference.md)；裸 `just` 打印 start-here 地图。
 
 ### deploy — 部署动词（nixos-rebuild 三语义 + HM）
@@ -612,7 +612,9 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
    root 的回滚真机验收——求值/构建级已全绿：配方派生/双 initrd 模式/惰性律由
    nixos_core_base_impermanence 锁定，formatMount 真实构建，但「每次启动根被归档重建」
    本身需要一次真实 btrfs 启动）、macOS activation（真 Mac）、hosts/nixos 的 disk.nix
-   应用（重装时机）——四者都已有完整路径，等待对应环境。
+   应用（重装时机）、hosts/nixos 的 facter 迁移执行（T19.1：`just hardware-migrate`
+   已就绪——探测报告 + 挂载原样搬迁 + 接线翻转 + legacy 退役一站式；等待机器本身）——
+   五者都已有完整路径，等待对应环境。
 9. **sound 栈门控：机械半部已落地（T10.1），语义半部已预裁决待真机确认
    （T17.1 卷宗）。** sound 现在是独立策略轴（enum `sound`：`pipewire`
    全栈 / `none` Null-Object，携带 `sound-server` 位与 `mixers`
@@ -705,6 +707,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 - [x] sound 语义半部裁决卷宗（T17.1：**债 #9 的环境门控部分从「等待真机」推进为「到机即决」**——[docs/guides/sound-adjudication.md](docs/guides/sound-adjudication.md) 成文：裁决范围〔vm/nixos-wsl 两台待裁决；nixos 工作站默认即正确；wsl standalone 与 darwin 出范围〕+ 架构事实〔QEMU 客机音频设备是域定义产物——裸 CLI 无、virt-manager 默认挂 ich9-intel-hda；本仓 facter 声明侧已无音频设备；WSLg 音频中介运行于 Windows 侧 system distro——socket 投影 + PULSE_SERVER 预配置 + RDP 通道往返，用户发行版内核无音频硬件可服务——一手来源 microsoft/wslg README 三节引文〕+ 探针清单 + 裁决矩阵〔两主机各两行，结论均为 none；nixos-wsl 两行同归 none——证据只影响归因措辞〕+ 翻转后验证〔三 toplevel 值面探针 + sound_gate 双律正交性说明〕。**预裁决一行翻转已预置**：hosts/vm 与 hosts/nixos-wsl 的 shared.nix 各带注释形式的 `sound = shared.enum.sound.none;`——真机验收确认后解注即一行数据变更〔零行为变化设计：注释不进求值，五闭包字节不变〕。**`just sound-audit`（hardware 组，只读）**：按运行时事实探测形态〔kernel release microsoft 旗标 / systemd-detect-virt 回退 cpuinfo hypervisor 旗标——动词层的 T4.0 定律：读已解析机器不读声明〕，跑该形态的探针电池，打印匹配矩阵行与建议翻转；SSH 会话不继承 WSLg env 的探针语义在输出里就地说明。**验证**：bash -n + stub 三形态四分支运行时模拟〔WSL 形（socket 缺席负路径）/ 客机形无音频 / 客机形带 hda 设备 / 裸金属形〕+ 五闭包 drvPath 前后字节一致 + nixfmt 两主机文件零重排 + docs-ssot-check 复建绿；**recipe 计数校准 82→84 全树六处同步〔README×3 + reference×2 + tree×1——计数本身抓到存量漂移：T10.2 的 nixos-boot 入列时未同步计数头，文档 82 / 活值 83；just --summary 活值为准〕**）
 - [x] devShells 腿成员枚举数据驱动（T18.1：**最后一处硬编码成员表的消灭**——发现路径：用户提示词新增 pdshell 参考仓库 → 审视 owner 自研 7 阶段管道 shell 库与本仓 devShells 面的关系 → 锁定 rev 与上游 HEAD 一致（da51c57，零锁更新需求）→ 顺藤核对本仓消费面时发现 CI `evaluate-devshells` 腿的矩阵是**写死一次就腐烂**的 9 成员列表，而活面已 25 员——**16 个 shell 零 CI 覆盖**，包括 `default`（14 语言 combinFrom 合并——pdshell 组合能力的最重验证对象）、`rs_compiler_dev`、`cpython`/`godot`/`makeOs`（default.nix 多变体成员）、`nix-nonfmt`/`nix-derivation-free-security`（nix/ 多变体）、asm/java/javascript/lisp/lua/python-renpy/zig。**同构类**：T9.3 wslview（路径依赖覆盖）+ T8.1 设计时抓到的四处计数漂移——硬编码清单与数据驱动面之间没有同步机制，单向腐烂是结构性必然。**修复 = 仓内既有惯例第四次复用**（output-faces T11.1 / deep-eval T15.1 / cache-attic 三处同款）：矩阵策略整段移除，作业内 `nix eval .#devShells.$SYS --apply builtins.attrNames --json` 枚举 + 逐成员 `--dry-run` 循环 + 失败成员 `::error` 点名（T9.2 归因哲学）+ 空面守卫 + 显式 `set -eo pipefail`（T11.1/T15.1 模拟器教训——不依赖 runner shell 默认值）；系统标签从 `.#debug.test_system` 读（消灭第二处硬编码 x86_64-linux）；工具链钉版与纯求值腿无 MNC 纪律原样保留（T12.1）。**顺带修复**：该腿头注释的 devDir 路径陈旧〔home/core/dev → home/env/dev——树演进留下的注释级漂移〕。**验证**：YAML 结构断言十条〔job 集不变/needs 不变/fail-gate 与 summary 接线不变/vm-tests 平面矩阵（合法轴）不受扰〕+ 全仓 34 run 块 bash -n + stub-nix 四分支运行时模拟〔绿：25 员全点名计数行正确/点名失败：default 失败时前 4 成员已点名+stderr 流出+::error 命名/空面守卫触发/首成员失败快败〕；CI 墙钟代价可接受：25 次短命 dry-run 序列，flake eval-cache 首次构建后逐成员递减〔矩阵形态的 9 份 nix 安装开销≈19 runner 分钟 vs 单作业形态≈12 分钟〕）
+- [x] hosts/nixos facter 迁移的仓库侧全量落地（T19.1：**「唯一未迁移主机」的迁移面从文档推进为动词 + 机器锁**——前置对账：owner 已将前轮全部演进采纳入上游（863d972 载 darwin 腿+attic+nix-types 钉 rev，442b698 载 T18.1 成员枚举——内容级核实仅 flake.lock 装饰性差异〔original.ref vs canonical original.rev，同一 locked rev〕），本地 main 快进 442b698，两分支功成身退。**问题重述**：T5.12 已把 hosts/vm 全量迁移到声明式报告，但真实机器的迁移是**机上门控**（root 探测 + 真硬件）——沙箱能交付的不是「执行迁移」而是**让迁移变成一条命令 + 让终态变成机器锁**。**`just hardware-migrate`（hardware 组，第 85 recipe）**：四步一站式〔PROBE（同 hardware-facter 的 root 扫描）/MOVE（报告表达不了的：fileSystems + swapDevices + 非空 kernelModules **原样搬入**主机入口——facter 从不生成挂载，disko 布局是最终归宿 T5.13；microcode 已由 drive 层 intel.nix 无条件持有、hostPlatform 由 report.system 派生）/FLIP（模板 import 块字节形校验后换为 `hardware.facter.reportPath`）/RETIRE（hardware.nix 退役，git 历史即回滚）〕；**fail-loudly 三重守卫**：已迁移则绿幂等/入口被手改则拒绝并打印手动翻转步骤/hardware.nix 中每个 stanza 必须归类为 DERIVED〔报告+驱动层重新表达：not-detected 扫描 import、availableKernelModules、initrd kernelModules、extraModulePackages、hostPlatform、微码〕或 MOVED〔挂载/kernelModules——逐字搬迁〕，未知 stanza 点名拒绝；**验收地图内置 flake 语义**：git add 报告先行〔flakes 只看已跟踪文件——普查对未跟踪报告暂时失明本身就是设计的强制性〕→ census 构建 → `just nixos-test`〔激活不写 boot 条目〕→ 重启即真门〔报告派生 initrd 必须能把机器带起来〕→ 单提交合入，回滚 = git revert。**`lib_shared_targets`（Plane 3，第 94 test）：事实源普查**——以 targets.nix mkShared 同构方式逐主机构造真实策略链（wsl.nix 先例），读分类器自己的 caps，对 hosts/ 树断言三律：**Law A** 无主机可同时携带 hardware.nix 与 facter.json〔双重声明即迁移自身的失败模式——这正是 migrate 把翻转与退役设计成同一命令的原因〕/**Law B** 裸金属 NixOS（nixos-system ∧ ¬wsl）恰一源/**Law C** 宿主持有形态（wsl 类 NIXOS、darwin、standalone）零源〔无人消费的事实源文件是死数据——说谎的文件〕；文件存在即声明（T5.12 数据与解释器分离的彻底化）；违规时 throw 点名主机与携带集。**验证**（无 nix 沙箱，静态全过）：just 1.40.0 实测 `--summary` 84→85；nixfmt 以**锁定版本**验证〔1.5.0——从 flake.lock 的 nixpkgs rev 直取 pkgs/by-name 版本号，避免拿 0.6.0 误判存量文件〕两新/改文件全绿；bash -n；**stub 仿真**〔伪 sudo+nixos-facter：happy path 全链路——挂载 UUID 逐字一致/nvidia 指纹块完好/kvm-intel 搬迁/翻转后文件 nixfmt 清洁/hardware.nix 退役/幂等重跑绿/无 legacy 拒绝/手改入口拒绝〕；**普查仿真**〔以真 hosts/ 树 + 真 caps 表驱动：现状全绿 + 四变异〔删而不翻→Law B 点名/darwin 落杂硬件文件→Law C 点名/双源中间态→Law A 点名/迁移终态→全绿〕〕；**计数同步 14 处**〔README×9 + ci.yml×3 + pipeline×2 + tree×2 + matrix×4 + reference×3——docs-ssot 锚点四句同提交流〕；machine 侧遗留仅「在机器上跑动词 + 重启验收」——债务 #8 环境门控类第五项登记）
 
 ### 被拒绝的路线图项（裁决记录）
 
@@ -738,7 +741,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 | 理解依赖全景 | [docs/architecture/dependency-graph.md](docs/architecture/dependency-graph.md) — inputs 全图 |
 | 从 0 部署一台机器 | [docs/guides/quickstart.md](docs/guides/quickstart.md) — 六 Phase 全程 |
 | 管理 secrets | [docs/secrets/scenarios.md](docs/secrets/scenarios.md) 九情景 · [docs/secrets/rotation.md](docs/secrets/rotation.md) 轮换 |
-| 找一个 just 动词 | [docs/just/reference.md](docs/just/reference.md) — 84 recipe × 13 组 |
+| 找一个 just 动词 | [docs/just/reference.md](docs/just/reference.md) — 85 recipe × 13 组 |
 | 了解 CI 为什么这样设计 | [docs/ci/pipeline.md](docs/ci/pipeline.md) — 缘起 · 预检 · 部署 · 世代 |
 | 扩展这个仓库 | [docs/guides/extending.md](docs/guides/extending.md) — 应用/环境/secret/策略四模式 |
 | 理解测试怎么写 | [docs/tests/test-matrix.md](docs/tests/test-matrix.md) · [nixosTest.md](docs/tests/nixosTest.md) · [nmt.md](docs/tests/nmt.md) |

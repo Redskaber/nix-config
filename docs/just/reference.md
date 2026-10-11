@@ -1,10 +1,10 @@
-# just 命令全参考 — 84 recipe × 13 组
+# just 命令全参考 — 85 recipe × 13 组
 
 > 本文是 README「justfile 命令参考」节的完整版（T13.1 分层重构时从 README 原样迁出）。
 > `just --list` 在终端给出同源入口；日常速查（deploy / devenv / secrets 三高频组）见
 > [README](../../README.md#日常操作速查)。
 
-> 全量动词面共 84 个 recipe，`[group]` 注解分 13 组（bootstrap / commit / deploy /
+> 全量动词面共 85 个 recipe，`[group]` 注解分 13 组（bootstrap / commit / deploy /
 > devenv / disk / flake / hardware / keys / maintenance / rules / secrets / services /
 > shared）——`just --list` 给出按组组织的全部入口；裸 `just`（无参数）打印
 > start-here 地图；secrets 侧的生命周期地图从 `just secrets-guide` 进入。
@@ -62,6 +62,8 @@ just shared-roundtrip            # 验证 shared.nix ⇄ 模板可双向字节�
 ### hardware — 硬件配置
 
 ```bash
+just hardware-migrate         # 一键迁移：hardware.nix → facter.json（T19.1；探测报告 + 挂载/kernelModules
+                               # 原样搬入主机入口 + 翻转接线 + 退役 legacy 文件；终态由事实源普查锁定）
 just hardware-facter           # 生成 hosts/<hostname>/facter.json（声明式路线，T5.12；首次或硬件变更后）
 just hardware-generate         # 生成 hosts/<hostname>/hardware.nix（legacy 路线，nixos-generate-config）
 just hardware-show             # 显示当前 hardware.nix 内容
