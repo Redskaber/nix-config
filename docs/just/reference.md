@@ -1,10 +1,10 @@
-# just 命令全参考 — 85 recipe × 13 组
+# just 命令全参考 — 88 recipe × 13 组
 
 > 本文是 README「justfile 命令参考」节的完整版（T13.1 分层重构时从 README 原样迁出）。
 > `just --list` 在终端给出同源入口；日常速查（deploy / devenv / secrets 三高频组）见
 > [README](../../README.md#日常操作速查)。
 
-> 全量动词面共 85 个 recipe，`[group]` 注解分 13 组（bootstrap / commit / deploy /
+> 全量动词面共 88 个 recipe，`[group]` 注解分 13 组（bootstrap / commit / deploy /
 > devenv / disk / flake / hardware / keys / maintenance / rules / secrets / services /
 > shared）——`just --list` 给出按组组织的全部入口；裸 `just`（无参数）打印
 > start-here 地图；secrets 侧的生命周期地图从 `just secrets-guide` 进入。
@@ -47,7 +47,12 @@ just nixos-switch <host>        # NixOS 切换（= sudo nixos-rebuild switch --f
 just nixos-test <host>          # test 模式（不写 boot 条目，重启即弃）
 just nixos-boot <host>          # boot 模式（T10.2：只设下一代引导，不激活——重启才生效）
 just home-switch <host>         # HM 切换（读 shared.nix 用户名 → <user>@<host>）
-# 例: just nixos-switch nixos / just home-switch wsl
+
+# colmena 远程部署面（T20.1）——同一模块树同一策略 IR，CI 锁发射等价：
+just deploy-list                # 列出 colmena 部署面（= nixosHosts；darwin/HM 走自己的动词）
+just deploy <host>              # 远程部署：构建→上传→激活（ssh，策略用户；CLI 钉 v0.5.0）
+just deploy-local               # 本机部署（apply-local --sudo；需 hosts/<h>/deploy.nix 开关）
+# 例: just nixos-switch nixos / just home-switch wsl / just deploy nixos
 ```
 
 ### shared — 策略层生成

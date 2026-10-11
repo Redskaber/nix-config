@@ -82,3 +82,32 @@ nixos-boot host:
 home-switch host:
     @cd {{ROOT}} && USER=$$(grep -oP 'username\s*=\s*"\K[^"]+' {{SHARED_NIX_PATH}}) && \
         nix run home-manager -- switch --flake ".#$${USER}@{{host}}"
+
+# ── Colmena deploy verbs (T20.1) ──────────────────────────────────────
+# The remote-deploy lane: `just deploy <host>` pushes the SAME closures
+# nixos-rebuild builds (CI locks the equivalence), over ssh as the
+# policy user. CLI pinned to v0.5.0 to match the flake input — colmena
+# 0.4 and older read the deprecated `colmena` output and cannot see
+# colmenaHive at all; nixpkgs' packaged colmena is channel-lagged, so
+# the tag (not nixpkgs#) is the pin that stays in lockstep.
+
+# List colmena's deployment scope (the classifier's nixosHosts — darwin
+# and standalone-HM hosts deploy by their own verbs, never colmena).
+[group('deploy')]
+deploy-list:
+    @cd {{ROOT}} && nix eval .#api.targets.nixosHosts --json
+
+# Remote-deploy one host: build, upload, activate (switch semantics —
+# the generation flips live; rollback stays a `colmena apply --rollback`
+# away). targetUser comes from the policy; coordinates from
+# hosts/<host>/deploy.nix (node name as host until it says otherwise).
+[group('deploy')]
+deploy host:
+    @cd {{ROOT}} && nix run github:zhaofengli/colmena/v0.5.0 -- apply --on {{host}}
+
+# Deploy to the machine you are ON (needs allowLocalDeployment on the
+# node — hosts/nixos/deploy.nix carries it). The sudo-parity of
+# nixos-switch for the colmena lane.
+[group('deploy')]
+deploy-local:
+    @cd {{ROOT}} && nix run github:zhaofengli/colmena/v0.5.0 -- apply-local --sudo

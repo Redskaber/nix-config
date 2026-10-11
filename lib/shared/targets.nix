@@ -21,14 +21,16 @@
 #   backend     mkNixosSystem    target emitters — one policy graph in,
 #   (codegen)  mkDarwinSystem   several closure formats out (a compiler
 #              mkHomeSystem      links one IR into multi-target
-#                               artifacts; the flake links one policy
+#              mkColmenaHive    artifacts; the flake links one policy
 #                               graph into nixos / darwin / standalone-HM
-#                               closures)
+#                               closures / the colmena deploy face — same
+#                               module doors, deployable packaging, T20.1)
 #
 # The consumer (flake.nix) only writes:
 #
 #   targets = import ./lib/shared/targets.nix { … };
 #   inherit (targets) nixosConfigurations homeConfigurations darwinConfigurations;
+#   inherit (targets) colmenaHive;
 #
 # Adding a target format = adding an emitter here; adding a host =
 # mkdir under hosts/; changing a host's class = editing
@@ -243,6 +245,107 @@ let
       };
       modules = [ ../../platform/${dshared.platform.tag} ];
     };
+
+  # ── backend: deployment facts + the colmena emitter (T20.1) ──
+  # The fourth closure format: a DEPLOYABLE view of the same hosts.
+  # colmena (0.5+, the colmenaHive output protocol) re-evaluates the
+  # NixOS module trees itself — the emitter's job is to hand it the
+  # SAME module doors the primary emitter takes plus per-host policy
+  # handles, so the re-emission stays config-identical (the CI parity
+  # gate locks that claim; see .github/workflows/ci.yml host-toplevels).
+  #
+  # Machine facts: hosts/<h>/deploy.nix — OPTIONAL, the disk.nix/
+  # persist.nix family (coordinates are host facts, not policy). File
+  # presence IS the declaration "this host carries deploy facts";
+  # absent means colmena's own defaults (node name as hostname, port
+  # 22). The census law (T19.1 family): facts on a host colmena can
+  # never consume are a lying file — colmena deploys nixosHosts only
+  # (darwin keeps darwin-rebuild, standalone home-only hosts keep
+  # home-switch), so the loader throws at eval instead of silently
+  # ignoring dead data.
+  deployFacts =
+    host:
+    let
+      facts = ../../hosts/${host}/deploy.nix;
+    in
+    if builtins.pathExists facts then
+      (
+        if (hostCaps host).nixos-system then
+          import facts
+        else
+          throw ''
+            lib::shared::targets — hosts/${host}/deploy.nix: deployment
+            facts on a non-NixOS host are a lying file. colmena's scope is
+            the nixosHosts (caps.nixos-system); darwin deploys via
+            darwin-rebuild, standalone home-manager hosts via home-switch.
+            Remove the file, or flip the host's class in
+            hosts/${host}/shared.nix.''
+      )
+    else
+      { };
+
+  mkColmenaNode =
+    host:
+    let
+      cshared = sharedByHost.${host};
+    in
+    {
+      # The SAME platform door the primary emitter takes (grammar v3):
+      # colmena's re-emission reads the identical module tree — no
+      # parallel assembly to drift. The per-host policy IR arrives
+      # through meta.nodeSpecialArgs (colmena injects `name`/`nodes`
+      # itself; nothing here duplicates that).
+      imports = [ ../../platform/${cshared.platform.tag} ];
+
+      # Policy-derived default, wholesale-merged UNDER the fact file
+      # (hosts/<h>/deploy.nix overrides, the shared.nix ⊕ hosts/ shape):
+      # ssh.nix pins PasswordAuthentication=false and PermitRootLogin
+      # ="no", so colmena's stock targetUser "root" cannot log in —
+      # the policy user is the only way in. Secrets ride sops-nix;
+      # colmena's deployment.keys stays unused on purpose.
+      deployment = {
+        targetUser = cshared.user.username;
+      } // deployFacts host;
+    };
+
+  # The hive: meta carries the evaluation plumbing, one node attr per
+  # nixosHost (inventory-driven — a new NixOS host joins the deploy
+  # face by construction, same as every other emitter).
+  colmenaHive = inputs.colmena.lib.makeHive (
+    {
+      meta = {
+        # Hermetic mode (colmena 0.5 refuses bare nixpkgs inputs in
+        # flakes): an INITIALIZED pkgs set is mandatory. Plain import,
+        # no overlays — the nodes' module trees apply overlays exactly
+        # where the primary emission applies them, so nothing gets
+        # layered twice (mkBefore of an empty overlays list is a
+        # no-op inside colmena's injected nixpkgs module).
+        nixpkgs = import nixpkgs { system = shared.arch.tag; };
+
+        # Per-host pkgs pins: multi-arch by construction — an
+        # aarch64-linux NixOS host would evaluate against its own
+        # arch, not the base host's (the T7.2 per-host-arch lesson,
+        # applied at the deploy face).
+        nodeNixpkgs = builtins.listToAttrs (
+          builtins.map
+            (h: lib.nameValuePair h (import nixpkgs { system = sharedByHost.${h}.arch.tag; }))
+            nixosHosts
+        );
+
+        # Mirrors the primary emitters' contract: `inputs` for every
+        # node; the per-host policy IR handle per node — the same
+        # sharedByHost thunks the primary emitters read (T5.10 single
+        # instantiation holds across the re-emission).
+        specialArgs = { inherit inputs; };
+        nodeSpecialArgs = builtins.listToAttrs (
+          builtins.map (h: lib.nameValuePair h { shared = sharedByHost.${h}; }) nixosHosts
+        );
+      };
+    }
+    // builtins.listToAttrs (
+      builtins.map (h: lib.nameValuePair h (mkColmenaNode h)) nixosHosts
+    )
+  );
 in
 {
   # Ready-to-use closures — flake.nix maps these 1:1 onto the flake
@@ -291,6 +394,13 @@ in
   darwinConfigurations = builtins.listToAttrs (
     builtins.map (h: lib.nameValuePair h (mkDarwinSystem h)) darwinHosts
   );
+
+  # The deployable view (T20.1): what `colmena` reads —
+  # `colmenaHive = makeHive { meta; <node per nixosHost> }`. Exposed
+  # by flake.nix under the output name colmena 0.5 expects. Scope is
+  # the classifier's nixosHosts; a fresh deployment fact file joins
+  # by mkdir (hosts/<h>/deploy.nix), no flake.nix edit.
+  colmenaHive = colmenaHive;
 
   # Inventory surface (debug/CI): what the classifier saw. Exposed by
   # flake.nix as api.targets — `nix eval .#api.targets.inventory`.

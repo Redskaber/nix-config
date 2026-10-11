@@ -11,7 +11,8 @@ nix-config/
 ├── lib/
 │   └── shared/
 │       ├── default.nix     # 共享加载器：两阶段初始化（scfpath 可覆盖，支持多机器）
-│       ├── targets.nix     # 目标工厂（生产端）：hosts/ 清单 → caps 分类 → 三类 closure 发射器；
+│       ├── targets.nix     # 目标工厂（生产端）：hosts/ 清单 → caps 分类 → 发射器（nixos /
+│       │                   #   darwin / standalone-HM 三类 closure + colmena 部署面，T20.1）；
 │       │                   #   flake.nix 只写 inherit (targets) nixosConfigurations …
 │       ├── docs.nix        # 文档工厂（生产端）：export/ 模块 → optionsDoc markdown（侧通道发射器）
 │       ├── lang/           # 阶段一 · 语言前端：类型/枚举/schema/验证（无 pkgs）
@@ -92,6 +93,7 @@ nix-config/
 │
 ├── hosts/                 # 多主机支持（per-machine facts + policy overrides）
 │   ├── nixos/             # 默认主机：hardware.nix（legacy 生成）+ default.nix（NVIDIA 指纹）
+│   │                      #   + deploy.nix（colmena 部署事实，T20.1——文件存在即声明）
 │   ├── vm/                # 评估级 VM 主机：facter.json + disk.nix + persist.nix（声明式
 │   │                      #   硬件/磁盘/状态事实，T5.12/T5.13/T5.14）
 │   │                      #   + shared.nix 策略覆盖（ephemeral root：/ 每次启动回滚清空，
@@ -146,7 +148,7 @@ nix-config/
 │   ├── ci/                 # pipeline.md（CI/CD 深度手册：预检/部署/世代/自动化）
 │   ├── guides/             # quickstart.md（六 Phase 全程）· extending.md（扩展指南）
 │   │                       #   · sound-adjudication.md（债 #9 语义半部裁决卷宗，T17.1）
-│   ├── just/               # reference.md（85 recipe × 13 组全参考）
+│   ├── just/               # reference.md（88 recipe × 13 组全参考）
 │   ├── preview/            # 截图预览
 │   ├── modules/            # export/ 模块接口规范（interface-standards.md）
 │   ├── secrets/            # rotation.md（轮换 runbook）· scenarios.md（九情景手册）

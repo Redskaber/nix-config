@@ -1116,6 +1116,7 @@
         "btop-config": "btop-config",
         "cava-config": "cava-config",
         "cnmplayer": "cnmplayer",
+        "colmena": "colmena",
         "commit-config": "commit-config",
         "configuration-orchestrator": "configuration-orchestrator",
         "disko": "disko",
@@ -1503,6 +1504,32 @@
         "owner": "Redskaber",
         "repo": "zcode",
         "type": "github"
+      }
+    },
+    "colmena": {
+      "inputs": {
+        "flake-compat": [],
+        "flake-utils": [
+          "pdshell",
+          "flake-utils"
+        ],
+        "nix-github-actions": [],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "stable": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790091756,
+        "narHash": "sha256-YkaWZQV/OO4ZEmin+RHZ/6qFfBah/qSSXduTQMZTNR0=",
+        "type": "tarball",
+        "url": "https://github.com/zhaofengli/colmena/archive/948491ae031dc0e2e61f0982943dd9964a724bdb.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://github.com/zhaofengli/colmena/archive/948491ae031dc0e2e61f0982943dd9964a724bdb.tar.gz"
       }
     }
   },

@@ -123,6 +123,39 @@
     # nix-types_2 node that can silently drift on partial updates.
     pdshell.inputs.nix-types.follows = "nix-types";
 
+    # Colmena — NixOS deployment (T20.1): the evaluator behind the
+    # colmenaHive output. Tarball-pinned like disko/nix-darwin above
+    # (github: short syntax would need API resolution; the archive URL
+    # pins the exact rev). v0.5.0 is the first release speaking the
+    # colmenaHive output protocol — the legacy `colmena` output is
+    # deprecated and its nix-instantiate evaluator does not work
+    # purely on Nix 2.21+. The CLI in the just recipes pins
+    # github:zhaofengli/colmena/v0.5.0 for the same reason
+    # (nixpkgs' packaged colmena is channel-lagged and would try to
+    # read the deprecated output instead).
+    #
+    # Input wiring (the lock graph mirrors these):
+    #  - nixpkgs/stable follow ours — makeHive never asks for them
+    #    (only eachSystem's thunk construction runs when .lib is
+    #    forced), and sharing keeps one instance of the same channel
+    #    (stable IS the release-26.05 branch our nixpkgs pins).
+    #  - flake-utils IS forced the moment colmena's outputs attrset is
+    #    constructed (eachSystem runs), so it follows pdshell's pin —
+    #    ONE flake-utils instance across the flake (the follows-
+    #    pins-one-instance discipline, same shape as pdshell →
+    #    nix-types above).
+    #  - nix-github-actions/flake-compat are never forced by
+    #    .lib.makeHive (they live inside unforced output thunks) —
+    #    empty follows keeps the lock graph minimal; a future colmena
+    #    bump that starts forcing them fails loudly (missing attr)
+    #    instead of silently fetching something unpinned.
+    colmena.url = "https://github.com/zhaofengli/colmena/archive/948491ae031dc0e2e61f0982943dd9964a724bdb.tar.gz";
+    colmena.inputs.nixpkgs.follows = "nixpkgs";
+    colmena.inputs.stable.follows = "nixpkgs";
+    colmena.inputs.flake-utils.follows = "pdshell/flake-utils";
+    colmena.inputs.nix-github-actions.follows = "";
+    colmena.inputs.flake-compat.follows = "";
+
     # hyprland config
     hyprland.url = "github:hyprwm/Hyprland";
     hyprland-plugins = {
@@ -442,5 +475,12 @@
       # assembly with home-manager riding in module mode.
       # 'darwin-rebuild switch --flake .#<host>'.
       inherit (targets) darwinConfigurations;
+      # Deployment face (T20.1): the colmenaHive output colmena 0.5+
+      # reads — produced by targets.nix like every other closure
+      # format; this is the protocol-name mapping only. Scope is the
+      # classifier's nixosHosts by construction (darwin keeps
+      # darwin-rebuild, standalone HM keeps home-switch);
+      # 'just deploy <host>' → colmena apply --on <host>.
+      inherit (targets) colmenaHive;
     };
 }

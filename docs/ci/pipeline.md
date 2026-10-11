@@ -315,3 +315,50 @@ nixfmt 清洁 / 幂等重跑绿 / 无 legacy 拒绝 / 手改入口拒绝）；�
 仿真（真 hosts/ 树 + 真 caps 表：现状全绿 + 删而不翻 → Law B 点名
 darwin 落杂文件 → Law C 点名 / 双源中间态 → Law A 点名 / 迁移终态
 → 全绿）。计数同步 14 处（docs-ssot 四锚点同提交流）。
+
+### T20.1 · colmena 部署面 — 远程部署的仓库侧全量落地（2026-10-12 演进）
+
+**发现路径**：评分短板（可运维性）+ roadmap P2 部署动词——六项演进全部入上游后，
+本仓无任何远程部署叙事（nixos-rebuild 只在本机 sudo 语义下工作，第二台机器落地
+即裸奔）。知识搜索三连定案：colmena 0.5.0（2026-09-22）改读 `colmenaHive` 输出
+（旧 `colmena` 输出废弃）；`meta.nodeSpecialArgs` 是每节点注入 per-host policy IR
+的官方机制（T5.10 单实例化跨再发射成立）；colmena 是 NixOS-only 部署面——上轮
+roadmap「三形态统一 push 路径」的表述被修正为诚实的形态分治（darwin 走
+darwin-rebuild，standalone HM 走 home-switch，colmena 面收敛于分类器的 nixosHosts）。
+
+**裁决**：部署面作为 targets.nix 的第四发射面落地（编译器管道的 codegen 段加一个
+目标格式），而不是 flake.nix 内的平行装配——节点复用主发射器的同一 platform 门，
+meta 携带求值管道（纯 import 的 nixpkgs、per-host nodeNixpkgs、specialArgs.inputs +
+nodeSpecialArgs.shared——同一个 sharedByHost thunk）。部署坐标按「数据与解释器
+分离」归位为机器事实（hosts/<h>/deploy.nix，disk.nix/persist.nix 家族）+ 普查律：
+colmena 永不消费的主机上出现 deploy.nix 即 throw（T19.1 Law C 的同族——说谎的
+文件）。targetUser 从策略派生（ssh.nix 禁 root 禁密码，colmena 默认 root 根本
+登不进来）。v1 事实只有 hosts/nixos/deploy.nix（allowLocalDeployment——本机即
+部署目标）；vm/nixos-wsl 刻意无事实：不可验证的地址是说谎事实。
+
+**修复**：flake input tarball-pinned @ v0.5.0（948491ae）——narHash 由手工 NAR
+序列化器计算（Python 实现 nix archive.cc 字节格式：每字符串 8 字节对齐 / 目录
+条目按名排序 / tarball 单顶层目录剥离），先用本仓 lock 里 disko + nix-darwin
+两个已知 narHash 验证序列化器（双 MATCH）再算 colmena 的；follows 图——
+nixpkgs/stable 跟本仓通道（makeHive 永不强制它们）、flake-utils 跟 pdshell 的
+pin（colmena 输出构造即强制 eachSystem——单一实例纪律）、nix-github-actions /
+flake-compat 空 follows（.lib 路径永不强制，未来强制即 loud fail）。just 三动词
+（deploy 组 6→9）：deploy-list / deploy / deploy-local，CLI 钉
+github:zhaofengli/colmena/v0.5.0（nixpkgs 打包版信道滞后读不了 colmenaHive）。
+
+**验证**（无 nix 沙箱，静态全过）：flake.lock 补丁后 JSON 合法 + 锁图三断言
+（follows 边解析 / 47 root inputs 全可达 / 节点形态镜像 disko 条目）；
+targets.nix / flake.nix 括号平衡；ci.yml YAML 解析 + 新步 bash -n；配方计数
+grep 复核 85→88；普查律仿真（真 hosts/ 树驱动：现状绿 + darwin 落 deploy.nix
+→ throw 点名）。CI 等价性门控（host-toplevels 腿新步「Colmena emission
+parity」）：逐 nixosHost 比对 `.#api.host-toplevels.<h>.drvPath` 与
+`.#colmenaHive.toplevel.<h>.drvPath`——部署面再发射的必须恰是本腿刚构建的同一
+derivation（缓存命中零重建，部署永不载运 CI 未验证的闭包）。假设论证自 colmena
+0.5.0 源码：注入的四个模块是纯选项声明与空 keys 上的 mapAttrs（deployment.keys
+本仓不用——secrets 走 sops-nix）、空 overlays 列表的 mkBefore 是 no-op、
+name/nodes 只是附加 specialArgs；**首跑定案**（darwin 腿先例：分支 push 后的
+第一次 run 是证据，mismatch 是 loud 可行动的信号而非噪音）。
+
+**墙钟代价**：绿路径零构建（等价即缓存命中）；三台主机的额外求值 ≈ deep-eval
+单主机粒度的 nix eval drvPath 序列，预计 < 3 分钟（等价性若被首跑证伪，这一步
+立即指明漂移面——比在部署现场发现便宜一个数量级）。

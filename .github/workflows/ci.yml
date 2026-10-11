@@ -995,6 +995,41 @@ jobs:
       - name: Evaluate darwin system closure (cross-system, eval-only)
         run: nix eval --raw .#darwinConfigurations.darwin.system.drvPath
 
+      # T20.1: colmena emission parity — the deploy face must re-emit
+      # EXACTLY what this leg just built. colmena re-evaluates each
+      # NixOS host through its own eval-config (plus four injected
+      # modules: deployment options + key services over an empty
+      # deployment.keys, all no-ops on this repo); the claim is the
+      # toplevel derivation is content-identical, so .#colmenaHive
+      # reuses the closures this leg built (cache hit, zero rebuild)
+      # and a deploy never ships anything CI has not verified. The
+      # hypothesis is argued from colmena 0.5.0 source (src/nix/hive/
+      # eval.nix + modules.nix: injected modules are option
+      # declarations and mapAttrs over an empty keys attrset;
+      # mkBefore of an empty overlays list is a no-op) and gates
+      # FIRST-RUN here — a mismatch is a loud, actionable signal (the
+      # colmena-injected module surface drifted from inert), not noise.
+      # Hosts enumerate from the inventory face (T18.1 pattern — no
+      # hardcoded member list to rot).
+      - name: Colmena emission parity (T20.1)
+        run: |
+          HOSTS=$(nix eval ".#api.targets.nixosHosts" --json \
+            | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')
+          [ -n "$HOSTS" ] || { echo "ERROR: nixosHosts face is empty" >&2; exit 1; }
+          for h in $HOSTS; do
+            A=$(nix eval --raw ".#api.host-toplevels.$h.drvPath")
+            B=$(nix eval --raw ".#colmenaHive.toplevel.$h.drvPath")
+            if [ "$A" != "$B" ]; then
+              echo "::error title=colmena emission drift::$h — primary $A vs colmena $B"
+              echo "The deploy face re-emits a closure CI has not built." >&2
+              echo "Inspect what colmena's injected modules changed (deployment" >&2
+              echo "options are inert; keys are empty; overlays mkBefore is a" >&2
+              echo "no-op) — a diff here means one of those assumptions broke." >&2
+              exit 1
+            fi
+            echo "parity: $h — $A"
+          done
+
   # ─────────────────────────────────────────────────────────────
   # STAGE 6.6: Darwin toplevels — native cross-system closure build
   # ─────────────────────────────────────────────────────────────
