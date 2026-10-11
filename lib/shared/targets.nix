@@ -305,7 +305,8 @@ let
       # colmena's deployment.keys stays unused on purpose.
       deployment = {
         targetUser = cshared.user.username;
-      } // deployFacts host;
+      }
+      // deployFacts host;
     };
 
   # The hive: meta carries the evaluation plumbing, one node attr per
@@ -327,9 +328,9 @@ let
         # arch, not the base host's (the T7.2 per-host-arch lesson,
         # applied at the deploy face).
         nodeNixpkgs = builtins.listToAttrs (
-          builtins.map
-            (h: lib.nameValuePair h (import nixpkgs { system = sharedByHost.${h}.arch.tag; }))
-            nixosHosts
+          builtins.map (
+            h: lib.nameValuePair h (import nixpkgs { system = sharedByHost.${h}.arch.tag; })
+          ) nixosHosts
         );
 
         # Mirrors the primary emitters' contract: `inputs` for every
@@ -342,9 +343,7 @@ let
         );
       };
     }
-    // builtins.listToAttrs (
-      builtins.map (h: lib.nameValuePair h (mkColmenaNode h)) nixosHosts
-    )
+    // builtins.listToAttrs (builtins.map (h: lib.nameValuePair h (mkColmenaNode h)) nixosHosts)
   );
 in
 {
