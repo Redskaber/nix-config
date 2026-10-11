@@ -18,7 +18,7 @@ concurrency:
 #   STAGE 2: deep-eval     — facet forcing: api envelope, host
 #                toplevels, misc checks + completeness audit (T15.1)
 #   STAGE 3: nmt-plane     — HM dotfile assertions (pure Nix eval, no KVM)
-#   STAGE 4: devshells     — devShell dry-run matrix
+#   STAGE 4: devshells     — devShell dry-run, face attrNames (T18.1)
 #   STAGE 4.5: output-faces — drvPath-force the faces deep-eval alone
 #                would cover only path-dependently (T11.1, no KVM)
 #   STAGE 5: security      — SOPS secret integrity audit + supply-chain
@@ -401,18 +401,23 @@ jobs:
             --flake ".#api.checks.planes.nmt"
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 4: Evaluate devShells (dry-run matrix)
+  # STAGE 4: Evaluate devShells (dry-run, data-driven enumeration)
   # ─────────────────────────────────────────────────────────────
-  # devShells use self + "/home/core/dev" (materialised store path),
+  # devShells use self + "/home/env/dev" (materialised store path),
   # so path evaluation succeeds without the age private key.
+  #
+  # T18.1: the member list is the face's own attrNames. The matrix
+  # this leg replaced was hardcoded once (9 shells) and silently
+  # rotted while the face grew to 25 members — 16 shells (including
+  # `default`, the 14-language combinFrom merge, and every
+  # multi-variant extra like cpython/godot/makeOs/rs_compiler_dev)
+  # had NO CI coverage at all. Same idiom as output-faces (T11.1)
+  # and cache-attic.yml: a new shell joins by construction, zero
+  # CI-side maintenance. Named failures per member (T9.2).
   evaluate-devshells:
     name: Evaluate devShells (dry-run)
     runs-on: ubuntu-latest
     needs: lint
-    strategy:
-      matrix:
-        shell: [rust, python, python-machine, nix, go, cpp, c, typescript, re]
-      fail-fast: false
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -440,8 +445,25 @@ jobs:
 
       # No magic-nix-cache: pure-eval leg (see the deep-eval incident
       # note) — dry-run evaluates and never substitutes.
-      - name: Dry-run devShells.${{ matrix.shell }}
-        run: nix build .#devShells.x86_64-linux.${{ matrix.shell }} --dry-run --no-link
+      - name: Dry-run every devShell (face attrNames)
+        run: |
+          set -eo pipefail
+          # System tag from the flake's own debug face — the same
+          # pattern output-faces uses; no hardcoded x86_64-linux.
+          SYS=$(nix eval --raw .#debug.test_system)
+          NAMES=$(nix eval ".#devShells.$SYS" --apply builtins.attrNames --json \
+            | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')
+          COUNT=0
+          for n in $NAMES; do
+            if ! nix build ".#devShells.$SYS.\"$n\"" --dry-run --no-link >/dev/null; then
+              echo "::error title=devShells dry-run failed::$SYS.\"$n\""
+              exit 1
+            fi
+            echo "devShells.$SYS.\"$n\": dry-run ok"
+            COUNT=$((COUNT+1))
+          done
+          echo "devShells face: $COUNT member(s) dry-run"
+          [ "$COUNT" -gt 0 ] || { echo "ERROR: devShells face is empty" >&2; exit 1; }
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 4.5: Output faces — derivation-depth forcing (T11.1)

@@ -35,8 +35,11 @@ nix eval .#checks.x86_64-linux --apply \
   --json | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]" \
   | xargs -I{} nix build ".#checks.x86_64-linux.{}" --no-link
 
-# 4. devShell dry-run
-nix build .#devShells.x86_64-linux.rust --dry-run --no-link
+# 4. devShell dry-run（逐成员，面 attrNames——T18.1）
+for s in $(nix eval .#devShells.x86_64-linux --apply builtins.attrNames --json \
+  | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))'); do
+  nix build ".#devShells.x86_64-linux.\"$s\"" --dry-run --no-link || exit 1
+done
 
 # 5. secret 文件验证
 find secrets/chipr -name "*.yaml" | xargs grep -L "^sops:" 2>/dev/null \
@@ -214,3 +217,49 @@ darwin runner 或交叉工具链。该门现已打开——GitHub 自 2025-04-10
   GitHub runner 文档确认。
 - **验收边界**：这是**构建级**验收（closure 真实构建）；macOS
   activation 仍待真 Mac（已知边界 #8 不变）。
+
+### devShells 腿成员枚举数据驱动（T18.1）— 最后一处硬编码成员表的消灭（2026-10-12 演进）
+
+**发现路径**：用户提示词新增 pdshell（owner 自研的 7 阶段管道 dev shell
+库——本仓 devShells 面的加载器地基）作为参考仓库 → 审视锁定关系
+（flake.lock 的 pdshell rev `da51c57` 与上游 HEAD 一致，零锁更新需求）
+→ 顺藤核对本仓消费面时暴露漂移：CI `evaluate-devshells` 腿的矩阵是
+**写死一次就腐烂**的 9 成员列表 `[rust, python, python-machine, nix,
+go, cpp, c, typescript, re]`，而活面已 **25 员**（docs-ssot 计数契约
+强制）——**16 个 shell 零 CI 覆盖**：
+
+- `default`——14 语言 combinFrom 合并（pdshell 组合能力的最重验证对象）
+- `default.nix` 多变体：`cpython` / `godot` / `makeOs` / `rs_compiler_dev`
+- `nix/` 多变体：`nix-nonfmt` / `nix-derivation-free-security`
+- 整目录：asm / java / javascript / lisp / lua / python-renpy / zig
+
+**同构类**：T9.3 wslview（路径依赖覆盖）与 T8.1 设计时抓到的四处计数
+漂移——硬编码清单与数据驱动面之间没有同步机制，单向腐烂是结构性必然。
+cache-attic.yml 的头注释甚至早已写明意图（"shells from the devShells
+matrix per system attrNames. Adding a shell needs [no CI-side
+change]"），但 ci.yml 的矩阵从未对齐。
+
+**修复**：仓内既有惯例第四次复用（output-faces T11.1 / deep-eval
+T15.1 / cache-attic 同款）——
+
+- 矩阵策略整段移除；作业内 `nix eval .#devShells.$SYS --apply
+  builtins.attrNames --json` 枚举（$SYS 读自 `.#debug.test_system`，
+  消灭第二处硬编码 x86_64-linux）。
+- 逐成员 `--dry-run --no-link` 循环；失败成员 `::error` 点名
+  （T9.2 归因哲学）；空面守卫；显式 `set -eo pipefail`（T11.1/T15.1
+  模拟器教训——不依赖 runner shell 默认值）。
+- 工具链钉版（upstream 2.35.2 tarball + env 旗标）与纯求值腿无
+  magic-nix-cache 纪律原样保留（T12.1）。
+- 顺带修复：该腿头注释的 devDir 路径陈旧（home/core/dev →
+  home/env/dev——树演进留下的注释级漂移）。
+
+**验证**：YAML 结构断言十条（job 集不变 / needs 不变 / fail-gate 与
+summary 接线不变 / vm-tests 平面矩阵——合法轴——不受扰）+ 全仓 34
+run 块 bash -n + stub-nix 四分支运行时模拟（绿：25 员全点名计数行
+正确 / 点名失败：`default` 失败时前 4 成员已点名 + stderr 流出 +
+::error 命名 / 空面守卫触发 / 首成员失败快败）。
+
+**墙钟代价**：25 次短命 dry-run 序列，flake eval-cache 首次构建后
+逐成员递减；矩阵形态的 9 份 nix 安装开销 ≈ 19 runner 分钟 vs 单作业
+形态 ≈ 12 分钟——覆盖从 9 → 25 员换约 3-4 分钟墙钟，runner 总分钟
+反而下降。
