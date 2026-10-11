@@ -2,7 +2,6 @@
 # @author: redskaber
 # @datetime: 2026-10-07
 # @description: home::core::exp::app::game::pokemmo
-# - Installer and Launcher for the PokeMMO emulator
 
 {
   inputs,
@@ -15,7 +14,7 @@
 {
 
   home.packages = with shared.upkgs; [
-
+    mgba
   ];
 
 }

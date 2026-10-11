@@ -83,6 +83,46 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 每周日 UTC 03:00，`.github/workflows/update-flake.yml` 自动：
 
-1. `nix flake update` 更新所有 inputs
+1. `nix flake update` 更新所有 inputs；随后将 nixpkgs 重新钉到
+   `nixos-26.05` **渠道快照** rev（`channels.nixos.org` 公布的
+   git-revision——Hydra 已完整构建、cache.nixos.org 全量可替代；
+   见下方事故裁决 #2）
 2. 生成 `flake.lock` diff 摘要
 3. 开 PR（branch: `automation/update-flake-inputs`，label: `dependencies automated`）
+
+### 事故裁决记录 — run 38085235502（2026-10-11 审计）
+
+三个独立根因，全部按「证据 → 裁决 → 修复」落地：
+
+1. **nixos_core_srv_db_postgresql 竞态（真失败，测试侧）**：26.05 上游把
+   `initialScript` / `ensureDatabases` / `ensureUsers` 从主服务的 postStart
+   挪进独立 oneshot `postgresql-setup.service`（`after = postgresql.service`）。
+   测试只 `wait_for_unit("postgresql.service")` 就单发断言 DB 存在——断言
+   落在 setup 单元的 `CREATE DATABASE` 之前（失败快照：`\l` 只剩
+   postgres/template0/template1）。**裁决**：修测试——门禁改为
+   `wait_for_unit("postgresql-setup.service")`，首个断言降级为
+   `wait_until_succeeds` 轮询（与 "listening on 5432" 子测试同款防御）。
+   同族加固：`nixos_core_base_nix` 的 `nix store info` 单发断言改轮询
+   （nix-daemon socket 首连激活，重载 runner 上同理）。
+2. **host-toplevels 腿（结构性缓存竞态）**：周日锁钉在移动分支 HEAD
+   （nixos-26.05），快于渠道 Hydra 构建进度 → 源码构建桌面栈尾部
+   （xdg-desktop-portal 的 meson 集成测试 2/27 失败：dynamiclauncher、
+   notification/test_sound_fd）→ 连坐 system-generators 等 → 90 分钟超时
+   取消（1h29m）。**裁决**：三层修复——更新流钉渠道快照 rev（上节）；
+   `overlays/patches` 对 `xdg-desktop-portal` `doCheck = false`（openldap
+   先例：上游易碎测试套不得扣留系统闭包构建）；host-toplevels 腿补
+   vm-tests 同款「失败后逐主机重求值」诊断步。
+3. **基建噪音（假失败面）**：Magic Nix Cache 代理的 GitHub Actions Cache
+   418 限流（ResourceExhausted）导致 narinfo 查询禁用 60s——deep-eval 腿
+   已有 infra 签名重试，本次构建腿未被其扣留（MNC 自禁后回退
+   cache.nixos.org）；`use-flakehub` 默认 true 制造 79 条 FlakeHub 认证
+   注解。**裁决**：全部 MNC 步显式 `use-flakehub: false`（本仓库无
+   FlakeHub 注册，纯噪音面）。另修复 security 腿 extra-conf 漂移
+   （补 `accept-flake-config = true`，与其余七腿对齐）。
+
+**已立案未修（roadmap）**：runner 上 Nix 工具链身份随
+`install.determinate.systems/stable` 动态解析而漂移（Determinate Nix
+分叉写入的 `eval-cores` / `lazy-trees` 对来自锁定 nixpkgs 的上游 Nix
+工具链是未知设置，每次调用告警）——nix-installer v3 的 tag 形态已无
+`nix-*` 可钉，需要一次真机验证的钉版方案（如 `nix-package-url` 指向
+releases.nixos.org 的 2.35.2 tarball）后再落地。

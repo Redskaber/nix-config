@@ -72,6 +72,15 @@ in
     start_all()
     machine.wait_for_unit("postgresql.service")
 
+    # NixOS 26.05 moved initialScript + ensureDatabases + ensureUsers out
+    # of the main unit's postStart into a SEPARATE oneshot,
+    # postgresql-setup.service, which only starts AFTER postgresql.service
+    # reaches READY=1 (Type=notify). Waiting for the main unit alone
+    # therefore races the ensure phase — run 38085235502 caught exactly
+    # that: "DB pgtest not found" with only postgres/template0/template1
+    # listed. Gate the assertions on the setup unit instead.
+    machine.wait_for_unit("postgresql-setup.service")
+
     with subtest("postgresql: service active"):
         st = machine.succeed("systemctl is-active postgresql").strip()
         assert st == "active", f"postgresql not active: {st}"
@@ -89,6 +98,13 @@ in
         assert "PostgreSQL" in out
 
     with subtest("postgresql: ensureDatabase ${testUser} exists"):
+        # Defense in depth: poll instead of firing once — a heavily
+        # loaded CI runner can still land this query before the setup
+        # unit's work is fully visible (same defensive shape as the
+        # "listening on 5432" subtest below).
+        machine.wait_until_succeeds(
+            "sudo -u postgres psql -lqt | grep -qw ${testUser}", timeout=60
+        )
         dbs = machine.succeed(
             "sudo -u postgres psql -lqt 2>&1 | cut -d'|' -f1 | tr -d ' '"
         ).strip()

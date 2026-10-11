@@ -41,7 +41,11 @@
         st = machine.succeed("systemctl is-active nix-daemon.socket").strip()
         assert st == "active", f"nix-daemon.socket not active: {st}"
         # via socket daemon ，feature
-        machine.succeed("nix store info")
+        # Socket activation spawns the daemon on FIRST connect — on a
+        # loaded CI runner that spawn can outlast a single-shot succeed
+        # (same race family as the postgresql ensure phase, run
+        # 38085235502 audit): poll instead of firing once.
+        machine.wait_until_succeeds("nix store info", timeout=60)
 
     with subtest("nix: experimental-features contain flakes + nix-command"):
         cfg = machine.succeed("nix show-config | grep experimental-features").strip()

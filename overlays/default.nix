@@ -29,6 +29,18 @@
     openldap = prev.openldap.overrideAttrs (old: {
       doCheck = false; # skip the failing test suite
     });
+
+    # FIX: integration-suite flakiness under CI (run 38085235502):
+    # nixpkgs runs xdg-desktop-portal's full meson integration battery
+    # on every SOURCE build (doCheck = true), and the dynamiclauncher /
+    # notification (test_sound_fd) legs fail on loaded runners — that
+    # single flake took the whole host-toplevels CI leg down (2/27
+    # failed, cascade + 90-minute timeout). Same policy as openldap
+    # above: an upstream test suite must not hold the system closure
+    # build hostage. Cached substitution bypasses this entirely.
+    xdg-desktop-portal = prev.xdg-desktop-portal.overrideAttrs (old: {
+      doCheck = false; # skip the flaky integration suite
+    });
   };
 
 }

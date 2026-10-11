@@ -67,6 +67,11 @@ jobs:
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
+        with:
+          # Run 38085235502 paid 79 "Unable to authenticate to FlakeHub"
+          # annotations: use-flakehub defaults to true and this repo has no
+          # FlakeHub registration, so every run bought failed-auth noise.
+          use-flakehub: false
 
       - name: Verify formatter evaluates
         run: nix eval .#formatter.x86_64-linux.name
@@ -329,6 +334,11 @@ jobs:
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
+        with:
+          # Run 38085235502 paid 79 "Unable to authenticate to FlakeHub"
+          # annotations: use-flakehub defaults to true and this repo has no
+          # FlakeHub registration, so every run bought failed-auth noise.
+          use-flakehub: false
 
       # T7.3: the plane address (.#api.checks.planes.nmt) replaces
       # prefix discovery + the per-check python loop — nix-fast-build
@@ -503,11 +513,16 @@ jobs:
           fi
           echo "OK: every action ref is an immutable commit SHA (mutable tags rejected)"
 
+      # Conf drift found in the 38085235502 audit: the other seven legs'
+      # extra-conf all carry accept-flake-config = true; this leg's omission
+      # only survived because its nix usage never consults flake trust —
+      # align it rather than rely on that staying true.
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
+            accept-flake-config = true
 
       # T9.1: sops from the LOCKED nixpkgs (statix note in the lint job) —
       # a registry sops could change decrypt semantics mid-pipeline.
@@ -685,6 +700,11 @@ jobs:
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
+        with:
+          # Run 38085235502 paid 79 "Unable to authenticate to FlakeHub"
+          # annotations: use-flakehub defaults to true and this repo has no
+          # FlakeHub registration, so every run bought failed-auth noise.
+          use-flakehub: false
 
       - name: Enable KVM
         run: |
@@ -772,17 +792,54 @@ jobs:
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
+        with:
+          # Run 38085235502 paid 79 "Unable to authenticate to FlakeHub"
+          # annotations: use-flakehub defaults to true and this repo has no
+          # FlakeHub registration, so every run bought failed-auth noise.
+          use-flakehub: false
 
       # T8.2: same tool + same determinism as the plane legs —
       # nix-fast-build from the LOCKED nixpkgs, whole-face handoff,
       # --skip-cached turns cache hits (cache.nixos.org substitution +
       # magic-nix-cache) into no-ops; -j explicit (see vm-tests note).
+      #
+      # Diagnose pass (run 38085235502): this leg died cancelled by its
+      # own 90-minute timeout after 89 minutes, and the nix-fast-build
+      # wall of output was the ONLY signal — eval-side vs build-side
+      # was guesswork (the vm-tests leg already carries the same pass
+      # for the 2026-10 nixos-plane incident). On a non-zero exit,
+      # re-evaluate each host toplevel drvPath individually (same force
+      # depth nix-eval-jobs uses): a deterministic eval error reproduces
+      # verbatim right here; a clean sweep points at build-side failure
+      # with the cause in the log above. Zero cost on the green path.
       - name: Build host toplevels (nix-fast-build)
         run: |
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          set +e
           nix run "$PKGS#nix-fast-build" -- \
             --no-nom --skip-cached -j "$(nproc)" \
             --flake ".#api.host-toplevels"
+          RC=$?
+          set -e
+          if [ "$RC" -ne 0 ]; then
+            echo "::warning::nix-fast-build exit $RC — re-evaluating each host toplevel individually to surface the verbatim error"
+            HOSTS=$(nix eval ".#api.host-toplevels" \
+              --apply builtins.attrNames --json \
+              | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')
+            FAILED_EVAL=0
+            for h in $HOSTS; do
+              if ! nix eval --raw ".#api.host-toplevels.$h.drvPath" \
+                   >/dev/null 2>"/tmp/eval_err_$h"; then
+                echo "::error title=eval failed::$h"
+                cat "/tmp/eval_err_$h"
+                FAILED_EVAL=1
+              fi
+            done
+            if [ "$FAILED_EVAL" -eq 0 ]; then
+              echo "::warning::every toplevel evaluates cleanly in isolation — the failure was build-side (see the nix-fast-build log above; a package's check phase is the usual suspect)."
+            fi
+            exit "$RC"
+          fi
 
       # Cross-system closure: evaluation is the depth we can afford on
       # an x86_64-linux runner (deep-eval already forces it; this makes
