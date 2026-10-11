@@ -297,6 +297,27 @@ let
       # itself; nothing here duplicates that).
       imports = [ ../../platform/${cshared.platform.tag} ];
 
+      # Version identity (T22.1, run 38171937689 — the parity gate's
+      # first-run verdict): the primary emitter rides nixpkgs' FLAKE
+      # lib — `nixpkgs.lib.nixosSystem` passes the version-aware lib
+      # (nixpkgs/flake.nix extends it with
+      # lib/flake-version-info.nix: trivial.versionSuffix =
+      # ".${lastModifiedDate}.${shortRev}" of the LOCKED nixpkgs), so
+      # its toplevels stamp `26.05.20261007.2efa67f`. colmena 0.5's
+      # hermetic eval imports eval-config.nix RAW (`import (npkgs.path
+      # + "/nixos/lib/eval-config.nix")`, no lib argument forwarded —
+      # src/nix/hive/eval.nix), and the plain lib's trivial.versionSuffix
+      # falls back to "pre-git" (no .version-suffix file in the store
+      # source) — the re-emitted closure drifted:
+      # 26.05pre-git vs 26.05.20261007.2efa67f, a deploy face
+      # re-emitting a closure CI has not built. Restore the identity
+      # link here: stamp the SAME value the primary gets, single-
+      # sourced from the flake input's own lib — nixpkgs ever changing
+      # the suffix computation propagates to both faces together.
+      # (release needs no line: both evals read the same .version
+      # file, "26.05" either way — only the suffix ever drifted.)
+      system.nixos.versionSuffix = nixpkgs.lib.trivial.versionSuffix;
+
       # Policy-derived default, wholesale-merged UNDER the fact file
       # (hosts/<h>/deploy.nix overrides, the shared.nix ⊕ hosts/ shape):
       # ssh.nix pins PasswordAuthentication=false and PermitRootLogin

@@ -362,3 +362,55 @@ name/nodes 只是附加 specialArgs；**首跑定案**（darwin 腿先例：分�
 **墙钟代价**：绿路径零构建（等价即缓存命中）；三台主机的额外求值 ≈ deep-eval
 单主机粒度的 nix eval drvPath 序列，预计 < 3 分钟（等价性若被首跑证伪，这一步
 立即指明漂移面——比在部署现场发现便宜一个数量级）。
+
+### 事故裁决记录 — run 38171937689（2026-10-12 审计：parity 首跑 + darwin 首跑）
+
+受测对象：main @ ca551e8（审计修复 + 七项演进全部入上游后的第一次完整 run）。
+14 job：11 绿（五 VM 平面 + deep-eval + nmt + devShells + Output Faces +
+Security Audit + Lint & Evaluate），3 红——两红是两条新腿的首跑定案信号，
+一红是 fail-gate 的正确联动：
+
+1. **Colmena emission parity（T20.1 门控首跑）— 捕获真实漂移**。`nixos`：
+   primary `…-nixos-system-nixos-26.05.20261007.2efa67f.drv` vs colmena
+   `…-nixos-system-nixos-26.05pre-git.drv`。根因（读源定案，非猜测）：
+   primary 走 `nixpkgs.lib.nixosSystem`——flake 的 lib 输出经
+   `lib/flake-version-info.nix` 扩展（`trivial.versionSuffix =
+   ".${substring 0 8 lastModifiedDate}.${shortRev}"`，值取锁定 nixpkgs 的
+   sourceInfo），toplevel 戳上 `26.05.20261007.2efa67f`；colmena 0.5 的
+   hermetic 求值 `import (npkgs.path + "/nixos/lib/eval-config.nix")` 不
+   转发 lib（src/nix/hive/eval.nix），raw lib 的 `trivial.versionSuffix`
+   读不到源树里不存在的 `.version-suffix` 文件而回退 `"pre-git"`——同一
+   模块树、同一 nixpkgs、两个 lib 身份 → 两个 derivation。T20.1 的假设
+   清单（注入模块惰性）没有覆盖 flake-lib 身份这一项。**修复（T22.1）**：
+   mkColmenaNode 注入 `system.nixos.versionSuffix =
+   nixpkgs.lib.trivial.versionSuffix`——单源取自 flake input 自己的 lib
+   （nixpkgs 改公式两边同跟踪；release 两侧本就同读 `.version` 文件，只有
+   suffix 曾漂移）。静态证明：flake.lock 的 nixpkgs sourceInfo（2026-10-07 /
+   2efa67f）经 overlay 公式恰好重现 primary 的观察串。parity 步提示语同步
+   补 version-identity 一句。**门控按设计工作**：它抓到的不是噪音，是部署
+   面再发射了 CI 未构建的闭包——正是它存在的目的。
+2. **Darwin Toplevels（T8.3 首跑）— build 侧失败 + 归因盲区**。求值干净
+   （腿内诊断 pass 证明：逐成员 drvPath 求值全绿），构建失败：home-manager
+   闭包级联（user-environment / home-manager-fonts / hm_LibraryFonts /
+   hm_fontconfigconf / home-manager-applications 全部 "1 dependency
+   failed"——一个共享的包构建失败；日志可见的 cache-miss 构建是
+   texliveMinimal 的 fmt 族：`texlive-2025-r78234-final-{luahbtex,luatex,
+   pdftex,tex}-fmt` 与 `-env`）。环境侧证据（annotations）：GitHub cache
+   服务当日故障（restore 400 ×2 / save 失败 ×2）+ macOS arm64 容量告警；
+   nixpkgs-26.05-darwin 通道现指 2026-10-11 的 commit（锁 rev 10-07）——
+   通道在推进，替换缺口是 darwin aarch64 的已知类（两起 90 分钟事故的
+   同根因面）。**根因 derivation 无法匿名定名**：Actions 日志已登录门控
+   （"Sign in to view logs"），annotations 只携带 workflow 自己的消息——
+   报告者甚至贴不出根错误。**修复（T22.2）**：两条 nix-fast-build 腿
+   （host-toplevels + darwin-toplevels）的失败分支追加 keep-going 归因
+   ——`nix build --keep-going --no-link` 逐主机驱动构建越过首个失败，
+   sed 提取 `error: build of '<drv>'` 根因行，每个真实失败的 derivation
+   以 `::error` annotation 点名（store 已持有 nix-fast-build 的成功构建，
+   只重建失败者：分钟级，非腿的 30 分钟墙钟）。归因哲学（T9.2）从点名
+   失败成员延伸到点名失败 derivation——下一次红腿的根因对匿名读者可见。
+3. **CI Summary 红**：fail-gate 正确联动（两腿红 → 汇总红）。
+
+**顺带裁决（不动代码）**：darwin toplevel 名 `darwin-system-26.05.dirty`
+的 `.dirty` = nix-darwin 以 tarball 型输入锁定（lock 无 rev →
+`self.shortRev or "dirty"`）——纯命名装饰，drv 在仓内自洽；输入形态是
+owner 的输入表决策，记档不动。

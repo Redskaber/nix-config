@@ -981,6 +981,23 @@ jobs:
             done
             if [ "$FAILED_EVAL" -eq 0 ]; then
               echo "::warning::every toplevel evaluates cleanly in isolation — the failure was build-side (see the nix-fast-build log above; a package's check phase is the usual suspect)."
+              # T22.2 (run 38171937689): name the ROOT failing
+              # derivations — the raw job log is sign-in gated, the
+              # annotations are not. --keep-going drives the build
+              # past the first failure so every genuinely-failed
+              # derivation reports; the store already holds
+              # nix-fast-build's successes, so this rebuilds only
+              # the failures. Same convention as the darwin leg.
+              for h in $HOSTS; do
+                nix build --keep-going --no-link \
+                  ".#api.host-toplevels.$h" \
+                  >"/tmp/keepgoing_$h.log" 2>&1 || true
+                sed -n "s/^error: build of '\([^']*\)'.*/\1/p" "/tmp/keepgoing_$h.log" \
+                  | sort -u \
+                  | while read -r DRV; do
+                      echo "::error title=build failed (root)::$DRV"
+                    done
+              done
             fi
             exit "$RC"
           fi
@@ -1024,7 +1041,11 @@ jobs:
               echo "The deploy face re-emits a closure CI has not built." >&2
               echo "Inspect what colmena's injected modules changed (deployment" >&2
               echo "options are inert; keys are empty; overlays mkBefore is a" >&2
-              echo "no-op) — a diff here means one of those assumptions broke." >&2
+              echo "no-op) — and the version identity: the primary stamps the" >&2
+              echo "toplevel through the flake lib (trivial.versionSuffix from the" >&2
+              echo "locked nixpkgs sourceInfo); mkColmenaNode restores that stamp" >&2
+              echo "over colmena's raw eval (T22.1, run 38171937689 — a suffix" >&2
+              echo "difference in the drv names below is this exact class)." >&2
               exit 1
             fi
             echo "parity: $h — $A"
@@ -1112,6 +1133,27 @@ jobs:
             done
             if [ "$FAILED_EVAL" -eq 0 ]; then
               echo "::warning::every darwin toplevel evaluates cleanly in isolation — the failure was build-side (see the nix-fast-build log above)."
+              # T22.2 (run 38171937689, this leg's first run): the
+              # build-side failure's root derivation was buried in a
+              # sign-in-gated log — the reporter could not even paste
+              # it, and the annotations carried only the workflow's
+              # own messages. --keep-going drives the build past the
+              # first failure so every genuinely-failed derivation
+              # reports as a ::error annotation naming the root; the
+              # store already holds nix-fast-build's successes, so
+              # this rebuilds only the failures (minutes, not the
+              # leg's 30-minute wall). Same convention as the linux
+              # host-toplevels leg.
+              for h in $HOSTS; do
+                nix build --keep-going --no-link \
+                  ".#api.darwin-toplevels.$h" \
+                  >"/tmp/keepgoing_$h.log" 2>&1 || true
+                sed -n "s/^error: build of '\([^']*\)'.*/\1/p" "/tmp/keepgoing_$h.log" \
+                  | sort -u \
+                  | while read -r DRV; do
+                      echo "::error title=build failed (root)::$DRV"
+                    done
+              done
             fi
             exit "$RC"
           fi
