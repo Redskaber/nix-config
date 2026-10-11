@@ -126,3 +126,40 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 工具链是未知设置，每次调用告警）——nix-installer v3 的 tag 形态已无
 `nix-*` 可钉，需要一次真机验证的钉版方案（如 `nix-package-url` 指向
 releases.nixos.org 的 2.35.2 tarball）后再落地。
+**→ 已于 run 38136560662 裁决中落地，见下节。**
+
+### 事故裁决记录 — run 38136560662（2026-10-11 审计）
+
+三个观察对象，两个真问题（均已修），一个纯基建噪音：
+
+1. **home_core_sec `Unexpected state: starting`（真失败，测试侧，同族
+   竞态第三例）**：该测试是 home plane 41 个成员中唯一对
+   `systemctl is-system-running` 做 fire-once 断言的——`wait_for_unit`
+   在目标单元激活即返回，而引导事务仍在收尾（失败快照：VM 到达
+   multi-user.target 用时 60.98s，断言在 0.22s 后读到 `starting`）。
+   兜底诊断 pass 的逐成员重求值全绿 = 评估层无罪。**裁决**：修测试
+   ——断言降级为 `wait_until_succeeds` 轮询（收敛到 running/degraded，
+   状态不会回退）；`meta.timeout` 60→120（慢 runner 上引导+轮询预算
+   加倍）。同款防御加固 `nixos_core_base_boot`（同断言形态，防患于
+   未然）。**注意失败成员的漂移模式**：`nixos_core_base_nix`（更早）
+   → `nixos_core_srv_db_postgresql`（38085235502）→ `home_core_sec`
+   （本轮）——每次不同的成员倒下，指向 VM 测试在重载 runner 上的
+   瞬态面，而非任何单一配置错误；三例均为 fire-once 断言，全部
+   收敛为轮询形态后该族竞态应告清零。
+2. **Nix 工具链身份漂移（真问题，CI 侧，上轮立案项清偿）**：
+   `/stable` 动态解析曾实发 Determinate Nix fork（`nix-installer`
+   v3.23.1，`distribution=DeterminateNix`），其写入的
+   `eval-cores=0` + `lazy-trees=true` 对锁定 nixpkgs 的上游 Nix
+   是未知设置——每次调用告警。真机 A/B/C 三组验证：CLI 旗标与
+   env 路线等价（`distribution=Nix` + 标准 nix.conf + 无
+   determinate-nixd），但 action v13 的 `extra-args` 是死代码
+   （`args.concat(extraArgs)` 返回值被丢弃）——**必须走 step env**。
+   **裁决**：ci.yml ×8 + update-flake.yml ×1 全部 installer 站点
+   `NIX_INSTALLER_PREFER_UPSTREAM_NIX: true` env +
+   `nix-package-url` 钉 releases.nixos.org 的 2.35.2 tarball（与
+   锁定 nixpkgs 同版本，身份漂移永久闭合）。
+3. **Magic Nix Cache 418（假失败，基建限流）**：GitHub Actions
+   Cache 代理 ResourceExhausted → MNC 自禁（"Not trying to use it
+   again on this run"）→ 自动回退 cache.nixos.org，构建结果不受
+   扣留。**裁决**：无需修复，计入基建噪音面（与 38085235502 的
+   FlakeHub 认证注解同族——记录、不行动）。

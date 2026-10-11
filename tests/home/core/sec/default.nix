@@ -13,7 +13,7 @@
   name = "home_core_sec";
   meta = {
     maintainers = [ "redskaber" ];
-    timeout = 60;
+    timeout = 120;
   };
 
   nodes.machine = {
@@ -25,7 +25,18 @@
     machine.wait_for_unit("multi-user.target")
 
     with subtest("home_core_sec: VM reaches multi-user.target"):
-        st = machine.succeed("systemctl is-system-running || true").strip()
-        assert st in {"running", "degraded"}, f"Unexpected state: {st}"
+        # wait_for_unit returns the moment the target unit is active,
+        # while the boot transaction may STILL be activating units —
+        # run 38136560662 caught exactly that: is-system-running read
+        # "starting" 0.22s after the target went active (fire-once
+        # assertion, same race family as the postgresql ensure phase
+        # and the nix-daemon socket spawn in the 38085235502 audit).
+        # Poll instead of firing once; a settling boot converges to
+        # running/degraded, it never regresses past them.
+        st = machine.wait_until_succeeds(
+            "systemctl is-system-running | grep -E '^(running|degraded)$'",
+            timeout=60,
+        ).strip()
+        print(f"system state: {st}")
   '';
 }

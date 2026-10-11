@@ -25,10 +25,25 @@ jobs:
 
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
+        env:
+          # Toolchain identity pinned (run 38136560662 adjudication, closes
+          # the open item from the 38085235502 record): install.determinate.
+          # system's /stable resolved dynamically and could hand out
+          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
+          # are unknown to the locked-nixpkgs upstream Nix — every call
+          # warned. Verified on a live runner: with this env the installer
+          # plans distribution=Nix with the standard nix.conf (no fork
+          # settings, no determinate-nixd). The extra-args input is dead
+          # code in action v13 (args.concat result is dropped), so the env
+          # route is the only working one.
+          NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
+          # ships, closing the identity drift for good.
+          nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
