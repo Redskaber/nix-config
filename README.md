@@ -101,7 +101,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 94 tests + pre-commit + docs-ssot = 96 checks    │
+│  6 平面 · 95 tests + pre-commit + docs-ssot = 97 checks    │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -306,7 +306,7 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **96 checks = 94 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **97 checks = 95 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
@@ -377,9 +377,9 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 96 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 97 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-4. **测试覆盖** — 94 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 95 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（10 阶段，最大并行）
@@ -401,7 +401,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，T15.1 面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （96 checks 必须被平面或杂项清单拥有——新测试
+    │           （97 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1）
@@ -459,7 +459,7 @@ push / PR
 > 四处坏测试引用）。
 >
 > **深层求值的面分片形态**（T15.1，run #338 + 首个 120m 窗 run 证据链）：单进程
-> `nix flake check` 在单进程内累积全部 96 checks 的活跃求值态——本地 4GB 沙箱
+> `nix flake check` 在单进程内累积全部 97 checks 的活跃求值态——本地 4GB 沙箱
 > 在第 9 个 derivation 处 OOM（实测 anon-rss ~2GB 且持续增长），7GB runner 处于
 > 临界边缘慢爬（run #338 90 分钟超时；首个 120m 窗 run 在 49min+ 仍在求值）；
 > 同树同日的 output-faces 腿（同冷 store、同 inputs）1m52s 完成——因为每个
@@ -718,6 +718,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 - [x] devShells 腿成员枚举数据驱动（T18.1：**最后一处硬编码成员表的消灭**——发现路径：用户提示词新增 pdshell 参考仓库 → 审视 owner 自研 7 阶段管道 shell 库与本仓 devShells 面的关系 → 锁定 rev 与上游 HEAD 一致（da51c57，零锁更新需求）→ 顺藤核对本仓消费面时发现 CI `evaluate-devshells` 腿的矩阵是**写死一次就腐烂**的 9 成员列表，而活面已 25 员——**16 个 shell 零 CI 覆盖**，包括 `default`（14 语言 combinFrom 合并——pdshell 组合能力的最重验证对象）、`rs_compiler_dev`、`cpython`/`godot`/`makeOs`（default.nix 多变体成员）、`nix-nonfmt`/`nix-derivation-free-security`（nix/ 多变体）、asm/java/javascript/lisp/lua/python-renpy/zig。**同构类**：T9.3 wslview（路径依赖覆盖）+ T8.1 设计时抓到的四处计数漂移——硬编码清单与数据驱动面之间没有同步机制，单向腐烂是结构性必然。**修复 = 仓内既有惯例第四次复用**（output-faces T11.1 / deep-eval T15.1 / cache-attic 三处同款）：矩阵策略整段移除，作业内 `nix eval .#devShells.$SYS --apply builtins.attrNames --json` 枚举 + 逐成员 `--dry-run` 循环 + 失败成员 `::error` 点名（T9.2 归因哲学）+ 空面守卫 + 显式 `set -eo pipefail`（T11.1/T15.1 模拟器教训——不依赖 runner shell 默认值）；系统标签从 `.#debug.test_system` 读（消灭第二处硬编码 x86_64-linux）；工具链钉版与纯求值腿无 MNC 纪律原样保留（T12.1）。**顺带修复**：该腿头注释的 devDir 路径陈旧〔home/core/dev → home/env/dev——树演进留下的注释级漂移〕。**验证**：YAML 结构断言十条〔job 集不变/needs 不变/fail-gate 与 summary 接线不变/vm-tests 平面矩阵（合法轴）不受扰〕+ 全仓 34 run 块 bash -n + stub-nix 四分支运行时模拟〔绿：25 员全点名计数行正确/点名失败：default 失败时前 4 成员已点名+stderr 流出+::error 命名/空面守卫触发/首成员失败快败〕；CI 墙钟代价可接受：25 次短命 dry-run 序列，flake eval-cache 首次构建后逐成员递减〔矩阵形态的 9 份 nix 安装开销≈19 runner 分钟 vs 单作业形态≈12 分钟〕）
 - [x] hosts/nixos facter 迁移的仓库侧全量落地（T19.1：**「唯一未迁移主机」的迁移面从文档推进为动词 + 机器锁**——前置对账：owner 已将前轮全部演进采纳入上游（863d972 载 darwin 腿+attic+nix-types 钉 rev，442b698 载 T18.1 成员枚举——内容级核实仅 flake.lock 装饰性差异〔original.ref vs canonical original.rev，同一 locked rev〕），本地 main 快进 442b698，两分支功成身退。**问题重述**：T5.12 已把 hosts/vm 全量迁移到声明式报告，但真实机器的迁移是**机上门控**（root 探测 + 真硬件）——沙箱能交付的不是「执行迁移」而是**让迁移变成一条命令 + 让终态变成机器锁**。**`just hardware-migrate`（hardware 组，第 85 recipe）**：四步一站式〔PROBE（同 hardware-facter 的 root 扫描）/MOVE（报告表达不了的：fileSystems + swapDevices + 非空 kernelModules **原样搬入**主机入口——facter 从不生成挂载，disko 布局是最终归宿 T5.13；microcode 已由 drive 层 intel.nix 无条件持有、hostPlatform 由 report.system 派生）/FLIP（模板 import 块字节形校验后换为 `hardware.facter.reportPath`）/RETIRE（hardware.nix 退役，git 历史即回滚）〕；**fail-loudly 三重守卫**：已迁移则绿幂等/入口被手改则拒绝并打印手动翻转步骤/hardware.nix 中每个 stanza 必须归类为 DERIVED〔报告+驱动层重新表达：not-detected 扫描 import、availableKernelModules、initrd kernelModules、extraModulePackages、hostPlatform、微码〕或 MOVED〔挂载/kernelModules——逐字搬迁〕，未知 stanza 点名拒绝；**验收地图内置 flake 语义**：git add 报告先行〔flakes 只看已跟踪文件——普查对未跟踪报告暂时失明本身就是设计的强制性〕→ census 构建 → `just nixos-test`〔激活不写 boot 条目〕→ 重启即真门〔报告派生 initrd 必须能把机器带起来〕→ 单提交合入，回滚 = git revert。**`lib_shared_targets`（Plane 3，第 94 test）：事实源普查**——以 targets.nix mkShared 同构方式逐主机构造真实策略链（wsl.nix 先例），读分类器自己的 caps，对 hosts/ 树断言三律：**Law A** 无主机可同时携带 hardware.nix 与 facter.json〔双重声明即迁移自身的失败模式——这正是 migrate 把翻转与退役设计成同一命令的原因〕/**Law B** 裸金属 NixOS（nixos-system ∧ ¬wsl）恰一源/**Law C** 宿主持有形态（wsl 类 NIXOS、darwin、standalone）零源〔无人消费的事实源文件是死数据——说谎的文件〕；文件存在即声明（T5.12 数据与解释器分离的彻底化）；违规时 throw 点名主机与携带集。**验证**（无 nix 沙箱，静态全过）：just 1.40.0 实测 `--summary` 84→85；nixfmt 以**锁定版本**验证〔1.5.0——从 flake.lock 的 nixpkgs rev 直取 pkgs/by-name 版本号，避免拿 0.6.0 误判存量文件〕两新/改文件全绿；bash -n；**stub 仿真**〔伪 sudo+nixos-facter：happy path 全链路——挂载 UUID 逐字一致/nvidia 指纹块完好/kvm-intel 搬迁/翻转后文件 nixfmt 清洁/hardware.nix 退役/幂等重跑绿/无 legacy 拒绝/手改入口拒绝〕；**普查仿真**〔以真 hosts/ 树 + 真 caps 表驱动：现状全绿 + 四变异〔删而不翻→Law B 点名/darwin 落杂硬件文件→Law C 点名/双源中间态→Law A 点名/迁移终态→全绿〕〕；**计数同步 14 处**〔README×9 + ci.yml×3 + pipeline×2 + tree×2 + matrix×4 + reference×3——docs-ssot 锚点四句同提交流〕；machine 侧遗留仅「在机器上跑动词 + 重启验收」——债务 #8 环境门控类第五项登记）
 - [x] colmena 部署面落地（T20.1：**P2 部署动词的仓库侧全量落地**——对账前置：owner 已将 T19.1 采纳进上游 3074d7c（rebase 自动判重，evolve 分支功成身退，六项演进全部回家）。**知识搜索定案**（歧义三连）：① colmena 0.5.0〔2026-09-22 发布〕改读 `colmenaHive` 输出（`colmena.lib.makeHive` 构造，hermetic 模式——旧 `colmena` 输出废弃且其 nix-instantiate 求值器在 Nix 2.21+ 不纯）；② `meta.nodeSpecialArgs` 是**每节点注入 per-host policy IR 的官方机制**（T5.10 单实例化跨再发射成立）；③ colmena 是 NixOS-only 部署面（eval-config.nix 路径）——上轮 roadmap「三形态统一 push 路径」的表述**被修正**：darwin 走 darwin-rebuild、standalone HM 走 home-switch，colmena 面收敛于分类器的 nixosHosts〔nixos · vm · nixos-wsl〕。**`colmenaHive` 发射器（lib/shared/targets.nix 第四发射面）**：节点 = 主发射器同款 platform 门 + deployment 段；meta 携带求值管道——nixpkgs 纯 import〔无 overlay——节点模块树在主发射器应用 overlay 的同一位置应用，colmena 注入的 nixpkgsModule 对空 overlays 列表 mkBefore 是 no-op〕、per-host nodeNixpkgs〔T7.2 per-host arch 教训应用于部署面〕、specialArgs.inputs + nodeSpecialArgs.shared〔同一 sharedByHost thunk，IR 单实例化〕；targetUser 从策略派生〔ssh.nix 禁 root 禁密码——colmena 默认 root 无法登录，策略用户是唯一通路〕；secrets 走 sops-nix，deployment.keys 刻意不用。**部署坐标 = 机器事实**：hosts/&lt;h&gt;/deploy.nix（disk.nix/persist.nix 家族，文件存在即声明，wholesale 覆盖于策略默认之上）+ **普查律**（T19.1 家族）：colmena 永不消费的主机上出现 deploy.nix 即 throw（说谎的文件）——非 NixOS 宿主走自己的部署动词。v1 事实仅 hosts/nixos/deploy.nix〔allowLocalDeployment=true——本机即部署目标〕；vm/nixos-wsl 刻意无事实〔不可验证的地址是说谎事实——第二台机器落地之日再写〕。**just 三动词**（deploy 组 6→9，85→88 recipe）：`deploy-list`（枚举面 = api.targets.nixosHosts，数据驱动零求值）+ `deploy <host>`（colmena apply --on）+ `deploy-local`（apply-local --sudo，nixos-switch 的 colmena 等位物）；CLI 钉 `github:zhaofengli/colmena/v0.5.0` tag（nixpkgs 打包的 colmena 信道滞后，读不了 colmenaHive）。**flake input 钉版链**：tarball-pinned @ 948491ae（v0.5.0 dereferenced tag commit）——**narHash 以手工 NAR 序列化器计算并双重自证**（Python 实现 nix archive.cc 字节格式：每字符串 8 字节对齐/目录条目按名排序/单顶层目录剥离；对本仓 lock 中 disko + nix-darwin 两个已知 narHash 实测双 MATCH 后才算 colmena 的）；follows 图：nixpkgs/stable→本仓通道、flake-utils→pdshell 的 pin（输出构造即强制 eachSystem——单一实例纪律，pdshell→nix-types 同型）、nix-github-actions/flake-compat→空 follows（.lib.makeHive 永不强制，强制即 loud fail 而非静默取未钉物）。**CI 等价性门控**（host-toplevels 腿新步）：逐 nixosHost 比对 `.#api.host-toplevels.<h>.drvPath` vs `.#colmenaHive.toplevel.<h>.drvPath`——部署面再发射的必须恰是 CI 刚构建的同一 derivation（缓存命中零重建 + 部署永不载运 CI 未验证闭包）；假设论证自 colmena 0.5.0 源码〔注入四模块 = 纯选项声明 + 空 keys 上的 mapAttrs no-op + 空 overlays mkBefore no-op + name/nodes specialArgs 附加〕，**首跑定案**（darwin 腿先例：分支 push 后第一次 run 是证据）；主机枚举走 api.targets.nixosHosts（T18.1 惯例，无硬编码成员表）。**验证**（无 nix 沙箱，静态全过）：flake.lock 补丁后 JSON 合法 + 锁图三断言〔follows 边解析/47 root inputs 全可达/节点形态镜像 disko 条目〕；targets.nix/flake.nix 括号平衡；ci.yml YAML 解析 + 新步 bash -n；配方计数 grep 复核 85→88；普查律仿真〔真 hosts/ 树驱动：现状绿 + darwin 落 deploy.nix → throw 点名 + 非本仓成员无影响〕；NAR 序列化器双 MATCH〔disko/nix-darwin〕；machine 侧遗留：「第二台机器 + ssh 公钥〔基策略 openssh-authKeys 仍空〕+ 真远程 deploy」——债务 #8 环境门控类第六项登记）
+- [x] 部署面普查测试锁定（T21.1：**T20.1 仿真的升级——普查律从静态推演进测试面，第 95 号**。对账前置：owner 两连跳——d693333 全量采纳 T20.1〔字节级空 diff，回馈路径连续第四轮验证〕+ ca551e8 formatter 补丁〔T20.1 的 targets.nix 格式漂移入上游、CI nixfmt check 红灯、owner 手工修补——沙箱无 nix 的交付盲区首次实体化〕。**格式保障体系化**（ca551e8 教训的系统性修复）：定位 CI formatter = nixpkgs nixfmt 1.x 线〔RFC 166〕，v1.5.0 静态二进制**字节级复现 ca551e8**〔d693333 经 v1.5.0 格式化与 ca551e8 全等〕——此后每轮交付前本地同款 --check，格式漂移永不再入上游。**三律锁进测试**：Law D〔无说谎部署事实〕——非 nixosHosts 主机上的 deploy.nix 即违规〔文件存在即声明，deployFacts 的 throw 路径从此有测试面证人，T19.1 Law A/B/C 同家族〕；发射覆盖——colmenaHive nodes == 分类器 nixosHosts **双向精确**〔缺失/多余即红——零硬编码成员表，T18.1 惯例〕；用户门——每 nixosHost 的 targetUser = 策略 username〔ssh.nix 禁 root 禁密码——colmena 默认 root 无法登录，空或 root 即死门〕。**构造纪律**（T19.1 先例）：同 loader 同 args 同 hostName 的 hostShared lens + flake 同款 targets import——测试读的恰是发射器读的；**attrNames-only 惰性链**〔nodeNames → attrNames hive → union keys——lazy 性质从 colmena 0.5.0 源码 eval.nix 论证：map 元素仅 force name、meta value 不触、listToAttrs 不解 value；**永不单树求值**，drvPath 等价归 CI parity gate 管辖，VM 测试不越界〕。**验证**（无 nix 沙箱，静态全过）：nixfmt v1.5.0 格式化即解析验证 + --check 干净〔CI 同款二进制〕；真树静态仿真三律全绿〔Law D 零违规——deploy.nix 仅 hosts/nixos/；coverage EXACT〔nixos · vm · nixos-wsl〕；user door 全 kilig〕；变异路径头注文档化〔塞 deploy.nix 进 darwin → Law D 点名；手写 hive 节点/漏主机 → 覆盖红；username 置 root → 门红〕。**计数链**：95 tests〔plane3 6→7〕/ 97 checks——锚点全同步〔README 两句 + matrix 段头/summary/Total + pipeline 两处 + tree.md 两处，docs-ssot 机器强制下零漂移〕）
 
 ### 被拒绝的路线图项（裁决记录）
 

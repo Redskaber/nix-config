@@ -212,6 +212,11 @@ let
     # exactly one fact shape per bare-metal host, zero for hosted-
     # elsewhere forms, never both).
     lib_shared_targets = nixosTest ./lib/shared/targets.nix;
+    # T21.1: the deploy-face census (T20.1's simulation, promoted to
+    # a locked test — no lying deploy facts, hive coverage exact, the
+    # per-node user door alive; attrNames-only laziness, the drvPath
+    # parity stays with the CI gate).
+    lib_shared_deploy = nixosTest ./lib/shared/deploy.nix;
   };
 
   # ══════════════════════════════════════════════════════════════════
