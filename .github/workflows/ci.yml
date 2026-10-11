@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 # ══════════════════════════════════════════════════════════════════════
-# Pipeline architecture (9 stages):
+# Pipeline architecture (10 stages):
 #
 #   STAGE 1: lint          — static analysis (statix/nixfmt/deadnix) + shallow eval
 #   STAGE 2: deep-eval     — facet forcing: api envelope, host
@@ -25,6 +25,8 @@ concurrency:
 #                pinning contract (every action ref must be a 40-hex SHA)
 #   STAGE 6: vm-tests      — NixOS/HM/Lib/Integration QEMU tests (KVM)
 #   STAGE 6.5: host-toplevels — system closure builds (T8.2, no KVM)
+#   STAGE 6.6: darwin-toplevels — native aarch64-darwin closure
+#                builds on a macos runner (T8.3, no cross toolchain)
 #   STAGE 7: summary       — aggregate result report (gates ALL stages)
 #
 # Deep evaluation (STAGE 2):
@@ -961,14 +963,101 @@ jobs:
             exit "$RC"
           fi
 
-      # Cross-system closure: evaluation is the depth we can afford on
-      # an x86_64-linux runner (deep-eval already forces it; this makes
-      # the intent and the attrpath explicit at the leg that owns
-      # closure depth). A darwin runner (or cross toolchain) upgrades
-      # this to a build step — the path is prepared, the environment
-      # is the gate.
+      # Cross-system closure: evaluation is the depth this x86_64-linux
+      # leg keeps (deep-eval already forces it; this makes the intent
+      # and the attrpath explicit at the leg that owns linux closure
+      # depth). The build-depth upgrade this comment used to await
+      # landed as STAGE 6.6 — a macos-latest (aarch64) runner now
+      # builds the same closure natively; this eval force stays as the
+      # zero-cost linux-side cross-system check.
       - name: Evaluate darwin system closure (cross-system, eval-only)
         run: nix eval --raw .#darwinConfigurations.darwin.system.drvPath
+
+  # ─────────────────────────────────────────────────────────────
+  # STAGE 6.6: Darwin toplevels — native cross-system closure build
+  # ─────────────────────────────────────────────────────────────
+  # T8.2 documented the gate ("building it needs a darwin runner or a
+  # cross toolchain — the path is prepared, the environment is the
+  # gate"); macos-latest settles it: GitHub arms public repos with
+  # M-series (aarch64-darwin) macOS runners, so the darwin closure
+  # builds NATIVELY — no cross toolchain, no emulation. Same face
+  # discipline as the linux leg: .#api.darwin-toplevels is
+  # inventory-driven (a second darwin host joins by construction),
+  # members are the nix-darwin toplevels (what darwin-rebuild
+  # builds). Substitution: nixpkgs aarch64-darwin paths substitute
+  # from cache.nixos.org (same locked rev), magic-nix-cache covers
+  # the repo's own derivations across runs — first run pays the
+  # nix-darwin core, then it's cached.
+  darwin-toplevels:
+    name: Darwin Toplevels (aarch64 closure build)
+    runs-on: macos-latest
+    needs: [lint, deep-eval]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
+        env:
+          # Same toolchain identity discipline as the linux legs (run
+          # 38136560662 adjudication — the extra-args input is dead
+          # code in action v13, the env route is the only working
+          # one): upstream Nix, not the Determinate fork — here the
+          # aarch64-darwin build of the same pinned 2.35.2.
+          NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            accept-flake-config = true
+          nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-aarch64-darwin.tar.xz
+
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
+        with:
+          # Same 38085235502 lesson as everywhere: no FlakeHub
+          # registration in this repo — opt out of the failed-auth
+          # annotations.
+          use-flakehub: false
+
+      # Same tool + same determinism as the linux legs — nix-fast-
+      # build from the LOCKED nixpkgs (aarch64-darwin member of the
+      # same rev), whole-face handoff, --skip-cached turns cache hits
+      # (cache.nixos.org substitution + magic-nix-cache) into no-ops.
+      # -j via sysctl: macOS runners have no nproc(1). nix-eval-jobs
+      # darwin performance notes concern eval-heavy faces; this face
+      # is one member today. Diagnose pass mirrors host-toplevels:
+      # on failure, re-evaluate each member individually — a
+      # deterministic eval error reproduces verbatim right here, a
+      # clean sweep points build-side with the cause in the log
+      # above. Zero cost on the green path.
+      - name: Build darwin toplevels (nix-fast-build)
+        run: |
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          set +e
+          nix run "$PKGS#nix-fast-build" -- \
+            --no-nom --skip-cached -j "$(sysctl -n hw.ncpu)" \
+            --flake ".#api.darwin-toplevels"
+          RC=$?
+          set -e
+          if [ "$RC" -ne 0 ]; then
+            echo "::warning::nix-fast-build exit $RC — re-evaluating each darwin toplevel individually to surface the verbatim error"
+            HOSTS=$(nix eval ".#api.darwin-toplevels" \
+              --apply builtins.attrNames --json \
+              | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')
+            FAILED_EVAL=0
+            for h in $HOSTS; do
+              if ! nix eval --raw ".#api.darwin-toplevels.$h.drvPath" \
+                   >/dev/null 2>"/tmp/eval_err_$h"; then
+                echo "::error title=eval failed::$h"
+                cat "/tmp/eval_err_$h"
+                FAILED_EVAL=1
+              fi
+            done
+            if [ "$FAILED_EVAL" -eq 0 ]; then
+              echo "::warning::every darwin toplevel evaluates cleanly in isolation — the failure was build-side (see the nix-fast-build log above)."
+            fi
+            exit "$RC"
+          fi
 
   # ─────────────────────────────────────────────────────────────
   # STAGE 7: CI Summary
@@ -976,7 +1065,7 @@ jobs:
   summary:
     name: CI Summary
     runs-on: ubuntu-latest
-    needs: [lint, deep-eval, nmt-plane, evaluate-devshells, output-faces, security, vm-tests, host-toplevels]
+    needs: [lint, deep-eval, nmt-plane, evaluate-devshells, output-faces, security, vm-tests, host-toplevels, darwin-toplevels]
     if: always()
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -998,6 +1087,7 @@ jobs:
           echo "| Security Audit           | ${{ needs.security.result }}                                 |" >> $GITHUB_STEP_SUMMARY
           echo "| VM Tests (QEMU)          | ${{ needs.vm-tests.result }}                                 |" >> $GITHUB_STEP_SUMMARY
           echo "| Host Toplevels (T8.2)   | ${{ needs.host-toplevels.result }}                           |" >> $GITHUB_STEP_SUMMARY
+          echo "| Darwin Toplevels (T8.3) | ${{ needs.darwin-toplevels.result }}                         |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Plane Reference (live from scripts/sh/test-count.sh)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -1022,8 +1112,9 @@ jobs:
           needs.output-faces.result != 'success' ||
           needs.security.result != 'success' ||
           needs.vm-tests.result != 'success' ||
-          needs.host-toplevels.result != 'success'
+          needs.host-toplevels.result != 'success' ||
+          needs.darwin-toplevels.result != 'success'
         run: |
           echo "One or more required stages did not succeed (failure or cancelled or skipped)."
-          echo "Note: mark all eight as required status checks in branch protection."
+          echo "Note: mark all nine as required status checks in branch protection."
           exit 1

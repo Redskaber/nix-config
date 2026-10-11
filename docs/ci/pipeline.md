@@ -163,3 +163,54 @@ releases.nixos.org 的 2.35.2 tarball）后再落地。
    again on this run"）→ 自动回退 cache.nixos.org，构建结果不受
    扣留。**裁决**：无需修复，计入基建噪音面（与 38085235502 的
    FlakeHub 认证注解同族——记录、不行动）。
+
+### 自建缓存（P0）— opt-in attic 推送已落地（2026-10-11 演进）
+
+缓存效率是对比打分中最弱的一轴（自建缓存缺位，替换命中率依赖
+cache.nixos.org 与 GH Actions Cache 的二跳）。`cache-attic.yml`
+落地为 **opt-in 机器契约**：`vars.ATTIC_SERVER` + `vars.ATTIC_CACHE`
++ `secret.ATTIC_TOKEN`——两个 vars 未设置时整个 workflow 每次
+触发即跳过（零成本零风险），设置 vars 即部署。
+
+- **触发**：每周二 05:05 +08（周一 21:05 UTC，周日渠道更新 PR
+  合并、周一 CI 全绿之后）+ 手动 dispatch。
+- **目标**：`nixosConfigurations` 全部 toplevel + `devShells` 矩阵
+  全部闭包（host-toplevels 腿与 devshells 腿的持续物化对象）。
+  枚举走 flake 面自身的 attrNames——加主机/加 shell/（未来）加
+  系统维度零 CI 侧改动。
+- **工具链**：与全部九个 installer 站点同款钉版（upstream 2.35.2
+  tarball + env 旗标）；MNC 开启（`use-flakehub: false`）——CI 腿
+  已缓存的部分经 GH Cache 替代后直接推 attic，冷启动周付一次
+  全量构建，其后为增量维护。
+- **Phase-2（记录、刻意不落地）**：缓存预热后，把该 substituter
+  加入各腿 installer 的 extra-conf（需追加 `vars.ATTIC_PUBLIC_KEY`），
+  让拉取侧同样吃到自建缓存——等所有者完成服务端部署后按契约
+  一步开启。
+
+### CI darwin 闭包构建腿（T8.3）— macos-latest 原机构建（2026-10-12 演进）
+
+T8.2 落地时 darwin 闭包停在「跨系统求值步」并写明环境门控：构建需要
+darwin runner 或交叉工具链。该门现已打开——GitHub 自 2025-04-10 起
+`macos-latest` 指向 macOS 15 **arm64（M 系列）**镜像，公开仓库免费使用，
+与主机策略声明的 `aarch64-darwin` 同形：闭包在原生平台构建，零交叉
+工具链、零模拟。
+
+- **面**：`api.darwin-toplevels`（第六 api 面）——`inventory.darwinHosts`
+  枚举驱动，成员 = `darwinConfigurations.<h>.system`（nix-darwin 的
+  toplevel 本体，`darwin-rebuild` 构建的就是它）。与 host-toplevels
+  完全同构的纪律：新 darwin 主机按构造入列，零 CI 侧维护。
+- **腿**：CI STAGE 6.6 `darwin-toplevels`（needs lint+deep-eval）——同工具
+  同纪律：锁定 nixpkgs 解析 nix-fast-build（aarch64-darwin 成员、同 rev）、
+  整面交接、`--skip-cached`；`-j` 走 `sysctl -n hw.ncpu`（macOS 无
+  nproc(1)）。工具链钉版与全部 installer 站点同款 env 旗标 +
+  aarch64-darwin 构建的同一 2.35.2 tarball；MNC 同款 `use-flakehub: false`。
+- **诊断 pass** 镜像 host-toplevels：nix-fast-build 非零退出时逐成员
+  重求值——求值错误逐字复现即配置侧缺陷；干净扫描指向构建侧。
+- **分工**：x86_64-linux 腿的 darwin 求值步**保留**（零成本交叉系统
+  检查，deep-eval 亦已强制同一 drvPath）；构建深度归 6.6 腿独有。
+- **前置核实**：nix-fast-build 的 nixpkgs 平台清单含 Darwin
+  （Linux/Darwin/FreeBSD/Windows）；nix-eval-jobs 的 darwin 性能告警
+  只影响 eval 密集面，本面单成员不受扰；macos-latest arm64 事实经
+  GitHub runner 文档确认。
+- **验收边界**：这是**构建级**验收（closure 真实构建）；macOS
+  activation 仍待真 Mac（已知边界 #8 不变）。

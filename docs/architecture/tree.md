@@ -159,9 +159,10 @@ nix-config/
 │
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml          # 9 阶段 CI 流水线（lint → deep-eval → nmt → devshells
+│       ├── ci.yml          # 10 阶段 CI 流水线（lint → deep-eval → nmt → devshells
 │       │                   #   → output-faces → security → vm-tests →
-│       │                   #   host-toplevels → summary）
+│       │                   #   host-toplevels → darwin-toplevels → summary）
+│       ├── cache-attic.yml # opt-in 自建缓存推送（vars/secret 门控，未设即跳过）
 │       └── update-flake.yml# 每周日自动更新 flake inputs 并开 PR
 │
 └── justfile                # 任务自动化入口（ROOT 变量 + import 子模块 + 裸 just 地图）

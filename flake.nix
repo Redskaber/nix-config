@@ -105,7 +105,14 @@
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
 
     # Nix types expend from my costum
-    nix-types.url = "github:Redskaber/nix-types";
+    # Machine contract (nix-types adjudication, docs/architecture/nix-types.md):
+    # pinned to the audited rev — upstream has NO tags (git ls-remote --tags
+    # is empty), so a 40-hex SHA is the only pinnable form. Same family as
+    # the action-SHA contract (9ebe543): the weekly update stops dragging
+    # nix-types HEAD, upgrades become deliberate decisions; the 732-line
+    # lang battery plus nix-types' own 440-test checks.testSuite are the
+    # dual safety net that catches a bad bump.
+    nix-types.url = "github:Redskaber/nix-types/815fc3fa921c243ec0dc9efd39201d05f0990a8a";
 
     # Nix dev Shell manager
     pdshell.url = "github:Redskaber/pdshell";
@@ -327,13 +334,29 @@
       # toplevels, data-driven from the inventory (a new NixOS host
       # joins by construction). CI hands this whole face to
       # nix-fast-build for closure-level build depth (the Mic92-parity
-      # move); darwin is aarch64-darwin and stays eval-only in CI —
-      # building it needs a darwin runner or a cross toolchain.
+      # move); darwin has its own face below — the x86_64-linux legs
+      # keep the cheap cross-system eval force, the darwin leg builds.
       api.host-toplevels = builtins.listToAttrs (
         builtins.map (h: {
           name = h;
           value = targets.nixosConfigurations.${h}.config.system.build.toplevel;
         }) targets.inventory.nixosHosts
+      );
+
+      # T8.3: the darwin build face — the sixth api face, same
+      # discipline as host-toplevels above: inventory-driven (a second
+      # darwin host joins by construction, zero CI-side edits), the
+      # members are the nix-darwin toplevels (what `darwin-rebuild`
+      # builds). Consumed by CI's darwin leg on a macos-latest
+      # (aarch64, M-series) runner — the environment gate T8.2 left
+      # open ("needs a darwin runner or a cross toolchain") is now
+      # passable natively; evaluation stays system-independent, so
+      # the x86_64-linux legs keep their eval-only force untouched.
+      api.darwin-toplevels = builtins.listToAttrs (
+        builtins.map (h: {
+          name = h;
+          value = targets.darwinConfigurations.${h}.system;
+        }) targets.inventory.darwinHosts
       );
 
       # debug information

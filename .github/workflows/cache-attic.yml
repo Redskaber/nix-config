@@ -1,0 +1,112 @@
+# @path: ~/projects/configs/nix-config/.github/workflows/cache-attic.yml
+# @author: redskaber
+# @datetime: 2026-10-11
+# @description: cache::attic — P0 self-hosted cache push (opt-in)
+#
+# P0 roadmap item (缓存效率 — the weakest scored axis in the comparative
+# review). This workflow is INERT until the repository owner sets the
+# machine contract:
+#   vars.ATTIC_SERVER    e.g. https://cache.example.com    ("" = disabled)
+#   vars.ATTIC_CACHE     attic cache name, e.g. nix-config
+#   secret.ATTIC_TOKEN   push token for that cache
+# Setting the two vars is the deploy switch — until then every trigger
+# skips at zero cost and zero risk.
+#
+# Target enumeration is data-driven (entry layer stays declarative, the
+# pipeline stages belong to the producer — same discipline as targets.nix):
+# hosts come from `nixosConfigurations` attrNames, shells from the
+# `devShells` matrix per system attrNames. Adding a host or a shell needs
+# zero edits here.
+#
+# Phase-2 (documented, deliberately not landed): once the cache is warm,
+# add the substituter to the installer legs' extra-conf (needs one more
+# var: ATTIC_PUBLIC_KEY) so CI pulls also benefit.
+
+name: "cache · self-hosted attic push"
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays 21:05 UTC = Tuesdays 05:05 +08 — after the Sunday
+    # update-flake PR has merged and the Monday CI legs have gone green
+    # on the new lock.
+    - cron: "5 21 * * 1"
+
+concurrency:
+  group: cache-attic-push
+  cancel-in-progress: false
+
+jobs:
+  attic-push:
+    if: vars.ATTIC_SERVER != '' && vars.ATTIC_CACHE != ''
+    runs-on: ubuntu-latest
+    # Cold-cache worst case (full desktop-stack closure build) plus the
+    # devshell matrix; with MNC substituting what the CI legs already
+    # cached, a warm run finishes far earlier.
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
+        env:
+          # Toolchain identity pinned (run 38136560662 adjudication):
+          # /stable resolved dynamically and could hand out Determinate's
+          # Nix fork, whose eval-cores / lazy-trees settings are unknown
+          # to the locked-nixpkgs upstream Nix. extra-args is dead code
+          # in action v13, so the env route is the only working one.
+          NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            accept-flake-config = true
+          # Upstream Nix 2.35.2 — the version the locked nixpkgs ships.
+          nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
+
+      - name: Cache Nix store
+        uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
+        with:
+          use-flakehub: false
+
+      # attic-client from the live nixpkgs registry — a stable Rust tool;
+      # the flake itself has no attic output to pin.
+      - name: Install attic-client
+        run: nix profile install nixpkgs#attic-client
+
+      # Named-server form (attic ≥ 0.1.80). Older clients take
+      # `attic login <url> <token>` and a bare cache name in push —
+      # adjust here when the server version is known.
+      - name: Log in to the self-hosted cache
+        env:
+          ATTIC_SERVER: ${{ vars.ATTIC_SERVER }}
+          ATTIC_TOKEN: ${{ secrets.ATTIC_TOKEN }}
+        run: attic login default "$ATTIC_SERVER" "$ATTIC_TOKEN"
+
+      - name: Push host toplevel + devshell closures
+        env:
+          ATTIC_CACHE: ${{ vars.ATTIC_CACHE }}
+        run: |
+          set -euo pipefail
+
+          # Data-driven enumeration — the inventory lives in the flake
+          # (targets.nix / pdsh), not in this file. NOTE: builds happen
+          # on the runner's system (x86_64-linux); a future non-x86 host
+          # needs a per-system builder matrix.
+          targets=()
+          for host in $(nix eval .#nixosConfigurations --apply builtins.attrNames --json | jq -r '.[]'); do
+            targets+=(".#nixosConfigurations.${host}.config.system.build.toplevel")
+          done
+          for system in $(nix eval .#devShells --apply builtins.attrNames --json | jq -r '.[]'); do
+            for shell in $(nix eval ".#devShells.${system}" --apply builtins.attrNames --json | jq -r '.[]'); do
+              targets+=(".#devShells.${system}.${shell}")
+            done
+          done
+
+          echo "pushing ${#targets[@]} targets:"
+          printf '  %s\n' "${targets[@]}"
+
+          # Build (MNC substitutes what the CI legs already cached), then
+          # push the full closure. attic dedups against the server-side
+          # state, so a warm week is a cheap no-op sweep.
+          nix build --no-link --print-out-paths "${targets[@]}" > /tmp/roots
+          nix path-info -r $(cat /tmp/roots) | sort -u | xargs -r attic push "default:$ATTIC_CACHE"

@@ -35,13 +35,20 @@ let
   # the legal surface spelled out (front-end diagnostic). The only
   # writers are the schema default ("stable") and shared.nix / hosts
   # overrides — both upstream of this pass.
+  #
+  # nix-types adjudication (docs/architecture/nix-types.md): the legal
+  # surface in the diagnostic is DERIVED from the table now — a single
+  # source of truth, so a scope added below updates the error message
+  # for free. The mechanical enum-ization of this bridge was examined
+  # and rejected with evidence (schema-default lexical scope, string
+  # interpolation consumers, diagnostic regression) — see the dossier.
   source-scopes = {
     stable = pkgs;
     unstable = upkgs;
   };
   i18nScope =
     source-scopes.${user_shared.i18n.nixpkgs-source}
-      or (throw "i18n.nixpkgs-source \"${user_shared.i18n.nixpkgs-source}\" is not one of [ stable unstable ] — fix the declaration in shared.nix or hosts/<host>/shared.nix");
+      or (throw "i18n.nixpkgs-source \"${user_shared.i18n.nixpkgs-source}\" is not one of [ ${builtins.concatStringsSep " " (builtins.attrNames source-scopes)} ] — fix the declaration in shared.nix or hosts/<host>/shared.nix");
 
   # ── T4.1: Result-typed secret path boundary ─────────────────────
   # The railway lives in shared.validate (ok/err/andThen — nix-types

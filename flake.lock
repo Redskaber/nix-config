@@ -836,6 +836,7 @@
       "original": {
         "owner": "Redskaber",
         "repo": "nix-types",
+        "rev": "815fc3fa921c243ec0dc9efd39201d05f0990a8a",
         "type": "github"
       }
     },
