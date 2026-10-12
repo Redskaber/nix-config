@@ -116,7 +116,7 @@ nix-config/
 ├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（wslview —— wslu 归档后的最小 shim）
 │
-├── tests/                  # 测试层（6 平面，97 tests + 2 仓库卫生 checks = 99 checks）
+├── tests/                  # 测试层（6 平面，98 tests + 2 仓库卫生 checks = 100 checks）
 │   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks（nixosTest runner）
 │   ├── test_calc.nix       # Plane 0: Smoke 基线
 │   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM，30 tests）

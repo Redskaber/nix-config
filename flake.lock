@@ -972,11 +972,11 @@
     "nmt": {
       "flake": false,
       "locked": {
-        "lastModified": 1778458957,
-        "narHash": "sha256-0tGk2GagNqDUkC7xtQhE4+QoCgWYZY7h4TPhoxelgkI=",
+        "lastModified": 1791802322,
+        "narHash": "sha256-3LqAXtKFFvHp62zRrAB13kb5A/8oXAWSJn0KDHsLjpw=",
         "owner": "Redskaber",
         "repo": "nmt",
-        "rev": "0aa46990a30d46127909e04c30be5ff0b914bed1",
+        "rev": "25fe4c8c29b7edf5d1294b21a2083633a919656f",
         "type": "github"
       },
       "original": {

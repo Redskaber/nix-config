@@ -101,7 +101,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 97 tests + pre-commit + docs-ssot = 99 checks    │
+│  6 平面 · 98 tests + pre-commit + docs-ssot = 100 checks   │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -306,7 +306,7 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **99 checks = 97 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **100 checks = 98 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
@@ -377,9 +377,9 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 99 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 100 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-4. **测试覆盖** — 97 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 98 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（10 阶段，最大并行）
@@ -401,7 +401,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，T15.1 面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （99 checks 必须被平面或杂项清单拥有——新测试
+    │           （100 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1）
@@ -459,7 +459,7 @@ push / PR
 > 四处坏测试引用）。
 >
 > **深层求值的面分片形态**（T15.1，run #338 + 首个 120m 窗 run 证据链）：单进程
-> `nix flake check` 在单进程内累积全部 99 checks 的活跃求值态——本地 4GB 沙箱
+> `nix flake check` 在单进程内累积全部 100 checks 的活跃求值态——本地 4GB 沙箱
 > 在第 9 个 derivation 处 OOM（实测 anon-rss ~2GB 且持续增长），7GB runner 处于
 > 临界边缘慢爬（run #338 90 分钟超时；首个 120m 窗 run 在 49min+ 仍在求值）；
 > 同树同日的 output-faces 腿（同冷 store、同 inputs）1m52s 完成——因为每个
@@ -727,6 +727,8 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 - [x] parity 第二裁决 + overlay 实例局部性（T24：**run 38171937689 复跑双根因清偿——沙箱 rootless nix 首次用于本仓求值取证，历轮静态复核正式升级为真实求值验证**。对账前置：T22.1/T22.2 已入上游 91da892；redskaber 又以 77c49ed 字节级采纳 T23.3 文档〔tree hash 与 evolve/p5 一致——回馈路径连续第七轮验证〕。**T24.1 revision 身份〔第二类身份漂移〕**：复跑证明 T22.1 修复了 drv 名〔双侧 `26.05.20261007.2efa67f` 一致〕但哈希仍异〔13q85www vs 57la5407〕——本地真实求值复现漂移对后 **derivation 递归 diff 取证**：48 个分歧节点全部收敛到唯一叶子 `nixos-version.drv`——colmena 侧 `@revision@` 保留运行时占位符〔checkPhase 的 grep 异常集随之多放行 `revision@`〕+ 内嵌 json 缺 `nixpkgsRevision`，primary 侧戳完整 40-hex rev——根因是 `flake-version-info.nix` 的**第二个字段** `trivial.revisionWithDefault`：flake lib 走 `self.rev or default`〔= 锁定 rev〕，plain lib 探测 store 源的 `.git`/`.git-revision` 双缺失 → null；级联链 nixos-version → system-path/etc → activate → toplevel。修复 = mkColmenaNode 注入 `system.nixos.revision = nixpkgs.lib.trivial.revisionWithDefault null`〔T22.1 同族第二行——两个字段两类漂移两裁决，均单源取自 flake input 自己的 lib〕。**T24.2 overlay 实例局部性**：T22.2 归因步点名 darwin 腿根因 `7mjhjj4k…-cutter-2.5.0.drv` 要求 `x86_64-linux` 却在 aarch64-darwin 闭包——本地 `derivation show --recursive` **位对位复现**〔本地闭包内 cutter drv 与 CI 失败 drv 哈希一字不差〕；根因链：shared.nix 的 `nixpkgs.overlays` 走 `shared.self.overlays`〔flake 级输出，以 targets.base 单次实例化〕→ patches 里 `cutter_patched = shared.upkgs.cutter…` 的 upkgs = **基础主机的 x86_64-linux 实例**——linux 侧可缓存成员掩盖跨界，cutter_patched 独有 postPatch 哈希永不在缓存 → macOS runner 平台不匹配爆炸；修复 = `prev.cutter`〔实例局部——overlay 契约本身：改谁补谁；base 主机上 `prev.cutter` == 原 `shared.upkgs.cutter`，linux 侧 `upkgs.cutter_patched` 修复前后同为 `7mjhjj…` 字节不变可证〕+ 文件签名去 `shared` 参数〔跨界需求在类型上不可表达〕。**新测试 `lib_shared_overlays`（第 96 号）**：canary 替换实例法——patches 应用到标记 stub 实例〔meta.description = INSTANCE-LOCAL-CANARY，穿透 overrideAttrs 存活〕，每个被补成员必须携带标记，从任何外部句柄取包即失标即红；构造纪律：base-bound shared 刻意传入〔绑定无关性即要点〕；变异检查实测：回退 bug 形态 → census 点名 `cutter_patched` 失标。**验证电池**（rootless nix 真实求值）：parity 修复前 kddnzzsk ≠ mjwh5pp4 → 修复后 `.#colmenaHive.toplevel.nixos.drvPath` == `.#api.host-toplevels.nixos.drvPath`〔等价性为属性——toplevel 哈希经 registry self 通道追踪树内容，已知边界 #10，双侧同移〕；linux cutter_patched 锚点 `7mjhjj…` 前后不变；darwin 闭包重评后 cutter = `h12dbwag…`〔aarch64-darwin〕且**全闭包 9,464 drv 的 system 分布纯 aarch64-darwin（+2 builtin）——跨界类清零**，闭包同时 13,317→9,464〔x86_64-linux 子树整体退场〕；nixfmt v1.5.0 --check 四文件干净〔ca551e8 纪律〕；CI parity 门提示语补两字段身份说明〔下一类漂移秒诊〕。**计数链**：96 tests〔plane3 7→8〕/ 98 checks——锚点全同步〕）
 - [x] nix-types lock bump + version 契约断言（T25：**P2 生态回馈的下游闭环——「钉 rev + 断言 version」两半全部就位**。对账前置：redskaber 已采纳 T24〔c44cde9——commit 消息完整承载双根因证据链，回馈路径连续第八轮验证〕且已 push nix-types〔a1a2a13——T23 双 commit squash 采纳，version 3.6.0 + suite #17 + PATTERNS.md 全量入上游〕。**T25.1 lock bump（两文件刻意决定的第一半）**：flake.nix 钉点 `815fc3f → a1a2a13`〔注释同步：WHERE/WAT 双文件契约 + 440→446 测试双安全网〕+ `nix flake update nix-types`〔真实求值工具链——沙箱重置后 rootless nix 全重部署：release tarball + unshare/pivot_root wrapper 同方案重建，本轮顺带 build-users-group 空值化使构建免旗标〕；bump 前缺口实证：旧 lock 下 `.#api.inputs.nix-types.lib.version` 求值即 attribute missing〔T23 要消灭的失败模式实况〕。**T25.2 version 契约断言（第二半，第 97 号测试）**：`lib_shared_lang_version`〔tests/lib/shared/lang/version.nix——fn.nix house shape：真 input 求值期断言 + VM dummy〕断言 `inputs.nix-types.lib.version == "3.6.0"`——rev 答 where〔flake.nix 钉点〕，version 答 what〔测试 expected〕，**单侧漂移即一行红**：诊断同时报出 lock rev / expected / observed 三方 + 双文件和解指引〔变异检查实测：假 expected → throw 三方全报〕。**回归电池（全部真实求值）**：8/8 lib 面成员绿〔overlays `65r63kfv` / deploy `c0nkli9m` 与 T24 轮同哈希——树无关类交叉验证〕；nixos toplevel 求值干净〔h0822bqf〕；darwin toplevel **`v66nskmz` 与 T24 轮同哈希**〔nix-types 是求值期机器不进闭包——bump 对 darwin 闭包零影响的最强证明〕；**parity 穿透 bump 依然成立**〔T24 修复稳固〕；nmt 面 15 员在位。**计数链**：97 tests〔plane3 8→9〕/ 99 checks——机器契约文档闲置表同步清偿〔lib.version 行从「闲置」翻转为「已落地」+ 落地记录含顺延说明：96 号候选被 T24 占位〕〕）
 - [x] 首绿封档 + 上游回馈包（T26：**双红清偿弧的验收与生态参与的第三方向**。对账前置：redskaber 已采纳 T25〔20a59b3——树哈希与 evolve/p7 字节级一致，回馈路径连续第九轮验证〕。**首绿裁决〔pipeline.md 裁决记录〕**：run 38192402014〔c44cde9〕全 14 作业全绿——**首次全绿**：parity 腿绿〔两字段身份注入后 primary == colmena 在 CI 成立——parity 门生命周期四阶段〔设计捕获 → 两跑裁决 → 修复 → 绿〕全部在生产 run 走完〕+ darwin 腿绿〔darwin 闭包首次在 macOS runner 原机构建成功，含 cutter_patched 的 aarch64-darwin 实例；整 run ~67 分钟，两条闭包腿 ~1h2m/~1h7m——冷构建成本即缓存轴的活体基线〕；run 38234435660〔20a59b3〕复绿且热跑〔T25 求值期机器不进闭包 → 两 commit 间闭包零漂移 → MNC 跨 run 全命中，最长腿 3m9s——零漂移周与漂移周的缓存画像对照，attic phase-2 的增益空间正是后者〕；第 97 号测试〔lib_shared_lang_version〕CI 首验绿。三段源码引证闭合机制链〔nixpkgs flake.nix 的 libVersionInfoOverlay + nixos eval-config.nix 的 `lib ? import ../../lib` 默认 + colmena eval.nix 的无 lib import〕、两字段两类漂移的 derivation 级证据、mkColmenaNode 两行注入 workaround、上游三方向〔文档 / knob / 静默 null 至少告警〕——38171937689 双跑裁决取证的上游侧可复用沉淀〕；② nmt assertions `--` 守卫补丁〔~rycee/nmt——三个断言函数 needle 前置无 end-of-options 分隔，`-` 开头 needle 被 grep 当选项〔ripgrep/fd 断言高频形态〕；`git format-patch` 兼容 + `git apply` 检验通过；对合规 needle 零行为变化——nmt 平面 15 成员无感〕+ 投递说明〔sourcehut 邮件通道 + 本仓规避条款退役路径〕。**判据**：回馈 = 测试纪律的副产品——两案证据均来自本仓 CI 与测试体系〔parity 门控发现 colmena 案；nmt 平面编写期踩坑发现 nmt 案〕。**文档链**：pipeline.md 首绿裁决记录 + 本条目 + 深入文档索引行；测试计数不变〔97/99——文档轮，T23.3 先例〕〕）
+
+- [x] nmt 消费闭环 + fork 自测试电池（T27：**依赖层回馈回路的收口——我们出补丁、owner 落 fork、本仓消费回来，三段全通**。对账前置：redskaber 内容级采纳 T26〔9d817b7——README 首绿裁决 + pipeline 记录入树；docs/feedback/ 粘贴即发制品 owner 编辑性裁剪不入库，经 web 下载接口存档；顺带 pipeline 列表标记修复 + roadmap owner→redskaber 规范化，回馈路径连续第十轮〕；**nmt fork 双段发现**：`25fe4c8 fix(assertions): pass -- before grep patterns`——T26 补丁已由 owner 落进自家 fork〔正是本仓规避 sourcehut 403 的镜像消费源〕——回馈的下半场只差 lock bump。**T27.1 fork 自测试电池**（evolve/t27-selftest，4 files +357）：测试框架测试自己——39 案三类〔正路径 15 + 负路径 12（**框架必须能在该红处红**——测试框架的失效即失效）+ 对抗性 needle 9（T26 回归类：`--smart-case`/`-x`/裸 `--` 必须按文本匹配 + **镜像案**：缺席的选项样 needle 必须仍红——守卫不得变成无条件放行）+ helper 3（normalizeStorePaths 零哈希改写/版本段塌缩 + sourceFile 当前壳可见性）〕；**开发期三坑当场沉淀**：must_fail 漏子壳括号 → 断言的 exit 1 杀整个电池〔括号是承重墙〕；store 平铺陷阱 → `${./battery.sh}` 复制进 store 后 `../bash-lib` 失位 → source 静默失败 24 案全红〔布线失败必须响亮：env 覆盖 + source 后 API 存在性硬验证〕；NIX_STORE 独立模式回退。**T27.2 消费侧闭环**（本仓，第 98 号测试 `nmt_home_core_exp_sys_base_ripgrep`）：lock bump `0aa4699 → 25fe4c8`〔真实求值工具链〕+ 驱动头注与 entry-shape 注释翻转〔CRITICAL 绕行段退役为「钉 rev 即保证」——ripgrep rcfile 段的「去横线」变通退役〕+ 新成员：`programs.ripgrep.arguments → .config/ripgrep/ripgreprc`（每行一 flag 纯文本）断言 `contains = [ "--smart-case" "--colors=auto" ]`——**消费级回归证明**：needle 经 `contains` → escapeShellArg → assertFileContains → `grep -qF --` 全链流经守卫。**验证电池**（rootless 真实求值）：fork 电池 39/39 绿〔standalone + nix build 双模式 + report 入 $out〕+ 变异检查〔撤守卫 → 恰三案选项样 needle 红——精确归因；消费侧变异：`--override-input nmt …/0aa4699` 回旧 rev → grep `unrecognized option '--colors=auto'` 原样复现——T26 记录的失败模式在生产消费链上钉死〕；nmt 面 16 员全绿〔新 rev 下〕；lib 面 9 员 drv 哈希与 9d817b7 基线**逐一相同**〔deploy c0nkli9m / overlays 65r63kfv / version fhrc4wcg——T27 delta 不进 lib 闭包，CI 绿裁决严格传递；openldap tar chown 为 rootless 沙箱固有限制（GitHub runner 真根可过——CI 已证）〕；parity 穿透 bump 成立〔r48lflqp 双侧〕；顺带清偿：matrix nmt 表 7 行 check 名/路径陈旧〔`nmt_home_core_base_*`〕对齐 registry 实名。**计数链**：97→98 tests / 99→100 checks〔nmt 15→16——README 六处 + matrix 段头/行/Total/合计 + tree.md + ci.yml〕；docs/tests/nmt.md 新增「本仓消费形态」节〔镜像缘起 + 守卫 + fork 自测入口〕〕）
 
 ### 被拒绝的路线图项（裁决记录）
 

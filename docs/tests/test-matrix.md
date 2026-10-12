@@ -186,19 +186,20 @@ home/core/exp/sys/base/git.nix
 | --------------------------- | ------------------------------------------------- |
 | `integration_hm_activation` | HM NixOS module wiring, user home, zsh/git/direnv |
 
-### 3.5 nmt-Plane (15 tests, 零 VM)
+### 3.5 nmt-Plane (16 tests, 零 VM)
 
 | check                               | 文件                                    | 验证点                                       | 断言类型              |
 | ----------------------------------- | --------------------------------------- | -------------------------------------------- | --------------------- |
-| `nmt_home_core_base_git`            | `nmt/home/core/base/git.nix`            | .config/git/config: user/branch/delta        | exists+contains       |
-| `nmt_home_core_base_starship`       | `nmt/home/core/base/starship.nix`       | .config/starship.toml: exists (scrubbed)     | exists                |
-| `nmt_home_core_base_direnv`         | `nmt/home/core/base/direnv.nix`         | .config/direnv/direnvrc: nix-direnv          | exists+contains       |
-| `nmt_home_core_base_atuin`          | `nmt/home/core/base/atuin.nix`          | .config/atuin/config.toml: exists (scrubbed) | exists                |
-| `nmt_home_core_base_zoxide`         | `nmt/home/core/base/zoxide.nix`         | .zshrc: zoxide init                          | contains              |
-| `nmt_home_core_base_tmux`           | `nmt/home/core/base/tmux.nix`           | .config/tmux/tmux.conf: history-limit        | exists+contains       |
-| `nmt_home_core_base_bat`            | `nmt/home/core/base/bat.nix`            | .config/bat/config: --theme/--pager          | exists+contains       |
+| `nmt_home_core_exp_sys_base_git`            | `nmt/home/core/exp/sys/base/git.nix`            | .config/git/config: user/branch/delta        | exists+contains       |
+| `nmt_home_core_exp_sys_base_starship`       | `nmt/home/core/exp/sys/base/starship.nix`       | .config/starship.toml: exists (scrubbed)     | exists                |
+| `nmt_home_core_exp_sys_base_direnv`        | `nmt/home/core/exp/sys/base/direnv.nix`        | .config/direnv/direnvrc: nix-direnv          | exists+contains       |
+| `nmt_home_core_exp_sys_base_atuin`          | `nmt/home/core/exp/sys/base/atuin.nix`          | .config/atuin/config.toml: exists (scrubbed) | exists                |
+| `nmt_home_core_exp_sys_base_zoxide`         | `nmt/home/core/exp/sys/base/zoxide.nix`         | .zshrc: zoxide init                          | contains              |
+| `nmt_home_core_exp_sys_base_tmux`           | `nmt/home/core/exp/sys/base/tmux.nix`           | .config/tmux/tmux.conf: history-limit        | exists+contains       |
+| `nmt_home_core_exp_sys_base_bat`            | `nmt/home/core/exp/sys/base/bat.nix`            | .config/bat/config: --theme/--pager          | exists+contains       |
 | `nmt_home_core_exp_sys_base_fd`     | `nmt/home/core/exp/sys/base/fd.nix`     | .config/fd/ignore: .git/ / \*.bak            | exists+contains       |
 | `nmt_home_core_exp_sys_base_fzf`    | `nmt/home/core/exp/sys/base/fzf.nix`    | .zshrc: fzf sourced / layout=reverse         | exists+regex+contains |
+| `nmt_home_core_exp_sys_base_ripgrep` | `nmt/home/core/exp/sys/base/ripgrep.nix` | .config/ripgrep/ripgreprc: --smart-case（leading-dash needle，T27.2 fork `--` 守卫的消费级回归证明） | exists+contains       |
 | `nmt_home_core_exp_sys_base_yazi`   | `nmt/home/core/exp/sys/base/yazi.nix`   | yazi.toml exists / init.lua: full-border     | exists+contains       |
 | `nmt_home_core_exp_sys_shell_zsh`   | `nmt/home/core/exp/sys/shell/zsh.nix`   | .zshrc: compinit/HISTSIZE                    | exists+contains       |
 | `nmt_home_core_exp_sys_shell_fish`  | `nmt/home/core/exp/sys/shell/fish.nix`  | config.fish: greeting/abbr                   | exists+contains       |
@@ -206,7 +207,7 @@ home/core/exp/sys/base/git.nix
 | `nmt_home_core_srv_security_gnupg`  | `nmt/home/core/srv/security/gnupg.nix`  | .gnupg/gpg.conf: use-agent                   | exists+contains       |
 | `nmt_home_core_srv_notify_mako`     | `nmt/home/core/srv/notify/mako.nix`     | .config/mako/config: font/colors             | exists+contains       |
 
-> 合计：base(7) + sys/base(3) + shell(2) + app/editor(1) + srv/security(1) + srv/notify(1) = **15**
+> 合计：exp/sys/base(11) + shell(2) + app/editor(1) + srv/security(1) + srv/notify(1) = **16**（T27.2 前表 7 行 check 名/路径陈旧〔`nmt_home_core_base_*`〕——本轮对齐 registry 实名，docs-ssot 只锚计数放过了名/路径漂移）
 
 ---
 
@@ -523,5 +524,5 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 | HM          | 41     | ✓     | base(2)+i18n_source(1)+editor(1)+sys/base(13+3 source)+shell(2+1 source)+sys(3)+sec(1)+srv(2)+dev(11)+export(1) |
 | Lib         | 9      | ✓     | enum + fn + schema + caps（T4.0 能力表契约）+ validate（T4.1 Result 铁路）+ targets（T19.1 事实源普查）+ deploy（T21.1 部署面普查）+ overlays（T24.2 overlay 局部性普查）+ version（T25.2 nix-types version 契约——rev 答 where、version 答 what，bump 两文件刻意决定） |
 | Integration | 1      | ✓     |                                                                         |
-| **nmt**     | **15** | **✗** | base(7)+sys/base(3)+shell(2)+app/editor(1)+srv(2)                       |
-| **Total**   | **97** |       | VM 82 + nmt 15（另有 2 个仓库卫生 checks：pre-commit-check + docs-ssot-check）→ 99 checks（T25.2 +1：lib_shared_lang_version——nix-types version 契约断言；T24.2 前序：lib_shared_overlays；T21.1 前序：lib_shared_deploy；T19.1 前序：lib_shared_targets） |
+| **nmt**     | **16** | **✗** | exp/sys/base(11)+shell(2)+app/editor(1)+srv(2)；T27.2 +1：ripgrep——fork `--` 守卫的消费级回归证明（leading-dash needle） |
+| **Total**   | **98** |       | VM 82 + nmt 16（另有 2 个仓库卫生 checks：pre-commit-check + docs-ssot-check）→ 100 checks（T27.2 +1：nmt_home_core_exp_sys_base_ripgrep——T26 守卫补丁的消费级回归证明，needle `--smart-case` 经 contains → escapeShellArg → assertFileContains → grep -qF -- 全链；T25.2 前序：lib_shared_lang_version；T24.2 前序：lib_shared_overlays） |

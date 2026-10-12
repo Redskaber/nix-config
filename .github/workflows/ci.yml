@@ -178,7 +178,7 @@ jobs:
   # STAGE 2: Deep evaluation — facet forcing (T15.1)
   # ─────────────────────────────────────────────────────────────
   # The former `nix flake check --no-build` single-process walk was
-  # retired on evidence. It evaluates all 97 checks in ONE process,
+  # retired on evidence. It evaluates all 98 checks in ONE process,
   # accumulating live evaluation state monotonically — the local 4GB
   # sandbox OOMs at the 9th derivation (measured, anon-rss ~2GB and
   # climbing), a 7GB runner sits at the cliff edge and crawls: run

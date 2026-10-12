@@ -7,19 +7,21 @@
 #
 #   assertFileExists    "rel-path"           — [[ -f ]] check
 #   assertPathNotExists "rel-path"           — [[ -e ]] absence check
-#   assertFileContains  "rel-path" "needle"  — grep -qF "$needle" "$file"
-#   assertFileRegex     "rel-path" "regex"   — grep -q  "$regex"  "$file"
+#   assertFileContains  "rel-path" "needle"  — grep -qF -- "$needle" "$file"
+#   assertFileRegex     "rel-path" "regex"   — grep -q  -- "$regex"  "$file"
 #   assertFileContent   "rel-path" ref-file  — cmp/diff (2nd arg = FILE path)
 #   assertLinkExists    "rel-path"           — [[ -L ]] symlink check
 #
-#   CRITICAL: assertFileContains uses:
-#     grep -qF "$2" "$(_abs "$1")"
-#   When $2 starts with "-" grep treats it as an option flag → error.
-#   Use `regex` key for needles starting with "--" or "-".
-#   assertFileRegex uses `grep -q "$2"` (unquoted 2nd arg in ERE mode).
-#   Both functions pass $2 BEFORE the filename, so leading "-" breaks both.
-#   Workaround: prefix needle with a space " --pager" won't work either.
-#   Best workaround: use a needle that doesn't start with "-".
+#   OPTION-LOOKING NEEDLES ARE SAFE at the pinned rev (25fe4c8, the fork's
+#   `--` end-of-options guards): the three grep assertions pass `--`
+#   before the needle, so a needle like "--smart-case" is matched as
+#   text instead of being parsed as a grep flag. Before the guards this
+#   was the CRITICAL limitation (an error at best; at worst grep ate
+#   the needle as a real flag — e.g. "-x" = whole-line match — and
+#   silently tested the wrong thing). The pin IS the guarantee: the
+#   `contains`/`regex` fields below accept leading-dash needles.
+#   (Regression battery: the fork's test/ — 39 cases incl. the mirror
+#   check that an ABSENT option-looking needle still fails.)
 #
 # ── pkgs.formats.* scrubbing ──────────────────────────────────────────
 #
@@ -56,8 +58,9 @@
 # ── ripgrep rcfile ────────────────────────────────────────────────────
 #
 #   programs.ripgrep.arguments → ~/.config/ripgrep/ripgreprc (one flag/line).
-#   Plain text, assertable. Note: needles must NOT start with "-".
-#   Use contains = [ "smart-case" ] not [ "--smart-case" ].
+#   Plain text, assertable. Leading-dash needles ("--smart-case") are
+#   safe at the pinned rev (25fe4c8, the fork's `--` guards) — the
+#   pre-guard workaround of stripping the dashes is retired.
 #
 # ── jq config ─────────────────────────────────────────────────────────
 #
@@ -152,8 +155,9 @@ let
   #   { path     : string;
   #     exists   ? false;   → assertFileExists   (file must be present)
   #     absent   ? false;   → assertPathNotExists (path must be absent)
-  #     contains ? [];      → assertFileContains  (fixed-string; NO "-" prefix!)
-  #     regex    ? null;    → assertFileRegex     (ERE; NO "-" prefix!)
+  #     contains ? [];      → assertFileContains  (fixed-string; leading-dash
+  #                           needles safe at pinned rev 25fe4c8)
+  #     regex    ? null;    → assertFileRegex     (ERE; leading-dash safe)
   #   }
   buildHomeManagerTest =
     testSpec:
@@ -235,6 +239,7 @@ in
   nmt_home_core_exp_sys_base_fd = buildTest ./home/core/exp/sys/base/fd.nix;
   nmt_home_core_exp_sys_base_fzf = buildTest ./home/core/exp/sys/base/fzf.nix;
   nmt_home_core_exp_sys_base_git = buildTest ./home/core/exp/sys/base/git.nix;
+  nmt_home_core_exp_sys_base_ripgrep = buildTest ./home/core/exp/sys/base/ripgrep.nix;
   nmt_home_core_exp_sys_base_starship = buildTest ./home/core/exp/sys/base/starship.nix;
   nmt_home_core_exp_sys_base_tmux = buildTest ./home/core/exp/sys/base/tmux.nix;
   nmt_home_core_exp_sys_base_yazi = buildTest ./home/core/exp/sys/base/yazi.nix;

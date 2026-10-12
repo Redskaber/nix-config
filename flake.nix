@@ -34,6 +34,10 @@
     # Mirror of git@git.sr.ht:~rycee/nmt (sourcehut returns HTTP 403 to Nix
     # fetchers due to bot-protection; github.com/Redskaber/nmt is accessible).
     # Used exclusively by tests/nmt/default.nix.
+    # Fork delta at the pinned rev (25fe4c8): the three grep assertions pass
+    # `--` before the needle — option-looking needles ("--smart-case") are
+    # matched as text; the pin is the guarantee the nmt-Plane's needle
+    # assertions rely on (see tests/nmt/default.nix).
     nmt.url = "github:Redskaber/nmt";
     nmt.flake = false;
 

@@ -339,6 +339,46 @@ A: 可能使用了未经擦洗的包路径，或该包不在白名单中。检�
 - [Home Manager CI/CD Pipeline](https://deepwiki.com/nix-community/home-manager/5.2-cicd-pipeline)
 - [NixOS 集成测试教程](https://nix.dev/tutorials/nixos/integration-testing-using-virtual-machines.html)
 
+本教程基于 NMT v0.5.1 以及 Home Manager 主分支的测试基础设施编写。随着项目发展，具体实现可能有所变化，建议以最新源代码为准。
+
 ---
 
-本教程基于 NMT v0.5.1 以及 Home Manager 主分支的测试基础设施编写。随着项目发展，具体实现可能有所变化，建议以最新源代码为准。
+## 10. 本仓消费形态（nix-config 侧）
+
+> 本节是 nix-config 对 nmt 的**实际消费契约**——上文的通用教程之外，本仓钉死了什么、依赖什么。
+
+### 10.1 输入与镜像缘起
+
+```nix
+# flake.nix
+nmt.url = "github:Redskaber/nmt";
+nmt.flake = false;   # 原始 store path，无 flake 产物
+```
+
+上游 `git.sr.ht:~rycee/nmt` 对 Nix fetcher 返回 HTTP 403（bot 防护），
+`github.com/Redskaber/nmt` 是可访问镜像——锁定 rev 即锁定消费内容。
+
+### 10.2 fork 增量（钉定 rev 25fe4c8 起）
+
+1. **`--` end-of-options 守卫**：三个 grep 断言（`assertFileContains` /
+   `assertFileRegex` / `assertFileNotRegex`）在 needle 前传 `--`——选项样
+   needle（`"--smart-case"`）按文本匹配而非被解析为旗标。对本仓
+   nmt-Plane 的意义：`contains` / `regex` 字段**接受前导横杠 needle**
+   （驱动层注释同句保证；T27.2 前此处是 CRITICAL 绕行段——「needle 不得
+   以 `-` 开头」的变通已退役）。
+2. **`test/` 自测试电池**（fork 的 evolve 分支，经 web 下载接口交付）：
+   测试框架测试自己的断言库——39 案三类（正路径 / 负路径——框架必须
+   能在该红处红 / 对抗性 needle——守卫回归类，含镜像案：缺席的选项样
+   needle 必须仍红）。standalone `bash test/battery.sh` 或 `nix build -f test/`。
+
+### 10.3 消费级回归证明（第 98 号测试）
+
+`nmt_home_core_exp_sys_base_ripgrep`：`programs.ripgrep.arguments →
+.config/ripgrep/ripgreprc`（每行一 flag 纯文本），断言
+`contains = [ "--smart-case" "--colors=auto" ]`——needle 经
+`contains` → `escapeShellArg` → `assertFileContains` → `grep -qF --`
+**全链流经守卫**。变异检查：`--override-input nmt github:Redskaber/nmt/0aa4699`
+（守卫前 rev）→ grep `unrecognized option '--colors=auto'` 原样复现——
+守卫的缺失在消费侧一行红。
+
+
