@@ -78,12 +78,28 @@ match。三条证据（均一手核验）：
 | `serialize` | 实例 → flat JSON-safe（tag/typename/value） | debug 面（`nix eval .#debug`）需要 dump 平台表 / 策略表时的现成原语 |
 | 多实例 match + specificity | `Red._` 优先于 `._._`，列表/attrset 双形态 | 「平台 × 版本」二维分派出现时（hyprland plugins 是一维先行例） |
 | `isType` 指纹 | `__meta__.variantNames` 区分同名不同变体集 | 测试断言需要枚举同一性判等时 |
+| `lib.version` 断言 | 上游 3.6.0 起的顶层身份串（见第 5 节） | lock bump 时在 lang 电池补 `== "3.6.0"` 断言——rev 答 where，version 答 what |
 
-### 5. 上游文档债（待仓库所有者执行）
+### 5. 上游文档债清偿与版本身份契约（T23，2026-10-12）
 
-- T6.4（README 路线图条目自有记录）：`docs/PATTERNS.md` 于 nix-types
-  仓库成文，位于**所有者本地未 push 的 commit 61bc6ce**（基于
-  v3.5.0/815fc3f，440/440 测试通过后提交——沙箱无 GitHub 凭据，
-  push 一步完成）。纯文档提交、库面零变化，push 后本仓 lock 无需
-  bump。本文档不重复其内容，以 push 后的 nix-types README
-  「Consumption patterns」节为准。
+- **死引用修正**：原登记的 PATTERNS.md「所有者本地未 push commit
+  61bc6ce」随沙箱环境重建**彻底丢失**（新 clone 对象库无此 commit、
+  GitHub 侧 HEAD 仍 815fc3f、无 reflog）——该登记曾是唯一的交付存证。
+  现已重写并扩展：nix-types `evolve/t23-version-identity` 分支
+  两 commit（`2fd8779` PATTERNS.md 七模式 + `d973191` 版本身份，
+  顺序为基座→扩展），以 web 完整包下载接口交付，push 前任何
+  引用以该 patch 为准。内容相对原稿的增强：新增 Version contract
+  模式（原稿成文时 `lib.version` 尚不存在）与「何时不要 enum 化」
+  判例清单（本文档第 2 节裁决的知识沉淀）。
+- **版本身份（T23.1，nix-types 3.6.0）**：`lib/version.nix` 单源
+  `version = "3.6.0"`，`lib/default.nix` 顶层合并；第 17 号测试套件
+  六法则锁定（存在性 / semver 形状 / 钉值真话纪律 / 不泄漏边界 ×3
+  ——枚举类型面、实例记录、`__meta__` 均不携带）；推导名
+  `nix-types-${version}` 与 demo 横幅同源（原手工 `v3.4` 落后两个
+  版本）。**验证从静态升级为求值**：沙箱 rootless nix
+  （`~/nixroot/nx`，2.35.2）幸存复用，446/446 真实求值绿。
+- **下游断言（待 owner push 后）**：nix-types 3.6.0 入 GitHub 后
+  bump 本仓 lock rev 时，lang 电池同步落 version 契约断言
+  （`inputs.nix-types.lib.version == "3.6.0"`，第 96 号测试候选）——
+  rev 钉住「哪里」，version 断言钉住「什么」，坏 bump 从
+  「三层数下游的 attribute missing」提前为「点名漂移的一行红」。
