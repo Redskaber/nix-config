@@ -172,20 +172,21 @@ releases.nixos.org 的 2.35.2 tarball）后再落地。
 缓存效率是对比打分中最弱的一轴（自建缓存缺位，替换命中率依赖
 cache.nixos.org 与 GH Actions Cache 的二跳）。`cache-attic.yml`
 落地为 **opt-in 机器契约**：`vars.ATTIC_SERVER` + `vars.ATTIC_CACHE`
+
 + `secret.ATTIC_TOKEN`——两个 vars 未设置时整个 workflow 每次
 触发即跳过（零成本零风险），设置 vars 即部署。
 
-- **触发**：每周二 05:05 +08（周一 21:05 UTC，周日渠道更新 PR
++ **触发**：每周二 05:05 +08（周一 21:05 UTC，周日渠道更新 PR
   合并、周一 CI 全绿之后）+ 手动 dispatch。
-- **目标**：`nixosConfigurations` 全部 toplevel + `devShells` 矩阵
++ **目标**：`nixosConfigurations` 全部 toplevel + `devShells` 矩阵
   全部闭包（host-toplevels 腿与 devshells 腿的持续物化对象）。
   枚举走 flake 面自身的 attrNames——加主机/加 shell/（未来）加
   系统维度零 CI 侧改动。
-- **工具链**：与全部九个 installer 站点同款钉版（upstream 2.35.2
++ **工具链**：与全部九个 installer 站点同款钉版（upstream 2.35.2
   tarball + env 旗标）；MNC 开启（`use-flakehub: false`）——CI 腿
   已缓存的部分经 GH Cache 替代后直接推 attic，冷启动周付一次
   全量构建，其后为增量维护。
-- **Phase-2（记录、刻意不落地）**：缓存预热后，把该 substituter
++ **Phase-2（记录、刻意不落地）**：缓存预热后，把该 substituter
   加入各腿 installer 的 extra-conf（需追加 `vars.ATTIC_PUBLIC_KEY`），
   让拉取侧同样吃到自建缓存——等所有者完成服务端部署后按契约
   一步开启。
@@ -198,24 +199,24 @@ darwin runner 或交叉工具链。该门现已打开——GitHub 自 2025-04-10
 与主机策略声明的 `aarch64-darwin` 同形：闭包在原生平台构建，零交叉
 工具链、零模拟。
 
-- **面**：`api.darwin-toplevels`（第六 api 面）——`inventory.darwinHosts`
++ **面**：`api.darwin-toplevels`（第六 api 面）——`inventory.darwinHosts`
   枚举驱动，成员 = `darwinConfigurations.<h>.system`（nix-darwin 的
   toplevel 本体，`darwin-rebuild` 构建的就是它）。与 host-toplevels
   完全同构的纪律：新 darwin 主机按构造入列，零 CI 侧维护。
-- **腿**：CI STAGE 6.6 `darwin-toplevels`（needs lint+deep-eval）——同工具
++ **腿**：CI STAGE 6.6 `darwin-toplevels`（needs lint+deep-eval）——同工具
   同纪律：锁定 nixpkgs 解析 nix-fast-build（aarch64-darwin 成员、同 rev）、
   整面交接、`--skip-cached`；`-j` 走 `sysctl -n hw.ncpu`（macOS 无
   nproc(1)）。工具链钉版与全部 installer 站点同款 env 旗标 +
   aarch64-darwin 构建的同一 2.35.2 tarball；MNC 同款 `use-flakehub: false`。
-- **诊断 pass** 镜像 host-toplevels：nix-fast-build 非零退出时逐成员
++ **诊断 pass** 镜像 host-toplevels：nix-fast-build 非零退出时逐成员
   重求值——求值错误逐字复现即配置侧缺陷；干净扫描指向构建侧。
-- **分工**：x86_64-linux 腿的 darwin 求值步**保留**（零成本交叉系统
++ **分工**：x86_64-linux 腿的 darwin 求值步**保留**（零成本交叉系统
   检查，deep-eval 亦已强制同一 drvPath）；构建深度归 6.6 腿独有。
-- **前置核实**：nix-fast-build 的 nixpkgs 平台清单含 Darwin
++ **前置核实**：nix-fast-build 的 nixpkgs 平台清单含 Darwin
   （Linux/Darwin/FreeBSD/Windows）；nix-eval-jobs 的 darwin 性能告警
   只影响 eval 密集面，本面单成员不受扰；macos-latest arm64 事实经
   GitHub runner 文档确认。
-- **验收边界**：这是**构建级**验收（closure 真实构建）；macOS
++ **验收边界**：这是**构建级**验收（closure 真实构建）；macOS
   activation 仍待真 Mac（已知边界 #8 不变）。
 
 ### devShells 腿成员枚举数据驱动（T18.1）— 最后一处硬编码成员表的消灭（2026-10-12 演进）
@@ -228,10 +229,10 @@ darwin runner 或交叉工具链。该门现已打开——GitHub 自 2025-04-10
 go, cpp, c, typescript, re]`，而活面已 **25 员**（docs-ssot 计数契约
 强制）——**16 个 shell 零 CI 覆盖**：
 
-- `default`——14 语言 combinFrom 合并（pdshell 组合能力的最重验证对象）
-- `default.nix` 多变体：`cpython` / `godot` / `makeOs` / `rs_compiler_dev`
-- `nix/` 多变体：`nix-nonfmt` / `nix-derivation-free-security`
-- 整目录：asm / java / javascript / lisp / lua / python-renpy / zig
++ `default`——14 语言 combinFrom 合并（pdshell 组合能力的最重验证对象）
++ `default.nix` 多变体：`cpython` / `godot` / `makeOs` / `rs_compiler_dev`
++ `nix/` 多变体：`nix-nonfmt` / `nix-derivation-free-security`
++ 整目录：asm / java / javascript / lisp / lua / python-renpy / zig
 
 **同构类**：T9.3 wslview（路径依赖覆盖）与 T8.1 设计时抓到的四处计数
 漂移——硬编码清单与数据驱动面之间没有同步机制，单向腐烂是结构性必然。
@@ -242,15 +243,15 @@ change]"），但 ci.yml 的矩阵从未对齐。
 **修复**：仓内既有惯例第四次复用（output-faces T11.1 / deep-eval
 T15.1 / cache-attic 同款）——
 
-- 矩阵策略整段移除；作业内 `nix eval .#devShells.$SYS --apply
++ 矩阵策略整段移除；作业内 `nix eval .#devShells.$SYS --apply
   builtins.attrNames --json` 枚举（$SYS 读自 `.#debug.test_system`，
   消灭第二处硬编码 x86_64-linux）。
-- 逐成员 `--dry-run --no-link` 循环；失败成员 `::error` 点名
++ 逐成员 `--dry-run --no-link` 循环；失败成员 `::error` 点名
   （T9.2 归因哲学）；空面守卫；显式 `set -eo pipefail`（T11.1/T15.1
   模拟器教训——不依赖 runner shell 默认值）。
-- 工具链钉版（upstream 2.35.2 tarball + env 旗标）与纯求值腿无
++ 工具链钉版（upstream 2.35.2 tarball + env 旗标）与纯求值腿无
   magic-nix-cache 纪律原样保留（T12.1）。
-- 顺带修复：该腿头注释的 devDir 路径陈旧（home/core/dev →
++ 顺带修复：该腿头注释的 devDir 路径陈旧（home/core/dev →
   home/env/dev——树演进留下的注释级漂移）。
 
 **验证**：YAML 结构断言十条（job 集不变 / needs 不变 / fail-gate 与
@@ -274,15 +275,15 @@ hosts/nixos（真实机器）是最后一台仍在 legacy `hardware.nix` 上的�
 **`just hardware-migrate`（hardware 组，第 85 recipe）**——迁移成为
 一条命令：
 
-- PROBE：同 `hardware-facter` 的 root 扫描（`nixpkgs#nixos-facter
++ PROBE：同 `hardware-facter` 的 root 扫描（`nixpkgs#nixos-facter
   -o hosts/<h>/facter.json`）。
-- MOVE：报告表达不了的事实**原样搬入**主机入口——fileSystems、
++ MOVE：报告表达不了的事实**原样搬入**主机入口——fileSystems、
   swapDevices、非空 `boot.kernelModules`（facter 从不生成挂载；disko
   布局是最终归宿 T5.13；microcode 已由 drive 层 intel.nix 持有、
   hostPlatform 由 report.system 派生——这些是 DERIVED，直接落）。
-- FLIP：模板 import 块（字节形校验，恰一次）换为
++ FLIP：模板 import 块（字节形校验，恰一次）换为
   `hardware.facter.reportPath = ./facter.json;`。
-- RETIRE：hardware.nix 退役——git 历史即回滚（revert 迁移提交即
++ RETIRE：hardware.nix 退役——git 历史即回滚（revert 迁移提交即
   回到 legacy 接线）。
 
 三重 fail-loudly 守卫：已迁移则绿幂等；入口被手改则拒绝并打印手动
@@ -296,11 +297,11 @@ hosts/nixos（真实机器）是最后一台仍在 legacy `hardware.nix` 上的�
 机器锁：以 targets.nix mkShared 同构方式逐主机构造真实策略链
 （wsl.nix 先例），读分类器自己的 caps，对 hosts/ 树断言三律——
 
-- **Law A**：无主机同时携带 hardware.nix 与 facter.json（双重声明
++ **Law A**：无主机同时携带 hardware.nix 与 facter.json（双重声明
   即迁移自身的失败模式——这正是 migrate 把翻转与退役设计成同一
   命令的原因）；
-- **Law B**：裸金属 NixOS（nixos-system ∧ ¬wsl）恰一源；
-- **Law C**：宿主持有形态（wsl 类 NixOS、darwin、standalone）零源
++ **Law B**：裸金属 NixOS（nixos-system ∧ ¬wsl）恰一源；
++ **Law C**：宿主持有形态（wsl 类 NixOS、darwin、standalone）零源
   （无人消费的事实源文件是死数据）。
 
 文件存在即声明——普查不看接线，这正是它的牙齿。违规时 throw 点名
@@ -483,3 +484,34 @@ rootless nix（`~/nixroot/nx`，unshare + pivot_root，2.35.2）首次用于
    才是可断言的不变量**；而 `7mjhjj…`（cutter_patched）这类不触
    self 的 drv 与树无关——CI 与本地一字不差，恰是两侧闭包内容
    同源的最强交叉证据。
+
+### 首绿裁决记录 — run 38192402014 + 38234435660（2026-10-12：双红清偿验收 + 首次全绿）
+
+受测对象：main @ c44cde9（T24 双根因清偿的采纳形态）→ run
+38192402014；main @ 20a59b3（T25 lock bump + 第 97 号 version 契约
+断言的采纳形态）→ run 38234435660。**两 run 全 14 作业全绿**——
+38171937689 的双红（parity + darwin）至此完成完整清偿弧，且新状态
+稳定复绿：
+
+1. **run 38192402014（c44cde9）— 首次全绿，冷构建**。parity 腿
+   （output-faces 内的等价门控）绿：两字段身份注入后 primary ==
+   colmena 在 CI 真实成立——parity 门的生命周期闭环（**设计捕获 →
+   两跑裁决 → 修复 → 绿**），门的全部四个阶段都在生产 run 里走过。
+   darwin 腿绿：**darwin 闭包首次在 macOS runner 原机构建成功**——
+   含 cutter_patched（postPatch 独有哈希、永不在缓存的那类）的
+   aarch64-darwin 实例本地构建；闭包 9,464 drv 的大头经
+   cache.nixos.org 替代（同 rev），纯本仓派生物原机产出。计时
+   证据（缓存轴的活体基线）：整 run 01:34:20Z → 02:41:42Z
+   （约 67 分钟），两条闭包腿 ~1h2m / ~1h7m——T24.2 修复把 darwin
+   闭包从「必炸」变「可建」，成本即此；run 级空转（纯替换 + 零
+   本仓重建）的对照见下一条。
+2. **run 38234435660（20a59b3）— 复绿，热跑**。T25 是求值期机器
+   （nix-types 不进闭包，darwin toplevel 与 T24 轮同哈希
+   v66nskmz），两 commit 间闭包零漂移 → MNC 跨 run 缓存全命中：
+   最长腿 3m9s——与上一 run 的 ~1h 腿对照，**缓存轴的现状画像**
+   （零漂移周快、漂移周冷构建一小时）：attic phase-2 的增益空间
+   正是后者（owner 侧 vars 待设，契约已备）。
+3. **第 97 号测试的 CI 首验**：38234435660 是 lock bump + version
+   契约断言入 CI 的首个 run——lib 平面 97 tests 在 CI 求值绿（本地
+   T25 轮已绿 + 变异检查红），version 契约（rev 答 where、version
+   答 what）首次在 CI 环境成立。
