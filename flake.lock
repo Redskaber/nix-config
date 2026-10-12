@@ -132,11 +132,11 @@
         "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1778703371,
-        "narHash": "sha256-T4Lca8xDyi6K6JLR48di5J8ZKyjv5b5X29aCZmqUmFc=",
+        "lastModified": 1791821529,
+        "narHash": "sha256-wa/Sn/c8RQsKQL1B0Qqqf4ZXm5qeUkZdV6bpbF2ZRA0=",
         "owner": "Redskaber",
         "repo": "ConfigurationOrchestrator",
-        "rev": "b43229603186b190fc811fb8c40ffdb2d25185f2",
+        "rev": "05c658f18cf783caeab4d0167aa548b58a38d4b7",
         "type": "github"
       },
       "original": {
@@ -1227,11 +1227,11 @@
     "swaync-config": {
       "flake": false,
       "locked": {
-        "lastModified": 1778399493,
-        "narHash": "sha256-WHBg9BeeCc/y8+cy94svki2lfRL7eSNlv5vMBeArA3Q=",
+        "lastModified": 1791821690,
+        "narHash": "sha256-WGFbK4yYPHiw+4P9p9Omh/MzgwSYH+Pe8ZMmr0X535I=",
         "owner": "Redskaber",
         "repo": "swaync-config",
-        "rev": "bec6d3dc691d4bcbeea44796990a5ffa477d9e83",
+        "rev": "6d7f091828c60c4ee34fa95bffa63f2b82651b84",
         "type": "github"
       },
       "original": {

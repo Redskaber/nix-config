@@ -30,17 +30,25 @@
 #      writable, or wallust's runtime overwrite hits EACCES next boot
 #
 # History: the first prototype run of this battery caught the swaync
-# site EMPTY (the swaync-config tree carries no wallust placeholder —
+# site EMPTY (the swaync-config tree carried no wallust placeholder —
 # the include matched nothing and the activation ran a no-op while
-# claiming to plant). The module now synthesizes the FileMap entry from
-# the wallust template until the tree grows its own (see
-# home/wm/hyprland/theme/swaync.nix); the repo-side half of that fix
-# ships as docs/feedback/swaync-config-placeholder.patch.
+# claiming to plant). T28 answered with a two-half fix: the module
+# synthesized the FileMap entry from the wallust template (behind a
+# tree-wins merge order, planned to retire on its own) and the
+# config-repo half shipped as a paste-ready placeholder patch. Both
+# halves have since landed: swaync-config c8818d9 grew the tree's own
+# placeholder, and T30 retired the synthesis — the site below now
+# plants the TREE file, same shape as the other six. With orc 05c658f
+# (the T29 include-intent guard, consumed back through the lock in
+# the same round) this class of rot can no longer be silent at all:
+# an include that selects nothing fails AT EVAL TIME, fleet-wide.
 #
 # Mutation checks (all verified on the real eval):
 #   - point an include at a moved rel → that site's cp needle fails,
 #     the throw names the site and the reconciliation
-#   - delete the swaync synthesis → swaync goes red (empty activation)
+#   - revert the swaync-config lock to a pre-placeholder rev → the
+#     eval now FAILS LOUDLY (orc include-intent guard) — the T28
+#     mutation replayed as a loud failure instead of a silent one
 #   - flip a destPrefix → destination needle fails
 
 {
@@ -97,12 +105,12 @@ let
     }
     {
       name = "swayncWallust";
-      # T28: the plant source is the synthesized entry (the wallust
-      # template) until the swaync-config tree grows the placeholder —
-      # the module's synthesis is part of THIS contract.
+      # T30: the plant source is the TREE file now — the synthesis
+      # retired when swaync-config c8818d9 grew the placeholder (the
+      # T28 config-repo half, adopted upstream).
       plants = [
         {
-          src = "${inputs.wallust-config}/templates/colors-swaync.css";
+          src = "${inputs.swaync-config}/wallust/colors-wallust.css";
           key = ".config/swaync/wallust/colors-wallust.css";
         }
       ];
@@ -199,9 +207,10 @@ let
                    still exists, it just plants nothing)
                 2. the destPrefix changed — colors would land in the
                    wrong tree
-                3. the plant source changed (for swaync: the T28
-                   synthesis in home/wm/hyprland/theme/swaync.nix or
-                   the tree's own placeholder)
+                3. the plant source moved in the config tree
+                   (swaync-config carries wallust/
+                   colors-wallust.css since c8818d9 — an upstream
+                   move or rename rots this needle)
                 4. orc changed the copy emitter's script shape''
         else if !hasSub chmodNeedle script then
           throw ''

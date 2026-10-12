@@ -233,6 +233,16 @@ let
     # writeBoundary ordering, the cp --remove-destination plant line
     # (source tree × destination key) and the writable bit.
     lib_shared_orc = nixosTest ./lib/shared/orc.nix;
+
+    # T30: the orc include-intent guard consumption contract — the
+    # third tool-library loop closed (T28 caught the silent failure →
+    # T29 fed the guard upstream → adopted 05c658f → this member
+    # consumes it back): a non-empty include selecting nothing must
+    # fail AT EVAL TIME through the production handle, the happy path
+    # must stay free, and the allowEmpty opt-out must merge as
+    # asserted (the 97th version contract's shape — the lock answers
+    # WHERE, this battery answers WHAT).
+    lib_shared_orc_guard = nixosTest ./lib/shared/orc-guard.nix;
   };
 
   # ══════════════════════════════════════════════════════════════════

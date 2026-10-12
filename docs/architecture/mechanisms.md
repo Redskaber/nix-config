@@ -413,6 +413,8 @@ waybarResult = shared.orc.mergeHomeFiles (
 home.activation.waybarWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] waybarResult.activation;
 ```
 
+**include-intent 守卫（消费面事实）：** `mergeHomeFiles` 对「include 非空且零匹配」的策略在**求值期 fail-fast**（orc 05c658f；`allowEmpty = true` 为显式弃权）——include 腐烂（上游移文件/改名/typo）不再产出静默空 activation，而是带 include patterns + FileMap keys + 四方向和解指引的求值期爆炸。车队经 flake.lock 消费该守卫，`tests/lib/shared/orc-guard.nix`（第 100 号）以生产句柄 `shared.orc` × 真 swaync-config 树钉死该能力在锁定的 orc 中在位。
+
 ### 7. 用户环境层 — home/env
 
 `home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的用户域 payload 行（`platform/*/home/<arch>.nix`）中与 `home/core` 并列导入：

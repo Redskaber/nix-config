@@ -170,7 +170,7 @@ home/core/exp/sys/base/git.nix
 
 > 合计：base(2) + i18n_source(1) + editor(1) + sys/base(13 + 3 source) + shell(2 + 1 source) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(11) + export(1) = **41**
 
-### 3.3 Lib-Plane (10 tests)
+### 3.3 Lib-Plane (11 tests)
 
 | check                                | 验证点                            |
 | ------------------------------------ | --------------------------------- |
@@ -180,6 +180,7 @@ home/core/exp/sys/base/git.nix
 | `lib_shared_overlays`                | overlay 局部性普查（T24.2，run 38171937689 复跑裁决锁定）：canary 替换实例法——patches 应用到标记 stub 实例，每个被补成员〔cutter_patched/openldap/xdg-desktop-portal〕必须携带 canary 标记〔meta.description 穿透 overrideAttrs 存活〕，从任何外部句柄取包即失标即红——overlay 契约：改谁补谁，`prev`/`final` 即所应用实例自己的不动点 |
 | `lib_shared_lang_version`            | nix-types version 契约（T25.2，下游断言落地）：rev 答 where〔flake.nix 40-hex 钉点〕，version 答 what〔本测试 expected〕——`inputs.nix-types.lib.version == "3.6.0"`，bump = 两文件刻意决定，单侧漂移即一行红（诊断报出 lock rev / expected / observed 三方 + 双文件和解指引；变异检查实测） |
 | `lib_shared_orc`                      | orc wallust copy-emitter 消费契约（T28）：一次 `homeManagerConfiguration` 经生产模块求值全部七站（mechanisms.md §6 清单）——dag 条目存在 + writeBoundary 后序 + `run cp --remove-destination <树>/<rel> "$HOME/<dest>/<rel>"` 全行〔源树携带文件 + 目的地键 + 旗标三合一——上游移文件/include 腐烂/destPrefix 拼写任一即红〕+ `run chmod u+w` 可写位；首跑即抓到 swaync 站点空 activation（swaync-config 树无 placeholder——include 零匹配的死寂失效模式），模块侧合成条目修复 + 配仓补丁存档 docs/feedback/；求值期裁决用纯子串搜索（lib.hasInfix 内部 builtins.match 禁含 store 路径模式——语言层限制绕行） |
+| `lib_shared_orc_guard`               | orc include-intent 守卫消费契约（T30，第 100 号）：第三代工具库回路收口——lock 钉的 orc 必须携带 T29 守卫〔05c658f〕。真 `shared.orc`〔生产句柄〕× 真 swaync-config 树四断言：非空 include 零匹配必须求值期爆〔`tryEval success = false`——T28 静默类的车队级死亡证明〕+ 正常路径零税〔copy 策略产 activation + 空 homeFiles〕+ `allowEmpty = true` 逃生门〔显式弃权产空不爆〕+ `include = []` 全接受〔census 不是 filter〕。第 97 号 version 契约同形：lock 答 WHERE、测试答 WHAT，单侧漂移即一行红 |
 
 ### 3.4 Integration-Plane (1 test)
 
@@ -523,7 +524,7 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 | Smoke       | 1      | ✓     |                                                                         |
 | NixOS       | 30     | ✓     | base(11=6+i18n_source+samesource+wsl+portal+sound_gate)+drive(3)+sec(4)+db(4)+hardware(2)+log(1)+security(2)+export(1)+monitor(1)+impermanence(1，T5.14：三组独立 nixosSystem 求值锁定回滚配方/单元排序/设备门/neededForBoot/bind mounts/惰性律) |
 | HM          | 41     | ✓     | base(2)+i18n_source(1)+editor(1)+sys/base(13+3 source)+shell(2+1 source)+sys(3)+sec(1)+srv(2)+dev(11)+export(1) |
-| Lib         | 10     | ✓     | enum + fn + schema + caps（T4.0 能力表契约）+ validate（T4.1 Result 铁路）+ targets（T19.1 事实源普查）+ deploy（T21.1 部署面普查）+ overlays（T24.2 overlay 局部性普查）+ version（T25.2 nix-types version 契约——rev 答 where、version 答 what，bump 两文件刻意决定）+ orc（T28 orc wallust copy-emitter 消费契约——七站全契约，首跑抓 swaync 空 activation） |
+| Lib         | 11     | ✓     | enum + fn + schema + caps（T4.0 能力表契约）+ validate（T4.1 Result 铁路）+ targets（T19.1 事实源普查）+ deploy（T21.1 部署面普查）+ overlays（T24.2 overlay 局部性普查）+ version（T25.2 nix-types version 契约——rev 答 where、version 答 what，bump 两文件刻意决定）+ orc（T28 orc wallust copy-emitter 消费契约——七站全契约，首跑抓 swaync 空 activation）+ orc-guard（T30 include-intent 守卫消费契约——三代工具库回路收口：T28 抓缺陷 → T29 守卫回馈上游 05c658f → 本轮消费回来） |
 | Integration | 1      | ✓     |                                                                         |
 | **nmt**     | **16** | **✗** | exp/sys/base(11)+shell(2)+app/editor(1)+srv(2)；T27.2 +1：ripgrep——fork `--` 守卫的消费级回归证明（leading-dash needle） |
-| **Total**   | **99** |       | VM 83 + nmt 16（另有 2 个仓库卫生 checks：pre-commit-check + docs-ssot-check）→ 101 checks（T28 +1：lib_shared_orc——七站 wallust copy-emitter 消费契约，首跑抓 swaync 空 activation〔include 零匹配的死寂失效模式〕，模块合成条目修复；T27.2 前序：nmt_home_core_exp_sys_base_ripgrep——T26 守卫补丁的消费级回归证明；T25.2 前序：lib_shared_lang_version；T24.2 前序：lib_shared_overlays） |
+| **Total**   | **100** |       | VM 84 + nmt 16（另有 2 个仓库卫生 checks：pre-commit-check + docs-ssot-check）→ 102 checks（T30 +1：lib_shared_orc_guard——orc include-intent 守卫消费契约〔lock 答 WHERE、测试答 WHAT〕+ swaync 合成条目退役〔swaync-config c8818d9 placeholder 采纳——干净表示〕；T28 +1：lib_shared_orc——七站 wallust copy-emitter 消费契约，首跑抓 swaync 空 activation〔include 零匹配的死寂失效模式〕；T27.2 前序：nmt_home_core_exp_sys_base_ripgrep；T25.2 前序：lib_shared_lang_version；T24.2 前序：lib_shared_overlays） |
