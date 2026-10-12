@@ -413,17 +413,6 @@ waybarResult = shared.orc.mergeHomeFiles (
 home.activation.waybarWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] waybarResult.activation;
 ```
 
-受 orc 管理的组件：waybar · rofi · swaync · kitty · cava · quickshell · hyprland
-
-契约测试（T28，第 99 号 `lib_shared_orc`）：七站全消费契约经生产模块一次
-`homeManagerConfiguration` 求值锁定——dag 条目存在 + writeBoundary 承重序 +
-`run cp --remove-destination <树>/<rel> "$HOME/<dest>/<rel>"` 全行（上游移文件
-/ include 腐烂 / destPrefix 拼写任一即红）+ `run chmod u+w` 可写位。swaync 站
-的 FileMap 合成条目（树无 placeholder 期间的植物源 = wallust 模板；树长出
-placeholder 后按合并序自动退役）：见
-`home/wm/hyprland/theme/swaync.nix` 与
-`docs/feedback/swaync-config-placeholder.patch`（配仓侧 @import 修复）。
-
 ### 7. 用户环境层 — home/env
 
 `home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的用户域 payload 行（`platform/*/home/<arch>.nix`）中与 `home/core` 并列导入：
