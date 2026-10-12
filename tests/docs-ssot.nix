@@ -121,6 +121,47 @@ let
       fact = "hosts count sentence";
       needle = "当前承载 **${t hostsCount} 台主机**（nixos · vm · darwin · wsl · nixos-wsl）";
     }
+    # T28: README's own per-plane table rows — these had drifted
+    # silently through T19–T27 (Lib claimed 5 while the live count
+    # was 9) because only the MATRIX file's rows were anchored.
+    # Same ERE shape as the matrix-row anchors below, adapted to the
+    # README table's prefix column.
+    {
+      file = "README";
+      kind = "E";
+      fact = "README plane-table row · smoke";
+      needle = "\\| Smoke +\\| +\\`test_\\` +\\| +${t planeCounts.smoke} +\\|";
+    }
+    {
+      file = "README";
+      kind = "E";
+      fact = "README plane-table row · nixos";
+      needle = "\\| NixOS +\\| +\\`nixos_\\` +\\| +${t planeCounts.nixos} +\\|";
+    }
+    {
+      file = "README";
+      kind = "E";
+      fact = "README plane-table row · home";
+      needle = "\\| HM +\\| +\\`home_\\` +\\| +${t planeCounts.home} +\\|";
+    }
+    {
+      file = "README";
+      kind = "E";
+      fact = "README plane-table row · lib";
+      needle = "\\| Lib +\\| +\\`lib_\\` +\\| +${t planeCounts.lib} +\\|";
+    }
+    {
+      file = "README";
+      kind = "E";
+      fact = "README plane-table row · integration";
+      needle = "\\| Integration +\\| +\\`integration_\\` +\\| +${t planeCounts.integration} +\\|";
+    }
+    {
+      file = "README";
+      kind = "E";
+      fact = "README plane-table row · nmt";
+      needle = "\\| \\*\\*nmt\\*\\* +\\| +\\`nmt_\\` +\\| +\\*\\*${t planeCounts.nmt}\\*\\* +\\|";
+    }
     # test-matrix — per-plane section headers (fixed strings)
     {
       file = "MATRIX";

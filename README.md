@@ -101,7 +101,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 98 tests + pre-commit + docs-ssot = 100 checks   │
+│  6 平面 · 99 tests + pre-commit + docs-ssot = 101 checks   │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -306,16 +306,16 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **100 checks = 98 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **101 checks = 99 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
 | Smoke       | `test_`        | 1      | QEMU           | 基本系统完整性                 | ~1 min   |
-| NixOS       | `nixos_`       | 29     | QEMU           | platform/nixos/* 模块 + 系统服务 | 2–10 min |
+| NixOS       | `nixos_`       | 30     | QEMU           | platform/nixos/* 模块 + 系统服务 | 2–10 min |
 | HM          | `home_`        | 41     | QEMU           | home/* 包安装 + 运行时行为     | 2–8 min  |
-| Lib         | `lib_`         | 5      | QEMU 256MB min | lib/shared 纯 Nix 表达式       | <1 min   |
+| Lib         | `lib_`         | 10     | QEMU 256MB min | lib/shared 纯 Nix 表达式（含 orc 消费契约，T28） | <1 min   |
 | Integration | `integration_` | 1      | QEMU full      | NixOS + HM 联合激活            | 5–15 min |
-| **nmt**     | `nmt_`         | **15** | **✗ 零 VM**    | HM dotfile 内容断言（纯 eval） | <10 s    |
+| **nmt**     | `nmt_`         | **16** | **✗ 零 VM**    | HM dotfile 内容断言（纯 eval） | <10 s    |
 
 **nmt-Plane 特点：** 纯 Nix eval，无 QEMU，无 KVM，利用 `scrubDerivations` 将包替换为 `@pkg-name@` 占位符，避免触发真实构建（白名单外的包一律擦洗）。适合 CI 最快反馈路径。
 
@@ -377,9 +377,9 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 100 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 101 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-4. **测试覆盖** — 98 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 99 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（10 阶段，最大并行）
@@ -401,7 +401,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，T15.1 面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （100 checks 必须被平面或杂项清单拥有——新测试
+    │           （101 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1）
@@ -459,7 +459,7 @@ push / PR
 > 四处坏测试引用）。
 >
 > **深层求值的面分片形态**（T15.1，run #338 + 首个 120m 窗 run 证据链）：单进程
-> `nix flake check` 在单进程内累积全部 100 checks 的活跃求值态——本地 4GB 沙箱
+> `nix flake check` 在单进程内累积全部 101 checks 的活跃求值态——本地 4GB 沙箱
 > 在第 9 个 derivation 处 OOM（实测 anon-rss ~2GB 且持续增长），7GB runner 处于
 > 临界边缘慢爬（run #338 90 分钟超时；首个 120m 窗 run 在 49min+ 仍在求值）；
 > 同树同日的 output-faces 腿（同冷 store、同 inputs）1m52s 完成——因为每个
@@ -729,6 +729,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 - [x] 首绿封档 + 上游回馈包（T26：**双红清偿弧的验收与生态参与的第三方向**。对账前置：redskaber 已采纳 T25〔20a59b3——树哈希与 evolve/p7 字节级一致，回馈路径连续第九轮验证〕。**首绿裁决〔pipeline.md 裁决记录〕**：run 38192402014〔c44cde9〕全 14 作业全绿——**首次全绿**：parity 腿绿〔两字段身份注入后 primary == colmena 在 CI 成立——parity 门生命周期四阶段〔设计捕获 → 两跑裁决 → 修复 → 绿〕全部在生产 run 走完〕+ darwin 腿绿〔darwin 闭包首次在 macOS runner 原机构建成功，含 cutter_patched 的 aarch64-darwin 实例；整 run ~67 分钟，两条闭包腿 ~1h2m/~1h7m——冷构建成本即缓存轴的活体基线〕；run 38234435660〔20a59b3〕复绿且热跑〔T25 求值期机器不进闭包 → 两 commit 间闭包零漂移 → MNC 跨 run 全命中，最长腿 3m9s——零漂移周与漂移周的缓存画像对照，attic phase-2 的增益空间正是后者〕；第 97 号测试〔lib_shared_lang_version〕CI 首验绿。三段源码引证闭合机制链〔nixpkgs flake.nix 的 libVersionInfoOverlay + nixos eval-config.nix 的 `lib ? import ../../lib` 默认 + colmena eval.nix 的无 lib import〕、两字段两类漂移的 derivation 级证据、mkColmenaNode 两行注入 workaround、上游三方向〔文档 / knob / 静默 null 至少告警〕——38171937689 双跑裁决取证的上游侧可复用沉淀〕；② nmt assertions `--` 守卫补丁〔~rycee/nmt——三个断言函数 needle 前置无 end-of-options 分隔，`-` 开头 needle 被 grep 当选项〔ripgrep/fd 断言高频形态〕；`git format-patch` 兼容 + `git apply` 检验通过；对合规 needle 零行为变化——nmt 平面 15 成员无感〕+ 投递说明〔sourcehut 邮件通道 + 本仓规避条款退役路径〕。**判据**：回馈 = 测试纪律的副产品——两案证据均来自本仓 CI 与测试体系〔parity 门控发现 colmena 案；nmt 平面编写期踩坑发现 nmt 案〕。**文档链**：pipeline.md 首绿裁决记录 + 本条目 + 深入文档索引行；测试计数不变〔97/99——文档轮，T23.3 先例〕〕）
 
 - [x] nmt 消费闭环 + fork 自测试电池（T27：**依赖层回馈回路的收口——我们出补丁、owner 落 fork、本仓消费回来，三段全通**。对账前置：redskaber 内容级采纳 T26〔9d817b7——README 首绿裁决 + pipeline 记录入树；docs/feedback/ 粘贴即发制品 owner 编辑性裁剪不入库，经 web 下载接口存档；顺带 pipeline 列表标记修复 + roadmap owner→redskaber 规范化，回馈路径连续第十轮〕；**nmt fork 双段发现**：`25fe4c8 fix(assertions): pass -- before grep patterns`——T26 补丁已由 owner 落进自家 fork〔正是本仓规避 sourcehut 403 的镜像消费源〕——回馈的下半场只差 lock bump。**T27.1 fork 自测试电池**（evolve/t27-selftest，4 files +357）：测试框架测试自己——39 案三类〔正路径 15 + 负路径 12（**框架必须能在该红处红**——测试框架的失效即失效）+ 对抗性 needle 9（T26 回归类：`--smart-case`/`-x`/裸 `--` 必须按文本匹配 + **镜像案**：缺席的选项样 needle 必须仍红——守卫不得变成无条件放行）+ helper 3（normalizeStorePaths 零哈希改写/版本段塌缩 + sourceFile 当前壳可见性）〕；**开发期三坑当场沉淀**：must_fail 漏子壳括号 → 断言的 exit 1 杀整个电池〔括号是承重墙〕；store 平铺陷阱 → `${./battery.sh}` 复制进 store 后 `../bash-lib` 失位 → source 静默失败 24 案全红〔布线失败必须响亮：env 覆盖 + source 后 API 存在性硬验证〕；NIX_STORE 独立模式回退。**T27.2 消费侧闭环**（本仓，第 98 号测试 `nmt_home_core_exp_sys_base_ripgrep`）：lock bump `0aa4699 → 25fe4c8`〔真实求值工具链〕+ 驱动头注与 entry-shape 注释翻转〔CRITICAL 绕行段退役为「钉 rev 即保证」——ripgrep rcfile 段的「去横线」变通退役〕+ 新成员：`programs.ripgrep.arguments → .config/ripgrep/ripgreprc`（每行一 flag 纯文本）断言 `contains = [ "--smart-case" "--colors=auto" ]`——**消费级回归证明**：needle 经 `contains` → escapeShellArg → assertFileContains → `grep -qF --` 全链流经守卫。**验证电池**（rootless 真实求值）：fork 电池 39/39 绿〔standalone + nix build 双模式 + report 入 $out〕+ 变异检查〔撤守卫 → 恰三案选项样 needle 红——精确归因；消费侧变异：`--override-input nmt …/0aa4699` 回旧 rev → grep `unrecognized option '--colors=auto'` 原样复现——T26 记录的失败模式在生产消费链上钉死〕；nmt 面 16 员全绿〔新 rev 下〕；lib 面 9 员 drv 哈希与 9d817b7 基线**逐一相同**〔deploy c0nkli9m / overlays 65r63kfv / version fhrc4wcg——T27 delta 不进 lib 闭包，CI 绿裁决严格传递；openldap tar chown 为 rootless 沙箱固有限制（GitHub runner 真根可过——CI 已证）〕；parity 穿透 bump 成立〔r48lflqp 双侧〕；顺带清偿：matrix nmt 表 7 行 check 名/路径陈旧〔`nmt_home_core_base_*`〕对齐 registry 实名。**计数链**：97→98 tests / 99→100 checks〔nmt 15→16——README 六处 + matrix 段头/行/Total/合计 + tree.md + ci.yml〕；docs/tests/nmt.md 新增「本仓消费形态」节〔镜像缘起 + 守卫 + fork 自测入口〕〕）
+- [x] orc 消费契约 + swaync 死寂失效修复（T28：**第 99 号测试 `lib_shared_orc`——wallust copy-emitter 的全部七站消费契约，fleet 对 shared.orc 消费的第一个测试**。背景：orc 是第五个自建工具库消费点〔mechanisms.md §6：waybar·rofi·swaync·kitty·cava·quickshell·hyprland 七站 `mergeHomeFiles` copy 发射〕，但 activation 面对既有 fleet 全盲——nmt 面只断言 home-files 符号链接面，copy 发射器的全部职责在激活期 cp 里。**测试形态**：一次 `homeManagerConfiguration` 经生产模块求值〔版本测试纪律：无 mock，真 inputs/shared〕——每站断言 dag 条目存在 + `after = ["writeBoundary"]` 承重序〔cp 不得与它覆盖的符号链接树赛跑〕+ `run cp --remove-destination <树>/<rel> "$HOME/<dest>/<rel>"` 全行〔源树携带文件 × 目的地键 × 旗标三合一：上游移文件/include 腐烂/destPrefix 拼写任一即红〕+ `run chmod u+w`〔wallust 运行时覆写需要可写位〕。**首跑即抓真缺陷**：swaync 站 activation 为空——swaync-config 树无 `wallust/colors-wallust.css` placeholder（对照：waybar/rofi/kitty/cava/quickshell 五树都带已渲染色板），include 零匹配 → 空命令串 → 激活期声称种植物实际什么都不做——**死寂失效模式**（无报错、无主题）。深挖三层：① wallust.toml 声明 `swaync.target = ~/.config/swaync/wallust/colors-wallust.css`——运行时写入需要激活期先种真实可写文件；② style.css 的 `@import` 指向**未渲染模板**（`{{foreground}}` token 字面量）；③ 模板 @define-color 名字与 style.css 引用面错位。**修复双轨**：仓内（`home/wm/hyprland/theme/swaync.nix`）从 wallust-config 模板合成 FileMap 条目——声明式 `//` 合并零 if-else，合并序保树条目胜出〔配仓长出 placeholder 即自动退役，零维护〕；仓外（`docs/feedback/swaync-config-placeholder.patch`，git format-patch 单 commit 双文件：placeholder〔waybar 同主题渲染色板 + style.css 额外引用的 foreground/color12/color1〕+ @import 改指种植目标；干净基座 bec6d3d `git apply --check` 验证通过）。**两个语言层沉淀**：① `lib.hasInfix` 内部经 `builtins.match` 构建 regex——Nix 语言禁 match 模式引用 store 路径，含 store 路径的 needle（全部源路径都是）即 throw——测试内改用纯子串搜索（substring 比较，上下文无关）；② rootless 沙箱 flake 源指纹缓存对工作树变异不失效——变异检查走 getFlake 工作树直读通道（独立验证器）。**变异检查三连**（工作树直读通道，精确归因）：撤合成 → 恰 swaync EMPTY-ACTIVATION 红；include 腐烂 → 恰 rofi 红；destPrefix 拼写 → 恰 waybar CP-SRC/DST-MISMATCH 红。**顺带清偿**：README 平面表三处陈旧计数〔NixOS 29→30 / Lib 5→10 / nmt 15→16——无锚漂移，docs-ssot 盲区〕修正 + docs-ssot.nix 补 README 平面表行锚（六行 ERE——防复发）。**验证**：8 plants 求值级全绿 + 三变异红 + lib 面 9 员 drvPath 与基线逐一相同〔T28 delta 不进 lib 面〕+ nmt 面 16 员不动〔swaync 模块不在 nmt 面〕+ parity 穿透成立 + docs-ssot/pre-commit/nixfmt 构建绿；lib 面 VM 构建为 rootless openldap chown 环境门控〔T27 已裁决，CI 真根证〕。**计数链**：98→99 tests / 100→101 checks〔README 六处 + 平面表 + matrix 段头/行/Total + tree.md + mechanisms §6〕〕）
 
 ### 被拒绝的路线图项（裁决记录）
 

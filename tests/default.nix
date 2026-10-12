@@ -227,6 +227,12 @@ let
     # substitution proves every patched member reads the instance it
     # was applied to, never a foreign package-set handle.
     lib_shared_overlays = nixosTest ./lib/shared/overlays.nix;
+    # T28: the orc wallust copy-emitter consumption contract — all
+    # seven §6 sites evaluated through the production theme modules
+    # (one homeManagerConfiguration, no mocks): the dag entry, its
+    # writeBoundary ordering, the cp --remove-destination plant line
+    # (source tree × destination key) and the writable bit.
+    lib_shared_orc = nixosTest ./lib/shared/orc.nix;
   };
 
   # ══════════════════════════════════════════════════════════════════

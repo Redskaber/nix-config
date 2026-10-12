@@ -116,15 +116,15 @@ nix-config/
 ├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（wslview —— wslu 归档后的最小 shim）
 │
-├── tests/                  # 测试层（6 平面，98 tests + 2 仓库卫生 checks = 100 checks）
+├── tests/                  # 测试层（6 平面，99 tests + 2 仓库卫生 checks = 101 checks）
 │   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks（nixosTest runner）
 │   ├── test_calc.nix       # Plane 0: Smoke 基线
 │   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM，30 tests）
 │   ├── home/               # Plane 2: HM-Plane（QEMU VM + packages，41 tests）
-│   ├── lib/                # Plane 3: Lib-Plane（纯 Nix eval，QEMU 256 MB minimal，9 tests）
+│   ├── lib/                # Plane 3: Lib-Plane（纯 Nix eval，QEMU 256 MB minimal，10 tests）
 │   ├── integration/        # Plane 4: Integration-Plane（NixOS + HM 联合，1 test）
 │   ├── fixtures/           # eval 期 secret 存在性 fixture（pathExists 探针）
-│   └── nmt/                # Plane 5: nmt-Plane（零 VM，纯 eval，15 tests）
+│   └── nmt/                # Plane 5: nmt-Plane（零 VM，纯 eval，16 tests）
 │       ├── default.nix     # buildHomeManagerTest 实现 + 注册表（含包擦洗白名单）
 │       └── home/           # 测试文件（lib.nmt.buildHomeManagerTest）
 │
