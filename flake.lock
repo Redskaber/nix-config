@@ -85,6 +85,32 @@
         "type": "github"
       }
     },
+    "colmena": {
+      "inputs": {
+        "flake-compat": [],
+        "flake-utils": [
+          "pdshell",
+          "flake-utils"
+        ],
+        "nix-github-actions": [],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "stable": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1790091756,
+        "narHash": "sha256-YkaWZQV/OO4ZEmin+RHZ/6qFfBah/qSSXduTQMZTNR0=",
+        "type": "tarball",
+        "url": "https://github.com/zhaofengli/colmena/archive/948491ae031dc0e2e61f0982943dd9964a724bdb.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://github.com/zhaofengli/colmena/archive/948491ae031dc0e2e61f0982943dd9964a724bdb.tar.gz"
+      }
+    },
     "commit-config": {
       "flake": false,
       "locked": {
@@ -826,17 +852,17 @@
     },
     "nix-types": {
       "locked": {
-        "lastModified": 1786354024,
-        "narHash": "sha256-goQ/YaKRJfRmpklM2Sjx85ZtydDeJH84QZ91L96siqs=",
+        "lastModified": 1791763826,
+        "narHash": "sha256-c4zTDyXMy+w2kHkW5wvg7fuQxIR06pu4ZBv0OSyd9Cw=",
         "owner": "Redskaber",
         "repo": "nix-types",
-        "rev": "815fc3fa921c243ec0dc9efd39201d05f0990a8a",
+        "rev": "a1a2a1392f64a1943bb741b0184be95a21767a21",
         "type": "github"
       },
       "original": {
         "owner": "Redskaber",
         "repo": "nix-types",
-        "rev": "815fc3fa921c243ec0dc9efd39201d05f0990a8a",
+        "rev": "a1a2a1392f64a1943bb741b0184be95a21767a21",
         "type": "github"
       }
     },
@@ -1504,32 +1530,6 @@
         "owner": "Redskaber",
         "repo": "zcode",
         "type": "github"
-      }
-    },
-    "colmena": {
-      "inputs": {
-        "flake-compat": [],
-        "flake-utils": [
-          "pdshell",
-          "flake-utils"
-        ],
-        "nix-github-actions": [],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "stable": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1790091756,
-        "narHash": "sha256-YkaWZQV/OO4ZEmin+RHZ/6qFfBah/qSSXduTQMZTNR0=",
-        "type": "tarball",
-        "url": "https://github.com/zhaofengli/colmena/archive/948491ae031dc0e2e61f0982943dd9964a724bdb.tar.gz"
-      },
-      "original": {
-        "type": "tarball",
-        "url": "https://github.com/zhaofengli/colmena/archive/948491ae031dc0e2e61f0982943dd9964a724bdb.tar.gz"
       }
     }
   },

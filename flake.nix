@@ -110,9 +110,15 @@
     # is empty), so a 40-hex SHA is the only pinnable form. Same family as
     # the action-SHA contract (9ebe543): the weekly update stops dragging
     # nix-types HEAD, upgrades become deliberate decisions; the 732-line
-    # lang battery plus nix-types' own 440-test checks.testSuite are the
+    # lang battery plus nix-types' own 446-test checks.testSuite are the
     # dual safety net that catches a bad bump.
-    nix-types.url = "github:Redskaber/nix-types/815fc3fa921c243ec0dc9efd39201d05f0990a8a";
+    # T25.1: 815fc3f → a1a2a13 (v3.6.0 — the machine-assertable version
+    # identity + PATTERNS.md, adopted upstream). The bump is a TWO-file
+    # deliberate decision by contract (docs/PATTERNS.md pattern #2 in
+    # nix-types): this pin answers WHERE, tests/lib/shared/lang/version.nix
+    # answers WHAT (lib.version == "3.6.0") — either side drifting alone
+    # turns the battery red in one line.
+    nix-types.url = "github:Redskaber/nix-types/a1a2a1392f64a1943bb741b0184be95a21767a21";
 
     # Nix dev Shell manager
     pdshell.url = "github:Redskaber/pdshell";

@@ -208,6 +208,11 @@ let
     # T4.1: the Result railway contract (ok/err lanes, front-end
     # precedence, boundary throw) — typed error handling has a test now.
     lib_shared_lang_validate = nixosTest ./lib/shared/lang/validate.nix;
+    # T25.2: the nix-types version contract (the lock's WHERE and the
+    # battery's WHAT must agree) — a bump is a two-file deliberate
+    # decision by construction; either side drifting alone is a
+    # one-line red naming both.
+    lib_shared_lang_version = nixosTest ./lib/shared/lang/version.nix;
     # T19.1: the fact-source census (hosts/ × the classifier's caps —
     # exactly one fact shape per bare-metal host, zero for hosted-
     # elsewhere forms, never both).

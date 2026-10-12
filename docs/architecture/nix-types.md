@@ -78,7 +78,8 @@ match。三条证据（均一手核验）：
 | `serialize` | 实例 → flat JSON-safe（tag/typename/value） | debug 面（`nix eval .#debug`）需要 dump 平台表 / 策略表时的现成原语 |
 | 多实例 match + specificity | `Red._` 优先于 `._._`，列表/attrset 双形态 | 「平台 × 版本」二维分派出现时（hyprland plugins 是一维先行例） |
 | `isType` 指纹 | `__meta__.variantNames` 区分同名不同变体集 | 测试断言需要枚举同一性判等时 |
-| `lib.version` 断言 | 上游 3.6.0 起的顶层身份串（见第 5 节） | lock bump 时在 lang 电池补 `== "3.6.0"` 断言——rev 答 where，version 答 what |
+
+（T25 前 `lib.version` 断言曾在此表闲置——触发场景已兑现，见第 5 节落地记录。）
 
 ### 5. 上游文档债清偿与版本身份契约（T23，2026-10-12）
 
@@ -98,8 +99,15 @@ match。三条证据（均一手核验）：
   `nix-types-${version}` 与 demo 横幅同源（原手工 `v3.4` 落后两个
   版本）。**验证从静态升级为求值**：沙箱 rootless nix
   （`~/nixroot/nx`，2.35.2）幸存复用，446/446 真实求值绿。
-- **下游断言（待 owner push 后）**：nix-types 3.6.0 入 GitHub 后
-  bump 本仓 lock rev 时，lang 电池同步落 version 契约断言
-  （`inputs.nix-types.lib.version == "3.6.0"`，第 96 号测试候选）——
-  rev 钉住「哪里」，version 断言钉住「什么」，坏 bump 从
-  「三层数下游的 attribute missing」提前为「点名漂移的一行红」。
+- **下游断言（已落地，T25）**：owner 已 push nix-types
+  （`a1a2a13`——T23 双 commit squash 采纳），本仓 lock bump
+  （`815fc3f → a1a2a13`，flake.nix 钉点 + narHash 同步）且 lang 电池
+  落地 version 契约断言：`lib_shared_lang_version`（第 97 号测试，
+  tests/lib/shared/lang/version.nix——原登记的 96 号候选被 T24 的
+  `lib_shared_overlays` 占位，顺延一位）断言
+  `inputs.nix-types.lib.version == "3.6.0"`——rev 钉住「哪里」，
+  version 断言钉住「什么」，坏 bump 从「三层数下游的 attribute
+  missing」提前为「点名双侧的一行红」（变异检查实测：假 expected
+  → throw 同时报出 lock rev / expected / observed 三方 + 双文件
+  和解指引）。bump 的两文件刻意决定形态：flake.nix 钉点 + 测试
+  expected——单侧漂移即红。
