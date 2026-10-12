@@ -101,7 +101,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 95 tests + pre-commit + docs-ssot = 97 checks    │
+│  6 平面 · 96 tests + pre-commit + docs-ssot = 98 checks    │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -306,7 +306,7 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **97 checks = 95 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **98 checks = 96 tests + 1 pre-commit-check + 1 docs-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
@@ -377,9 +377,9 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 97 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 98 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-4. **测试覆盖** — 95 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 96 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（10 阶段，最大并行）
@@ -401,7 +401,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，T15.1 面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （97 checks 必须被平面或杂项清单拥有——新测试
+    │           （98 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1）
@@ -459,7 +459,7 @@ push / PR
 > 四处坏测试引用）。
 >
 > **深层求值的面分片形态**（T15.1，run #338 + 首个 120m 窗 run 证据链）：单进程
-> `nix flake check` 在单进程内累积全部 97 checks 的活跃求值态——本地 4GB 沙箱
+> `nix flake check` 在单进程内累积全部 98 checks 的活跃求值态——本地 4GB 沙箱
 > 在第 9 个 derivation 处 OOM（实测 anon-rss ~2GB 且持续增长），7GB runner 处于
 > 临界边缘慢爬（run #338 90 分钟超时；首个 120m 窗 run 在 49min+ 仍在求值）；
 > 同树同日的 output-faces 腿（同冷 store、同 inputs）1m52s 完成——因为每个
@@ -723,6 +723,8 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 - [x] colmena 发射等价性首跑修复（T22.1：**run 38171937689 裁决——parity 门控首跑捕获真实漂移，根因读源定案**。对账前置：T21.1 已被 owner 采纳〔2eaed42，tree hash 字节级一致，回馈路径连续第五轮验证〕。**根因链**〔三段源码证据，非猜测〕：primary 走 `nixpkgs.lib.nixosSystem`——nixpkgs/flake.nix 以 `lib/flake-version-info.nix self` 扩展 lib〔`trivial.versionSuffix = ".${substring 0 8 lastModifiedDate}.${shortRev}"`，值取锁定 nixpkgs 的 sourceInfo〕→ toplevel 戳 `26.05.20261007.2efa67f`；colmena 0.5 hermetic 求值 `import (npkgs.path + "/nixos/lib/eval-config.nix")` 不转发 lib〔src/nix/hive/eval.nix〕→ raw lib 读不到源树缺失的 `.version-suffix` → 回退 `"pre-git"` → `26.05pre-git`。同一模块树、同一 nixpkgs、两个 lib 身份、两个 derivation——T20.1 的假设清单〔注入模块惰性〕没有覆盖 flake-lib 身份这一项。**修复**：mkColmenaNode 注入 `system.nixos.versionSuffix = nixpkgs.lib.trivial.versionSuffix`——单源取自 flake input 自己的 lib〔nixpkgs 改公式两边同跟踪；release 两侧本就同读 .version 文件，只有 suffix 曾漂移〕。**静态证明**：flake.lock 的 nixpkgs sourceInfo〔2026-10-07 / 2efa67f〕经 overlay 公式精确重现 run 日志中 primary 的观察串；parity 步提示语补 version-identity 一句〔下次这类漂移秒诊〕。**门控按设计工作**：首跑不是噪音，是它存在的目的——部署面曾再发射 CI 未构建的闭包）
 - [x] CI 构建失败的根因归因步（T22.2：**run 38171937689 的第二个盲区——darwin 腿 build 侧失败的根 derivation 无法匿名定名**。Actions 日志已登录门控〔"Sign in to view logs"〕，annotations 只携带 workflow 自己的消息——报告者贴不出根错误，审计只能从级联拓扑推断失败家族〔user-environment/fonts/LibraryFonts/fontconfig/applications 全部 "1 dependency failed"——共享单包；可见 cache-miss 构建 = texliveMinimal 的 fmt 族〕。**修复**：host-toplevels 与 darwin-toplevels 两条 nix-fast-build 腿的失败分支追加 keep-going 归因——`nix build --keep-going --no-link` 逐主机驱动构建越过首个失败，sed 提取 `error: build of '<drv>'` 根因行，每个真实失败的 derivation 以 `::error` annotation 点名〔T9.2 归因哲学从成员名延伸到 derivation 名〕；store 已持有 nix-fast-build 的成功构建，只重建失败者——分钟级代价。**环境侧证据记档**：GitHub cache 服务当日故障〔restore 400 ×2 / save 失败 ×2〕+ macOS arm64 容量告警 + nixpkgs-26.05-darwin 通道现指 10-11 commit〔锁 10-07〕——darwin aarch64 替换缺口是两起 90 分钟事故同根因面，缓存维度失分不变；顺带裁决：darwin toplevel 名 `.dirty` = nix-darwin tarball 型输入无 rev〔纯命名，owner 输入表决策，记档不动〕）
 - [x] nix-types 版本身份契约 + 消费模式文档（T23：**P2 生态回馈——「可继承」维度 5.5→7 的最短路径**。对账前置：T22.1/T22.2 已被 owner 采纳〔91da892，tree hash 字节级一致，回馈路径连续第六轮验证——九项演进全部回家〕。**交付形态**：nix-types `evolve/t23-version-identity` 分支两 commit〔`d973191` 版本身份 + `2fd8779` PATTERNS.md，基于 815fc3f〕，经 web 完整包下载接口交付〔沙箱无 GitHub 凭据，push 归 owner〕。**T23.1 版本身份（3.6.0，minor——纯增量）**：版本号此前只活在 README/CHANGELOG 标题与 commit message 里——消费者能钉 rev 却无法编程式验证钉到了什么；`lib/version.nix` 单源 `version = "3.6.0"` 顶层合并进 `core // adt // version`，第 17 号测试套件六法则锁定〔存在性 / semver 形状〔恰好 major.minor.patch 全数字——下游 `==` 断言永简〕/ 钉值真话纪律〔忘 bump 测试先红，bump 测试不 bump 版本同红〕/ 不泄漏边界 ×3〔枚举类型面、实例记录、`__meta__`——v3.0 元数据清理线保持干净，version 只在顶层旅行〕〕；推导名 `nix-types-${version}` 与 demo 横幅同源〔原手工 v3.4 落后两版，单源后永不再漂〕。**T23.2 PATTERNS.md 重写**：恢复随沙箱重建丢失的 T6.4 交付物〔原稿 61bc6ce 无 push、对象库无存证、GitHub HEAD 未动——彻底丢失，机器契约文档第 5 节死引用同步修正〕；七模式全为生产实测形态〔本仓 16 表舰队〕，每模式陈述其防御的失效模式：pin rev〔40-hex SHA，升级 = lock diff 里的刻意决定〕/ version contract〔v3.6+，rev 答 where、version 答 what〕/ sibling follows〔防 nix-types_2 实例漂移〕/ 策略表〔enum 载荷行携带 caps/policy/sets——数据替代 if/else 阶梯〕/ Result 铁路〔unwrapOrElse throw 单 throw 边界〕/ 穷尽分派〔无 silent `_`〕/ **何时不要 enum 化**〔判例清单：默认值作用域/插值消费面/诊断质量 + parse 桥重开条件——本仓 source-scopes 裁决的知识沉淀〕。**验证升级**：沙箱 rootless nix〔`~/nixroot/nx`，unshare + pivot_root 方案，2.35.2 + 16,729 store 条目〕幸存复用——446/446〔440+6〕**真实求值**绿，历轮静态复核纪律首次升级为求值验证。**下游断言（待 owner push 后）**：3.6.0 入 GitHub → bump lock rev → lang 电池同步落 `lib.version == "3.6.0"` 断言〔第 96 号候选〕，坏 bump 从「三层数下游 attribute missing」提前为「点名漂移的一行红」〕）
+
+- [x] parity 第二裁决 + overlay 实例局部性（T24：**run 38171937689 复跑双根因清偿——沙箱 rootless nix 首次用于本仓求值取证，历轮静态复核正式升级为真实求值验证**。对账前置：T22.1/T22.2 已入上游 91da892；owner 又以 77c49ed 字节级采纳 T23.3 文档〔tree hash 与 evolve/p5 一致——回馈路径连续第七轮验证〕。**T24.1 revision 身份〔第二类身份漂移〕**：复跑证明 T22.1 修复了 drv 名〔双侧 `26.05.20261007.2efa67f` 一致〕但哈希仍异〔13q85www vs 57la5407〕——本地真实求值复现漂移对后 **derivation 递归 diff 取证**：48 个分歧节点全部收敛到唯一叶子 `nixos-version.drv`——colmena 侧 `@revision@` 保留运行时占位符〔checkPhase 的 grep 异常集随之多放行 `revision@`〕+ 内嵌 json 缺 `nixpkgsRevision`，primary 侧戳完整 40-hex rev——根因是 `flake-version-info.nix` 的**第二个字段** `trivial.revisionWithDefault`：flake lib 走 `self.rev or default`〔= 锁定 rev〕，plain lib 探测 store 源的 `.git`/`.git-revision` 双缺失 → null；级联链 nixos-version → system-path/etc → activate → toplevel。修复 = mkColmenaNode 注入 `system.nixos.revision = nixpkgs.lib.trivial.revisionWithDefault null`〔T22.1 同族第二行——两个字段两类漂移两裁决，均单源取自 flake input 自己的 lib〕。**T24.2 overlay 实例局部性**：T22.2 归因步点名 darwin 腿根因 `7mjhjj4k…-cutter-2.5.0.drv` 要求 `x86_64-linux` 却在 aarch64-darwin 闭包——本地 `derivation show --recursive` **位对位复现**〔本地闭包内 cutter drv 与 CI 失败 drv 哈希一字不差〕；根因链：shared.nix 的 `nixpkgs.overlays` 走 `shared.self.overlays`〔flake 级输出，以 targets.base 单次实例化〕→ patches 里 `cutter_patched = shared.upkgs.cutter…` 的 upkgs = **基础主机的 x86_64-linux 实例**——linux 侧可缓存成员掩盖跨界，cutter_patched 独有 postPatch 哈希永不在缓存 → macOS runner 平台不匹配爆炸；修复 = `prev.cutter`〔实例局部——overlay 契约本身：改谁补谁；base 主机上 `prev.cutter` == 原 `shared.upkgs.cutter`，linux 侧 `upkgs.cutter_patched` 修复前后同为 `7mjhjj…` 字节不变可证〕+ 文件签名去 `shared` 参数〔跨界需求在类型上不可表达〕。**新测试 `lib_shared_overlays`（第 96 号）**：canary 替换实例法——patches 应用到标记 stub 实例〔meta.description = INSTANCE-LOCAL-CANARY，穿透 overrideAttrs 存活〕，每个被补成员必须携带标记，从任何外部句柄取包即失标即红；构造纪律：base-bound shared 刻意传入〔绑定无关性即要点〕；变异检查实测：回退 bug 形态 → census 点名 `cutter_patched` 失标。**验证电池**（rootless nix 真实求值）：parity 修复前 kddnzzsk ≠ mjwh5pp4 → 修复后 `.#colmenaHive.toplevel.nixos.drvPath` == `.#api.host-toplevels.nixos.drvPath`〔等价性为属性——toplevel 哈希经 registry self 通道追踪树内容，已知边界 #10，双侧同移〕；linux cutter_patched 锚点 `7mjhjj…` 前后不变；darwin 闭包重评后 cutter = `h12dbwag…`〔aarch64-darwin〕且**全闭包 9,464 drv 的 system 分布纯 aarch64-darwin（+2 builtin）——跨界类清零**，闭包同时 13,317→9,464〔x86_64-linux 子树整体退场〕；nixfmt v1.5.0 --check 四文件干净〔ca551e8 纪律〕；CI parity 门提示语补两字段身份说明〔下一类漂移秒诊〕。**计数链**：96 tests〔plane3 7→8〕/ 98 checks——锚点全同步〕）
 
 ### 被拒绝的路线图项（裁决记录）
 

@@ -1041,11 +1041,16 @@ jobs:
               echo "The deploy face re-emits a closure CI has not built." >&2
               echo "Inspect what colmena's injected modules changed (deployment" >&2
               echo "options are inert; keys are empty; overlays mkBefore is a" >&2
-              echo "no-op) — and the version identity: the primary stamps the" >&2
-              echo "toplevel through the flake lib (trivial.versionSuffix from the" >&2
-              echo "locked nixpkgs sourceInfo); mkColmenaNode restores that stamp" >&2
-              echo "over colmena's raw eval (T22.1, run 38171937689 — a suffix" >&2
-              echo "difference in the drv names below is this exact class)." >&2
+              echo "no-op) — and the version identity, TWO fields: the primary" >&2
+              echo "stamps the toplevel through the flake lib (trivial." >&2
+              echo "versionSuffix AND trivial.revisionWithDefault — the suffix" >&2
+              echo "names the drv, the revision fills @revision@ and the json's" >&2
+              echo "nixpkgsRevision inside the closure); mkColmenaNode restores" >&2
+              echo "both stamps over colmena's raw eval (T22.1 + T24.1, run" >&2
+              echo "38171937689 and its re-run: a suffix difference in the drv" >&2
+              echo "names below is the first class; equal names with different" >&2
+              echo "hashes is the second — diff the two derivations, the drift" >&2
+              echo "converges on the identity leaf)." >&2
               exit 1
             fi
             echo "parity: $h — $A"

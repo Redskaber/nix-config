@@ -170,13 +170,14 @@ home/core/exp/sys/base/git.nix
 
 > 合计：base(2) + i18n_source(1) + editor(1) + sys/base(13 + 3 source) + shell(2 + 1 source) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(11) + export(1) = **41**
 
-### 3.3 Lib-Plane (7 tests)
+### 3.3 Lib-Plane (8 tests)
 
 | check                                | 验证点                            |
 | ------------------------------------ | --------------------------------- |
 | `lib_shared_shared_{enum,fn,schema}` | 枚举语义 / fn 逻辑 / schema merge |
 | `lib_shared_targets`                | 事实源普查（T19.1）：hosts/ × 分类器 caps——裸金属 NixOS 主机恰一事实源、宿主持有形态零源、双源即红（迁移自身的失败模式即 Law A） |
 | `lib_shared_deploy`                 | 部署面普查（T21.1）：T20.1 仿真升级为锁定测试——Law D 无说谎部署事实〔非 nixosHosts 上的 deploy.nix〕+ 发射覆盖双向精确〔colmenaHive nodes == 分类器 nixosHosts，零硬编码成员表〕+ 用户门存活〔targetUser = 策略用户，ssh 禁 root 禁密码——空或 root 即死门〕；attrNames-only 惰性链〔永不单树求值，drvPath 等价归 CI 门〕 |
+| `lib_shared_overlays`                | overlay 局部性普查（T24.2，run 38171937689 复跑裁决锁定）：canary 替换实例法——patches 应用到标记 stub 实例，每个被补成员〔cutter_patched/openldap/xdg-desktop-portal〕必须携带 canary 标记〔meta.description 穿透 overrideAttrs 存活〕，从任何外部句柄取包即失标即红——overlay 契约：改谁补谁，`prev`/`final` 即所应用实例自己的不动点 |
 
 ### 3.4 Integration-Plane (1 test)
 
@@ -519,7 +520,7 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 | Smoke       | 1      | ✓     |                                                                         |
 | NixOS       | 30     | ✓     | base(11=6+i18n_source+samesource+wsl+portal+sound_gate)+drive(3)+sec(4)+db(4)+hardware(2)+log(1)+security(2)+export(1)+monitor(1)+impermanence(1，T5.14：三组独立 nixosSystem 求值锁定回滚配方/单元排序/设备门/neededForBoot/bind mounts/惰性律) |
 | HM          | 41     | ✓     | base(2)+i18n_source(1)+editor(1)+sys/base(13+3 source)+shell(2+1 source)+sys(3)+sec(1)+srv(2)+dev(11)+export(1) |
-| Lib         | 7      | ✓     | enum + fn + schema + caps（T4.0 能力表契约：真值表/策略选择/穷尽性）+ validate（T4.1 Result 铁路：ok/err 车道/前置优先级/边界 throw/EMPTY 容忍——fixture 双树：provisioned 严格 + empty 放行）+ targets（T19.1 事实源普查：三律——无双重声明/裸金属恰一/宿主代管零源）+ deploy（T21.1 部署面普查：Law D 无说谎事实 + hive 覆盖精确 + 用户门存活） |
+| Lib         | 8      | ✓     | enum + fn + schema + caps（T4.0 能力表契约：真值表/策略选择/穷尽性）+ validate（T4.1 Result 铁路：ok/err 车道/前置优先级/边界 throw/EMPTY 容忍——fixture 双树：provisioned 严格 + empty 放行）+ targets（T19.1 事实源普查：三律——无双重声明/裸金属恰一/宿主代管零源）+ deploy（T21.1 部署面普查：Law D 无说谎事实 + hive 覆盖精确 + 用户门存活）+ overlays（T24.2 overlay 局部性普查：canary 实例法——被补成员必携带所应用实例的标记，跨界句柄即失标即红） |
 | Integration | 1      | ✓     |                                                                         |
 | **nmt**     | **15** | **✗** | base(7)+sys/base(3)+shell(2)+app/editor(1)+srv(2)                       |
-| **Total**   | **95** |       | VM 80 + nmt 15（另有 2 个仓库卫生 checks：pre-commit-check〔nixfmt/statix/deadnix〕+ docs-ssot-check〔T8.1：文档计数锚点契约〕）→ 97 checks（T21.1 +1：lib_shared_deploy——部署面普查三律，T20.1 仿真的锁定升级；T19.1 前序：lib_shared_targets——事实源普查三律） |
+| **Total**   | **96** |       | VM 81 + nmt 15（另有 2 个仓库卫生 checks：pre-commit-check〔nixfmt/statix/deadnix〕+ docs-ssot-check〔T8.1：文档计数锚点契约〕）→ 98 checks（T24.2 +1：lib_shared_overlays——overlay 局部性普查，canary 实例法锁定；T21.1 前序：lib_shared_deploy——部署面普查三律；T19.1 前序：lib_shared_targets——事实源普查三律） |

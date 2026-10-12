@@ -297,26 +297,40 @@ let
       # itself; nothing here duplicates that).
       imports = [ ../../platform/${cshared.platform.tag} ];
 
-      # Version identity (T22.1, run 38171937689 — the parity gate's
-      # first-run verdict): the primary emitter rides nixpkgs' FLAKE
-      # lib — `nixpkgs.lib.nixosSystem` passes the version-aware lib
-      # (nixpkgs/flake.nix extends it with
-      # lib/flake-version-info.nix: trivial.versionSuffix =
-      # ".${lastModifiedDate}.${shortRev}" of the LOCKED nixpkgs), so
-      # its toplevels stamp `26.05.20261007.2efa67f`. colmena 0.5's
+      # Version identity (T22.1 + T24.1, run 38171937689 and its
+      # post-fix re-run — the parity gate's first two verdicts): the
+      # primary emitter rides nixpkgs' FLAKE lib — `nixpkgs.lib.
+      # nixosSystem` passes the version-aware lib (nixpkgs/flake.nix
+      # extends it with lib/flake-version-info.nix), and that
+      # extension carries TWO identity fields. colmena 0.5's
       # hermetic eval imports eval-config.nix RAW (`import (npkgs.path
       # + "/nixos/lib/eval-config.nix")`, no lib argument forwarded —
-      # src/nix/hive/eval.nix), and the plain lib's trivial.versionSuffix
-      # falls back to "pre-git" (no .version-suffix file in the store
-      # source) — the re-emitted closure drifted:
-      # 26.05pre-git vs 26.05.20261007.2efa67f, a deploy face
-      # re-emitting a closure CI has not built. Restore the identity
-      # link here: stamp the SAME value the primary gets, single-
-      # sourced from the flake input's own lib — nixpkgs ever changing
-      # the suffix computation propagates to both faces together.
-      # (release needs no line: both evals read the same .version
-      # file, "26.05" either way — only the suffix ever drifted.)
+      # src/nix/hive/eval.nix), and the PLAIN lib answers neither.
+      # Each field drifted in its own run, each its own class:
+      #
+      #   trivial.versionSuffix (T22.1) — flake: ".${lastModifiedDate}.
+      #   ${shortRev}" of the locked nixpkgs; plain lib: "pre-git"
+      #   fallback. The toplevel drv NAME drifted (26.05pre-git vs
+      #   26.05.20261007.2efa67f) — fixed by the line below.
+      #
+      #   trivial.revisionWithDefault (T24.1) — flake: `self.rev or
+      #   default`, the locked 40-hex rev; plain lib: probes the store
+      #   source for .git/.git-revision, finds neither (a
+      #   flake-fetched tarball) → null. The re-run then proved the
+      #   NAMES equal but the drv HASHES still apart: the derivation
+      #   diff converged on ONE leaf — nixos-version — whose colmena
+      #   side kept the runtime "@revision@" placeholder (and dropped
+      #   nixpkgsRevision from the embedded json) while the primary
+      #   stamped the locked rev, cascading through system-path/etc/
+      #   activate into every toplevel. Fixed by the second line.
+      #
+      # Both restored here, single-sourced from the flake input's own
+      # lib — nixpkgs ever changing either computation propagates to
+      # both faces together. (release/codeName need no lines: both
+      # evals read the same .version file — only these two fields
+      # ever drifted.)
       system.nixos.versionSuffix = nixpkgs.lib.trivial.versionSuffix;
+      system.nixos.revision = nixpkgs.lib.trivial.revisionWithDefault null;
 
       # Policy-derived default, wholesale-merged UNDER the fact file
       # (hosts/<h>/deploy.nix overrides, the shared.nix ⊕ hosts/ shape):

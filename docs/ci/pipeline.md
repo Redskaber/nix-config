@@ -414,3 +414,72 @@ Security Audit + Lint & Evaluate），3 红——两红是两条新腿的首跑�
 的 `.dirty` = nix-darwin 以 tarball 型输入锁定（lock 无 rev →
 `self.shortRev or "dirty"`）——纯命名装饰，drv 在仓内自洽；输入形态是
 owner 的输入表决策，记档不动。
+
+### 事故裁决记录 — run 38171937689 复跑（2026-10-12 审计：parity 第二裁决 + darwin 根因定名）
+
+受测对象：main @ 91da892（T22.1/T22.2 修复自身的 run——两红皆是
+前轮修复按设计交出的下一层证据，本轮双双清偿）。取证工具升级：沙箱
+rootless nix（`~/nixroot/nx`，unshare + pivot_root，2.35.2）首次用于
+本仓——历轮静态复核（读源论证 + 字符串仿真）从本轮起正式升级为
+真实求值取证（T23 轮仅 nix-types 独立仓用过）：
+
+1. **Parity 第二裁决（T24.1）— 名一致、哈希仍异 → derivation 递归
+   diff 定案**。复跑：`nixos` primary `13q85www…` vs colmena
+   `57la5407…`——**drv 名双侧完全一致**（`-nixos-system-nixos-
+   26.05.20261007.2efa67f.drv`，T22.1 的 versionSuffix 修复生效），
+   哈希仍异：T22.1 修复了名字，漂移转移进闭包内容。本地求值复现
+   漂移对（kddnzzsk ≠ mjwh5pp4——与 CI 不同树上的同构漂移，见下
+   #3 边界注），`nix derivation show` 双侧对比 + 递归下钻：**48 个
+   分歧节点全部收敛到唯一叶子** `nixos-version.drv`——colmena 侧
+   `@revision@` 保留运行时占位符（checkPhase 的 grep 异常集随之多
+   放行 `revision@`、内嵌 json 缺 `nixpkgsRevision` 字段），primary
+   侧 substitute 进完整 40-hex rev——级联链 nixos-version →
+   system-path / etc → activate → toplevel。根因：
+   `lib/flake-version-info.nix` 的**第二个身份字段**
+   `trivial.revisionWithDefault`——flake lib 走 `self.rev or default`
+   （= 锁定 rev `2efa67fd…`），plain lib 探测 store 源的 `.git` /
+   `.git-revision` 双缺失（flake tarball 源）→ null。**两个字段、
+   两次漂移、两裁决**：versionSuffix 漂移改 drv 名（首跑可见），
+   revision 漂移改闭包内容（复跑可见）。修复：mkColmenaNode 注入
+   `system.nixos.revision = nixpkgs.lib.trivial.revisionWithDefault null`
+   （T22.1 同族第二行，单源 flake input 自己的 lib）。**真实求值
+   验证**：修复后 `.#colmenaHive.toplevel.nixos.drvPath` ==
+   `.#api.host-toplevels.nixos.drvPath`（等价性为不变量）。parity
+   门提示语同步扩为两字段身份说明——第三类漂移出现时 diff 双 drv
+   即秒诊。
+2. **Darwin 根因定名（T24.2）— keep-going 归因首战告捷 → 位对位
+   复现 → overlay 实例局部性清偿**。复跑红腿：T22.2 的 `--keep-going`
+   归因步让根因以 `::error` annotation 可见——`cutter-2.5.0.drv`
+   要求 `x86_64-linux` 却在 `aarch64-darwin` 构建闭包（平台不匹配，
+   构建侧即刻失败）。本地 `nix derivation show --recursive` 复现：
+   darwin 闭包内 cutter drv 与 CI 失败 drv **哈希一字不差**
+   （`7mjhjj4k…`），`system = x86_64-linux`，postPatch 确认为
+   overlays 的 `cutter_patched`。根因链（读源定案）：shared.nix 的
+   `nixpkgs.overlays` 引用 `shared.self.overlays`——**flake 级
+   overlays 输出，以 targets.base（基础工作站 IR）单次实例化**——
+   patches 里 `cutter_patched = shared.upkgs.cutter…` 的 upkgs 因此
+   恒为基础主机的 x86_64-linux 实例，无论 overlay 被应用到哪个
+   主机的 pkgs/upkgs。**掩盖机制**：同类的跨界成员（home/env/base
+   的 gcc/gdb/rustc 等）全部可从 cache.nixos.org 替换（替换不要求
+   平台匹配）——跨界静默；cutter_patched 的 postPatch 造出独有
+   哈希，永不在缓存 → 必须本地构建 → macOS runner 平台不匹配
+   即刻爆炸。修复：`cutter_patched = prev.cutter…`——实例局部
+   （overlay 契约本身：改谁补谁，`prev` 即所应用实例自己的不动点）
+   ；文件签名去 `shared` 参数（跨界需求在类型上不可表达）。**linux
+   侧字节不变证明**：base 主机上 `prev.cutter` == 原
+   `shared.upkgs.cutter`，`upkgs.cutter_patched` 修复前后同为
+   `7mjhjj…`。**新测试 `lib_shared_overlays`（第 96 号）**：canary
+   替换实例法——patches 应用到标记 stub 实例（meta.description
+   穿透 overrideAttrs 存活），每个被补成员必须携带标记，从任何
+   外部句柄取包即失标即红；变异检查实测：回退 bug 形态 → census
+   点名 `cutter_patched`。**全闭包审计**：修复后 darwin 闭包
+   9,464 drv 的 system 分布 = aarch64-darwin 9,462 + builtin 2——
+   **跨界类清零**；闭包同时 13,317 → 9,464（x86_64-linux 子树
+   整体退场——那 3,853 个 drv 本就不该在 macOS 闭包里）。
+3. **边界注（已知边界 #10 的现场演示）**：CI 的 primary
+   `13q85www` vs 本地 `kddnzzsk`——不同树（91da892 vs 复现树）上
+   同一 emission 的哈希不同：toplevel 经 registry self 通道追踪树
+   内容（#10 记录在案），双侧同移，**等价性（primary == colmena）
+   才是可断言的不变量**；而 `7mjhjj…`（cutter_patched）这类不触
+   self 的 drv 与树无关——CI 与本地一字不差，恰是两侧闭包内容
+   同源的最强交叉证据。

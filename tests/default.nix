@@ -217,6 +217,11 @@ let
     # per-node user door alive; attrNames-only laziness, the drvPath
     # parity stays with the CI gate).
     lib_shared_deploy = nixosTest ./lib/shared/deploy.nix;
+    # T24.2: the overlay locality census (run 38171937689's darwin
+    # verdict, locked) — overlays are instance-local: a canary
+    # substitution proves every patched member reads the instance it
+    # was applied to, never a foreign package-set handle.
+    lib_shared_overlays = nixosTest ./lib/shared/overlays.nix;
   };
 
   # ══════════════════════════════════════════════════════════════════
