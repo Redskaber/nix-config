@@ -48,6 +48,40 @@ concurrency:
 #   QEMU VM tests (Plane 1–4) require /dev/kvm. GitHub-hosted ubuntu-latest
 #   runners provide KVM via nested virtualisation. nmt-Plane (Plane 5) is
 #   pure Nix eval — no QEMU, no KVM.
+#
+# Cache axis (P0, round 16 — the owner-side verb landed):
+#   The public Cachix cache redskaber-nix-config is live (ZSTD, priority
+#   41, public key pinned below in every leg). Two wiring halves, both
+#   CI-layer concerns — the distributer belongs in the distribution
+#   layer, which for a flake repo is the runner's nix.conf, never the
+#   Nix config itself:
+#     PULL is unconditional in every Install Nix leg below. The cache
+#     is public (zero auth; a narinfo 404 is a no-op), and priority 41
+#     keeps cache.nixos.org (priority 40) preferred wherever both hold
+#     the path — the 5 GB free tier therefore serves ONLY the gap Hydra
+#     cannot: the lock pins the nixos-26.05 moving-branch HEAD, which
+#     runs AHEAD of Hydra's binary availability. That gap is exactly
+#     the 90-minute source-build tail that killed runs 38085235502 and
+#     38385434464 (13/14 jobs green; host-toplevels cancelled by its own
+#     bound; one timeout leaves the closure uncached and the next run
+#     cold again — the vicious cycle this wiring breaks).
+#     PUSH is opt-in with the cache-attic.yml discipline: INERT until
+#     the repository owner sets secret.CACHIX_AUTH_TOKEN (one secret,
+#     no vars — the cache name and public key are public facts, pinned
+#     like cache.nixos.org's identity). The push step lives in the
+#     host-toplevels leg right after the build it caches — zero extra
+#     build, the store is warm. Its timeout rises 90 → 150 for the
+#     cold-bootstrap window: the first post-lock-bump run must get
+#     PAST the old bound once so the push can capture the gap
+#     generation; once the cache holds a full generation, the
+#     substituter collapses the rebuild into substitution and the
+#     bound can be revisited. MNC stays (it carries the intra-run eval
+#     legs) — its 418 rate-limit history (T12.1) and 10 GB / 7-day
+#     eviction stay noted; this cache is the persistent layer MNC
+#     structurally cannot be. Quota honesty: ~1–1.5 GB ZSTD per lock
+#     generation, weekly bumps → the free tier holds ~3–4 generations;
+#     the scale-out path stays documented in cache-attic.yml (attic)
+#     and docs/ci/pipeline.md (harmonia).
 # ══════════════════════════════════════════════════════════════════════
 
 jobs:
@@ -78,6 +112,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — see the
+            # workflow header for the design. Priority 41 sits behind
+            # cache.nixos.org (40) so the free tier serves only the
+            # Hydra gap.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
           # ships, closing the identity drift for good.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
@@ -244,6 +284,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — see the
+            # workflow header for the design. Priority 41 sits behind
+            # cache.nixos.org (40) so the free tier serves only the
+            # Hydra gap.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
           # ships, closing the identity drift for good.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
@@ -386,6 +432,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — see the
+            # workflow header for the design. Priority 41 sits behind
+            # cache.nixos.org (40) so the free tier serves only the
+            # Hydra gap.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
           # ships, closing the identity drift for good.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
@@ -450,6 +502,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — see the
+            # workflow header for the design. Priority 41 sits behind
+            # cache.nixos.org (40) so the free tier serves only the
+            # Hydra gap.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
           # ships, closing the identity drift for good.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
@@ -527,6 +585,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — see the
+            # workflow header for the design. Priority 41 sits behind
+            # cache.nixos.org (40) so the free tier serves only the
+            # Hydra gap.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
           # ships, closing the identity drift for good.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
@@ -645,6 +709,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — see the
+            # workflow header for the design. Priority 41 sits behind
+            # cache.nixos.org (40) so the free tier serves only the
+            # Hydra gap.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
           # ships, closing the identity drift for good.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
@@ -834,6 +904,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — see the
+            # workflow header for the design. Priority 41 sits behind
+            # cache.nixos.org (40) so the free tier serves only the
+            # Hydra gap.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
           # ships, closing the identity drift for good.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
@@ -919,7 +995,13 @@ jobs:
     name: Host Toplevels (closure build)
     runs-on: ubuntu-latest
     needs: [lint, deep-eval]
-    timeout-minutes: 90
+    # Round 16 cache bootstrap: 150 while the Cachix push below
+    # captures the first full post-bump generation (the cold window —
+    # runs 38085235502 and 38385434464 both died at the old 90-minute
+    # bound mid desktop-stack, before any push could exist). Once the
+    # cache holds a complete generation the substituter collapses the
+    # rebuild into substitution; revisit toward the old bound then.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
@@ -941,6 +1023,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — see the
+            # workflow header for the design. Priority 41 sits behind
+            # cache.nixos.org (40) so the free tier serves only the
+            # Hydra gap.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
           # ships, closing the identity drift for good.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
@@ -1011,6 +1099,40 @@ jobs:
               done
             fi
             exit "$RC"
+          fi
+
+      # P0 cache axis (round 16) — the PUSH half. The build above just
+      # materialised the toplevel closures in this store; pushing them
+      # turns the next run's cold gap into substitution. Opt-in with
+      # the cache-attic.yml discipline: INERT until the repository
+      # owner sets secret.CACHIX_AUTH_TOKEN (pull needs no secret — the
+      # cache is public). `if: always()` deliberately: a mid-closure
+      # build failure still caches the successfully-built prefix for
+      # the retry (the timeout class kills the whole job and cannot —
+      # the 150-minute bootstrap bound above is what buys this step
+      # the time to exist). Tools from the LOCKED nixpkgs (same
+      # discipline as nix-fast-build); paths via outPath forcing (pure
+      # eval, no store realisation needed to NAME an output), filtered
+      # to what the store actually holds. cachix pushes each path's
+      # CLOSURE and skips what the cache already holds (chunk-level
+      # dedup) — re-pushes are no-ops.
+      - name: Push built closures to Cachix
+        if: always() && secrets.CACHIX_AUTH_TOKEN != ''
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: |
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          HOSTS=$(nix eval ".#api.host-toplevels" --apply builtins.attrNames --json \
+            | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')
+          PATHS=""
+          for h in $HOSTS; do
+            P=$(nix eval --raw ".#api.host-toplevels.$h.outPath")
+            if [ -e "$P" ]; then PATHS="$PATHS $P"; fi
+          done
+          if [ -n "$PATHS" ]; then
+            nix run "$PKGS#cachix" -- push $PATHS
+          else
+            echo "nothing built to push (build failed before any host completed)"
           fi
 
       # Cross-system closure: evaluation is the depth this x86_64-linux
@@ -1103,6 +1225,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — see the
+            # workflow header for the design. Priority 41 sits behind
+            # cache.nixos.org (40) so the free tier serves only the
+            # Hydra gap.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-aarch64-darwin.tar.xz
 
       - name: Cache Nix store

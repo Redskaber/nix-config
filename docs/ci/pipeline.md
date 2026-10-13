@@ -515,3 +515,41 @@ rootless nix（`~/nixroot/nx`，unshare + pivot_root，2.35.2）首次用于
    契约断言入 CI 的首个 run——lib 平面 97 tests 在 CI 求值绿（本地
    T25 轮已绿 + 变异检查红），version 契约（rev 答 where、version
    答 what）首次在 CI 环境成立。
+
+### 缓存轴接线裁决 — Cachix 公开层（2026-10-13：owner 侧动词落地后的仓库侧接线）
+
+背景：评分最弱轴（缓存 6.5/10）的根治路径经对比评审定为「Cachix
+免费层先落地 → attic/harmonia 规模化」。run 38385434464（e5dcf1f
+重触发，owner 手动）再次实证病灶：13/14 作业绿，唯一红是 Host
+Toplevels 自限时 90 分钟取消——冷缓存闭包构建超预算的恶性循环
+（一次超时 → 闭包产物不入任何缓存 → 后续 run 依旧冷）。owner 侧
+动词已落地：公开缓存 redskaber-nix-config（ZSTD、priority 41）
+创建在线，但仓库侧零接线、缓存为空（toplevel narinfo 404 实测）。
+本 commit 补上接线——两半，均为 CI 层关注点（分发逻辑归位分发层
+——对 flake 仓库而言就是 runner 的 nix.conf，绝不进 Nix 配置）：
+
+1. **PULL（无条件）**：11 个 Install Nix 腿（ci.yml ×9、
+   update-flake.yml、cache-attic.yml）的 extra-conf 统一加
+   substituters + trusted-public-keys。公开缓存零鉴权（narinfo
+   404 即无操作）；priority 41 保持在 cache.nixos.org（40）之后，
+   5 GB 免费层只服务 Hydra 追不上的缺口——锁钉在 nixos-26.05
+   移动分支 HEAD、快于 Hydra 渠道进度，正是 38085235502 与
+   38385434464 两次 90 分钟源码构建尾部的根因。
+2. **PUSH（opt-in）**：host-toplevels 腿构建步之后加推缓存步，
+   `if: always() && secrets.CACHIX_AUTH_TOKEN != ''`——cache-attic.yml
+   同款 opt-in 纪律（无 secret 则零成本跳过，INERT）。工具走锁定
+   nixpkgs 的 `nix run $PKGS#cachix`（cachix 1.11.1，与
+   nix-fast-build 同纪律）；路径经 outPath 纯求值 + store 存在性
+   过滤（构建中失败仍缓存已建前缀，供重试替代；超时类杀整个
+   job 无法推——这正是下面的 bootstrap 提时要解决的）。
+3. **BOOTSTRAP**：host-toplevels timeout 90 → 150：首个锁后冷
+   run 需要越过旧上限一次，才能把「缺口代」推入缓存；缓存持有
+   完整一代后 substituter 把重建塌缩成替代，可回访收紧。
+4. **配额诚实账**：闭包约 1–1.5 GB ZSTD/代，锁周更 → 5 GB 免费
+   层约 3–4 代满；出路按序：面板清老代 → 付费层 → harmonia
+   （复用现有 kilig-nixos 常开主机，零边际成本——规模化终态；
+   cache-attic.yml 的 attic 设计保留为自建选项，其头部 round-16
+   注记同步）。MNC 保留（承载 run 内求值腿），其 418 限流史
+   （T12.1）与 10 GB/7 天逐出不变——本缓存是其结构上做不到的
+   持久层。darwin 腿与 vm 腿的推缓存为 phase-2（绿且快，配额
+   优先给红腿）。

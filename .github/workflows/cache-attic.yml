@@ -18,9 +18,19 @@
 # `devShells` matrix per system attrNames. Adding a host or a shell needs
 # zero edits here.
 #
-# Phase-2 (documented, deliberately not landed): once the cache is warm,
-# add the substituter to the installer legs' extra-conf (needs one more
-# var: ATTIC_PUBLIC_KEY) so CI pulls also benefit.
+# Phase-2 (documented, deliberately not landed): once the attic server
+# is deployed, add ITS substituter to the installer legs' extra-conf
+# (needs one more var: ATTIC_PUBLIC_KEY) so CI pulls also benefit.
+#
+# Round-16 amendment: the INTERIM layer landed in ci.yml — the public
+# Cachix cache redskaber-nix-config now carries the pull (every leg)
+# and the opt-in push (host-toplevels, secret.CACHIX_AUTH_TOKEN). This
+# workflow stays the SELF-HOSTED scale-out for when the 5 GB Cachix
+# free tier saturates (weekly lock bumps ≈ 1–1.5 GB ZSTD/generation):
+# attic on own hardware (this file) or harmonia on the existing
+# kilig-nixos host (zero marginal cost — see docs/ci/pipeline.md's
+# round-16 entry). The Cachix public key is pinned in this workflow's
+# own extra-conf below for the same reason as every ci.yml leg.
 
 name: "cache · self-hosted attic push"
 
@@ -60,6 +70,11 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — same
+            # contract as every ci.yml leg (design rationale in
+            # ci.yml's header).
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 

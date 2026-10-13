@@ -41,6 +41,12 @@ jobs:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
+            # P0 cache axis (round 16): public Cachix pull — same
+            # contract as every ci.yml leg (design rationale in ci.yml's
+            # header). Materialisation of the bumped lock's inputs
+            # substitutes wherever the cache already holds them.
+            substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+            trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
           # ships, closing the identity drift for good.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
