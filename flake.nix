@@ -408,11 +408,15 @@
       debug.test_devDir = devDir;
 
       # checks
-      # Test planes 0–5 + the two repo-hygiene gates: the pre-commit
+      # Test planes 0–5 + the three repo-hygiene gates: the pre-commit
       # eval gate (see tests/pre-commit.nix for the git-hooks half
-      # and its history) and the docs-SSOT contract (tests/docs-ssot.nix,
+      # and its history), the docs-SSOT contract (tests/docs-ssot.nix,
       # T8.1 — README/test-matrix count anchors asserted against live
-      # facts at BUILD time, which is why CI STAGE 1 builds both).
+      # facts at BUILD time, which is why CI STAGE 1 builds both),
+      # and the testScript syntax gate (tests/testscript-syntax.nix,
+      # T32 — python-compiles every composed testScript at the
+      # cheapest possible layer; the CI driver's pylyzer run used to
+      # be the ONLY parser, and it sits behind the whole VM closure).
       # T7.3: the FLAT face only — `nix flake check` requires each
       # attribute here to be a derivation, so the planes grouping
       # lives behind api.checks.planes, never inside this output.
@@ -428,7 +432,8 @@
             ;
           inventory = targets.inventory;
           devShellNames = builtins.attrNames pdsh;
-        });
+        })
+        // (import ./tests/testscript-syntax.nix { inherit inputs self shared; });
 
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc

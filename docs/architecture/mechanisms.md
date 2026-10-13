@@ -284,6 +284,8 @@ default = {
 
 **可用 devShells 速查表（25 个 shell 的组合内容与特性）保留在[README 开发环境速查](../../README.md#日常操作速查)——该表承载 docs-SSOT 计数锚点（`可用 devShells 速查（25 个，…`），单一副本防漂移；本节只讲机制。**
 
+**消费契约（T31，第 101 号测试 `lib_shared_pdshell`）：** 加载器本身也是被消费的工具库——第 101 号测试经生产句柄 `shared.pdshells` × flake.nix 同款实参对真树断言五组：**census**（25 成员精确集合——成员籍；`_` 前缀静默排除与上游 fn-makeFullName 命名漂移的唯一绊网）、**face**（`dev-shell-<member>` 名字注入）、**combinFrom**（根 default 自身 buildInputs 为 `[]`，全部 117 个合并输入必须经十四个语言默认贡献到达——四探针各归一语言）、**lifecycle**（`# === 段标记` + 继承先于自身 + FINAL SHELL OVERRIDE 导出身份轴 shell）、**NamedFile 隔离**（renpy 自带引擎、不泄漏兄弟与跨作用域输入）。census 锚 MEMBERSHIP 与 docs-ssot 锚 COUNT 互补——两者必须同 commit 旅行。
+
 ### 5. 安全层 — SOPS + Age（分层管理）
 
 ```

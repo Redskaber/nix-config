@@ -174,6 +174,16 @@ jobs:
       - name: Build docs-ssot-check derivation (T8.1)
         run: nix build .#checks.x86_64-linux.docs-ssot-check --no-link
 
+      # T32: the third repo-hygiene gate — python-compiles every
+      # composed testScript (eval-time direct module calls, build-
+      # time compile()). The CI driver's pylyzer run is the
+      # authoritative parser, but it sits behind the whole VM
+      # closure — this gate surfaces the same class at the cheapest
+      # possible layer, which is why it belongs in STAGE 1 with the
+      # other two gates.
+      - name: Build testscript-syntax-check derivation (T32)
+        run: nix build .#checks.x86_64-linux.testscript-syntax-check --no-link
+
   # ─────────────────────────────────────────────────────────────
   # STAGE 2: Deep evaluation — facet forcing (T15.1)
   # ─────────────────────────────────────────────────────────────
@@ -309,11 +319,11 @@ jobs:
               nix eval --raw ".#nixosConfigurations.$H.config.system.build.toplevel.drvPath"
           done
 
-          # Face 3 — the two misc checks. The planes own the other 94
-          # (vm-tests builds them — stronger than eval); these two are
+          # Face 3 — the three misc checks. The planes own the rest
+          # (vm-tests builds them — stronger than eval); these three are
           # prefix-less, so this leg forces their evaluation level
           # (the lint leg BUILDS them — even stronger).
-          for C in docs-ssot-check pre-commit-check; do
+          for C in docs-ssot-check pre-commit-check testscript-syntax-check; do
             force "checks.x86_64-linux.$C.drvPath" \
               nix eval --raw ".#checks.x86_64-linux.$C.drvPath"
           done
@@ -333,6 +343,7 @@ jobs:
           { cat /tmp/planed.sorted
             echo docs-ssot-check
             echo pre-commit-check
+            echo testscript-syntax-check
           } | sort -u > /tmp/owned.sorted
           UNOWNED=$(comm -23 /tmp/all-checks.sorted /tmp/owned.sorted)
           if [ -n "$UNOWNED" ]; then

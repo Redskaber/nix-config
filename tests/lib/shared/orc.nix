@@ -261,13 +261,24 @@ in
     virtualisation.memorySize = 256;
   };
 
+  # T32: the contract text is spliced as a STRING EXPRESSION, never
+  # into a `#` comment — contractHeld is multi-line (header + one line
+  # per site verdict), and only the first spliced line would land
+  # behind a single '#': the rest arrived as bare python and the CI
+  # driver's pylyzer run rejected the whole member (83 diagnostics,
+  # the lib-plane red this round fixed). The string expression carries
+  # the same traceability (the verdicts render into the driver source)
+  # with multi-line safety by construction.
   testScript = ''
     start_all()
     machine.wait_for_unit("multi-user.target")
 
     with subtest("orc: wallust copy-emitter contract — seven sites, production modules, no mocks"):
-        # ${contractHeld} — renders only if every site held; the
-        # machine is a dummy (the contract is an eval-time property).
+        """
+        ${contractHeld}
+        """
+        # renders only if every site held; the machine is a dummy
+        # (the contract is an eval-time property).
         machine.succeed("true")
   '';
 }
