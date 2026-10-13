@@ -1,6 +1,6 @@
 # @path: ~/projects/configs/nix-config/home/core/srv/default.nix
 # @author: redskaber
-# @datetime: 2026-05-05
+# @datetime: 2026-10-13
 # @description: home::core::srv::default
 
 {
@@ -14,6 +14,7 @@
 {
 
   imports = [
+    ./cache
     ./db
     ./notify
     ./security

@@ -628,3 +628,35 @@ cachix push <name>` 经典管道）——本地验证实测首参缺名即挂起
 
 + CLI 语义实测双路径（缺名挂起stdin / 带名无token 快速失败于
 auth 检查——证明参数解析先于鉴权、带名形态合法）。
+
+### 悬空模块接线 — 死代码对 14 道门不可见（2026-10-13：第 19 轮，owner 侧新工作引入的缺陷类别）
+
+**背景**：owner 消费 8016bbd 为 main 6ae5794（第三次完整交付回路：门户
+patch/zip → owner → GitHub main），并附带自己的新工作：`home/core/srv/cache/
+{default,cachix}.nix`（cachix CLI 进 home.packages，本地推送指南的 owner 侧
+落地动作）。
+
+**缺陷实锤**：新模块**悬空**——`home/core/srv/default.nix` 的 imports 只有
+`./db ./notify ./security`，全树（`git grep 'srv/cache\|\./cache'`）零外部
+引用。功能性证明：修复前 `kilig@nixos` 的 `home.packages` 中 cachix 条目数
+= 0——模块文件存在、default 链完整、但从未进入模块树。**CI 侧 6ae5794 的
+run 38459605632 全 14 job 绿**：求值器只看被 import 的东西，死代码对它不存
+在。
+
+**「缺陷变门」第五案**：与第 17 轮（校验器当场拦截）、第 18 轮（opt-in 门
+后只有真跑 CLI 才可见）同谱系但类别全新——**门系统对「应该被接线而未接线」
+的模块完全失明**。提案：模块可达性审计门（walk `home/`、`platform/` 树，
+断言每个含 default.nix 的目录从模块根可达；不可达即红）——把「目录存在 =
+模块生效」的隐式假设变成显式断言。
+
+**bootstrap run 闭卷**（第 18 轮遗留项）：38449427216（4072a79）终态
+**绿**——Host Toplevels 1h 0m，远低于 150 分钟上限，90 分钟超时恶性循环
+正式终结（冷缓存闭包一次性入 GitHub 缓存，后续 run 冷尾塌缩）；6ae5794 的
+run 38459605632 亦全绿（1h 14m）。**push 步仍 INERT**（CACHIX_AUTH_TOKEN
+unset 的 ::notice）——缓存轴剩余动词唯余 owner 设 secret。
+
+**修复（本 commit）**：`home/core/srv/default.nix` imports 补 `./cache` 一
+行（字母序首位）。验证矩阵：修复后 kilig@nixos home.packages 中 cachix = 1
+（derivation 实证 NIX_MAIN_PROGRAM=cachix）；4 个 homeConfigurations
+activationPackage 逐面求值绿；3 个 host-toplevels 逐面求值绿（toplevel 路
+径如预期变化——cachix 入闭包）。
