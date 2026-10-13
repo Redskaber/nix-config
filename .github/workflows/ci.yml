@@ -68,7 +68,14 @@ concurrency:
 #     PUSH is opt-in with the cache-attic.yml discipline: INERT until
 #     the repository owner sets secret.CACHIX_AUTH_TOKEN (one secret,
 #     no vars — the cache name and public key are public facts, pinned
-#     like cache.nixos.org's identity). The push step lives in the
+#     like cache.nixos.org's identity). Round-17 correction on WHERE
+#     the guard lives: secrets are invisible to if: expressions
+#     (available contexts there: env/github/inputs/job/matrix/needs/
+#     runner/steps/strategy/vars — GitHub's validator rejects a
+#     secrets.* reference as "Unrecognized named-value"), so the
+#     emptiness check is a script-side exit-0 on the env-mapped token;
+#     only the vars route (cache-attic.yml's job gate) may test a
+#     switch in an if: at all. The push step lives in the
 #     host-toplevels leg right after the build it caches — zero extra
 #     build, the store is warm. Its timeout rises 90 → 150 for the
 #     cold-bootstrap window: the first post-lock-bump run must get
@@ -1101,26 +1108,41 @@ jobs:
             exit "$RC"
           fi
 
-      # P0 cache axis (round 16) — the PUSH half. The build above just
-      # materialised the toplevel closures in this store; pushing them
-      # turns the next run's cold gap into substitution. Opt-in with
-      # the cache-attic.yml discipline: INERT until the repository
-      # owner sets secret.CACHIX_AUTH_TOKEN (pull needs no secret — the
-      # cache is public). `if: always()` deliberately: a mid-closure
-      # build failure still caches the successfully-built prefix for
-      # the retry (the timeout class kills the whole job and cannot —
-      # the 150-minute bootstrap bound above is what buys this step
-      # the time to exist). Tools from the LOCKED nixpkgs (same
-      # discipline as nix-fast-build); paths via outPath forcing (pure
-      # eval, no store realisation needed to NAME an output), filtered
-      # to what the store actually holds. cachix pushes each path's
-      # CLOSURE and skips what the cache already holds (chunk-level
-      # dedup) — re-pushes are no-ops.
+      # P0 cache axis (round 16, fixed round 17) — the PUSH half. The
+      # build above just materialised the toplevel closures in this
+      # store; pushing them turns the next run's cold gap into
+      # substitution. Opt-in, INERT until the repository owner sets
+      # secret.CACHIX_AUTH_TOKEN (pull needs no secret — the cache is
+      # public). Round-17 correction: the secrets context is NOT
+      # available in step-level if: expressions (GitHub rejected
+      # `always() && secrets.CACHIX_AUTH_TOKEN != ''` as "Unrecognized
+      # named-value" — main@ccf9edb currently carries that invalid
+      # file), so the emptiness guard lives INSIDE the script, where
+      # the env-mapped token is legal — the same env-position
+      # discipline as cache-attic.yml's ATTIC_TOKEN (its job-level
+      # gate uses vars, which if: DOES see). `if: always()`
+      # deliberately: a mid-closure build failure still caches the
+      # successfully-built prefix for the retry (the timeout class
+      # kills the whole job and cannot — the 150-minute bootstrap
+      # bound above is what buys this step the time to exist). Tools
+      # from the LOCKED nixpkgs (same discipline as nix-fast-build);
+      # paths via outPath forcing (pure eval, no store realisation
+      # needed to NAME an output), filtered to what the store
+      # actually holds. cachix pushes each path's CLOSURE and skips
+      # what the cache already holds (chunk-level dedup) — re-pushes
+      # are no-ops.
       - name: Push built closures to Cachix
-        if: always() && secrets.CACHIX_AUTH_TOKEN != ''
+        if: always()
         env:
           CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
         run: |
+          # The opt-in guard, in the one position where secrets are
+          # legal: env-mapped here, checked by the shell. Unset secret
+          # maps to the empty string — INERT by design, exit 0.
+          if [ -z "${CACHIX_AUTH_TOKEN:-}" ]; then
+            echo "::notice title=cachix-push::CACHIX_AUTH_TOKEN unset - push step INERT (opt-in). Set the repository secret to enable."
+            exit 0
+          fi
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
           HOSTS=$(nix eval ".#api.host-toplevels" --apply builtins.attrNames --json \
             | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')

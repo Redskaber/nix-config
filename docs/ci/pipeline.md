@@ -536,9 +536,12 @@ Toplevels 自限时 90 分钟取消——冷缓存闭包构建超预算的恶性
    移动分支 HEAD、快于 Hydra 渠道进度，正是 38085235502 与
    38385434464 两次 90 分钟源码构建尾部的根因。
 2. **PUSH（opt-in）**：host-toplevels 腿构建步之后加推缓存步，
-   `if: always() && secrets.CACHIX_AUTH_TOKEN != ''`——cache-attic.yml
-   同款 opt-in 纪律（无 secret 则零成本跳过，INERT）。工具走锁定
-   nixpkgs 的 `nix run $PKGS#cachix`（cachix 1.11.1，与
+   `if: always()` + 脚本内判空（round-17 修正：初版
+   `if: always() && secrets.CACHIX_AUTH_TOKEN != ''` 被 GitHub 校验器
+   拒绝——secrets 上下文对 if: 表达式不可见，可用上下文仅
+   env/github/inputs/job/matrix/needs/runner/steps/strategy/vars；
+   守卫移入脚本对 env 映射 token 判空、未设即 exit 0 INERT）。
+   工具走锁定 nixpkgs 的 `nix run $PKGS#cachix`（cachix 1.11.1，与
    nix-fast-build 同纪律）；路径经 outPath 纯求值 + store 存在性
    过滤（构建中失败仍缓存已建前缀，供重试替代；超时类杀整个
    job 无法推——这正是下面的 bootstrap 提时要解决的）。
@@ -553,3 +556,42 @@ Toplevels 自限时 90 分钟取消——冷缓存闭包构建超预算的恶性
    （T12.1）与 10 GB/7 天逐出不变——本缓存是其结构上做不到的
    持久层。darwin 腿与 vm 腿的推缓存为 phase-2（绿且快，配额
    优先给红腿）。
+
+### 守卫位置修正 — secrets 对 if: 不可见（2026-10-13：第 17 轮，交付缺陷的诚实账）
+
+owner 消费门户交付物（接线 diff）后落 main 为 ccf9edb，GitHub
+校验器立即拒绝：
+
+```
+Invalid workflow file: .github/workflows/ci.yml#L1
+(Line: 1120, Col: 13): Unrecognized named-value: 'secrets'.
+Located at position 13 within expression:
+always() && secrets.CACHIX_AUTH_TOKEN != ''
+```
+
+根因：GitHub Actions 表达式的**上下文可用性表**把 `secrets` 排除在
+`if:` 位置之外（step 级 if: 可见上下文仅 env/github/inputs/job/
+matrix/needs/runner/steps/strategy/vars）；`secrets` 的合法位置是
+`env:`/`with:`/`run` 值位。owner 自己的 cache-attic.yml 从未违例
+——其 job 级门用 `vars.ATTIC_SERVER`（vars 对 if: 可见），token 只
+进 `env:` 值位；第 16 轮宣称的「cache-attic.yml 同款纪律」在守卫
+位置上是错误类比。初版守卫被写成 `if: always() && secrets.X != ''`
+（校验时即拒绝、零 run 可跑——main 的 CI 因此全瘫，直至本修正）。
+
+修复（同 commit）：
+
+1. **守卫移位**：`if: always()` 保留（构建失败仍推已建前缀的语义
+   不变），判空进脚本——`env:` 映射 token（未设 secret 求值为空
+   串），脚本首段 `[ -z "${CACHIX_AUTH_TOKEN:-}" ] && exit 0`
+   （`::notice` 注明 INERT opt-in）。secrets 只在合法位置出现。
+2. **文档三处**：ci.yml 头部 PUSH 注记 + push 步注释 + 本条目。
+
+「缺陷变门」（T26 卫生门 / T29 上游守卫 / T32 语法门的第四案）：
+actionlint 1.7.12（锁定 nixpkgs，Hydra 全命中零构建）在本地**逐字
+复现**该校验器拒绝（`ci.yml:1120:25: context "secrets" is not
+allowed here. available contexts are …`）——即该错误类存在本地
+可跑的最廉价门。提案：pre-commit 增加 actionlint hook（lint 腿
+pre-commit 现仅 nixfmt/statix/deadnix——YAML/表达式层零覆盖，正是
+本缺陷穿过三重本地验证直达 GitHub 的原因）。修复树已用 actionlint
+复扫：secrets 类错误清零；余 139 行均 shellcheck 弱风格提示
+（SC2086 等，owner 既有脚本同在，非 blocker、不属本轮范围）。
