@@ -595,3 +595,36 @@ pre-commit 现仅 nixfmt/statix/deadnix——YAML/表达式层零覆盖，正是
 本缺陷穿过三重本地验证直达 GitHub 的原因）。修复树已用 actionlint
 复扫：secrets 类错误清零；余 139 行均 shellcheck 弱风格提示
 （SC2086 等，owner 既有脚本同在，非 blocker、不属本轮范围）。
+
+### 本地工作流成文 + push 步 CLI 形态修正（2026-10-14：第 18 轮，本地视角补全暴露的潜伏缺陷）
+
+第 16/17 轮只覆盖了 CI 侧接线；本地侧（owner 在自己机器上怎么用这个
+缓存）无文档。本轮补全 [docs/guides/cache.md](../guides/cache.md)
+（拉取两种形式 / authtoken + push / CLI 形态铁律 / 故障速查），README
+「深入文档」表加索引行。
+
+**写文档时的本地 CLI 验证暴露第 16 轮 push 步的潜伏缺陷**：
+`cachix push` 的 CLI 形态是 `push CACHE-NAME [PATHS...]`——**缓存名是
+必选首参数**（一个 token 可服务多个缓存）。第 16 轮脚本写的是
+`nix run "$PKGS#cachix" -- push $PATHS`（漏缓存名）——第一个 toplevel
+路径会被静默当作缓存名；owner 设 secret 后该步会以 `cache not found`
+失败（在构建成功之后，把绿 job 染红）。另一形态语义：无 PATHS 且
+stdin 非 TTY 时 CLI 从 stdin 读换行分隔路径（`nix-store -qR … |
+cachix push <name>` 经典管道）——本地验证实测首参缺名即挂起等 stdin，
+正是这个语义的反向证明。
+
+**为什么它潜伏了整整两轮没炸**：push 步是 opt-in（`secret.CACHIX_AUTH_TOKEN`
+未设即脚本首段 exit 0）——缺陷在 opt-in 门后从未活跑。这是「opt-in
+掩盖缺陷」的第一案：**opt-in 路径的验证责任在交付侧，不能等开关打开**
+（对照第 17 轮教训——secrets 守卫位置错误是被 GitHub 校验器当场拦下的
+明缺陷；本缺陷在校验器视野之外，只有把 CLI 真跑一遍才可见）。
+
+修复（同 commit）：push 步补缓存名
+`nix run "$PKGS#cachix" -- push redskaber-nix-config $PATHS`；步注释
+记录 CLI 形态铁律与漏写症状；docs/guides/cache.md 的「CLI 形态铁律」
+节与故障速查表（`cache not found` / 推送挂起两行）同源落文档。
+
+验证：YAML 解析 + push 脚本 bash -n + actionlint expression 类清零
+
++ CLI 语义实测双路径（缺名挂起stdin / 带名无token 快速失败于
+auth 检查——证明参数解析先于鉴权、带名形态合法）。

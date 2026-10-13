@@ -1130,7 +1130,16 @@ jobs:
       # needed to NAME an output), filtered to what the store
       # actually holds. cachix pushes each path's CLOSURE and skips
       # what the cache already holds (chunk-level dedup) — re-pushes
-      # are no-ops.
+      # are no-ops. CLI shape note (round 18): `cachix push CACHE-NAME
+      # [PATHS...]` — the cache name is a MANDATORY first positional
+      # (one auth token can serve multiple caches); with no paths and
+      # a non-TTY stdin the CLI reads newline-separated paths from
+      # stdin (the `nix-store -qR … | cachix push <name>` pipe
+      # pattern). The round-16 version omitted the name — the first
+      # toplevel path would be silently treated as the cache name
+      # ("cache not found" once a token existed); caught by local CLI
+      # verification in round 18, before any run ever executed the
+      # step (opt-in kept the bug latent, never live).
       - name: Push built closures to Cachix
         if: always()
         env:
@@ -1152,7 +1161,7 @@ jobs:
             if [ -e "$P" ]; then PATHS="$PATHS $P"; fi
           done
           if [ -n "$PATHS" ]; then
-            nix run "$PKGS#cachix" -- push $PATHS
+            nix run "$PKGS#cachix" -- push redskaber-nix-config $PATHS
           else
             echo "nothing built to push (build failed before any host completed)"
           fi

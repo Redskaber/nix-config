@@ -768,6 +768,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 | 看每个文件干什么 | [docs/architecture/tree.md](docs/architecture/tree.md) — 完整注释目录树 |
 | 理解依赖全景 | [docs/architecture/dependency-graph.md](docs/architecture/dependency-graph.md) — inputs 全图 |
 | 从 0 部署一台机器 | [docs/guides/quickstart.md](docs/guides/quickstart.md) — 六 Phase 全程 |
+| 用本地缓存拉取/推送 | [docs/guides/cache.md](docs/guides/cache.md) — cachix 本地工作流（拉零鉴权 · 推 owner 侧） |
 | 管理 secrets | [docs/secrets/scenarios.md](docs/secrets/scenarios.md) 九情景 · [docs/secrets/rotation.md](docs/secrets/rotation.md) 轮换 |
 | 找一个 just 动词 | [docs/just/reference.md](docs/just/reference.md) — 88 recipe × 13 组 |
 | 了解 CI 为什么这样设计 | [docs/ci/pipeline.md](docs/ci/pipeline.md) — 缘起 · 预检 · 部署 · 世代 |
