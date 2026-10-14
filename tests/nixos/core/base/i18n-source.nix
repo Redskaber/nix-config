@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-10-08
 # @description: tests::nixos::core::base::i18n-source
-# @source: platform/nixos/core/base/i18n.nix
+# @source: platform/nixos/system/core/base/i18n.nix
 #
 # T1.5 + T1.2 (regression guard, first production-tree import):
 #
@@ -82,7 +82,7 @@ let
   };
 
   # ── REAL production import ────────────────────────────────────────
-  production = import ../../../../platform/nixos/core/base/i18n.nix {
+  production = import ../../../../platform/nixos/system/core/base/i18n.nix {
     inputs = { };
     shared = mockShared;
     config = { };

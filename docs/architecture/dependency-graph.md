@@ -11,13 +11,13 @@ flake.nix（46 inputs）
 ├── nix-darwin (26.05)           # darwin 系统闭包（tarball-pinned 规避 api 限流）
 ├── sops-nix                     # secret 管理（版本锁定）
 ├── disko (v1.13.0)              # 声明式磁盘分区（tarball-pinned；解释器注册于
-│                                #   platform/nixos/core/base/disk.nix）
+│                                #   platform/nixos/system/core/base/disk.nix）
 ├── impermanence (7b1d382f)      # 声明式持久状态 / ephemeral root（tarball-pinned 至
 │                                #   master HEAD；解释器注册于
-│                                #   platform/nixos/core/base/impermanence.nix，T5.14）
+│                                #   platform/nixos/system/core/base/impermanence.nix，T5.14）
 ├── nixos-wsl (release-26.05)    # 第五系统形态的 WSL 解释器（tarball-pinned 至
 │                                #   release-26.05 分支；薄门注册于
-│                                #   platform/nixos-wsl/default.nix，T7.1）
+│                                #   platform/nixos-wsl/system/default.nix，T7.1）
 ├── nix-types                    # enum 类型系统（自建）
 ├── pdshell                      # devShell 管道引擎（自建；follows nix-types 单源）
 ├── configuration-orchestrator   # wallust 主题注入引擎（自建）

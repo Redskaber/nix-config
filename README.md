@@ -64,25 +64,24 @@
            │                              │
 ┌──────────▼──────────┐       ┌───────────▼──────────────────┐
 │  SYSTEM LAYER       │       │  USER LAYER                  │
-│  platform/<tag>/    │       │  home/ + platform/<tag>/home │
-│  default.nix        │       │  home/default.nix → <arch>.nix│
-│  硬件·驱动·安全·服务│       │  应用·开发环境·窗口管理器    │
-│  core/ · dm/ · wm/  │       │  core/ · env/ · wm/          │
-│  （顶层 = 系统域，  │       │  （目录即域，T5.11）         │
-│   T5.11）           │       │                              │
+│  platform/<tag>/    │       │  platform/<tag>/home/        │
+│  system/default.nix │       │  home/default.nix（门即      │
+│  硬件·驱动·安全·服务│       │  payload，arch 轴已退役）    │
+│  core/ · dm/ · wm/  │       │  应用·开发环境·窗口管理器    │
+│  （域地址显式，     │       │  home/（共享库）core·env·wm  │
+│   语法 v4）         │       │                              │
 └──────────┬──────────┘       └───────────┬──────────────────┘
            │                              │
-           │         ┌────────────────────▼──────────────────┐
-           │         │  HOST DISPATCH LAYER  ·  platform/    │
-           │         │  平台目录 = 目标机描述（target double：│
-           │         │  platform 轴选目录，arch 轴选用户域内 │
-           │         │  的 payload 行）目录即域（T5.11）：   │
-           │         │  顶层 = 系统域（default.nix = 职责边界，│
-           │         │  有系统形态的平台才有）；home/ = 用户 │
-           │         │  域（唯一保留字；home/default.nix =   │
-           │         │  HM 职责边界）·  文件存在性           │
-           │         │  = 能力声明                           │
-           │         └────────────────────┬──────────────────┘
+           │      ┌───────────────────────▼──────────────────┐
+           │      │  HOST DISPATCH LAYER  ·  platform/       │
+           │      │  平台目录 = 目标机描述（target double    │
+           │      │  的 platform 半边；arch 半边为管道值）： │
+           │      │  平台主序·域显式（语法 v4）：            │
+           │      │  system/ = 系统域（default.nix = 门，    │
+           │      │  有系统形态的平台才有）；home/ = 用户    │
+           │      │  域（门即 payload）·  文件存在性         │
+           │      │  = 能力声明                              │
+           │      └───────────────────────┬──────────────────┘
            │                              │
 ┌──────────▼──────────────────────────────▼──────────────────┐
 │  SHARED LAYER  ·  lib/shared/                              │
@@ -116,9 +115,9 @@ lib/shared (两阶段初始化：lang → runtime)
 lib/shared/targets.nix (目标工厂：hosts/ 清单 → caps 分类 → 发射器)
     ↓ 产出成品 closures
 flake.nix → inherit (targets) nixosConfigurations / homeConfigurations / darwinConfigurations
-    ↓ 三门分发（发射器纯数据驱动目录引用，语法 v3：目录即域）：
-    ↓   nixos 系统门 platform/<tag> → default.nix · darwin 单门 platform/<tag> → default.nix（系统路由+arch 分发，HM 内乘） · HM 门 platform/<tag>/home → home/default.nix（arch 路由）
-platform/nixos/{default.nix, home/{default,x86_64-linux}.nix} + core/ dm/ wm/ + home/（模块树；app 树按 app-set 重量级路由：full/lean/none）
+    ↓ 三门分发（发射器纯数据驱动目录引用，语法 v4：域地址显式）：
+    ↓   nixos 系统门 platform/<tag>/system → default.nix · darwin 单门 platform/<tag>/system（系统路由，HM 内乘 import ../home） · HM 门 platform/<tag>/home → default.nix（门即 payload，arch 退役）
+platform/nixos/{system/{default.nix, core/ dm/ wm/}, home/default.nix} + home/（模块树；app 树按 app-set 重量级路由：full/lean/none）
     ↓ sops-nix (initrd 阶段)
 /run/secrets/ (运行时 secret 挂载)
     ↓ systemd services
@@ -149,43 +148,43 @@ platform/nixos/{default.nix, home/{default,x86_64-linux}.nix} + core/ dm/ wm/ + 
 
 ## 目录语法 — 平台分发层的文法
 
-平台分发层（`platform/`）遵循**目录即域**文法（v3，T5.11）。读目录即知平台形态，读文件名即知域。
+平台分发层（`platform/`）遵循**平台主序 · 域显式**文法（v4）。每个平台标签一个目录，目录内恰两个保留域名——`system/` 与 `home/`，各持自己的 `default.nix` 门。读目录即知平台形态，读路径即知域。
 
 ```
 platform/<tag>/
-├── default.nix        # 系统边界（系统域顶层）—— 有系统形态的平台才有
-├── core/ dm/ wm/      # 系统树（nixos 的系统形态子系统，自由生长）
-└── home/              # 用户域 —— 唯一保留的顶层名
-    ├── default.nix    # HM 边界 —— 平台保有独立 standalone 门才有
-    └── <arch>.nix     # HM payload 行（arch 轴的地址）
+├── system/             # 系统域 —— 有系统形态的平台才有（nixos · darwin · nixos-wsl）
+│   ├── default.nix     # 系统门：entry and dispatch（子系统注册 + hosts facts）
+│   └── core/ dm/ wm/ … # 系统配置（subdir | file，自由生长）
+└── home/               # 用户域 —— 每个平台都有
+    └── default.nix     # home 门：entry and dispatch（门即 HM payload 模块）
 ```
 
-**文法六律：**
+**文法六律（v4）：**
 
-1. **顶层 = 系统域，`home/` = 用户域。** 文件存在性 = 能力声明（caps 表在文件系统上的投影）：`linux/`、`wsl/` 顶层没有 `default.nix`，因为它们没有系统形态；`darwin/` 的 `home/` 里没有 `default.nix`，因为它的 HM 不走独立门。
-2. **每活门一边界。** `nixos` 双活门 → 两个边界文件（`default.nix` + `home/default.nix`）；`darwin` 单活门 → `default.nix` 一个文件（T5.8 单门折叠：系统路由 + arch 分发 + HM module mode 挂载一体，跨域引用在路径上可见）。
-3. **target double。** platform 轴选目录（caps 分类决定哪个发射器到达），arch 轴选用户域内的 payload 行。arch 维仅存在于用户域——系统域的 arch 差异由发射器的 `system` 参数在 nixpkgs 层吸收。
-4. **一个路径只有一个含义。** 顶层同名异义债务为零（v2 消灭了 default.nix 双关，v3 把 arch 轴写进目录位置）。
-5. **边界只装配/路由，永不装内容。** payload 与系统树互不 import；`hosts/` 是唯一 per-host 差异点。
-6. **声明而不存在的路径在 eval 期响亮失败。** 目录路由是字符串插值（`./${shared.arch.tag}.nix`），落到不存在的行即报错——declared-but-absent 从 arch 文件扩展到整个文法。
+1. **两个域，两个显式地址。** `system/` 与 `home/` 是 `<tag>/` 下恰有的两个保留名，各持 `default.nix` 门——`platform/<tag>/system` 与 `platform/<tag>/home` 在发射器两侧完全对称（v3 的系统域是隐式顶层、用户域低一级；v4 给两域同等显式门——更明确、更通用）。文件存在性 = 能力声明（caps 表在文件系统上的投影）：`linux/`、`wsl/` 没有 `system/`，因为它们没有系统形态。
+2. **每活门一边界，门即内容装配点。** 系统门 = 子系统注册表（`./core ./wm ./dm` + `../../../hosts/<h>` facts）；home 门 = HM 入口模块本身（base facts + 跨平台用户库 `../../../home/{core,env,wm}` 分发）。
+3. **arch 轴不建模——分发路径下的自然选择。** 所有 arch 走同一管道（每平台一条流）：arch 差异由发射器 `system` 参数与 per-host pkgs 合成（`runtime.nix` 以 `{ system = arch.tag; }` 实例化）在 nixpkgs 层吸收；app 自带 arch 标签，是否启用由分发层（`lib/shared/`）处理完整后自动判断。v3 的 `home/<arch>.nix` payload 行已退役——target double 保留 platform 半边为目录地址，arch 半边降为管道值。
+4. **一个路径只有一个含义。** 顶层同名异义债务为零；域读自目录名而非层级位置（v2 读文件名，v3 读层级，v4 读显式域目录）。
+5. **声明而不存在的路径在 eval 期响亮失败。** 目录路由是数据驱动插值（`platform/${shared.platform.tag}/system`），落到不存在的门即报错。
+6. **分发逻辑只在分发层。** 发射器以 IR 投影 tag（零 if-else、零原始 tag 比较——T4.0：后续 pass 查询目标描述，绝不重新词法分析）；配置树不感知平台决策，子系统路由只有数据形态。
 
 **五平台形态表：**
 
-| platform | 系统形态 | 独立 HM 门 | 目录形态 |
-| -------- | -------- | ---------- | -------- |
-| `nixos` | ✅ `default.nix` + `core/ dm/ wm/` | ✅ `home/default.nix` + payload 行 | 双门双边界（策略：standalone HM 秒级切换、独立于系统世代回滚） |
-| `darwin` | ✅ `default.nix`（单门折叠，HM 以 module mode 内乘） | ✗（payload 行仍驻 `home/`，由系统关挂载） | 单门单边界 |
-| `linux` | ✗ | ✅ `home/default.nix` | 整个平台目录即用户域 |
-| `wsl` | ✗（Windows 宿主持有内核侧） | ✅ `home/default.nix` | 整个平台目录即用户域 |
-| `nixos-wsl` | ✅ 薄门：`default.nix` = `../nixos` 复用 + NixOS-WSL 解释器（T7.1） | ✅ `home/default.nix`（payload 行回用 nixos 用户域） | 双门；系统边界即整个形态定义：读门即知「nixos customs + WSL 解释器」 |
+| platform | system/ | home/ | 目录形态 |
+| -------- | ------- | ----- | -------- |
+| `nixos` | ✅ `default.nix` + `core/ dm/ wm/` | ✅ `default.nix`（门即 payload） | 双门双域，地址对称（策略：standalone HM 秒级切换、独立于系统世代回滚） |
+| `darwin` | ✅ `default.nix`（单门折叠：HM module mode 内乘，`import ../home` 跨域引用路径可见） | ✅（门即 payload，由系统门挂载，无独立门） | 双目录单活门 |
+| `linux` | ✗ | ✅ `default.nix` | home/ 即全部 |
+| `wsl` | ✗（Windows 宿主持有内核侧） | ✅ `default.nix` | home/ 即全部 |
+| `nixos-wsl` | ✅ 薄门：`../../nixos/system` 复用 + NixOS-WSL 解释器（T7.1） | ✅ 薄门：`imports = [ ../../nixos/home ]` | 双门双薄门：读门即知「nixos customs + WSL 解释器」 |
 
 **子系统路由的两种形态（零 if-else）：**
 
 ```nix
-# 单选（目录插值）：platform/nixos/dm/default.nix
+# 单选（目录插值）：platform/nixos/system/dm/default.nix
 imports = [ ./${shared.display-manager.tag} ];      # ly → ./ly
 
-# 多选（map 路由）：platform/nixos/core/drive/default.nix
+# 多选（map 路由）：platform/nixos/system/core/drive/default.nix
 imports = builtins.map (drive: ./${drive}.nix) shared.drive.value;
 # shared.drive.value = [ "intel" "nvidia" ] → imports [ ./intel.nix ./nvidia.nix ]
 ```
@@ -200,10 +199,10 @@ imports = builtins.map (drive: ./${drive}.nix) shared.drive.value;
 ```
 nix-config/
 ├── flake.nix          # entry layer：输入声明 + 协议名映射（成品由 lib/shared/targets.nix 生产）
-├── shared.nix        # 策略层（just shared-generate 生成，禁止手动编辑用户名）
-├── lib/shared/       # 共享层：lang（前端）→ runtime（IR 合成）→ targets.nix（codegen）
-├── platform/          # 分发层：目录即域（nixos · linux · darwin · wsl · nixos-wsl 五形态）
-├── home/              # 用户层（HM）：core / wm / env 三域（无根入口，由 payload 行导入）
+├── shared.nix         # 策略层（just shared-generate 生成，禁止手动编辑用户名）
+├── lib/shared/        # 共享层：lang（前端）→ runtime（IR 合成）→ targets.nix（codegen）
+├── platform/          # 分发层：平台主序·域显式（nixos · linux · darwin · wsl · nixos-wsl 五形态）
+├── home/              # 用户层（HM）：core / wm / env 三域（无根入口，由各平台 home 门导入）
 ├── hosts/             # 主机事实：facter.json · disk.nix · persist.nix + shared.nix 覆盖
 ├── secrets/           # SOPS 密文（chipr/）+ 明文模板（plan/，不入仓）
 ├── export/            # 可复用模块输出（nixosModules · homeModules）
@@ -465,7 +464,7 @@ push / PR
 ### deploy — 部署动词（nixos-rebuild 三语义 + HM + colmena 远程面）
 
 ```bash
-just nixos-switch <host>      # = sudo nixos-rebuild switch --flake .#<host>（激活）
+just nixos-switch <host>       # = sudo nixos-rebuild switch --flake .#<host>（激活）
 just nixos-test <host>         # test：试验性切换，重启即弃
 just nixos-boot <host>         # boot：只设下一代引导不激活（T10.2）
 just home-switch <host>        # standalone HM（→ <username>@<host>）

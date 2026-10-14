@@ -189,23 +189,28 @@ jobs:
 
       # Formatting drift gate (same formatter the flake exports).
       # T9.1: locked-nixpkgs nixfmt — registry ref retired (statix note).
+      # SC2046 repayment: the file list rides a mapfile'd array and
+      # "${FILES[@]}" — one argument per file, zero word splitting;
+      # a future path name containing spaces survives intact (the
+      # unquoted $(git ls-files …) form was shellcheck-gated debt).
       - name: nixfmt check
         run: |
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
-          nix run "$PKGS#nixfmt" -- --check \
-            $(git ls-files '*.nix' | grep -v -E '(^|/)([^/]*-config)/' || true)
+          mapfile -t FILES < <(git ls-files '*.nix' | grep -v -E '(^|/)([^/]*-config)/' || true)
+          nix run "$PKGS#nixfmt" -- --check "${FILES[@]}"
 
       # Dead-code gate — mirrors the pre-commit hook settings: the tree
       # standardises on uniform module heads ({ inputs, shared, lib,
       # config, pkgs, ... }) and overlay pairs (final: prev:), so unused
       # lambda names/patterns are exempted; dead `let` bindings still fail.
-      # T9.1: locked-nixpkgs deadnix (statix note).
+      # T9.1: locked-nixpkgs deadnix (statix note). SC2046 repayment:
+      # mapfile'd array + "${FILES[@]}" — see the nixfmt step note.
       - name: deadnix check
         run: |
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          mapfile -t FILES < <(git ls-files '*.nix')
           nix run "$PKGS#deadnix" -- \
-            --no-lambda-pattern-names --no-lambda-arg --fail \
-            $(git ls-files '*.nix')
+            --no-lambda-pattern-names --no-lambda-arg --fail "${FILES[@]}"
 
       # The real three-hook gate (nixfmt + statix + deadnix over the whole
       # tree, as one derivation). The prefix-driven vm-tests matrix cannot

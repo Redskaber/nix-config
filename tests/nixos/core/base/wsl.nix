@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-10-10
 # @description: tests::nixos::core::base::wsl
-# @source: platform/nixos/core/base/wsl.nix, platform/nixos-wsl/ (the fifth form)
+# @source: platform/nixos/system/core/base/wsl.nix, platform/nixos-wsl/ (the fifth form)
 #
 # T7.1 eval-level acceptance of the NixOS-WSL fifth system form —
 # the export-modules.nix pattern (see tests/nixos/core/base/
@@ -75,7 +75,7 @@ let
     };
     modules = [
       { nixpkgs.hostPlatform = "x86_64-linux"; }
-      ../../../../platform/nixos/core/base/wsl.nix
+      ../../../../platform/nixos/system/core/base/wsl.nix
     ];
   };
 

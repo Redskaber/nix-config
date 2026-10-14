@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::base::sound
-# @source: platform/nixos/core/base/sound.nix
+# @source: platform/nixos/system/core/base/sound.nix
 #
 # Mirrors production config:
 #   services.pulseaudio.enable = false

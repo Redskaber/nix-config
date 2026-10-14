@@ -5,10 +5,10 @@
 #
 # A host's disk layout lives in hosts/<hostname>/disk.nix as DATA —
 # interpreted by the disko module (registered platform-side in
-# platform/nixos/core/base/disk.nix). Its state strategy lives in
+# platform/nixos/system/core/base/disk.nix). Its state strategy lives in
 # hosts/<hostname>/persist.nix as DATA — interpreted by impermanence
 # and the rollback machinery (registered platform-side in
-# platform/nixos/core/base/impermanence.nix). This module exposes
+# platform/nixos/system/core/base/impermanence.nix). This module exposes
 # the APPLY and INSPECT side of those declarations:
 #
 #   disk-show <host>     read-only — evaluate the host's layout as JSON

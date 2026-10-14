@@ -38,5 +38,5 @@
   # Deliberately nothing else: this host's machine facts are all
   # negations (see header); everything else arrives via the policy
   # chain (hosts/nixos-wsl/shared.nix) and the platform customs
-  # (platform/nixos-wsl/).
+  # (platform/nixos-wsl/system/).
 }

@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-10-11
 # @description: tests::nixos::core::base::sound-gate
-# @source: platform/nixos/core/base/sound.nix, lib/shared/lang/enum.nix
+# @source: platform/nixos/system/core/base/sound.nix, lib/shared/lang/enum.nix
 #
 # T10.1 eval-level acceptance of the sound strategy gate — the
 # export-modules.nix pattern (see tests/nixos/core/base/wsl.nix and
@@ -52,7 +52,7 @@ let
     };
     modules = [
       { nixpkgs.hostPlatform = "x86_64-linux"; }
-      ../../../../platform/nixos/core/base/sound.nix
+      ../../../../platform/nixos/system/core/base/sound.nix
     ];
   };
 
@@ -67,7 +67,7 @@ let
     };
     modules = [
       { nixpkgs.hostPlatform = "x86_64-linux"; }
-      ../../../../platform/nixos/core/base/sound.nix
+      ../../../../platform/nixos/system/core/base/sound.nix
     ];
   };
 

@@ -26,13 +26,13 @@
 #     report.uefi           → boot-loader hints (BIOS guest: none)
 #     network_interface     → omitted from the report on purpose: the
 #                              platform's NetworkManager policy owns
-#                              DHCP (platform/nixos/core/base/network.nix);
+#                              DHCP (platform/nixos/system/core/base/network.nix);
 #                              the CONTROLLER (virtio-net) is declared —
 #                              the driver still reaches the initrd.
 #
 #   ./disk.nix (T5.13 — disko): the disk shape as a layout —
 #   interpreted by the disko module (registered platform-side in
-#   platform/nixos/core/base/disk.nix), imported below. The layout
+#   platform/nixos/system/core/base/disk.nix), imported below. The layout
 #   drives fileSystems, and its EF02 partition wires
 #   boot.loader.grub.devices (the BIOS-boot story; the loader policy
 #   override rides along in the same file — see its header).
@@ -41,7 +41,7 @@
 #   declaration — that the root is ephemeral, and the inventory of
 #   what survives — interpreted by the impermanence module + the
 #   rollback machinery (registered platform-side in
-#   platform/nixos/core/base/impermanence.nix), imported below.
+#   platform/nixos/system/core/base/impermanence.nix), imported below.
 #   Together with the btrfs subvolume layout in ./disk.nix this
 #   makes the guest an ephemeral-root machine: / is archived and
 #   re-created empty on every boot; /persistent, /nix and /boot are

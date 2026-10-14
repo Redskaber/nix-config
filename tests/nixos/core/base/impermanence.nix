@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-10-09
 # @description: tests::nixos::core::base::impermanence
-# @source: platform/nixos/core/base/impermanence.nix
+# @source: platform/nixos/system/core/base/impermanence.nix
 #
 # Eval-level acceptance of the ephemeral-root interpreter (T5.14),
 # the export-modules.nix pattern applied to a fixpoint module: the
@@ -95,7 +95,7 @@ let
   systemdEval = nixosSystem {
     specialArgs = { inherit inputs; };
     modules = base ++ [
-      ../../../../platform/nixos/core/base/impermanence.nix
+      ../../../../platform/nixos/system/core/base/impermanence.nix
       {
         boot.initrd.systemd.enable = true;
         redskaber.impermanence.ephemeral-root = {
@@ -114,7 +114,7 @@ let
   classicEval = nixosSystem {
     specialArgs = { inherit inputs; };
     modules = base ++ [
-      ../../../../platform/nixos/core/base/impermanence.nix
+      ../../../../platform/nixos/system/core/base/impermanence.nix
       {
         boot.initrd.systemd.enable = false;
         redskaber.impermanence.ephemeral-root.enable = true;
@@ -130,7 +130,7 @@ let
     specialArgs = { inherit inputs; };
     modules = [
       { nixpkgs.hostPlatform = "x86_64-linux"; }
-      ../../../../platform/nixos/core/base/impermanence.nix
+      ../../../../platform/nixos/system/core/base/impermanence.nix
       {
         fileSystems."/" = {
           device = "/dev/vda2";

@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-10-10
 # @description: tests::nixos::core::base::portal
-# @source: platform/nixos/core/base/portal.nix, hosts/vm/shared.nix
+# @source: platform/nixos/system/core/base/portal.nix, hosts/vm/shared.nix
 #
 # T7.2 eval-level acceptance of the portal capability gate — the
 # export-modules.nix pattern (see tests/nixos/core/base/wsl.nix):
@@ -51,7 +51,7 @@ let
     };
     modules = [
       { nixpkgs.hostPlatform = "x86_64-linux"; }
-      ../../../../platform/nixos/core/base/portal.nix
+      ../../../../platform/nixos/system/core/base/portal.nix
     ];
   };
 

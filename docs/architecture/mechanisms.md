@@ -182,7 +182,7 @@ platform/ · home/           通过 { shared, ... } 消费
 | `pointer-cursor`  | `Bibata-Modern-Amber` 等 12 个 Bibata 变体                                                                                                                                                                                                                                                                                                    |
 | `version`         | `v25_11`（携带 `{stateVersion, wine, swww, adb}` 策略） · `v26_05`（同构）                                                                                                                                                                                                                                                                          |
 
-`window-manager` 枚举值内嵌 `portal` 策略，`platform/nixos/core/base/portal.nix` 和 `home/core/base/portal.nix` 直接消费：
+`window-manager` 枚举值内嵌 `portal` 策略，`platform/nixos/system/core/base/portal.nix` 和 `home/core/base/portal.nix` 直接消费：
 
 ```nix
 # enum.nix 中的结构
@@ -231,9 +231,9 @@ home.packages = [ … ] ++ (shared.platform.value.trace-tools shared.upkgs);  # 
              darwinHosts     = caps.darwin
              standaloneHosts = !caps.darwin（darwin standalone 会携带 linux pkgs——结构性排除）
 后端     三类发射器（统一目录引用，语法 v3）：
-             mkNixosSystem  → modules = [ ../../platform/${tag} ]        （hostPlatform 来自主机事实）
-             mkDarwinSystem → modules = [ ../../platform/${tag} ]        （system = arch.tag 参数吸收）
-             mkHomeSystem   → modules = [ ../../platform/${tag}/home ]   （standalone HM 门）
+             mkNixosSystem  → modules = [ ../../platform/${tag}/system ] （grammar v4：域地址显式）
+             mkDarwinSystem → modules = [ ../../platform/${tag}/system ] （system = arch.tag 参数吸收）
+             mkHomeSystem   → modules = [ ../../platform/${tag}/home ]    （门即 payload，arch 退役）
 ```
 
 **策略 IR 单实例化（T5.10，分发层 CSE）：** `sharedByHost = genAttrs hostNames mkShared` 单表，分类器/发射器/命名/别名全部读表；默认主机表项 = 基实例（句柄共享，默认主机永不为同一份 IR 付两次钱）；flake.nix 的基 `shared` 消费 `targets.base`（后端导出已建好的基 IR 句柄）而非二度 import。遗留别名 `<user>-<platform>` 是 attr 级 thunk 别名（共享同一闭包，非重发射）。
@@ -419,10 +419,10 @@ home.activation.waybarWallust = lib.hm.dag.entryAfter [ "writeBoundary" ] waybar
 
 ### 7. 用户环境层 — home/env
 
-`home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的用户域 payload 行（`platform/*/home/<arch>.nix`）中与 `home/core` 并列导入：
+`home/env` 是独立于 `home/core` 的全局运行时环境层，在所有平台的用户域门（`platform/<platform>/home/default.nix`，grammar v4——门即 payload，arch 轴已退役）中与 `home/core` 并列导入：
 
 ```
-platform/<platform>/home/<arch>.nix
+platform/<platform>/home/default.nix
     imports = [ ../../../home/core  ../../../home/env  ../../../home/wm ]
 ```
 
@@ -574,11 +574,11 @@ fileSystems、initrd 模块、微码全部以 option 赋值硬编码在生成物
 文件系统与挂载点），由 disko 模块解释——`fileSystems`、`swapDevices` 与 BIOS boot 的
 `boot.loader.grub.devices` 全部从布局派生。解释器注册位置不同是上游化差异的直接后果：
 facter 模块上游化进了 nixpkgs（零 import、零 input）；disko 不在 nixpkgs（已对锁定树
-核实），其注册 = `platform/nixos/core/base/disk.nix` 一行 import——**能力归平台结构树，
+核实），其注册 = `platform/nixos/system/core/base/disk.nix` 一行 import——**能力归平台结构树，
 数据归 hosts/**（与 sops-nix 注册于 core/sec/secret 同一裁决）；**persist.nix 是状态策略
 数据**（「根是 ephemeral 的」这一机器事实 + 什么生存的清单 environment.persistence），由
 impermanence 模块 + 回滚机制解释（同样不在 nixpkgs——已对锁定树核实，注册 =
-`platform/nixos/core/base/impermanence.nix`）。三个事实对共享同一裁决链。数据与解释器分离的
+`platform/nixos/system/core/base/impermanence.nix`）。三个事实对共享同一裁决链。数据与解释器分离的
 价值与 hosts/ 本身同构：机器事实是前端数据，解释它的能力是后端，主机入口只做一行
 接线。
 
@@ -612,7 +612,7 @@ networking，在 NM 之下会再挂一层 dhcpcd；CONTROLLER（virtio-net）在
 systemd-boot off——平台默认面向 UEFI 机器群）。
 
 **ephemeral root（T5.14 实验，仅 vm）：** `just persist-show vm` 可读出整张状态契约。
-回滚机制是平台侧解释器（`platform/nixos/core/base/impermanence.nix`）：读布局已声明的
+回滚机制是平台侧解释器（`platform/nixos/system/core/base/impermanence.nix`）：读布局已声明的
 根挂载事实（device/fsType/subvol——disko _config 输出），派生上游权威配方（impermanence
 README.org 的 BTRFS subvolumes 节）：归档旧根 → 删除超过 retain-days（默认 30 天）的旧根
 → 重建空 subvol → 才挂载 /。**两种 initrd 模式、同一配方**：systemd stage 1（平台 fleet
@@ -622,7 +622,7 @@ classic stage 1 落地为 postResumeCommands（根挂载循环之前执行——
 「每个 persistence 路径必须 neededForBoot」，解释器用 mkDefault 满足之；本仓更严一条：
 每个 persistence 路径必须是已声明的 mount（布局缺口→求值期大声失败）。
 
-platform/nixos/default.nix 通过 ../../hosts/${shared.hostName} 动态路由到对应主机（系统边界
+platform/nixos/system/default.nix 通过 ../../../hosts/${shared.hostName} 动态路由到对应主机（系统边界
 挂载 host facts；darwin 的边界同理）。**消费不对称**：`hosts/<h>/default.nix` 只被
 系统边界导入；`hosts/<h>/shared.nix` 被每一类 closure 的策略加载器消费——standalone
 HM 路径永不触碰主机系统事实。
@@ -655,7 +655,7 @@ service-profile = shared.enum.service-profile.dev-on-demand;
 #   db.mongodb     = { install = false; autostart = false; }  # 不装
 #   virt.podman    = { install = true;  autostart = true;  }  # 装且自启
 
-# 配置文件消费（platform/nixos/core/srv/db/postgresql.nix）
+# 配置文件消费（platform/nixos/system/core/srv/db/postgresql.nix）
 services.postgresql.enable = shared.services.db.postgresql.install;
 systemd.services.postgresql.wantedBy =
   lib.mkForce (lib.optional shared.services.db.postgresql.autostart "multi-user.target");

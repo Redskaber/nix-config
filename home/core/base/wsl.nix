@@ -12,12 +12,12 @@
 #   hosts/nixos-wsl  platform.nixos-wsl    (the fifth system form, T7.1)
 #
 # Before T7.1 this surface lived inline in
-# platform/wsl/home/x86_64-linux.nix — correct for the one host that
+# platform/wsl/home/default.nix — correct for the one host that
 # had caps.wsl, structurally unreachable for a second one. The
 # extraction keeps the values byte-equal (the standalone-wsl HM
 # closure must not move); what changed is the ADDRESS: caps-gated
 # shared-tree module, the same shape the system side has used since
-# T3.1 (platform/nixos/core/base/wsl.nix keeps the system-domain
+# T3.1 (platform/nixos/system/core/base/wsl.nix keeps the system-domain
 # deltas — the two files are the boundary, read together).
 #
 # What belongs HERE (user space): wslview routing, WSLENV crossing,

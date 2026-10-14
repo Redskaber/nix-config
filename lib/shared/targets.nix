@@ -115,55 +115,65 @@ let
 
   # ── backend: target emitters (codegen) ────────────────────────
   # One policy graph in, three closure formats out. Directory
-  # grammar v3 — directory-as-domain (T5.11): a platform directory
-  # splits its two option universes by LEVEL, and every import
-  # syntax below is a uniform directory reference — the subtree
-  # owns its whole shape (T5.4 principle, now universal):
+  # grammar v4 — platform-major, domain-explicit: every platform
+  # tag owns a directory, and inside it exactly two reserved
+  # domain names — system/ and home/ — each with its own
+  # default.nix door. The two domains finally hold SYMMETRIC
+  # addresses (v3's system domain was the platform's implicit top
+  # level while the user domain lived one level down; v4 gives
+  # BOTH an explicit door — the more explicit, more universal
+  # form):
   #
-  #   platform/<tag>/default.nix   the SYSTEM door — the platform's
-  #                                top level IS the system domain.
-  #                                Present IFF the platform has a
-  #                                system form (nixos · darwin; absent
-  #                                on linux/wsl — no system emitter
-  #                                ever asks for them)
-  #   platform/<tag>/<subsys>/     the system tree (core/ dm/ wm/…) —
-  #                                grows free at the top level
-  #   platform/<tag>/home/         THE user domain of the platform —
-  #                                reserved top-level name (the one
-  #                                word v3 reserves): every HM file
-  #                                lives one level down, never flat
-  #                                at the system level
-  #   platform/<tag>/home/default.nix
-  #                                the HOME door — present IFF the
-  #                                platform keeps a standalone HM
-  #                                closure live (nixos · linux · wsl;
-  #                                absent on darwin — HM rides in
-  #                                module mode inside the system
-  #                                closure, T5.8)
-  #   platform/<tag>/home/<arch>.nix
-  #                                HM payload — arch rows, organized
-  #                                INSIDE the user domain. The target
-  #                                double: the platform axis picks
-  #                                the directory, the arch axis picks
-  #                                the row (system-level arch
-  #                                differences are absorbed by the
-  #                                emitter's `system` parameter at
-  #                                the nixpkgs layer — the arch axis
-  #                                exists ONLY in the user domain, so
-  #                                v3 gives it an address there)
+  #   platform/<tag>/system/      the SYSTEM domain — default.nix
+  #                               is the system door: entry and
+  #                               dispatch for the platform's system
+  #                               form; system configs (core/ dm/
+  #                               wm/…) grow free around it. Present
+  #                               IFF the platform has a system form
+  #                               (nixos · darwin · nixos-wsl; absent
+  #                               on linux/wsl — no system emitter
+  #                               ever asks for them)
+  #   platform/<tag>/home/        the USER domain — default.nix is
+  #                               the home door: entry and dispatch
+  #                               for the user domain; the door IS
+  #                               the HM payload module (base facts
+  #                               + the cross-platform user library
+  #                               imports), present on every platform
+  #                               (nixos · linux · wsl · nixos-wsl
+  #                               standalone doors; darwin's door is
+  #                               mounted by its system customs in
+  #                               module mode, T5.8)
   #
-  #   mkNixosSystem   platform/<tag>        → default.nix
-  #   mkDarwinSystem  platform/<tag>        → default.nix
-  #   mkHomeSystem    platform/<tag>/home   → home/default.nix
+  # The arch axis is NOT modelled anywhere on disk — it is a
+  # natural choice made by the dispatch path, not an address: all
+  # arches of a platform walk the ONE same pipeline (one flow per
+  # platform), and arch differences are absorbed BEFORE these
+  # doors, by the emitters' `system` parameter and the per-host
+  # pkgs synthesis at the nixpkgs layer (runtime.nix instantiates
+  # { system = arch.tag; }). v3's per-arch payload rows
+  # (home/<arch>.nix) are retired; the target double keeps its
+  # platform half as a directory address and drops its arch half
+  # to a pipeline VALUE.
   #
-  # File presence IS the capability declaration — the caps table
+  #   mkNixosSystem   platform/<tag>/system → default.nix
+  #   mkDarwinSystem  platform/<tag>/system → default.nix
+  #   mkColmenaNode   platform/<tag>/system → default.nix
+  #   mkHomeSystem    platform/<tag>/home   → default.nix
+  #
+  # The natural dispatch boundary is exactly where the pipeline
+  # lands — default.nix → <system/default.nix | home/default.nix>
+  # — and the tag interpolation below is the dispatch layer's own
+  # projection (never an if-else, never a raw tag compare — the
+  # T4.0 law holds at the codegen boundary): the policy IR
+  # carries the tag, the emitters project it onto the filesystem,
+  # and the config tree stays free of platform decisions. File
+  # presence IS the capability declaration — the caps table
   # (enum.nix) projected onto the filesystem: listing a platform
   # directory reads off its shape, and every PATH has exactly one
-  # meaning (v2 read domains off filenames; v3 reads them off
-  # levels — top = system, home/ = user, so no same-name-different-
-  # domain debt either way). A declared-but-absent path fails loudly
-  # at eval; the host's policy decides WHERE the path lands; the
-  # caps classifier decides WHO reaches which emitter.
+  # meaning (v2 read domains off filenames; v3 off levels; v4 off
+  # explicit domain directories). A declared-but-absent path
+  # fails loudly at eval; the host's policy decides WHERE the path
+  # lands; the caps classifier decides WHO reaches which emitter.
   # Structure never smuggles policy: nixos keeps BOTH doors live
   # ON purpose (standalone HM switches in seconds and rolls back
   # independently of the system generation) — folding them into
@@ -181,13 +191,14 @@ let
         inherit inputs;
         shared = nshared;
       };
-      # Directory reference lands in platform/<tag>/default.nix —
-      # the system customs (grammar v3, T5.11). The platform's
-      # top level IS the system domain (core/ dm/ wm/ grow free
-      # there); the sibling home/ subtree serves the platform's
-      # OTHER live door (standalone HM) without ever touching
-      # this one — two option universes, two levels.
-      modules = [ ../../platform/${nshared.platform.tag} ];
+      # Directory reference lands in platform/<tag>/system — the
+      # platform's system door (grammar v4, domain-explicit): the
+      # tag arrives from the policy IR and is projected onto the
+      # filesystem (never re-lexed, never compared — T4.0), the
+      # door owns the platform's system form (core/ dm/ wm/ grow
+      # free below it), and the user domain has its own symmetric
+      # door at platform/<tag>/home.
+      modules = [ ../../platform/${nshared.platform.tag}/system ];
     };
 
   mkHomeSystem =
@@ -210,28 +221,28 @@ let
         inherit inputs;
         shared = hshared;
       };
-      # Directory reference lands in platform/<tag>/home/ — the
-      # HM customs (grammar v3, T5.11): the user domain of the
-      # platform, one level below the system top. Uniform with the
-      # two system emitters above — three directory references,
-      # each subtree owning its whole shape (the door inside is
-      # home/default.nix; standalone-only platforms like linux/wsl
-      # have exactly this subtree and no system level at all).
+      # Directory reference lands in platform/<tag>/home — the
+      # platform's home door (grammar v4, domain-explicit): the
+      # symmetric twin of the system emitters' reference, one
+      # uniform shape for all four emitters. The door IS the HM
+      # payload module (arch-free by construction — all arches of
+      # the platform walk this one pipeline; standalone-only
+      # platforms like linux/wsl own exactly this subtree and no
+      # system form at all).
       modules = [ ../../platform/${hshared.platform.tag}/home ];
     };
 
-  # darwinSystem goes through the platform customs (T5.8, grammar
-  # v3 T5.11): the darwin platform has ONE live door — the system
-  # closure with HM riding inside in module mode — so this directory
-  # reference lands in platform/<tag>/default.nix, the system
-  # router itself (imports hm.darwinModule + host facts, dispatches
-  # the arch payload under home-manager.users). There is no
-  # home/default.nix inside its home/ subtree: the standalone HM
-  # door does not exist on darwin (file absence = capability
-  # declaration — the payload rows still live there, mounted in
-  # module mode). Zero module names, zero assembly details at the
-  # dispatch layer — one directory reference, and the tree owns
-  # its whole shape.
+  # darwinSystem goes through the platform customs (T5.8 lineage,
+  # grammar v4): the darwin platform has ONE live door — the
+  # system closure with HM riding inside in module mode — so this
+  # emitter takes the same platform/<tag>/system boundary the
+  # NixOS emitter takes. That door mounts the user-domain payload
+  # (import ../home — the cross-domain reference is explicit in
+  # the path) under home-manager.users; no standalone door for
+  # darwin exists (the caps classifier never routes a darwin host
+  # through platform/<tag>/home). Zero module names, zero assembly
+  # details at the dispatch layer — one directory reference, and
+  # the tree owns its whole shape.
   mkDarwinSystem =
     host:
     let
@@ -243,7 +254,7 @@ let
         inherit inputs;
         shared = dshared;
       };
-      modules = [ ../../platform/${dshared.platform.tag} ];
+      modules = [ ../../platform/${dshared.platform.tag}/system ];
     };
 
   # ── backend: deployment facts + the colmena emitter (T20.1) ──
@@ -290,12 +301,12 @@ let
       cshared = sharedByHost.${host};
     in
     {
-      # The SAME platform door the primary emitter takes (grammar v3):
-      # colmena's re-emission reads the identical module tree — no
-      # parallel assembly to drift. The per-host policy IR arrives
-      # through meta.nodeSpecialArgs (colmena injects `name`/`nodes`
-      # itself; nothing here duplicates that).
-      imports = [ ../../platform/${cshared.platform.tag} ];
+      # The SAME platform/<tag>/system door the primary emitter takes
+      # (grammar v4): colmena's re-emission reads the identical module
+      # tree — no parallel assembly to drift. The per-host policy IR
+      # arrives through meta.nodeSpecialArgs (colmena injects
+      # `name`/`nodes` itself; nothing here duplicates that).
+      imports = [ ../../platform/${cshared.platform.tag}/system ];
 
       # Version identity (T22.1 + T24.1, run 38171937689 and its
       # post-fix re-run — the parity gate's first two verdicts): the

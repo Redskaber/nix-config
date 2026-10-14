@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-10
 # @description: tests::nixos::core::drive::intel
-# @source: platform/nixos/core/drive/intel.nix
+# @source: platform/nixos/system/core/drive/intel.nix
 #
 # Verifies Intel GPU driver toolchain is installed:
 #   - intel-gpu-tools (intel_gpu_top)

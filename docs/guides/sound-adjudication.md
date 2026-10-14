@@ -10,7 +10,7 @@
 
 ## 1. 裁决范围
 
-sound 轴是 NixOS 系统层策略（`platform/nixos/core/base/sound.nix` 读
+sound 轴是 NixOS 系统层策略（`platform/nixos/system/core/base/sound.nix` 读
 `shared.sound.value.sound-server` 门控），因此只有路由进 nixosConfigurations
 的主机需要回答本轴：
 

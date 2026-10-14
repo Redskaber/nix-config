@@ -28,7 +28,7 @@ mkdir home/env/dev/<lang>
 
 ### 添加新 Secret（三步，核心逻辑零改动）
 
-**Step 0** — `platform/nixos/core/srv/db/newdb.nix` impl + `platform/nixos/core/srv/db/default.nix` import
+**Step 0** — `platform/nixos/system/core/srv/db/newdb.nix` impl + `platform/nixos/system/core/srv/db/default.nix` import
 
 **Step 1** — `docs/tmpl/shared.nix.tmpl` 中添加：
 

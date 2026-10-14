@@ -4,7 +4,7 @@
 # @description: hosts::vm::disk — the guest's one-disk layout (disko, T5.13; btrfs subvolumes, T5.14)
 #
 # THE DATA half of the disk fact pair (interpreter lives platform-side
-# in platform/nixos/core/base/disk.nix). T5.13 declared the whole disk
+# in platform/nixos/system/core/base/disk.nix). T5.13 declared the whole disk
 # as a GPT partition table with an EF02 BIOS-boot staging partition
 # and a root ext4; T5.14 upgrades the root partition to btrfs so the
 # root can become EPHEMERAL — four subvolumes, four lifetimes:
@@ -12,7 +12,7 @@
 #   root       mounted at /           EPHEMERAL — archived under
 #            old_roots/<timestamp> and re-created empty on every boot
 #            by the rollback interpreter
-#            (platform/nixos/core/base/impermanence.nix). Anything on
+#            (platform/nixos/system/core/base/impermanence.nix). Anything on
 #            it that is not in /persistent evaporates at boot.
 #   persistent  mounted at /persistent  THE STATE — what survives
 #            (the inventory lives in ./persist.nix; the interpreter

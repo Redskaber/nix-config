@@ -25,7 +25,7 @@
      `inherit (inputs.nix-types.lib) result;`——ok/err/andThen 在
      数据驱动的 pass 列表上组合，`unwrapOrElse throw` 是全仓唯一
      throw 边界（Err 诊断逐字成为 eval 错误）。
-  3. **match 穷尽分派**：`platform/nixos/wm/hyprland/plugins/default.nix`
+  3. **match 穷尽分派**：`platform/nixos/system/wm/hyprland/plugins/default.nix`
      对 shared.version（v25_11 / v26_05 必须显式回答，无 silent else）；
      `home/wm/hyprland/default.nix` 对 shared.platform（nixos 行 +
      通配兜底）。
@@ -48,7 +48,7 @@ match。三条证据（均一手核验）：
    要么被迫 required 化（全部 host 加样板声明，违背 T4.0「默认值
    物化」的初衷）。
 2. **字符串消费面**：`home/core/base/i18n.nix` 与
-   `platform/nixos/core/base/i18n.nix` 把声明源直接插值进 sameSource
+   `platform/nixos/system/core/base/i18n.nix` 把声明源直接插值进 sameSource
    守卫的诊断串（`${shared.i18n.nixpkgs-source}`）；enum 实例插值
    依赖 `__toString`，诊断语义改变（标签 vs 声明原文）。
 3. **诊断质量回归**：`.${str}` 属性缺失 → Nix attribute-missing

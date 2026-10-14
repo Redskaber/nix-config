@@ -1,40 +1,32 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/home/default.nix
 # @author: redskaber
-# @datetime: 2026-10-09
-# @description: platform::nixos::home — the standalone-HM customs (T5.11)
+# @datetime: 2026-10-14
+# @description: platform::nixos::home — the NixOS home door (grammar v4)
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
 #
-# THE home-domain customs of platform/nixos — the second live door.
-# Directory grammar v3 — directory-as-domain (T5.11): a platform
-# directory splits its two option universes by LEVEL. The top level
-# is the system domain (default.nix + core/ dm/ wm/…); this subtree
-# — home/, the one reserved top-level name — IS the user domain.
-# mkHomeSystem imports platform/<tag>/home (a directory reference,
-# uniform with the two system emitters); the door inside is this
-# file, and the arch rows sit next to it as siblings:
+# THE home door of platform/nixos — entry and dispatch for the user
+# domain (directory grammar v4, platform-major, domain-explicit):
+# mkHomeSystem imports platform/<tag>/home and lands here. The door
+# IS the HM payload module: the HM base facts, the cross-platform
+# user library imports, and nothing else — the platform-specific
+# user content stays in this subtree, the shared content in the
+# repo-root library the imports below reach.
 #
-#   imports = [ ./${shared.arch.tag}.nix ]
-#
-# The target double, spatially: the platform axis picked this
-# directory; the arch axis picks the payload row. The arch axis
-# exists ONLY in the user domain (system-level arch differences
-# are absorbed by the emitter's `system` parameter at the nixpkgs
-# layer) — v2 codified that as a comment; v3 gives it an address.
+# The arch axis is NOT modelled: v3's per-arch payload rows
+# (home/<arch>.nix) are retired — every arch of the platform walks
+# this ONE pipeline, and arch differences are absorbed at the
+# nixpkgs layer (the emitter reads the per-host pkgs handle that
+# runtime.nix synthesizes with { system = arch.tag; }). This is
+# your home-manager configuration file — it replaces
+# ~/.config/nixpkgs/home.nix.
 #
 # nixos hosts keep BOTH doors live on purpose — a policy, not a
 # residue: the standalone HM closure switches in seconds and rolls
 # back independently of the system generation, while the system
-# door one level up (../default.nix) owns hardware/services. The
-# two option universes never share a FILE (that would need
-# option-existence sniffing — config-layer if-else, forbidden) and
-# since T5.11 they never even share a LEVEL.
-#
-# Consumers: mkHomeSystem — ACTIVE, homeConfigurations.<user>@<host>
-# for every nixos-system host. darwin's equivalent door is closed by
-# grammar (no home/default.nix inside platform/darwin/home/ — HM
-# rides in module mode inside the darwin system customs, the T5.8
-# fold; the arch rows still live in that subtree, differently
-# mounted).
+# door at ../system owns hardware/services. The two option
+# universes never share a FILE (that would need option-existence
+# sniffing — config-layer if-else, forbidden) and never share a
+# DOOR.
 {
   inputs,
   shared,
@@ -44,8 +36,26 @@
   ...
 }:
 {
+  home = {
+    username = shared.user.username;
+    homeDirectory = shared.homeDir;
+    stateVersion = shared.version.value.stateVersion;
+  };
+  programs.home-manager.enable = true;
+
+  # You can import other home-manager modules here
   imports = [
-    ./${shared.arch.tag}.nix
+    # If you import other home-manager modules from other flakes (such as nix-colors):
+    # You can also split up your configuration and import pieces of it here:
+    ../../../home/core
+    ../../../home/env
+    ../../../home/wm
+    # devShells: import dev/lang.nix from flake.nix
   ];
 
+  # used user custom inxpkgs
+  nixpkgs = shared.nixpkgs;
+
+  # Nicely reload system units when changing configs
+  systemd.user.startServices = "sd-switch";
 }

@@ -69,7 +69,7 @@
     # rev of the tag). The module evaluates against OUR nixpkgs
     # (follows) so layout scripts and the interpreter share one channel.
     # The import happens platform-side (see
-    # platform/nixos/core/base/disk.nix), never here — the entry layer
+    # platform/nixos/system/core/base/disk.nix), never here — the entry layer
     # registers producers, it does not assemble consumers.
     disko.url = "https://github.com/nix-community/disko/archive/56ef5e72fec74b993ad0973b2dfa4eadeb48ba41.tar.gz";
     disko.inputs.nixpkgs.follows = "nixpkgs";
@@ -77,7 +77,7 @@
     # Impermanence — declarative persistent state on ephemeral roots
     # (T5.14): the interpreter for hosts/<h>/persist.nix declarations.
     # Same registration story as disko above (capability registered
-    # platform-side in platform/nixos/core/base/impermanence.nix, data
+    # platform-side in platform/nixos/system/core/base/impermanence.nix, data
     # as host facts). NOT in nixpkgs — checked against the locked
     # nixos-26.05 tree, and neither is preservation, its nixpkgs-track
     # successor (nix-community/preservation, nixpkgs#265640); the
@@ -98,13 +98,13 @@
     # NixOS-WSL — the WSL2 interpreter for the nixos-wsl platform row
     # (T7.1): the fifth system form, a NixOS system layer hosted
     # inside a Windows-managed distro. Registered platform-side in
-    # platform/nixos-wsl/default.nix (the thin door that reuses the
+    # platform/nixos-wsl/system/default.nix (the thin door that reuses the
     # nixos customs); hosts/nixos-wsl/ carries the host's data.
     # Tarball-pinned to the release-26.05 branch (release branches
     # are nixpkgs-coupled since 2505.7.0 — main tracks unstable).
     # The module owns the WSL surface (wsl.conf generation, systemd
     # hosting, interop/binfmt, boot/kernel/loader subtraction); our
-    # platform/nixos/core/base/wsl.nix keeps only the true deltas.
+    # platform/nixos/system/core/base/wsl.nix keeps only the true deltas.
     nixos-wsl.url = "https://github.com/nix-community/NixOS-WSL/archive/b98199a76ab180be55f7a6a97bd4984a87c99964.tar.gz";
     nixos-wsl.inputs.nixpkgs.follows = "nixpkgs";
 

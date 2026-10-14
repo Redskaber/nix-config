@@ -218,7 +218,7 @@ let
     "ly"
     "sddm"
     # T7.1: the Null-Object row — no display manager. Console hosts
-    # (WSL, headless servers) select it; platform/nixos/dm/none/ is
+    # (WSL, headless servers) select it; platform/nixos/system/dm/none/ is
     # the deliberately-empty module that keeps the dm router
     # unconditional (same pattern as window-manager none).
     "none"

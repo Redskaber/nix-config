@@ -4,7 +4,7 @@
 # @description: hosts::vm::persist — the guest's state strategy (impermanence, T5.14)
 #
 # THE DATA half of the persistence fact pair (interpreter lives
-# platform-side in platform/nixos/core/base/impermanence.nix — the
+# platform-side in platform/nixos/system/core/base/impermanence.nix — the
 # third fact pair of the hosts/ doctrine, after facter.json T5.12 and
 # disk.nix T5.13). Two declarations, no behavior:
 #

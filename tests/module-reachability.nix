@@ -14,19 +14,24 @@
 #   The round-19 fix wired ./cache by hand and proposed this gate.
 #
 # WHAT THIS GATE DOES — the directory side of the ledger, asserted:
-#   1. NODES — every .nix file under home/ and platform/ (280 at
-#      landing; the count travels into the check output so a probe
-#      regression is a visible drop, not a silent green).
+#   1. NODES — every file under home/ and platform/ (277 at the
+#      grammar-v4 landing, 276 of them .nix — the one .toml is the
+#      yazi theme data; the count travels into the check output
+#      so a probe regression is a visible drop, not a silent green).
 #   2. MODULE DIRS — every directory containing a default.nix (the
-#      unit of the assertion: 94 at landing).
+#      unit of the assertion: 95 at the grammar-v4 landing).
 #   3. ROOTS — the faces the flake actually evaluates:
-#        platform/<tag>/default.nix        the system domain (3 tags:
-#                                          darwin nixos nixos-wsl)
-#        platform/<tag>/home/default.nix   the user domain (4 tags:
-#                                          linux nixos nixos-wsl wsl —
-#                                          linux/wsl are standalone-HM-
-#                                          only platforms, no system
-#                                          toplevel door)
+#        platform/<tag>/system/default.nix
+#                                        the system domain (3 tags:
+#                                          darwin nixos nixos-wsl —
+#                                          grammar v4, domain-explicit)
+#        platform/<tag>/home/default.nix   the user domain (5 tags:
+#                                          darwin linux nixos nixos-wsl
+#                                          wsl — every platform owns a
+#                                          home door; darwin's is
+#                                          mounted by its system door
+#                                          in module mode, linux/wsl
+#                                          are standalone-HM-only)
 #        home/env/dev                      the devShells DOMAIN root —
 #                                          consumed OUTSIDE the import
 #          graph: shared.nix builds devDir as a string
@@ -41,8 +46,11 @@
 #                              a directory reference lands on its
 #                              default.nix, a .nix file on itself.
 #        dynamic ./\${…}.nix  ./\${…} — the tree's routers (app
-#              categories, editors, terminals, browsers, shells, arch
-#              rows, drive, wm, dm) select siblings through enum rows.
+#              categories, editors, terminals, browsers, shells,
+#              drive, wm, dm) select siblings through enum rows.
+#              (grammar v4 retired the arch-row routers — the arch
+#              axis has no address on disk anymore; every arch
+#              walks the one pipeline per platform.)
 #              The gate cannot resolve an enum at scan time (that would
 #              drag the whole distribution layer into a hygiene check),
 #              so it over-approximates: suffix ".nix" → every sibling
@@ -136,7 +144,7 @@ let
   # ── 3. roots: the faces the flake evaluates ────────────────────────
   platformTagDirs = attrNames (readDir (src + "/platform"));
   systemRoots = filter (p: pathExists p) (
-    map (tag: src + "/platform/" + tag + "/default.nix") platformTagDirs
+    map (tag: src + "/platform/" + tag + "/system/default.nix") platformTagDirs
   );
   homeRoots = filter (p: pathExists p) (
     map (tag: src + "/platform/" + tag + "/home/default.nix") platformTagDirs

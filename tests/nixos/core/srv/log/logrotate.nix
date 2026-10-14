@@ -2,7 +2,7 @@
 # @author: redskaber
 # @datetime: 2026-05-09
 # @description: tests::nixos::core::srv::log::logrotate
-# @source: platform/nixos/core/srv/log/logrotate.nix
+# @source: platform/nixos/system/core/srv/log/logrotate.nix
 
 { pkgs, lib, ... }:
 {

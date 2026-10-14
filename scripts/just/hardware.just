@@ -32,7 +32,7 @@
 # law at the verb level).
 #
 # Multi-host design:
-#   Both files live in hosts/<hostname>/ (not platform/nixos/core/base/).
+#   Both files live in hosts/<hostname>/ (not platform/nixos/system/core/base/).
 #   The <hostname> is read from shared.nix at runtime, so this script stays
 #   data-driven — no hardcoded host paths.
 #

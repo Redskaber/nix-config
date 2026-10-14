@@ -82,7 +82,7 @@ let
 
   importProduction =
     shared:
-    import ../../../../platform/nixos/core/base/i18n.nix {
+    import ../../../../platform/nixos/system/core/base/i18n.nix {
       inputs = { };
       inherit shared lib;
       config = { };

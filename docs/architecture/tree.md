@@ -29,29 +29,30 @@ nix-config/
 │       └── runtime/
 │           └── default.nix # 阶段二 · IR 合成：caps/pkgs/upkgs/i18nScope/services/appCategories/…
 │
-├── platform/               # 平台分发层（host-dispatch：目录语法 v3 — 目录即域，T5.11）
-│   ├── nixos/              # NixOS 双边界（双活门）：顶层 = 系统域：default.nix = 系统边界
-│   │                       #   （core/dm/wm 注册 + hosts facts）；home/ = 用户域：
-│   │                       #   home/default.nix = HM 边界（standalone 门，秒级切换/独立
-│   │                       #   回滚的策略选择）；home/x86_64-linux.nix = HM payload 行；
-│   │                       #   core/{base,drive,exp,sec,srv} · dm/ · wm/；nixpkgs = shared.nixpkgs
-│   ├── linux/              # 通用 Linux：目录即用户域——home/default.nix = 唯一边界
-│   │                       #   （standalone HM + nixGL(mesa) + genericLinux；无系统形态
-│   │                       #   ——顶层无 default.nix 即声明；整个平台目录只有 home/）
-│   ├── darwin/             # macOS(nix-darwin)：default.nix = 唯一边界（T5.8 单门折叠：
+├── platform/               # 平台分发层（host-dispatch：目录语法 v4 — 平台主序 · 域显式）
+│   ├── nixos/              # NixOS 双活门：system/ = 系统域（system/default.nix = 系统门：
+│   │                       #   core/dm/wm 注册 + hosts facts）；home/ = 用户域
+│   │                       #   （home/default.nix = home 门——门即 HM payload，arch 轴
+│   │                       #   已退役：所有 arch 走同一管道，arch 差异由发射器 system
+│   │                       #   参数/per-host pkgs 在 nixpkgs 层吸收；秒级切换/独立回滚
+│   │                       #   的策略选择）；system/{core,drive,exp,sec,srv} · dm/ · wm/
+│   ├── linux/              # 通用 Linux：home/ = 唯一活门——门即 payload（standalone HM +
+│   │                       #   nixGL(mesa) + genericLinux；无 system/ 目录即声明无系统
+│   │                       #   形态——整个平台目录只有 home/）
+│   ├── darwin/             # macOS(nix-darwin)：system/ = 唯一活门（T5.8 单门折叠：
 │   │                       #   hm.darwinModule + hosts facts + home-manager.users 挂载
-│   │                       #   = import ./home/${arch.tag}.nix 一体——系统门跨域引用，
-│   │                       #   路径可见；home/ 内无 default.nix——HM 非独立门，payload
-│   │                       #   行仍驻留，以 module mode 挂载）；home/<arch>.nix = HM payload
-│   ├── wsl/                # WSL2：home/default.nix = 唯一边界（standalone HM + nixGL +
-│   │                       #   genericLinux + systemd；无系统形态，顶层无 default.nix；
-│   │                       #   整个平台目录即用户域；WSL 用户空间 interop 由共享树
-│   │                       #   home/core/base/wsl.nix 按 caps.wsl 提供，T7.1）
-│   └── nixos-wsl/          # NixOS-WSL 第五形态（T7.1）：default.nix = 薄门——
-│                           #   ../nixos 复用 + NixOS-WSL 解释器；home/ = 用户域
-│                           #   （payload 行回用 nixos 用户域行；门即形态定义）
+│   │                       #   = import ../home 一体——系统门跨域引用，路径可见）；
+│   │                       #   home/ = 用户域门（module mode 挂载，非独立门）
+│   ├── wsl/                # WSL2：home/ = 唯一活门（standalone HM + nixGL +
+│   │                       #   genericLinux + systemd；无 system/ 目录；WSL 用户空间
+│   │                       #   interop 由共享树 home/core/base/wsl.nix 按 caps.wsl
+│   │                       #   提供，T7.1）
+│   └── nixos-wsl/          # NixOS-WSL 第五形态（T7.1）：system/ = 薄门——
+│                           #   ../../nixos/system 复用 + NixOS-WSL 解释器；home/ =
+│                           #   薄门（imports = [ ../../nixos/home ] 回用 nixos 用户域
+│                           #   门；门即形态定义）
 │
-├── home/                   # 用户层（Home Manager）—— 无根入口，仅由 payload 行导入
+├── home/                   # 用户层（Home Manager）—— 无根入口，仅由各平台 home 门导入
 │   ├── core/
 │   │   ├── base/           # 基础：字体 · i18n(fcitx5) · portal(wm 策略驱动) · XDG
 │   │   │                   #   · wsl（caps.wsl 门控的 WSL 用户空间 interop：wslview/WSLENV，T7.1）
@@ -72,7 +73,7 @@ nix-config/
 │   │   │       ├── misc/       #   杂项：cava · cursor(指针主题)
 │   │   │       ├── monitor/    #   监控：btop · htop · bottom
 │   │   │       └── shell/      #   Shell：zsh(fzf-tab+atuin) · fish(fzf-fish+autopair)
-│   │   ├── sec/            # 用户安全（扩展点，系统侧在 platform/nixos/core/sec）
+│   │   ├── sec/            # 用户安全（扩展点，系统侧在 platform/nixos/system/core/sec）
 │   │   └── srv/            # 用户服务：
 │   │       ├── cache/      #   缓存：cachix
 │   │       ├── db/         #   数据库客户端工具
@@ -83,7 +84,7 @@ nix-config/
 │   │   │   └── theme/      # quickshell · rofi · swaync · satty · swayosd · wallust · waybar · wlogout · qtct
 │   │   ├── niri/           # Wayland WM（备选）：niri + 主题栈
 │   │   │   └── theme/      # satty · swaylock · swaync · swayosd · waybar · wlogout
-│   │   └── none/           # Null-Object：空模块（其存在让 payload 行的无条件 import 成立）
+│   │   └── none/           # Null-Object：空模块（其存在让 home 门的无条件 import 成立）
 │   └── env/
 │       ├── base/           # 全局基础包：clang · cmake · rustc · cargo · python314 · nodejs_26
 │       │                   # 调试工具：valgrind · strace · ltrace · pciutils · vulkan-tools
@@ -117,7 +118,7 @@ nix-config/
 ├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（wslview —— wslu 归档后的最小 shim）
 │
-├── tests/                  # 测试层（6 平面，101 tests + 3 仓库卫生 checks = 104 checks）
+├── tests/                  # 测试层（6 平面，101 tests + 4 仓库卫生 checks = 105 checks）
 │   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks（nixosTest runner）
 │   ├── test_calc.nix       # Plane 0: Smoke 基线
 │   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM，30 tests）

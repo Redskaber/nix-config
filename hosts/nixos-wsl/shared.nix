@@ -11,8 +11,8 @@
 # Class-defining override: platform.tag = "nixos-wsl" — the fifth
 # platform row (T7.1). The dispatch layer routes this host INTO
 # nixosConfigurations (caps.nixos-system) through the
-# platform/nixos-wsl/ customs (nixos tree + the NixOS-WSL
-# interpreter), AND into homeConfigurations."kilig@nixos-wsl"
+# platform/nixos-wsl/ customs (system/ domain: nixos tree + the
+# NixOS-WSL interpreter), AND into homeConfigurations."kilig@nixos-wsl"
 # (both doors live, the nixos policy). The sibling hosts/wsl stays
 # the other WSL shape: system layer unowned, standalone HM only.
 #
