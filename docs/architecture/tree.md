@@ -141,8 +141,9 @@ nix-config/
 │   │   ├── secrets.just    # Age 密钥 + SOPS 加密生命周期（双域密钥层级 + 注册表驱动）
 │   │   ├── commit.just     # 数据驱动的提交规范部署（基于 commit-config flake input）
 │   │   └── dump.just       # 项目文本导出（文档/审计用）
-│   └── sh/                 # shell 工具（path_headers @path 头部守卫 · test-count 计数
-│                           #   单一来源 · secrets-rotate 轮换 runbook · dump 管道）
+│   └── sh/                 # 工具（path_headers @path 头部守卫 · test-count 计数单一
+│                           #   来源 · secrets-rotate 轮换 runbook · dump 管道 ·
+│                           #   secrets-db 注册表引擎：CRUD + sqlite 缓存）
 │
 ├── docs/
 │   ├── architecture/       # 深度架构：mechanisms.md（十一层机制）· tree.md（本文件）
@@ -150,7 +151,7 @@ nix-config/
 │   ├── ci/                 # pipeline.md（CI/CD 深度手册：预检/部署/世代/自动化）
 │   ├── guides/             # quickstart.md（六 Phase 全程）· extending.md（扩展指南）
 │   │                       #   · sound-adjudication.md（债 #9 语义半部裁决卷宗，T17.1）
-│   ├── just/               # reference.md（88 recipe × 13 组全参考）
+│   ├── just/               # reference.md（98 recipe × 14 组全参考）
 │   ├── preview/            # 截图预览
 │   ├── modules/            # export/ 模块接口规范（interface-standards.md）
 │   ├── secrets/            # rotation.md（轮换 runbook）· scenarios.md（九情景手册）

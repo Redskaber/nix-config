@@ -116,6 +116,13 @@ jobs:
           # route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
+          # R27 hardening (run 38638140684): the installer-binary download
+          # from cf.install.determinate.systems timed out twice on that run
+          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
+          # flake, not code). Pin the download to GitHub's own release CDN
+          # instead (same origin as the checkout itself; keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
@@ -318,6 +325,13 @@ jobs:
           # route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
+          # R27 hardening (run 38638140684): the installer-binary download
+          # from cf.install.determinate.systems timed out twice on that run
+          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
+          # flake, not code). Pin the download to GitHub's own release CDN
+          # instead (same origin as the checkout itself; keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
@@ -468,6 +482,13 @@ jobs:
           # route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
+          # R27 hardening (run 38638140684): the installer-binary download
+          # from cf.install.determinate.systems timed out twice on that run
+          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
+          # flake, not code). Pin the download to GitHub's own release CDN
+          # instead (same origin as the checkout itself; keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
@@ -538,6 +559,13 @@ jobs:
           # route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
+          # R27 hardening (run 38638140684): the installer-binary download
+          # from cf.install.determinate.systems timed out twice on that run
+          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
+          # flake, not code). Pin the download to GitHub's own release CDN
+          # instead (same origin as the checkout itself; keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
@@ -621,6 +649,13 @@ jobs:
           # route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
+          # R27 hardening (run 38638140684): the installer-binary download
+          # from cf.install.determinate.systems timed out twice on that run
+          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
+          # flake, not code). Pin the download to GitHub's own release CDN
+          # instead (same origin as the checkout itself; keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
@@ -745,6 +780,13 @@ jobs:
           # route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
+          # R27 hardening (run 38638140684): the installer-binary download
+          # from cf.install.determinate.systems timed out twice on that run
+          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
+          # flake, not code). Pin the download to GitHub's own release CDN
+          # instead (same origin as the checkout itself; keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
@@ -940,6 +982,13 @@ jobs:
           # route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
+          # R27 hardening (run 38638140684): the installer-binary download
+          # from cf.install.determinate.systems timed out twice on that run
+          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
+          # flake, not code). Pin the download to GitHub's own release CDN
+          # instead (same origin as the checkout itself; keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
@@ -1059,6 +1108,13 @@ jobs:
           # route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
+          # R27 hardening (run 38638140684): the installer-binary download
+          # from cf.install.determinate.systems timed out twice on that run
+          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
+          # flake, not code). Pin the download to GitHub's own release CDN
+          # instead (same origin as the checkout itself; keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
@@ -1285,6 +1341,13 @@ jobs:
           # aarch64-darwin build of the same pinned 2.35.2.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
+          # R27 hardening (run 38638140684): the installer-binary download
+          # from cf.install.determinate.systems timed out twice on that run
+          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
+          # flake, not code). Pin the download to GitHub's own release CDN
+          # instead (same origin as the checkout itself; keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true

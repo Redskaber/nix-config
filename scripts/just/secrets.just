@@ -5,6 +5,9 @@
 # BEGINNER MAP (the whole surface in one screen — `just secrets-guide`
 # prints it with scenario flows):
 #
+#   registry (the data)      secrets-add <alias> <rel-path>   register (3 layers at once)
+#                            secrets-edit <alias> · secrets-remove <alias>
+#                            secrets-show <alias> · secrets-declared · secrets-db
 #   secrets (the values)     secret-set <alias> · secret-set-all
 #                            secret-get <alias> · secret-edit <alias>
 #                            secret-remove <alias> · secrets-list
@@ -44,12 +47,16 @@
 #   │                  key-remove / rotate) — regen refuses evolved    │
 #   │                  files                                           │
 #   ├──────────────────────────────────────────────────────────────────┤
-#   │  REGISTRY        _secrets-registry = the alias table (DATA):     │
+#   │  REGISTRY        secrets/registry.toml = the alias table (DATA): │
 #   │                  alias | dotted-key | prompt | transform.        │
-#   │                  Every public verb (secret-set/get/edit/remove,  │
-#   │                  secrets-list, secret-set-all) is a thin pass    │
-#   │                  over it — adding a secret adds ONE row, never   │
+#   │                  Owned by the CRUD verbs (secrets-add / -edit /  │
+#   │                  -remove); every public verb is a thin pass      │
+#   │                  over it — adding a secret is ONE command, never │
 #   │                  a new recipe                                    │
+#   │  DATABASE CACHE  secrets/.cache/secrets.db (sqlite, ignored):    │
+#   │                  registry × shared.nix declarations × filesystem │
+#   │                  state materialized by scripts/sh/secrets-db.py; │
+#   │                  every query transparently refreshes on drift    │
 #   ├──────────────────────────────────────────────────────────────────┤
 #   │  CIPHER LAYER    secrets/chipr/** SOPS-encrypted                 │
 #   │                  interactive input → sops encrypt → overwrite    │
@@ -82,9 +89,11 @@
 #
 # Design principles:
 #   - Data-driven: all secret paths read from shared.nix at runtime; the
-#     alias→secret mapping lives in ONE registry table. Adding a new
-#     secret = edit shared.nix.tmpl + one template YAML + one registry
-#     row. No new recipe, no code changes.
+#     alias→secret mapping lives in ONE registry DATA FILE
+#     (secrets/registry.toml). Adding a new secret = ONE command
+#     (`just secrets-add <alias> <rel-path>`) — it writes the registry
+#     row, the template skeleton, and the shared.nix declaration (live +
+#     template) together. No new recipe, no manual file surgery.
 #
 #   - Canonical substitution rule (SINGLE, position-agnostic — no special-cases):
 #     shared.nix is a Nix module and stores secret rel-paths using Nix string
@@ -181,13 +190,13 @@ secrets-guide:
     @echo "                           secret-edit <alias>  decrypt → $EDITOR → re-encrypt"
     @echo "                           secret-remove <alias> destroy one blob"
     @echo "                           secrets-list         alias table × state"
-    @echo "  keys (the decryptors)     key-show             your user age public key"
+    @echo "  keys (the decryptors)    key-show             your user age public key"
     @echo "                           key-new-host <alias> keypair (outside the repo)"
     @echo "                           key-add-host        wire a host pubkey into the rules"
     @echo "                           key-install-host    host identity onto THIS machine"
     @echo "                           key-remove <alias>  revoke from the rules"
     @echo "                           key-rotate-user/host <age1…>  guided rotation"
-    @echo "  rules (the policy)        .sops.yaml — rendered once by secrets-init"
+    @echo "  rules (the policy)       .sops.yaml — rendered once by secrets-init"
     @echo "                           (docs/tmpl/sops/sops-rules.yaml.tmpl), then"
     @echo "                           evolved by the key verbs — rules-init/reset/destroy"
     @echo "  keep-consistent          secrets-sync   re-encrypt blobs onto the rules"
@@ -223,12 +232,16 @@ secrets-guide:
     @echo "  just key-rotate-user <age1…>          # 3 steps"
     @echo "  just key-rotate-host <age1…>          # 4 steps (add-then-revoke)"
     @echo ""
-    @echo "adding a secret = three layers (config is truth):"
-    @echo "  1. declare it in docs/tmpl/shared.nix.tmpl → just shared-generate <username>"
-    @echo "  2. template YAML under docs/tmpl/sops/<rel-path>.yaml (placeholder __SECRET_VALUE__)"
-    @echo "  3. one registry row in scripts/just/secrets.just (_secrets-registry)"
+    @echo "adding a secret = ONE command (the three layers are written together):"
+    @echo "  just secrets-add <alias> <rel-path> [prompt] [transform]"
+    @echo "    e.g. just secrets-add cachix-token nixos/core/base/nix/cachix/auth-token \"Cachix auth token\""
+    @echo "    writes: registry row (secrets/registry.toml) + template skeleton"
+    @echo "            (docs/tmpl/sops/…) + declaration (shared.nix + tmpl),"
+    @echo "            then re-syncs the database cache. Refuses paths no sops"
+    @echo "            rule covers (plaintext-risk class)."
     @echo ""
-    @echo "audit: just secrets-status · just secrets-list"
+    @echo "audit: just secrets-status · just secrets-list · just secrets-show <alias>"
+    @echo "       just secrets-declared (config-truth ↔ registry drift view)"
     @echo "runbook: docs/secrets/rotation.md"
     @echo ""
 
@@ -526,24 +539,91 @@ rules-destroy:
 # useful to eyeball the YAML shape before typing real secrets.
 # secrets/plan/** is gitignored — plaintext never enters the repo.
 
-# Generate all plaintext template instances (reference copies).
+# Generate all plaintext template instances (reference copies) —
+# registry-driven: the hardcoded key list this recipe used to carry was
+# the coupling the R27 refactor removed (the registry is the single row
+# source now; adding a secret needs no edit here).
 [group('secrets')]
 secrets-plan-create:
-    @just _assert-shared
-    @just _secrets-plan-gen "nixos.core.base.user.password"
-    @just _secrets-plan-gen "nixos.core.base.nix.user.github.access-token"
-    @just _secrets-plan-gen "nixos.core.srv.db.mongodb.user.password"
-    @just _secrets-plan-gen "nixos.core.srv.db.mysql.root.password"
-    @just _secrets-plan-gen "nixos.core.srv.db.mysql.user.password"
-    @just _secrets-plan-gen "nixos.core.srv.db.postgresql.user.password"
-    @just _secrets-plan-gen "nixos.core.srv.db.redis.user.password"
-    @echo "All plan instances created under {{SECRETS_PLAN_PATH}}"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    just _assert-shared
+    mapfile -t KEYS < <(just _secrets-registry | cut -d'|' -f2)
+    for KEY in "${KEYS[@]}"; do
+        just _secrets-plan-gen "${KEY}"
+    done
+    echo "All plan instances created under {{SECRETS_PLAN_PATH}}"
 
 # Delete all plaintext template instances.
 [group('secrets')]
 secrets-plan-destroy:
     @rm -rf {{SECRETS_PLAN_PATH}}
     @echo "Destroyed {{SECRETS_PLAN_PATH}}"
+
+
+# ==============================================================================
+# REGISTRY LAYER — data-driven CRUD (R27)
+# ==============================================================================
+# The alias table lives in secrets/registry.toml (DATA). These verbs own
+# it through scripts/sh/secrets-db.py, which also writes the template
+# skeleton + the shared.nix declaration (live + template kept equivalent)
+# and materializes the join into secrets/.cache/secrets.db (sqlite cache,
+# git-ignored, transparently refreshed on any input drift).
+
+# Register a new secret end-to-end: registry row + template skeleton +
+# shared.nix/tmpl declaration, in one command. The dotted key is derived
+# canonically from the path (dots for slashes, ${username} segments
+# skipped). Refuses paths no .sops.yaml rule covers (plaintext-risk class)
+# and aliases that already exist.
+#   just secrets-add cachix-token nixos/core/base/nix/cachix/auth-token "Cachix auth token"
+[group('secrets')]
+secrets-add alias rel prompt="" transform="plain":
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" add {{quote(alias)}} {{quote(rel)}} {{quote(prompt)}} {{quote(transform)}}
+
+# Retire a secret: registry row + template skeleton + declaration are
+# removed together. REFUSES while the encrypted blob still exists
+# (destroy it first: `just secret-remove <alias>` — the blob is the live
+# value, this verb is the retirement of the SHAPE).
+[group('secrets')]
+secrets-remove alias:
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" remove {{quote(alias)}}
+
+# Update a registry row's operator UX: prompt label and/or transform
+# (plain | mkpasswd). Empty arguments keep the current value.
+#   just secrets-edit postgresql "PostgreSQL (dev) password"
+[group('secrets')]
+secrets-edit alias prompt="" transform="":
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" edit {{quote(alias)}} {{quote(prompt)}} {{quote(transform)}}
+
+# The one-secret dossier — everything the operator may need to see
+# WITHOUT touching any file by hand (the no-accidents display layer):
+# registry row, resolved paths (template/blob/plan), declaration,
+# leaf key, covering sops rule, blob size/mtime and its recipients.
+# Decryption stays an explicit separate verb (`secret-get`).
+#   just secrets-show postgresql
+[group('secrets')]
+secrets-show alias:
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" q show {{quote(alias)}}
+
+# Config-truth ↔ registry drift view: every shared.nix declaration ×
+# registry membership × blob state. Answers "what does the config
+# declare that the just surface does not cover" in one screen.
+[group('secrets')]
+secrets-declared:
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" q declared
+
+# Database cache state: built_at, input fingerprint, row/declaration/blob
+# counts. The cache is secrets/.cache/secrets.db (sqlite, git-ignored);
+# queries refresh it transparently — this verb is inspection, not a chore.
+[group('secrets')]
+secrets-db:
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" q info
+
+# Force a cache rebuild (after hand edits to registry.toml / shared.nix,
+# or when a query's transparent refresh looks stale).
+[group('secrets')]
+secrets-db-sync:
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" sync
 
 
 # ==============================================================================
@@ -758,21 +838,17 @@ secrets-destroy-all:
 # ==============================================================================
 # Private — the secret registry (alias table, DATA)
 # ==============================================================================
-# The ONE table a new secret touches. Row format (no | inside fields):
+# The registry lives in secrets/registry.toml (DATA, committed). This
+# recipe emits the pipe format the cipher-layer verbs consume:
 #   alias | dotted-key in shared.nix | prompt (shown while typing) | transform
 #   transform: "plain" (default — store as-is) | "mkpasswd" (sha-512 hash)
-# Aliases are the short names every public verb takes.
+# Aliases are the short names every public verb takes. CRUD happens
+# through secrets-add / secrets-edit / secrets-remove; the database
+# cache (secrets/.cache/secrets.db) is refreshed transparently.
 
 [private]
 _secrets-registry:
-    @printf '%s\n' \
-        'userpwd|nixos.core.base.user.password|User system password|mkpasswd' \
-        'nix|nixos.core.base.nix.user.github.access-token|GitHub access token|plain' \
-        'mongodb|nixos.core.srv.db.mongodb.user.password|MongoDB password|plain' \
-        'mysql|nixos.core.srv.db.mysql.user.password|MySQL user password|plain' \
-        'mysql-root|nixos.core.srv.db.mysql.root.password|MySQL root password|plain' \
-        'postgresql|nixos.core.srv.db.postgresql.user.password|PostgreSQL password|plain' \
-        'redis|nixos.core.srv.db.redis.user.password|Redis password|plain'
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" q rows
 
 # Resolve one registry row by alias; prints "alias|key|prompt|transform".
 # Exits non-zero with the known-alias list when the alias is unknown.
@@ -780,12 +856,7 @@ _secrets-registry:
 _secrets-row alias:
     #!/usr/bin/env bash
     set -euo pipefail
-    ROW="$(just _secrets-registry | awk -F'|' -v a="{{alias}}" '$1 == a { print; found = 1 } END { exit !found }')" || {
-        echo "Error: unknown secret alias '{{alias}}'." >&2
-        echo "  known: $(just _secrets-registry | cut -d'|' -f1 | tr '\n' ' ')" >&2
-        echo "  map  : just secrets-list" >&2
-        exit 1
-    }
+    ROW="$(python3 "{{ROOT}}/scripts/sh/secrets-db.py" q row {{quote(alias)}})" || exit 1
     printf '%s\n' "${ROW}"
 
 
@@ -813,60 +884,35 @@ _secrets-username:
 #   line 2: resolved secret rel-path      (REL  — real username substituted)
 #   line 3: username value                (U    — for in-content substitution)
 #
-# The substitution rule is defined ONCE here (see "Canonical substitution rule"
-# in the file header) and applied identically to every secret key. It is a
-# single global literal replacement with no per-secret special-casing, so it
-# covers usernames embedded as path segments (…/kilig/…) AND as affixes
-# (redis-kilig) with the same expression. plan and chipr layers therefore
-# always reference the same template file.
+# R27: the grep/perl resolution moved into scripts/sh/secrets-db.py (one
+# python implementation parses both declaration shapes and caches the
+# join in the sqlite database) — same contract, same output, same
+# canonical substitution rule. This recipe stays the single just-side
+# entry point so every consumer is unchanged.
 #
 # Usage: just _secrets-paths "nixos.core.srv.db.redis.user.password"
 [private]
 _secrets-paths key:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    SHARED="{{SHARED_NIX_PATH}}"
-    [[ -f "${SHARED}" ]] || { echo "Error: ${SHARED} not found. Run: just shared-generate <username>" >&2; exit 1; }
-    U=$(grep -oP 'username\s*=\s*"\K[^"]+' "${SHARED}" || true)
-    [[ -n "${U}" ]] || { echo "Error: could not parse username from ${SHARED}" >&2; exit 1; }
-    # Dotted keys may be declared with their value on the NEXT line
-    # (nixfmt wraps long assignments) — a line-oriented grep would silently
-    # skip them. One perl slurp handles both shapes; \Q\E keeps the dotted
-    # key a literal, \s*= anchors it so one key cannot prefix-match another.
-    REL=$(perl -0777 -ne 'print $1 if /\b\Q{{key}}\E\s*=\s*"([^"]+)"/' "${SHARED}")
-    [[ -n "${REL}" ]] || { echo "Error: key '{{key}}' not found in ${SHARED}" >&2; exit 1; }
-    # Canonical rule (single, position-agnostic — handles segments AND affixes):
-    needle='${username}'
-    TMPL_REL="${REL//${needle}/__USERNAME__}"
-    RES_REL="${REL//${needle}/${U}}"
-    printf '%s\n%s\n%s\n' "{{SECRETS_TMPL_PATH}}/${TMPL_REL}.yaml" "${RES_REL}" "${U}"
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" q paths {{quote(key)}}
 
 
 # ==============================================================================
 # Private — infrastructure setup
 # ==============================================================================
 
-# Create all secret dirs (plan/ and chipr/) driven entirely by shared.nix.
-# Reads every nixos.* secret value (perl slurp — values may sit on the next
-# line), resolves ${username} → U via the canonical rule, then mkdir.
-# Zero hardcoded paths.
+# Create all secret dirs (plan/ and chipr/) driven entirely by shared.nix
+# declarations — resolved + cached in the database, emitted NUL-separated
+# (injection-safe for any future exotic segment). Zero hardcoded paths.
 [private]
 _secrets-mkdir:
     #!/usr/bin/env bash
     set -euo pipefail
     SHARED="{{SHARED_NIX_PATH}}"
     [[ -f "${SHARED}" ]] || { echo "Error: ${SHARED} not found. Run: just shared-generate <username>" >&2; exit 1; }
-    U=$(grep -oP 'username\s*=\s*"\K[^"]+' "${SHARED}" || true)
-    [[ -n "${U}" ]] || { echo "Error: could not parse username from ${SHARED}" >&2; exit 1; }
-    mapfile -t RELS < <(perl -0777 -ne 'while (/nixos\.[a-zA-Z0-9._-]+\s*=\s*"([^"]+)"/g) { print "$1\n" }' "${SHARED}")
-    [[ ${#RELS[@]} -gt 0 ]] || { echo "Error: no nixos.* secrets found in ${SHARED}" >&2; exit 1; }
-    needle='${username}'
-    for REL in "${RELS[@]}"; do
-        R="${REL//${needle}/${U}}"
-        mkdir -p "{{SECRETS_PLAN_PATH}}/$(dirname "${R}")"
-        mkdir -p "{{SECRETS_CHIPR_PATH}}/$(dirname "${R}")"
+    python3 "{{ROOT}}/scripts/sh/secrets-db.py" q dirs | while IFS= read -rd '' d; do
+        mkdir -p "${d}"
     done
-    echo "Created dirs for ${#RELS[@]} secret(s) under secrets/plan and secrets/chipr"
+    echo "Created declaration dirs under secrets/plan and secrets/chipr"
 
 # Generate the user age keypair if the key file does not exist yet
 # (~/.config/sops/age/keys.txt, chmod 400 — never inside the repo).

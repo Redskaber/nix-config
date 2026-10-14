@@ -1,12 +1,12 @@
-# just 命令全参考 — 88 recipe × 13 组
+# just 命令全参考 — 98 recipe × 14 组
 
 > 本文是 README「justfile 命令参考」节的完整版（T13.1 分层重构时从 README 原样迁出）。
 > `just --list` 在终端给出同源入口；日常速查（deploy / devenv / secrets 三高频组）见
 > [README](../../README.md#日常操作速查)。
 
-> 全量动词面共 88 个 recipe，`[group]` 注解分 13 组（bootstrap / commit / deploy /
-> devenv / disk / flake / hardware / keys / maintenance / rules / secrets / services /
-> shared）——`just --list` 给出按组组织的全部入口；裸 `just`（无参数）打印
+> 全量动词面共 98 个 recipe，`[group]` 注解分 14 组（bootstrap / cachix / commit /
+> deploy / devenv / disk / flake / hardware / keys / maintenance / rules / secrets /
+> services / shared）——`just --list` 给出按组组织的全部入口；裸 `just`（无参数）打印
 > start-here 地图；secrets 侧的生命周期地图从 `just secrets-guide` 进入。
 
 ### 全局（引导入口）
@@ -166,6 +166,19 @@ just secret-edit <alias>          # 解密进 $EDITOR，保存即重新加密
 just secret-remove <alias>        # 删除单个密文 blob（提示配置层声明）
 # 别名: userpwd · nix · mongodb · mysql · mysql-root · postgresql · redis
 
+# ── registry：注册表 CRUD（R27，数据驱动三层一次写全）─────────────────
+just secrets-add <alias> <rel-path> [prompt] [transform]
+                                  # 注册新秘密：registry.toml 行 + 模板骨架 +
+                                  #   shared.nix/tmpl 声明，一条命令三层齐
+                                  #   （cachix-token 例：见下方 cachix 组）
+just secrets-edit <alias> [prompt] [transform]
+                                  # 改注册行的提示语 / 变换（plain|mkpasswd）
+just secrets-remove <alias>       # 退役秘密（拒绝在密文仍在时执行——先 secret-remove）
+just secrets-show <alias>         # 单个秘密全档案（行/路径/规则/收件人，不解密）
+just secrets-declared             # shared.nix 声明 ↔ 注册表漂移视图（谁没被动词覆盖）
+just secrets-db                   # 数据库缓存状态（行/声明/密文计数 + 指纹）
+just secrets-db-sync              # 强制重建缓存（手改 registry.toml / shared.nix 后）
+
 # ── keys：谁能解密（KEY LAYER）───────────────────────────────────────────
 just key-show                     # 显示 user age 公钥（可分享）
 just key-destroy                  # 销毁 user 密钥文件（不可逆）
@@ -191,6 +204,22 @@ just secrets-sync                 # sops updatekeys ×全部（规则↔密文�
 just secrets-verify               # 收件人一致性审计（NO-RULE / DRIFT；CI 同款）
 just secrets-status               # 三层审计（key / rule / blob + 本机 identity）
 just secrets-destroy-all          # 销毁全部 sops 相关内容（不可逆）
+```
+
+### cachix — 公共二进制缓存轴（redskaber-nix-config）
+
+```bash
+# 缓存可达性探测（公共信息，无需 token）+ 本机 substituter 接线 + 推送半场状态
+just cachix-status               # 一屏：URL 探测 / 受信公钥 / CI 与本地推送半场
+
+# token 注册流（准备段：注册进 secrets 体系 + 交互录入，一条命令闭合）
+just cachix-token                # 注册 cachix-token 秘密（三层）+ secret-set 录入值
+                                  #   token 来自 https://app.cachix.org/cache/
+                                  #   redskaber-nix-config → Auth Tokens（owner-only）
+
+# 本地推送（token 解析顺序：CACHIX_AUTH_TOKEN env → cachix-token 秘密）
+just cachix-push /nix/store/…    # 推送指定 store 路径（cachix 二进制：$CACHIX_BIN >
+                                  #   PATH > nix shell nixpkgs#cachix）
 ```
 
 ### commit — 提交规范部署

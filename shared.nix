@@ -89,6 +89,7 @@ shared.schema.shared {
     nixos.core.srv.db.postgresql.user.password =
       "nixos/core/srv/db/postgresql/users/${username}/password";
     nixos.core.srv.db.redis.user.password = "nixos/core/srv/db/redis/users/redis-${username}/password";
+    nixos.core.base.nix.cachix.auth-token = "nixos/core/base/nix/cachix/auth-token";
   };
 
   nixpkgs = {

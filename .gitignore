@@ -22,4 +22,8 @@ todo
 # plan
 secrets/plan
 
+# python tooling caches (secrets-db.py __pycache__ and friends)
+__pycache__/
+*.pyc
+
 result*

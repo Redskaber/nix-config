@@ -145,16 +145,18 @@ just secrets-sync           # 失效 key 从此解不开新密文
 4. **git 历史**: 旧密文仍在历史中可解——接受暴露或重写历史
    （rotation.md §compromise 的权衡）。
 
-### 情景 8 — 新增一个 secret（三层，配置层是真值）
+### 情景 8 — 新增一个 secret（一条命令，三层一次写全）
 
 ```bash
-# ① shared.nix.tmpl 声明 dotted key（重新生成 shared.nix）:
-#    nixos.core.srv.db.newdb.user.password = "nixos/core/srv/db/newdb/users/__USERNAME__/password";
-# ② 模板 YAML: docs/tmpl/sops/nixos/core/srv/db/newdb/users/__USERNAME__/password.yaml
-#    （叶子键 = 路径末段；占位符 __SECRET_VALUE__ / __USERNAME__）
-# ③ 注册表一行: secrets.just::_secrets-registry
-#    'newdb|nixos.core.srv.db.newdb.user.password|NewDB password|plain'
-just shared-generate <username> && just secret-set newdb && just secrets-verify
+# R27 起注册表是数据文件（secrets/registry.toml），CRUD 动词一次写全三层：
+#   ① registry.toml 行（别名 → dotted key → 提示语 → 变换）
+#   ② 模板 YAML: docs/tmpl/sops/nixos/core/srv/db/newdb/users/__USERNAME__/password.yaml
+#      （叶子键 = 路径末段；占位符 __SECRET_VALUE__ / __USERNAME__）
+#   ③ shared.nix + docs/tmpl/shared.nix.tmpl 的声明行（结构化插入，保持往返等价）
+just secrets-add newdb nixos/core/srv/db/newdb/users/${username}/password "NewDB password"
+just secret-set newdb && just secrets-verify
+# 拒绝面：路径无 .sops.yaml 规则覆盖（明文风险类）、别名/键已存在、
+#        ${username} 作段内缀（无法静态命名——手工声明，见 redis 行）
 ```
 
 ### 情景 9 — 销毁 / 退役

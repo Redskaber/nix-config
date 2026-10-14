@@ -24,7 +24,7 @@
 14. [深入文档](#深入文档)
 
 > 深度内容按受众分层至 `docs/`（[文末索引](#深入文档)）：架构内幕 · 六 Phase 全程 ·
-> 九情景 secrets 手册 · 88 recipe 全参考 · CI 深度手册——README 只保留入口层。
+> 九情景 secrets 手册 · 98 recipe 全参考 · CI 深度手册——README 只保留入口层。
 
 ---
 
@@ -140,7 +140,7 @@ platform/nixos/{system/{default.nix, core/ dm/ wm/}, home/default.nix} + home/�
 | **生命周期** | devShell 四阶段钩子：`preInputsHook → postInputsHook → preShellHook → postShellHook`                          |
 | **边界明确** | system layer 不感知用户配置；user layer 不直接操作硬件；host layer 是唯一的平台感知点                         |
 | **生成不变** | `shared.nix` 由模板生成（覆盖写入），不可 sed 原地 patch；`.sops.yaml` 同理                                   |
-| **数据驱动** | `secrets.just` 零硬编码路径，所有 secret 路径运行时从 `shared.nix` 读取；CI checks 按平面整面交接（`api.checks.planes`，T7.3）    |
+| **数据驱动** | secret 别名注册表是数据文件（`secrets/registry.toml`，CRUD 动词管理），路径唯一来源于 `shared.nix`；查询经 sqlite 数据库缓存（`secrets/.cache/`，输入漂移自动重建）；CI checks 按平面整面交接（`api.checks.planes`，T7.3）    |
 | **通信协议** | 层间通过 `shared` attrset 传递（`specialArgs`/`extraSpecialArgs`）；`api.inputs` / `api.shared` / `api.targets` / `api.checks.planes` 暴露 flake 侧信息供脚本与 CI 查询 |
 | **数据与解释器分离** | 机器事实归 `hosts/`（facter.json 硬件数据 · disk.nix 磁盘布局 · persist.nix 状态策略），解释能力归平台结构树（nixpkgs facter 模块 · disko 注册 · impermanence + 回滚机制）；主机入口只做一行接线（T5.12/T5.13/T5.14） |
 
@@ -210,7 +210,7 @@ nix-config/
 ├── export/            # 可复用模块输出（nixosModules · homeModules）
 ├── overlays/ · pkgs/  # nixpkgs overlay（additions/patches）· 自定义 derivation（wslview shim）
 ├── tests/             # 测试层：6 平面（smoke/nixos/home/lib/integration/nmt）
-├── scripts/           # just 子模块（13 组动词）+ sh 工具（计数/轮换/导出）
+├── scripts/           # just 子模块（14 组动词）+ sh 工具（计数/轮换/导出/注册表引擎）
 ├── docs/              # 深度文档（按受众分层，见文末「深入文档」索引）
 └── justfile           # 任务自动化入口（裸 just 打印 start-here 地图）
 ```
@@ -460,7 +460,7 @@ push / PR
 
 ## 日常操作速查
 
-> 全量动词面共 88 个 recipe，`[group]` 注解分 13 组——终端 `just --list` 或
+> 全量动词面共 98 个 recipe，`[group]` 注解分 14 组——终端 `just --list` 或
 > [docs/just/reference.md](docs/just/reference.md)；裸 `just` 打印 start-here 地图。
 
 ### deploy — 部署动词（nixos-rebuild 三语义 + HM + colmena 远程面）
@@ -525,6 +525,12 @@ echo "use flake github:Redskaber/nix-config#python-machine" > .envrc && direnv a
 | 意图 | 命令 |
 | --- | --- |
 | 我有哪些加密内容 / 缺哪个 | `just secrets-list` |
+| 注册一个新秘密（三层一次写全） | `just secrets-add <alias> <rel-path> [prompt]` |
+| 改注册行的提示语 / 变换 | `just secrets-edit <alias> [prompt] [transform]` |
+| 退役一个秘密（先销毁密文） | `just secrets-remove <alias>` |
+| 单个秘密全档案（不解密） | `just secrets-show <alias>` |
+| 声明 ↔ 注册表漂移视图 | `just secrets-declared` |
+| 注册库缓存状态 | `just secrets-db` |
 | 录入 / 改一个秘密 | `just secret-set <alias>` |
 | 看一个秘密 | `just secret-get <alias>` |
 | 编辑一个秘密 | `just secret-edit <alias>` |

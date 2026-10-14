@@ -1,0 +1,6 @@
+nixos:
+  core:
+    base:
+      nix:
+        cachix:
+          auth-token: "__SECRET_VALUE__"
