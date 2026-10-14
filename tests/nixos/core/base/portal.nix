@@ -74,7 +74,7 @@ let
       shared = vmShared;
     };
     # Directory reference — the same shape mkNixosSystem emits.
-    modules = [ ../../../../platform/nixos ];
+    modules = [ ../../../../platform/nixos/system ];
   };
 
   # ── Eval-time assertions ─────────────────────────────────────────

@@ -1,6 +1,6 @@
 # @path: ~/projects/configs/nix-config/tests/module-reachability.nix
 # @author: redskaber
-# @datetime: 2026-10-13
+# @datetime: 2026-10-15
 # @description: tests::module-reachability — the fourth repo-hygiene gate (T41)
 # @source: self (the flake source tree) × home/ + platform/ (the module trees)
 #
@@ -65,6 +65,26 @@
 #   5. ASSERTION — every module dir must be reachable from the roots.
 #      Dangling after exemptions → the check builds RED with the
 #      verbatim directory list and the reconciliation.
+#   6. DOORLESS REFS (run 38632140441's class, closed 2026-10-15) —
+#      static import-shaped references that name an EXISTING
+#      directory under the audited trees but no module door (no
+#      default.nix there). The v3→v4 grammar landing left two alive
+#      by masking: tests imported platform/<tag> — the v3 top gate —
+#      and evaluated green while the corpse doors still sat on disk
+#      (run 38630505084's tree passed this gate's step); the corpse
+#      sweep (97910e6) deleted the doors and the next eval (run
+#      38632140441, testscript-syntax-check) failed on the dangling
+#      reference. The discriminator is exact, both directions:
+#        - a token ending in "/" is the static prefix of a dynamic
+#          ./\${…} router (owned by the dynamic edge machinery —
+#          never an import itself);
+#        - a token whose target leaves home/ + platform/ is a data
+#          binding (the hosts/ readDir census) — never an import of
+#          an audited door.
+#      What remains is precisely the import-shaped class; a
+#      violation today always names a structural root (home/,
+#      platform/, platform/<tag>/) — none of which has ever been
+#      importable, so red is always stale grammar or a typo.
 #
 # EXEMPTIONS — the policy ledger: an entry keeps the gate green while
 #   making a dangling state EXPLICIT, tracked, and self-healing. Two
@@ -102,6 +122,7 @@ let
     pathExists
     readDir
     readFile
+    readFileType
     split
     tail
     ;
@@ -296,7 +317,6 @@ let
 
   # ── 5. assertion + the exemption ledger ───────────────────────────
   dangling = filter (d: !elem (d + "/default.nix") reachableFiles) moduleDirs;
-
   exemptions = [
     {
       path = "home/core/exp/sys/re";
@@ -312,6 +332,63 @@ let
   ) exemptPaths;
 
   danglingAfterExemptions = filter (d: !elem d exemptPaths) dangling;
+
+  # ── 6. doorless directory references (header §6) ───────────────────
+  # The scan domain widens for this assertion: the ORIGIN of a
+  # reference can be any .nix file in the flake source (run 38632140441's
+  # two lived under tests/ — outside the edge-extraction trees), only
+  # the TARGET must land inside the audited trees.
+  scanNix = filter (p: hasSuffix ".nix" p) (map str (lib.filesystem.listFilesRecursive self));
+
+  inAuditedTrees =
+    t:
+    t == src + "/home"
+    || t == src + "/platform"
+    || hasPrefix (src + "/home/") t
+    || hasPrefix (src + "/platform/") t;
+
+  refToks =
+    pathStr:
+    let
+      text = stripRe lineComment (stripRe blockComment (readFile pathStr));
+    in
+    map (m: head m) (filter (x: !isString x) (split staticPattern text));
+
+  doorlessFrom =
+    pathStr:
+    filter (
+      tok:
+      let
+        t = resolve (dirOf pathStr) tok;
+      in
+      # a trailing "/" marks the static prefix of a dynamic ./\${…}
+      # router — the dynamic edge machinery owns those, never an import
+      !(hasSuffix "/" tok)
+      && inAuditedTrees t
+      && pathExists t
+      && readFileType t == "directory"
+      && !(pathExists (t + "/default.nix"))
+    ) (refToks pathStr);
+
+  doorlessRefs = concatLists (
+    map (
+      pathStr:
+      map (tok: {
+        file = removePrefix (src + "/") pathStr;
+        inherit tok;
+        target = removePrefix (src + "/") (resolve (dirOf pathStr) tok) + "/";
+      }) (doorlessFrom pathStr)
+    ) scanNix
+  );
+
+  reportDoorlessRefs =
+    if doorlessRefs == [ ] then
+      ""
+    else
+      "\n"
+      + concatStringsSep "\n" (
+        map (r: "  - " + r.file + ": " + r.tok + " -> " + r.target + " (no default.nix)") doorlessRefs
+      );
 
   t = toString;
 
@@ -331,14 +408,16 @@ in
   module-reachability-check =
     pkgs.runCommand "module-reachability-check"
       {
-        # Forces the two reports at eval time (a non-empty report only
+        # Forces the three reports at eval time (a non-empty report only
         # renders when the list it summarises is non-empty — the empty
         # case is "" and costs nothing).
-        inherit reportDangling reportBadExemptions;
+        inherit reportDangling reportBadExemptions reportDoorlessRefs;
         nodeCount = t (length allNix);
         moduleDirCount = t (length moduleDirs);
         rootCount = t (length roots);
         exemptCount = t (length exemptions);
+        scanFileCount = t (length scanNix);
+        doorlessRefCount = t (length doorlessRefs);
       }
       ''
         set -euo pipefail
@@ -366,8 +445,21 @@ in
           echo "defect — remove the entry so the gate speaks the truth." >&2
           exit 1
         fi
+        if [ -n "$reportDoorlessRefs" ]; then
+          echo "" >&2
+          echo "module-reachability: DOORLESS DIRECTORY REFERENCES (import-shaped, naming no module door):$reportDoorlessRefs" >&2
+          echo "" >&2
+          echo "A directory import resolves to <dir>/default.nix — these targets carry none." >&2
+          echo "Run 38632140441's class: v3 top-gate imports survived grammar v4 masked by" >&2
+          echo "the corpse doors on disk; the sweep deleted the doors and the reference" >&2
+          echo "dangled into eval. Reconciliation:" >&2
+          echo "  1. point it at the door it means — grammar v4 moved the system door to" >&2
+          echo "     platform/<tag>/system (append /system, or /home for the user domain)" >&2
+          echo "  2. dead reference — delete it" >&2
+          exit 1
+        fi
         mkdir -p "$out"
-        echo "module-reachability: $moduleDirCount module dirs reachable from $rootCount roots (+devShells domain), $exemptCount exemptions, $nodeCount nodes scanned (static+dynamic edge extraction)" > "$out/summary"
+        echo "module-reachability: $moduleDirCount module dirs reachable from $rootCount roots (+devShells domain), $exemptCount exemptions, $nodeCount nodes scanned (static+dynamic edge extraction), $scanFileCount files scanned for doorless refs ($doorlessRefCount found)" > "$out/summary"
         cat "$out/summary"
       '';
 }

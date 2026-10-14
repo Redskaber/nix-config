@@ -63,7 +63,7 @@ let
       shared = wslShared;
     };
     # Directory reference — the same shape mkNixosSystem emits.
-    modules = [ ../../../../platform/nixos-wsl ];
+    modules = [ ../../../../platform/nixos-wsl/system ];
   };
 
   # ── inert: the delta under a plain-nixos policy ───────────────
