@@ -135,12 +135,12 @@ let
 
   # ── 3. roots: the faces the flake evaluates ────────────────────────
   platformTagDirs = attrNames (readDir (src + "/platform"));
-  systemRoots = filter (p: pathExists p) (map (
-    tag: src + "/platform/" + tag + "/default.nix"
-  ) platformTagDirs);
-  homeRoots = filter (p: pathExists p) (map (
-    tag: src + "/platform/" + tag + "/home/default.nix"
-  ) platformTagDirs);
+  systemRoots = filter (p: pathExists p) (
+    map (tag: src + "/platform/" + tag + "/default.nix") platformTagDirs
+  );
+  homeRoots = filter (p: pathExists p) (
+    map (tag: src + "/platform/" + tag + "/home/default.nix") platformTagDirs
+  );
 
   # The devShells domain (see header): subtree closure by fiat.
   devDomain = src + "/home/env/dev";
@@ -161,7 +161,8 @@ let
   resolve =
     fromDir: token:
     let
-      go = dir: segs:
+      go =
+        dir: segs:
         if segs == [ ] then
           dir
         else if head segs == "." then
@@ -178,7 +179,9 @@ let
   # one static token → zero or one edge (dir → its default.nix, file → itself)
   staticEdge =
     fromDir: tok:
-    let t = resolve fromDir tok; in
+    let
+      t = resolve fromDir tok;
+    in
     if !(inTree t) then
       null
     else if pathExists (t + "/default.nix") then
@@ -191,7 +194,9 @@ let
   # the suffix after '}' of a dynamic token ("./\${x}.nix" → ".nix")
   dynSuffix =
     tok:
-    let parts = lib.splitString "}" tok; in
+    let
+      parts = lib.splitString "}" tok;
+    in
     if length parts >= 2 then elemAt parts (length parts - 1) else "";
 
   # one dynamic token → the sibling over-approximation (see header §4)
@@ -200,20 +205,31 @@ let
     let
       sfx = dynSuffix tok;
       names = attrNames (readDir fromDir);
-      of = name:
-        let cand = fromDir + "/" + name; in
+      of =
+        name:
+        let
+          cand = fromDir + "/" + name;
+        in
         if sfx == ".nix" then
           (
-            if pathExists (cand + "/default.nix") then cand + "/default.nix"
-            else if hasSuffix ".nix" cand && pathExists cand then cand
-            else null
+            if pathExists (cand + "/default.nix") then
+              cand + "/default.nix"
+            else if hasSuffix ".nix" cand && pathExists cand then
+              cand
+            else
+              null
           )
-        else if sfx == "" then (
-          # bare ./\${x}: a directory OR a file row
-          if pathExists (cand + "/default.nix") then cand + "/default.nix"
-          else if hasSuffix ".nix" cand && pathExists cand then cand
-          else null
-        ) else
+        else if sfx == "" then
+          (
+            # bare ./\${x}: a directory OR a file row
+            if pathExists (cand + "/default.nix") then
+              cand + "/default.nix"
+            else if hasSuffix ".nix" cand && pathExists cand then
+              cand
+            else
+              null
+          )
+        else
           null; # non-.nix suffix: none in the tree; conservative skip
     in
     map of names;
@@ -245,10 +261,12 @@ let
       ++ concatLists (map (tok: dynEdges fromDir tok) dynToks)
     );
 
-  adj = listToAttrs (map (p: {
-    name = p;
-    value = fileEdges p;
-  }) allNix);
+  adj = listToAttrs (
+    map (p: {
+      name = p;
+      value = fileEdges p;
+    }) allNix
+  );
 
   # ── reachability: worklist BFS over the import graph ───────────────
   go =
@@ -281,10 +299,9 @@ let
   exemptPaths = map (e: src + "/" + e.path) exemptions;
 
   # ledger tripwires (see header EXEMPTIONS)
-  badExemptions =
-    filter (
-      p: !(elem p moduleDirs) || elem (p + "/default.nix") reachableFiles
-    ) exemptPaths;
+  badExemptions = filter (
+    p: !(elem p moduleDirs) || elem (p + "/default.nix") reachableFiles
+  ) exemptPaths;
 
   danglingAfterExemptions = filter (d: !elem d exemptPaths) dangling;
 
