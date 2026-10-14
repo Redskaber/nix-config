@@ -622,9 +622,9 @@ classic stage 1 落地为 postResumeCommands（根挂载循环之前执行——
 「每个 persistence 路径必须 neededForBoot」，解释器用 mkDefault 满足之；本仓更严一条：
 每个 persistence 路径必须是已声明的 mount（布局缺口→求值期大声失败）。
 
-platform/nixos/default.nix 通过 ../../hosts/${shared.hostName} 动态路由到对应主机（系统海关
-挂载 host facts；darwin 的海关同理）。**消费不对称**：`hosts/<h>/default.nix` 只被
-系统海关导入；`hosts/<h>/shared.nix` 被每一类 closure 的策略加载器消费——standalone
+platform/nixos/default.nix 通过 ../../hosts/${shared.hostName} 动态路由到对应主机（系统边界
+挂载 host facts；darwin 的边界同理）。**消费不对称**：`hosts/<h>/default.nix` 只被
+系统边界导入；`hosts/<h>/shared.nix` 被每一类 closure 的策略加载器消费——standalone
 HM 路径永不触碰主机系统事实。
 新增主机只需：
 

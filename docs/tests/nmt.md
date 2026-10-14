@@ -380,5 +380,3 @@ nmt.flake = false;   # 原始 store path，无 flake 产物
 **全链流经守卫**。变异检查：`--override-input nmt github:Redskaber/nmt/0aa4699`
 （守卫前 rev）→ grep `unrecognized option '--colors=auto'` 原样复现——
 守卫的缺失在消费侧一行红。
-
-

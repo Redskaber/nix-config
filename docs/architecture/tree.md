@@ -30,20 +30,20 @@ nix-config/
 │           └── default.nix # 阶段二 · IR 合成：caps/pkgs/upkgs/i18nScope/services/appCategories/…
 │
 ├── platform/               # 平台分发层（host-dispatch：目录语法 v3 — 目录即域，T5.11）
-│   ├── nixos/              # NixOS 双海关（双活门）：顶层 = 系统域：default.nix = 系统海关
+│   ├── nixos/              # NixOS 双边界（双活门）：顶层 = 系统域：default.nix = 系统边界
 │   │                       #   （core/dm/wm 注册 + hosts facts）；home/ = 用户域：
-│   │                       #   home/default.nix = HM 海关（standalone 门，秒级切换/独立
+│   │                       #   home/default.nix = HM 边界（standalone 门，秒级切换/独立
 │   │                       #   回滚的策略选择）；home/x86_64-linux.nix = HM payload 行；
 │   │                       #   core/{base,drive,exp,sec,srv} · dm/ · wm/；nixpkgs = shared.nixpkgs
-│   ├── linux/              # 通用 Linux：目录即用户域——home/default.nix = 唯一海关
+│   ├── linux/              # 通用 Linux：目录即用户域——home/default.nix = 唯一边界
 │   │                       #   （standalone HM + nixGL(mesa) + genericLinux；无系统形态
 │   │                       #   ——顶层无 default.nix 即声明；整个平台目录只有 home/）
-│   ├── darwin/             # macOS(nix-darwin)：default.nix = 唯一海关（T5.8 单门折叠：
+│   ├── darwin/             # macOS(nix-darwin)：default.nix = 唯一边界（T5.8 单门折叠：
 │   │                       #   hm.darwinModule + hosts facts + home-manager.users 挂载
 │   │                       #   = import ./home/${arch.tag}.nix 一体——系统门跨域引用，
 │   │                       #   路径可见；home/ 内无 default.nix——HM 非独立门，payload
 │   │                       #   行仍驻留，以 module mode 挂载）；home/<arch>.nix = HM payload
-│   ├── wsl/                # WSL2：home/default.nix = 唯一海关（standalone HM + nixGL +
+│   ├── wsl/                # WSL2：home/default.nix = 唯一边界（standalone HM + nixGL +
 │   │                       #   genericLinux + systemd；无系统形态，顶层无 default.nix；
 │   │                       #   整个平台目录即用户域；WSL 用户空间 interop 由共享树
 │   │                       #   home/core/base/wsl.nix 按 caps.wsl 提供，T7.1）
@@ -74,6 +74,7 @@ nix-config/
 │   │   │       └── shell/      #   Shell：zsh(fzf-tab+atuin) · fish(fzf-fish+autopair)
 │   │   ├── sec/            # 用户安全（扩展点，系统侧在 platform/nixos/core/sec）
 │   │   └── srv/            # 用户服务：
+│   │       ├── cache/      #   缓存：cachix
 │   │       ├── db/         #   数据库客户端工具
 │   │       ├── notify/     #   通知：mako
 │   │       └── security/   #   安全：gnupg keyring
