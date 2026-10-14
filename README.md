@@ -101,7 +101,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 101 tests + 3 仓库卫生门 = 104 checks            │
+│  6 平面 · 101 tests + 4 仓库卫生门 = 105 checks            │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -306,7 +306,7 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **104 checks = 101 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **105 checks = 101 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
@@ -377,7 +377,7 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 104 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 105 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
 4. **测试覆盖** — 101 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
@@ -401,7 +401,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，T15.1 面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （104 checks 必须被平面或杂项清单拥有——新测试
+    │           （105 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1）
@@ -459,7 +459,7 @@ push / PR
 > 四处坏测试引用）。
 >
 > **深层求值的面分片形态**（T15.1，run #338 + 首个 120m 窗 run 证据链）：单进程
-> `nix flake check` 在单进程内累积全部 104 checks 的活跃求值态——本地 4GB 沙箱
+> `nix flake check` 在单进程内累积全部 105 checks 的活跃求值态——本地 4GB 沙箱
 > 在第 9 个 derivation 处 OOM（实测 anon-rss ~2GB 且持续增长），7GB runner 处于
 > 临界边缘慢爬（run #338 90 分钟超时；首个 120m 窗 run 在 49min+ 仍在求值）；
 > 同树同日的 output-faces 腿（同冷 store、同 inputs）1m52s 完成——因为每个

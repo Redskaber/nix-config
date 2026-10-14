@@ -660,3 +660,53 @@ unset 的 ::notice）——缓存轴剩余动词唯余 owner 设 secret。
 （derivation 实证 NIX_MAIN_PROGRAM=cachix）；4 个 homeConfigurations
 activationPackage 逐面求值绿；3 个 host-toplevels 逐面求值绿（toplevel 路
 径如预期变化——cachix 入闭包）。
+
+### 模块可达性门落地 — 第五案从提案到实施（2026-10-13：第 20 轮，T41）
+
+**上游对账**：owner 消费 f3434b8 为 main 2530151（第四次交付回路：接线在、
+第 19 轮裁决条目在、仅去注释——同 T29 编辑性调整先例）；2530151 的 run
+38476322152 提交时仍在跑（求值面绿；Host Toplevels 未启动）。
+
+**门的设计（tests/module-reachability.nix，第四仓库卫生门）**：目录侧的账本
+——home/ + platform/ 每个含 default.nix 的目录必须从 flake 实际求值的面可达：
+- 根：7 个图根（platform/<tag>/default.nix ×3 + platform/<tag>/home/
+  default.nix ×4——linux/wsl 是 standalone-HM-only 平台，无系统门）+ 1 个
+  devShells 域根（home/env/dev——经 devDir 字符串插值被 pdshell 装载器
+  目录式消费〔SourceKind DirectoryRoot/NamedFile〕，在 import 图之外，整
+  子树作域闭包）；
+- 边：文本提取两形态——静态 ./x ../x（目录引用落到 default.nix、文件引
+  用落到自身）+ 动态 ./\${…} 路由（枚举在分发层求值，门不重复分发逻辑——
+  过近似为全部同层兄弟；方向性保证：过近似只会漏报悬空〔假绿〕，永不
+  误报已接线模块为悬空〔假红〕——树内已验证无 readDir/fileset/路径绑定
+  let/字符串拼接 import，假红面为零）；
+- **注释剥离**：`#` 行注释与 `/* */` 块注释在提取前剥除——对照 B 实测抓到
+  门的初版缺陷：f3434b8 修复注释里的 `./cache` 字样让摘线后的 srv/cache
+  仍然假绿（注释不是接线）。剥离只会移除候选边，真实 import 在此树全部是
+  裸路径字面量或动态形态，永不被误吃；
+- **豁免账本**：显式记录 + 双绊线（豁免指向非模块目录 = 红〔手误/已删树〕；
+  豁免指向已接线模块 = 红〔过期——迫使账本自愈〕）——静默悬空在两个方向
+  都不可能。
+
+**门的首扫即抓**：home/core/exp/sys/re 悬空（9440679 加入，与接线的
+exp/app/re 套件同 commit；exp/sys/default.nix 的 imports 只有 ai base compat
+fs media misc monitor shell 八子，无 ./re——ilspycmd 全 HM 主机装不装是
+owner 产品决策，入豁免账本显式化，等三选一：接线/移入 dev 域/删除）。
+另顺手关闭既有漂移：scripts/sh/test-count.sh 公式 +2 自 T32 起漏更（输出
+103 vs 实际 104）——本轮 +4 修正。
+
+**验证矩阵**：门绿（94 模块目录 / 8 根 / 1 豁免 / 281 节点）；阴性对照 A
+（去豁免）→ 红，准确点名 home/core/exp/sys/re；阴性对照 B（摘 srv/cache
+接线 = 第 19 轮缺陷变异重放）→ 红，准确点名 home/core/srv/cache——
+门对两个真实案例的死亡证明。纯求值两坑实录（均已修+注释存档）：
+路径上下文（Nix 2.18+ 路径携带 context，toString 传播进 readDir/readFile/
+pathExists 即被 pure eval 拒——字符串域边界一次 unsafeDiscardStringContext，
+语义安全：扫描的是已物化 flake source）与 lib/builtin 作用域（filter/init/
+concatLists 等非全局）。
+
+**计数链**：104→105 checks（docs-ssot 公式 +3→+4〔四员注释〕+ README box
+「4 仓库卫生门」+ SSOT 句点名四员 + 三散文处 104→105 + matrix Total 行
++ tree.md？〔否——matrix Total 行为唯一 matrix 侧锚〕+ test-count.sh +4）；
+**CI 接线**：STAGE 1 显式构建第四门 + deep-eval Face 3 杂项清单 + Face 4
+owned 清单 +「the other two」→「the gates」措辞；flake checks 第五段合并；
+actionlint expression 类清零；docs-ssot 构建复验绿（锚点与活事实同步的
+机器证明）。

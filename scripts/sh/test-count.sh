@@ -63,5 +63,5 @@ echo "  pre_commit_hooks: ${hooks} (inside 1 pre-commit-check derivation)"
 python3 -c "
 vm=$(echo "$planes" | awk -F': ' '/vm_subtotal/{print $2}')
 print(f'  tests_total: {vm}+$nmt = {vm+$nmt}')
-print(f'  checks_total: {vm}+$nmt+2 = {vm+$nmt+2}')  # + pre-commit-check + docs-ssot-check drvs
+print(f'  checks_total: {vm}+$nmt+4 = {vm+$nmt+4}')  # + pre-commit/docs-ssot/testscript-syntax/module-reachability drvs
 "

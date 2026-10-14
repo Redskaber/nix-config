@@ -67,10 +67,10 @@ let
   planeCounts = lib.mapAttrs (_: p: builtins.length (builtins.attrNames p)) tests.planes;
   planesTotal = builtins.length (builtins.attrNames tests.planes);
   testsTotal = builtins.length (builtins.attrNames tests.checks);
-  # + pre-commit-check + docs-ssot-check + testscript-syntax-check —
-  # all three flake-level, all outside tests.checks, so the counted
-  # set never contains the counter.
-  checksTotal = testsTotal + 3;
+  # + pre-commit-check + docs-ssot-check + testscript-syntax-check
+  # + module-reachability-check — all four flake-level, all outside
+  # tests.checks, so the counted set never contains the counter.
+  checksTotal = testsTotal + 4;
   # `inputs` is the @-capture of the outputs arguments, which Nix
   # always augments with `self` — the README claim counts DECLARED
   # inputs only.
@@ -90,13 +90,13 @@ let
       file = "README";
       kind = "F";
       fact = "test-layer box formula";
-      needle = "${t planesTotal} 平面 · ${t testsTotal} tests + 3 仓库卫生门 = ${t checksTotal} checks";
+      needle = "${t planesTotal} 平面 · ${t testsTotal} tests + 4 仓库卫生门 = ${t checksTotal} checks";
     }
     {
       file = "README";
       kind = "F";
       fact = "test-suite SSOT sentence";
-      needle = "**${t checksTotal} checks = ${t testsTotal} tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check**";
+      needle = "**${t checksTotal} checks = ${t testsTotal} tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check**";
     }
     {
       file = "README";
