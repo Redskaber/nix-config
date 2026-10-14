@@ -249,6 +249,18 @@ jobs:
       - name: Build module-reachability-check derivation (T41)
         run: nix build .#checks.x86_64-linux.module-reachability-check --no-link
 
+      # T46: the fifth repo-hygiene gate — the platform tree-shape
+      # layer: a pure readDir walk of platform/ asserting the v4
+      # grammar (tag dirs only; only system/+home/ domains, at least
+      # one; default.nix doors; module-dir-only payloads — bare .nix
+      # at domain level is the arch-line corpse class, door-less dirs
+      # are invisible to every gate). The 82 v3 corpses of run #369
+      # were all this class: reachability caught them via the graph
+      # walk, shape rejects the address space outright, at zero
+      # evaluation cost. Same gating shape as the siblings.
+      - name: Build platform-grammar-check derivation (T46)
+        run: nix build .#checks.x86_64-linux.platform-grammar-check --no-link
+
   # ─────────────────────────────────────────────────────────────
   # STAGE 2: Deep evaluation — facet forcing (T15.1)
   # ─────────────────────────────────────────────────────────────
@@ -390,11 +402,11 @@ jobs:
               nix eval --raw ".#nixosConfigurations.$H.config.system.build.toplevel.drvPath"
           done
 
-          # Face 3 — the four misc checks. The planes own the rest
-          # (vm-tests builds them — stronger than eval); these four are
+          # Face 3 — the five misc checks. The planes own the rest
+          # (vm-tests builds them — stronger than eval); these five are
           # prefix-less, so this leg forces their evaluation level
           # (the lint leg BUILDS them — even stronger).
-          for C in docs-ssot-check pre-commit-check testscript-syntax-check module-reachability-check; do
+          for C in docs-ssot-check pre-commit-check testscript-syntax-check module-reachability-check platform-grammar-check; do
             force "checks.x86_64-linux.$C.drvPath" \
               nix eval --raw ".#checks.x86_64-linux.$C.drvPath"
           done
@@ -416,6 +428,7 @@ jobs:
             echo pre-commit-check
             echo testscript-syntax-check
             echo module-reachability-check
+            echo platform-grammar-check
           } | sort -u > /tmp/owned.sorted
           UNOWNED=$(comm -23 /tmp/all-checks.sorted /tmp/owned.sorted)
           if [ -n "$UNOWNED" ]; then
@@ -764,7 +777,7 @@ jobs:
           fi
           COUNT=0
           FAILED=0
-          find secrets/chipr -name "*.yaml" | while read f; do
+          find secrets/chipr -name "*.yaml" | while IFS= read -r f; do
             COUNT=$((COUNT+1))
             echo "Checking: $f"
             if ! grep -q "^sops:" "$f"; then
@@ -772,9 +785,9 @@ jobs:
               FAILED=$((FAILED+1))
             fi
           done
-          if find secrets/chipr -name "*.yaml" | xargs grep -rL "^sops:" 2>/dev/null | grep -q .; then
+          if find secrets/chipr -name "*.yaml" -print0 | xargs -0 grep -rL "^sops:" 2>/dev/null | grep -q .; then
             echo "ERROR: Some chipr secret files are missing sops metadata" >&2
-            find secrets/chipr -name "*.yaml" | xargs grep -rL "^sops:" 2>/dev/null
+            find secrets/chipr -name "*.yaml" -print0 | xargs -0 grep -rL "^sops:" 2>/dev/null
             exit 1
           fi
           echo "All chipr secret files have sops metadata ($COUNT file(s))"
@@ -1172,15 +1185,15 @@ jobs:
             exit 0
           fi
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
-          HOSTS=$(nix eval ".#api.host-toplevels" --apply builtins.attrNames --json \
-            | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')
-          PATHS=""
-          for h in $HOSTS; do
+          mapfile -t HOSTS < <(nix eval ".#api.host-toplevels" --apply builtins.attrNames --json \
+            | python3 -c 'import json,sys; [print(x) for x in json.load(sys.stdin)]')
+          PATHS=()
+          for h in "${HOSTS[@]}"; do
             P=$(nix eval --raw ".#api.host-toplevels.$h.outPath")
-            if [ -e "$P" ]; then PATHS="$PATHS $P"; fi
+            if [ -e "$P" ]; then PATHS+=("$P"); fi
           done
-          if [ -n "$PATHS" ]; then
-            nix run "$PKGS#cachix" -- push redskaber-nix-config $PATHS
+          if [ "${#PATHS[@]}" -gt 0 ]; then
+            nix run "$PKGS#cachix" -- push redskaber-nix-config "${PATHS[@]}"
           else
             echo "nothing built to push (build failed before any host completed)"
           fi
@@ -1368,27 +1381,27 @@ jobs:
           # Test plane counts come from the single source of truth —
           # scripts/sh/test-count.sh parses the registries live, so the
           # summary table can never drift from the actual tree.
-          echo "## CI Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Stage                    | Status                                                       |" >> $GITHUB_STEP_SUMMARY
-          echo "|--------------------------|--------------------------------------------------------------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint & Evaluate          | ${{ needs.lint.result }}                                     |" >> $GITHUB_STEP_SUMMARY
-          echo "| Deep Evaluation          | ${{ needs.deep-eval.result }}                                |" >> $GITHUB_STEP_SUMMARY
-          echo "| nmt-Plane (HM dotfiles)  | ${{ needs.nmt-plane.result }}                                |" >> $GITHUB_STEP_SUMMARY
-          echo "| devShells dry-run        | ${{ needs.evaluate-devshells.result }}                       |" >> $GITHUB_STEP_SUMMARY
-          echo "| Output Faces (T11.1)    | ${{ needs.output-faces.result }}                             |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security Audit           | ${{ needs.security.result }}                                 |" >> $GITHUB_STEP_SUMMARY
-          echo "| VM Tests (QEMU)          | ${{ needs.vm-tests.result }}                                 |" >> $GITHUB_STEP_SUMMARY
-          echo "| Host Toplevels (T8.2)   | ${{ needs.host-toplevels.result }}                           |" >> $GITHUB_STEP_SUMMARY
-          echo "| Darwin Toplevels (T8.3) | ${{ needs.darwin-toplevels.result }}                         |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Test Plane Reference (live from scripts/sh/test-count.sh)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          bash scripts/sh/test-count.sh >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "> pre-commit-check (nixfmt/statix/deadnix) is built by the lint stage and deep-eval forces every output to a derivation outPath." >> $GITHUB_STEP_SUMMARY
+          echo "## CI Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Stage                    | Status                                                       |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------------------------|--------------------------------------------------------------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Lint & Evaluate          | ${{ needs.lint.result }}                                     |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Deep Evaluation          | ${{ needs.deep-eval.result }}                                |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| nmt-Plane (HM dotfiles)  | ${{ needs.nmt-plane.result }}                                |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| devShells dry-run        | ${{ needs.evaluate-devshells.result }}                       |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Output Faces (T11.1)    | ${{ needs.output-faces.result }}                             |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Security Audit           | ${{ needs.security.result }}                                 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| VM Tests (QEMU)          | ${{ needs.vm-tests.result }}                                 |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Host Toplevels (T8.2)   | ${{ needs.host-toplevels.result }}                           |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Darwin Toplevels (T8.3) | ${{ needs.darwin-toplevels.result }}                         |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Test Plane Reference (live from scripts/sh/test-count.sh)" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          bash scripts/sh/test-count.sh >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "> pre-commit-check (nixfmt/statix/deadnix) is built by the lint stage and deep-eval forces every output to a derivation outPath." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fail if any required stage did not succeed
         # T13.2 (run #338): the gate used to test only == 'failure' — a

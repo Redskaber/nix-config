@@ -408,7 +408,7 @@
       debug.test_devDir = devDir;
 
       # checks
-      # Test planes 0–5 + the four repo-hygiene gates: the pre-commit
+      # Test planes 0–5 + the five repo-hygiene gates: the pre-commit
       # eval gate (see tests/pre-commit.nix for the git-hooks half
       # and its history), the docs-SSOT contract (tests/docs-ssot.nix,
       # T8.1 — README/test-matrix count anchors asserted against live
@@ -417,12 +417,21 @@
       # T32 — python-compiles every composed testScript at the
       # cheapest possible layer; the CI driver's pylyzer run used to
       # be the ONLY parser, and it sits behind the whole VM closure),
-      # and the module-reachability gate
+      # the module-reachability gate
       # (tests/module-reachability.nix, T41 — the directory side of the
       # ledger: every module dir under home/ + platform/ must be
       # reachable from the flake's evaluated faces; dead code that
       # SHOULD be wired is invisible to every other gate, round 19's
-      # srv/cache and the gate's own first catch being the cases).
+      # srv/cache and the gate's own first catch being the cases),
+      # and the platform-grammar gate
+      # (tests/platform-grammar.nix, T46 — the tree-shape layer of the
+      # same ledger: platform/<tag>/ holds only tag directories, the
+      # only reserved domains are system/ + home/ (at least one),
+      # every domain carries its default.nix door, and domain-level
+      # payload is module dirs only — the 82 v3 corpses of run #369
+      # (top doors, arch-line files, top-level module trees) were all
+      # this class; reachability caught them via a full graph walk,
+      # shape rejects the address space outright).
       # T7.3: the FLAT face only — `nix flake check` requires each
       # attribute here to be a derivation, so the planes grouping
       # lives behind api.checks.planes, never inside this output.
@@ -440,7 +449,8 @@
           devShellNames = builtins.attrNames pdsh;
         })
         // (import ./tests/testscript-syntax.nix { inherit inputs self shared; })
-        // (import ./tests/module-reachability.nix { inherit inputs self shared; });
+        // (import ./tests/module-reachability.nix { inherit inputs self shared; })
+        // (import ./tests/platform-grammar.nix { inherit inputs self shared; });
 
       # Your custom packages
       # Accessible through 'nix build', 'nix shell', etc

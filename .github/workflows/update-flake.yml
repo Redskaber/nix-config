@@ -85,10 +85,10 @@ jobs:
         id: summary
         run: |
           if diff -q flake.lock.before flake.lock > /dev/null 2>&1; then
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No changes to flake inputs."
           else
-            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "changed=true" >> "$GITHUB_OUTPUT"
 
             # Simple diff report
             DIFF=$(diff flake.lock.before flake.lock || true)
@@ -118,7 +118,7 @@ jobs:
               echo ""
               echo "> ⚠️ Review carefully — input updates can introduce breaking changes."
               echo "BODY_EOF"
-            } >> $GITHUB_OUTPUT
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create Pull Request

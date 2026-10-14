@@ -124,4 +124,5 @@ jobs:
           # push the full closure. attic dedups against the server-side
           # state, so a warm week is a cheap no-op sweep.
           nix build --no-link --print-out-paths "${targets[@]}" > /tmp/roots
-          nix path-info -r $(cat /tmp/roots) | sort -u | xargs -r attic push "default:$ATTIC_CACHE"
+          mapfile -t ROOTS < /tmp/roots
+          nix path-info -r "${ROOTS[@]}" | sort -u | xargs -r attic push "default:$ATTIC_CACHE"
