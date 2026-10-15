@@ -12,9 +12,11 @@
 # WHY THIS EXISTS — the identity is declared once in
 # lib/shared/lang/const.nix (shared.const.cache.fleet). Distribution
 # follows each plane's capability: the planes that evaluate nix
-# consume it BY VALUE — platform/nixos/system/core/base/nix.nix and
-# platform/darwin/system/nix compose shared.const.cache.fleet.url/
-# publicKey into the host substituter policy, which cannot drift.
+# consume it BY VALUE — platform/nixos/system/core/base/nix.nix,
+# platform/darwin/system/nix and home/core/base/nix.nix (the
+# standalone user plane, caps.system-nix-gated) compose
+# shared.const.cache.fleet.url/publicKey into their substituter
+# policy, which cannot drift.
 # Every other plane cannot evaluate the const and carries LITERAL
 # mirrors, which rot silently (rename the cache or rotate the key
 # and the workflow legs would keep speaking the old identity until
@@ -139,6 +141,11 @@ let
     {
       path = "/platform/darwin/system/nix/default.nix";
       why = "darwin host-side composition";
+      ref = "shared.const.cache.fleet";
+    }
+    {
+      path = "/home/core/base/nix.nix";
+      why = "standalone user-side composition";
       ref = "shared.const.cache.fleet";
     }
   ];

@@ -133,6 +133,10 @@ let
     home_core_base_i18n = nixosTest ./home/core/base/i18n.nix;
     # Production-tree imports (real modules, marker package sets):
     home_core_base_i18n_source = nixosTest ./home/core/base/i18n-source.nix;
+    # Production-tree import, both gate states on one VM (see the
+    # test header): renders on system-less classes, silent on
+    # system-nix classes — the nix.conf priority chain, pinned.
+    home_core_base_nix = nixosTest ./home/core/base/nix.nix;
 
     # ── home/core/exp/app/editor ──────────────────────────────────────
     home_core_exp_app_editor_nvim = nixosTest ./home/core/exp/app/editor/nvim.nix;

@@ -16,10 +16,8 @@
   imports = [
     ./fonts.nix
     ./i18n.nix
+    ./nix.nix
     ./portal.nix
-    # WSL user-space specialisation — caps.wsl-gated: the
-    # shared-tree address for wslview/WSLENV interop, consumed by
-    # every wsl-capable host (standalone-wsl and nixos-wsl alike).
     ./wsl.nix
     ./xdg.nix
   ];

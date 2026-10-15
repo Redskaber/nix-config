@@ -12,8 +12,9 @@
 {
   # The fleet's public binary-cache identity — the SSOT for the pull
   # side. Distribution follows each consumer plane's capability: the
-  # host sides consume it BY VALUE (platform/nixos/system/core/base/
-  # nix.nix + platform/darwin/system/nix via shared.const —
+  # nix-evaluating sides consume it BY VALUE (platform/nixos/system/
+  # core/base/nix.nix + platform/darwin/system/nix + home/core/base/
+  # nix.nix — the standalone user plane — via shared.const,
   # impossible to drift), while the planes that cannot evaluate nix
   # carry pinned LITERAL mirrors: the CI workflows,
   # scripts/just/cachix.just, and the prose in docs/guides/cache.md.

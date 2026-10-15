@@ -70,6 +70,10 @@
 │  core/ · dm/ · wm/  │       │  应用·开发环境·窗口管理器    │
 │  （域地址显式，     │       │  home/（共享库）core·env·wm  │
 │   语法 v4）         │       │                              │
+│                     │       │  用户域 nix 平面（R30：      │
+│                     │       │  caps 门控的用户级 nix.conf  │
+│                     │       │  + registry，仅 standalone   │
+│                     │       │  形态渲染）                  │
 └──────────┬──────────┘       └───────────┬──────────────────┘
            │                              │
            │      ┌───────────────────────▼──────────────────┐
@@ -92,6 +96,8 @@
 │  checks 五门聚合 / module-docs / pdsh / tests 单次构造     │
 │  （生产端：faces.nix 只写 inherit (targets) …；            │
 │   策略 IR 每主机单实例化，T5.10）                          │
+│  const.nix = 身份 SSOT（fleet cache：三面按值分发 +        │
+│  入口层法定沉默——cache-ssot 门三禁断言）                   │
 └──────────────────────────────┬─────────────────────────────┘
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
@@ -102,7 +108,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 101 tests + 6 仓库卫生门 = 107 checks            │
+│  6 平面 · 102 tests + 6 仓库卫生门 = 108 checks            │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -128,6 +134,23 @@ platform/nixos/{system/{default.nix, core/ dm/ wm/}, home/default.nix} + home/�
 /run/secrets/ (运行时 secret 挂载)
     ↓ systemd services
 运行中的系统
+```
+
+**nix.conf 三平面分发（R24–R30 闭合的横切流）：**
+
+```
+lib/shared/lang/const.nix —— 身份 SSOT（shared.const.cache.fleet）
+    ↓ 按值消费（求值面不可能漂移；R30 用户平面补齐最后缺口）
+    ├── platform/nixos/…/core/base/nix.nix → nix.settings → /etc/nix/nix.conf（NixOS 主机）
+    ├── platform/darwin/system/nix         → nix.settings → /etc/nix/nix.conf（darwin 主机）
+    └── home/core/base/nix.nix（caps.system-nix 门控，仅 standalone 形态渲染）
+                                          → HM nix.settings → ~/.config/nix/nix.conf
+                                              （+ nix.registry → registry.json；构建期
+                                                checkPhase 以 nix config show 验证文法）
+（不能求值 const 的面持钉死字面镜像：CI workflows · cachix.just · cache.md 散文；
+  flake.nix 入口层法定沉默〔R27〕——tests/cache-ssot.nix 把镜像、消费、缺席三面
+  全部钉为断言。优先级链裁决：用户文件按设置遮蔽系统文件，故用户平面只在
+  无系统 nix 平台的主机渲染——一台机器一个 nix.conf 平面，无双份漂移。）
 ```
 
 ---
@@ -265,6 +288,10 @@ echo "experimental-features = nix-command flakes pipe-operators" >> ~/.config/ni
 nix shell nixpkgs#just nixpkgs#git           # just 不全局安装，一次性进入
 ```
 
+> 注：这行手写的 `~/.config/nix/nix.conf` 只是引导桥——首次 home 切换后由
+> `home/core/base/nix.nix` 接管（standalone 形态，caps 门控：experimental-features、
+> fleet cache 身份与用户 registry 全部声明式落地，见「架构总览 · nix.conf 三平面分发」）。
+
 **Phase 1 — 克隆 + 策略与密钥基线**：
 
 ```bash
@@ -313,13 +340,13 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **107 checks = 101 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**（计数与 TOC 导航由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移、TOC 死链/孤儿节即 CI 红灯；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **108 checks = 102 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**（计数与 TOC 导航由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移、TOC 死链/孤儿节即 CI 红灯；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
 | Smoke       | `test_`        | 1      | QEMU           | 基本系统完整性                 | ~1 min   |
 | NixOS       | `nixos_`       | 30     | QEMU           | platform/nixos/* 模块 + 系统服务 | 2–10 min |
-| HM          | `home_`        | 41     | QEMU           | home/* 包安装 + 运行时行为     | 2–8 min  |
+| HM          | `home_`        | 42     | QEMU           | home/* 包安装 + 运行时行为     | 2–8 min  |
 | Lib         | `lib_`         | 12     | QEMU 256MB min | lib/shared 纯 Nix 表达式（含 orc 消费契约 + include-intent 守卫契约 + pdshell 加载器契约，T28/T30/T31） | <1 min   |
 | Integration | `integration_` | 1      | QEMU full      | NixOS + HM 联合激活            | 5–15 min |
 | **nmt**     | `nmt_`         | **16** | **✗ 零 VM**    | HM dotfile 内容断言（纯 eval） | <10 s    |
@@ -384,9 +411,9 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 107 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 108 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-4. **测试覆盖** — 101 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 102 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（10 阶段，最大并行）
@@ -410,7 +437,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （107 checks 必须被平面或杂项清单拥有——新测试
+    │           （108 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试）
@@ -442,7 +469,7 @@ push / PR
     │       │   + 流水线构建，--skip-cached 对接 magic-nix-cache）：
     │       ├── smoke        — 基线（1）
     │       ├── nixos        — 系统模块（29）
-    │       ├── home         — HM 模块（41）
+    │       ├── home         — HM 模块（42）
     │       ├── lib          — lib 纯表达式（5）
     │       └── integration  — NixOS + HM 联合激活（1）
     │

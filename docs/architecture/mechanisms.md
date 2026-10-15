@@ -141,7 +141,7 @@ nix eval .#api.inputs --json | jq -r 'keys - ["sops-nix"] | join(" ")'
 
 # CI 构建阶段按平面整面交接（成员 = 同一求值的 thunk，零额外成本）：
 nix eval .#api.checks.planes --apply 'p: builtins.mapAttrs (_: builtins.length) p'
-# → { "home": 41, "integration": 1, "lib": 5, "nixos": 29, "nmt": 15, "smoke": 1 }
+# → { "home": 42, "integration": 1, "lib": 5, "nixos": 29, "nmt": 15, "smoke": 1 }
 ```
 
 ### 2. 策略层 — shared.nix 生成机制
@@ -199,7 +199,11 @@ xdg.portal.config.common.default = shared.window-manager.portal.default;
 
 ```nix
 # lib/shared/lang/enum.nix：每行回答"该平台是什么"，一处声明
-nixos = { caps = { linux-family = true; nixos-system = true; wsl = false; darwin = false; };
+nixos = { caps = { linux-family = true; nixos-system = true; wsl = false; darwin = false;
+                    system-nix = true; };  # 第 30 轮新增列：系统级 nix 平面是否存在——
+          # home/core/base/nix.nix 读其否定作能力声明（无系统平面的 standalone 形态，
+          # 用户级 ~/.config/nix/nix.conf 是舰队唯一可达平面；有系统平面则保持沉默
+          # ——nix.conf 优先级链：用户文件会按设置遮蔽系统文件，不可双平面）
           home-prefix = "/home"; btop = pkgs: pkgs.btop.override { … }; … };
 
 # lib/shared/targets.nix 输出路由读同一张表（faces.nix 只消费成品；

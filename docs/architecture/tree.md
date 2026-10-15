@@ -60,6 +60,10 @@ nix-config/
 ├── home/                   # 用户层（Home Manager）—— 无根入口，仅由各平台 home 门导入
 │   ├── core/
 │   │   ├── base/           # 基础：字体 · i18n(fcitx5) · portal(wm 策略驱动) · XDG
+│   │   │                   #   · nix（用户域 nix 平面，R30：caps.system-nix 门控——HM 原生
+│   │   │                   #     nix.settings/registry 渲染 ~/.config/nix/nix.conf +
+│   │   │                   #     registry.json，fleet 身份按值消费；仅无系统 nix 平台的
+│   │   │                   #     standalone 形态渲染——优先级链禁止双平面遮蔽）
 │   │   │                   #   · wsl（caps.wsl 门控的 WSL 用户空间 interop：wslview/WSLENV，T7.1）
 │   │   ├── exp/            # 扩展功能（可选模块）
 │   │   │   ├── app/        # GUI 应用（app-set 重量级路由，T5.10：

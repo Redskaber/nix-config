@@ -17,11 +17,13 @@
 
 **身份单源（SSOT）**：缓存身份（名/URL/公钥）只声明在
 `lib/shared/lang/const.nix`（`shared.const.cache.fleet`），分发按各面能力：
-nix 消费面**按值消费**——platform/nixos/system/core/base/nix.nix 主机侧组合
+nix 消费面**按值消费**——platform/nixos/system/core/base/nix.nix 主机侧组合、
+platform/darwin/system/nix（darwin 主机侧）与 home/core/base/nix.nix
+（第 30 轮新增的 standalone 用户平面，caps.system-nix 门控）都
 引用 `shared.const.cache.fleet`，不可能漂移；无法求值的面持**钉死的字面
 量镜像**——CI workflows、scripts/just/cachix.just（YAML/shell 面无法 import
 nix）与本文档的散文。flake.nix **不携带**任何缓存身份（第 27 轮裁决：
-入口层零缓存身份——真实消费面〔主机 ×2 + CI〕已全部闭合，flake 级字面
+入口层零缓存身份——真实消费面〔主机 ×3 + CI〕已全部闭合，flake 级字面
 量将是唯一「能求值 const 却持字面量」的镜像面，且 nixConfig 的信任语义
 对外部消费者是负债而非服务——accept 提示摩擦 + 非受信用户下静默忽略；
 无主机侧 nix.conf 的消费者按本文两种拉取形式显式接入）。
@@ -69,11 +71,21 @@ nix store ping --store https://redskaber-nix-config.cachix.org
 
 **darwin 主机运行时注意**：darwin-rebuild 用的是 /etc/nix/nix.conf——
 平台侧 platform/darwin/system/nix 生成它（nix-darwin 的 nix 模块，与
-NixOS 主机同一身份单源：shared.const.cache.fleet 按值消费，拉取侧三面
-闭合：CI runner · NixOS 主机 · darwin 主机；flake 入口层不携带缓存身份，
-见上「身份单源」）。nix-darwin 按已知哈希白名单接管安装器版的
-/etc/nix/nix.conf，switch 即落盘；非本 flake 管理的 darwin 机器仍走
-形式一/二。
+NixOS 主机同一身份单源：shared.const.cache.fleet 按值消费，拉取侧四面
+闭合：CI runner · NixOS 主机 · darwin 主机 · standalone 用户平面；flake
+入口层不携带缓存身份，见上「身份单源」）。nix-darwin 按已知哈希白名单
+接管安装器版的 /etc/nix/nix.conf，switch 即落盘；非本 flake 管理的 darwin
+机器仍走形式一/二。
+
+**standalone 用户平面（第 30 轮）**：hosts/wsl 这类无系统层的
+standalone-HM 主机，fleet 无法触达 /etc/nix/nix.conf——共享树
+home/core/base/nix.nix 经 home-manager 原生 `nix.settings` 渲染
+~/.config/nix/nix.conf（+ registry.json），同一身份按值消费、同一套
+experimental-features。注意两点：① nix.conf 优先级链中用户文件按设置
+遮蔽系统文件（列表型整体替换），故该平面仅在无系统 nix 平台的形态渲染
+（caps.system-nix 门控，nixos/darwin 主机保持系统平面单一）；② 守护进程
+形态下用户级 substituters 生效需用户受信（单用户安装无此前提）——信任
+是发行版侧的机器属性，与 NixOS 主机侧 trusted-users 同源问题。
 
 ## 推送（owner 侧动词，需 token）
 
@@ -133,7 +145,9 @@ CI 侧 host-toplevels 与 darwin-toplevels 两条腿都会自动推（owner 设
 
 - **分发逻辑归位分发层**：substituters 属于机器的 nix.conf（NixOS 主机
   由 platform/nixos/system/core/base/nix.nix、darwin 主机由
-  platform/darwin/system/nix 生成）或 runner 的 extra-conf——flake.nix
+  platform/darwin/system/nix、standalone-HM 主机由
+  home/core/base/nix.nix〔用户级 ~/.config/nix/nix.conf，第 30 轮〕
+  生成）或 runner 的 extra-conf——flake.nix
   入口层不携带缓存身份（第 27 轮裁决，见上「身份单源」；门把沉默钉为
   断言）。缓存身份本身单源在 lib/shared/lang/const.nix，按各面能力分发
   （见上「身份单源」）。构建永不依赖缓存的存在——outputs、lib、hosts 的

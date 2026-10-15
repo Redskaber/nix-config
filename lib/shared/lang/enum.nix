@@ -60,6 +60,17 @@ let
   #   caps        — capability vector: the resolved facts leaves consume
   #                 (never a raw tag comparison, never a re-derived
   #                 predicate call at the leaf).
+  #                 The `system-nix` cell answers whether a system-level
+  #                 nix settings plane renders /etc/nix/nix.conf for this
+  #                 platform (nixos customs / nix-darwin's system/nix).
+  #                 The user-domain twin (home/core/base/nix.nix) reads its
+  #                 negation as ITS capability statement: where no system
+  #                 plane exists (linux/wsl), the user-level
+  #                 ~/.config/nix/nix.conf is the fleet's only reachable
+  #                 nix.conf — per the nix.conf priority chain the user
+  #                 file would also SHADOW the system one per-setting, so
+  #                 on system-nix platforms the home plane stays silent
+  #                 (one plane per concern, no second copy to drift).
   #   home-prefix — data for fn.homeDir (no branching, just interpolation).
   #   btop        — per-platform package strategy (version.wine/swww
   #                 precedent): Linux family takes the GPU-stack build,
@@ -79,6 +90,7 @@ let
       nixos-system = false; # no NixOS system layer on this host
       wsl = false;
       darwin = false;
+      system-nix = false; # no system emitter — the user nix.conf is the managed plane (home/core/base/nix.nix)
     };
     inherit (strategies) home-prefix btop trace-tools;
   };
@@ -88,6 +100,7 @@ let
       nixos-system = false;
       wsl = false;
       darwin = true; # launchd/nix-darwin owns system-level activation
+      system-nix = true; # platform/darwin/system/nix renders /etc/nix/nix.conf
     };
     home-prefix = "/Users";
     btop = pkgs: pkgs.btop; # stock build (Aqua GPUs report out of the box)
@@ -99,6 +112,7 @@ let
       nixos-system = true; # the NixOS system layer owns i18n/sops/…
       wsl = false;
       darwin = false;
+      system-nix = true; # platform/nixos/…/core/base/nix.nix renders /etc/nix/nix.conf
     };
     inherit (strategies) home-prefix btop trace-tools;
   };
@@ -108,6 +122,7 @@ let
       nixos-system = false;
       wsl = true; # interop + dual-kernel clock-drift realities
       darwin = false;
+      system-nix = false; # distro owns its global file — the user nix.conf is the fleet-reachable plane
     };
     inherit (strategies) home-prefix btop trace-tools;
   };
@@ -123,6 +138,7 @@ let
       nixos-system = true; # the NixOS system layer, WSL-hosted
       wsl = true; # interop + dual-kernel clock-drift realities
       darwin = false;
+      system-nix = true; # reuses the nixos customs — /etc/nix/nix.conf is fleet-owned
     };
     inherit (strategies) home-prefix btop trace-tools;
   };
