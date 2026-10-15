@@ -5,7 +5,8 @@
 # @directory: https://github.com/wimpysworld/nix-config
 #
 # The docs-SSOT half of `checks` (T8.1), the pre-commit-check's sibling
-# in repo hygiene. Composed in flake.nix as
+# in repo hygiene. Composed in lib/shared/faces.nix (the linker pass,
+# R31) as
 #
 #   checks.<sys> = (import ./tests { … })            # 92 tests
 #               // (import ./tests/pre-commit.nix { … })  # + pre-commit-check

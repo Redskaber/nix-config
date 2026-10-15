@@ -248,7 +248,7 @@ let
     # last self-built tool library (nix-types 97 / nmt 98 / orc
     # 99+100 / pdshell 101): census / face / combinFrom / lifecycle /
     # NamedFile, five groups through the production handle
-    # shared.pdshells × flake.nix's argument record, verbatim.
+    # shared.pdshells × faces.nix's argument record, verbatim.
     lib_shared_pdshell = nixosTest ./lib/shared/pdshell.nix;
   };
 

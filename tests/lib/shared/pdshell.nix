@@ -46,7 +46,7 @@
 #                   contribution — the loader isolates siblings.
 #
 # Construction discipline (the 100th's shape): the same handle
-# (shared.pdshells) × the same argument record flake.nix passes —
+# (shared.pdshells) × the same argument record faces.nix passes —
 # pkgs, inputs, shared, devDir, verbatim — re-run here so the
 # contract is an eval-time property of the check build. The flake's
 # single pdsh construction stays single (devShells output + the
@@ -91,7 +91,7 @@
 }:
 let
   # ── the REAL loader, through the production handle ────────────
-  # The argument record is flake.nix's, verbatim (devShells loader,
+  # The argument record is faces.nix's, verbatim (devShells loader,
   # T8.1) — pkgs from the shared instance, the flake inputs, the
   # shared axis set, and the schema's devDir pointing at the real
   # home/env/dev tree.

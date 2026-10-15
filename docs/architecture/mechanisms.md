@@ -202,7 +202,7 @@ xdg.portal.config.common.default = shared.window-manager.portal.default;
 nixos = { caps = { linux-family = true; nixos-system = true; wsl = false; darwin = false; };
           home-prefix = "/home"; btop = pkgs: pkgs.btop.override { … }; … };
 
-# lib/shared/targets.nix 输出路由读同一张表（flake.nix 只消费成品；
+# lib/shared/targets.nix 输出路由读同一张表（faces.nix 只消费成品；
 # 策略 IR 每主机单实例化——分类器/发射器/命名/别名共读一张表，T5.10）：
 nixosHosts  = filter (h: sharedByHost.${h}.caps.nixos-system) hostNames;
 darwinHosts = filter (h: sharedByHost.${h}.caps.darwin) hostNames;
@@ -236,14 +236,17 @@ home.packages = [ … ] ++ (shared.platform.value.trace-tools shared.upkgs);  # 
              mkHomeSystem   → modules = [ ../../platform/${tag}/home ]    （门即 payload，arch 退役）
 ```
 
-**策略 IR 单实例化（T5.10，分发层 CSE）：** `sharedByHost = genAttrs hostNames mkShared` 单表，分类器/发射器/命名/别名全部读表；默认主机表项 = 基实例（句柄共享，默认主机永不为同一份 IR 付两次钱）；flake.nix 的基 `shared` 消费 `targets.base`（后端导出已建好的基 IR 句柄）而非二度 import。遗留别名 `<user>-<platform>` 是 attr 级 thunk 别名（共享同一闭包，非重发射）。
+**策略 IR 单实例化（T5.10，分发层 CSE）：** `sharedByHost = genAttrs hostNames mkShared` 单表，分类器/发射器/命名/别名全部读表；默认主机表项 = 基实例（句柄共享，默认主机永不为同一份 IR 付两次钱）；链接层（faces.nix，R31）的基 `shared` 消费 `targets.base`（后端导出已建好的基 IR 句柄）而非二度 import。遗留别名 `<user>-<platform>` 是 attr 级 thunk 别名（共享同一闭包，非重发射）。
 
-**产出成品（flake.nix 只写 inherit）：**
+**产出成品（faces.nix 只写 inherit；flake.nix 只剩注册 + 一行委托，R31）：**
 
 ```nix
 inherit (targets) nixosConfigurations;   # 每台 nixos 主机 + legacy 别名
 inherit (targets) homeConfigurations;    # "<user>@<host>"（kilig@nixos · kilig@vm · kilig@wsl）
 inherit (targets) darwinConfigurations;  # 每台 darwin 主机（darwin）
+inherit (targets) colmenaHive;           # 部署面（colmena 0.5+）
+inherit (targets) hostToplevels;         # api.host-toplevels 的 Linux toplevel 投影（R31）
+inherit (targets) darwinToplevels;       # api.darwin-toplevels 的 darwin toplevel 投影（R31）
 ```
 
 ### 4. 开发环境管道 — pdshell

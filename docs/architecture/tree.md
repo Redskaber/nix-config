@@ -5,15 +5,18 @@
 
 ```
 nix-config/
-├── flake.nix               # entry layer: 输入声明 + flake 协议名映射（成品由 lib/shared/targets.nix 生产）
+├── flake.nix               # entry layer: 输入声明 + 一行委托（outputs 整体交给 lib/shared/faces.nix 组装，R31）
 ├── shared.nix              # 策略层（由 just shared-generate 生成，禁止手动编辑用户名）
 │
 ├── lib/
 │   └── shared/
 │       ├── default.nix     # 共享加载器：两阶段初始化（scfpath 可覆盖，支持多机器）
 │       ├── targets.nix     # 目标工厂（生产端）：hosts/ 清单 → caps 分类 → 发射器（nixos /
-│       │                   #   darwin / standalone-HM 三类 closure + colmena 部署面，T20.1）；
-│       │                   #   flake.nix 只写 inherit (targets) nixosConfigurations …
+│       │                   #   darwin / standalone-HM 三类 closure + colmena 部署面 + 两个 toplevel
+│       │                   #   投影面〔hostToplevels / darwinToplevels，R31 从 flake.nix 迁入〕）
+│       ├── faces.nix       # 链接层（linker，R31）：把各生产端成品组装到 flake 协议输出名上
+│       │                   #   （checks 五门聚合 / module-docs 工厂调用 / pdsh 单次构造 / tests
+│       │                   #   单次导入 / exports 聚合）—— flake.nix 只剩注册 + 一行委托
 │       ├── docs.nix        # 文档工厂（生产端）：export/ 模块 → optionsDoc markdown（侧通道发射器）
 │       ├── lang/           # 阶段一 · 语言前端：类型/枚举/schema/验证（无 pkgs）
 │       │   ├── default.nix # 阶段一聚合：const + schema + enum + fn + tools + validate

@@ -31,7 +31,7 @@
 # Construction discipline (the wsl.nix/T19.1 precedent): policy
 # handles are built exactly like targets.nix mkShared — same loader,
 # same args, same hostName — and the emitter is imported the way
-# flake.nix imports it. colmenaHive.nodes is forced ONLY through
+# faces.nix imports it. colmenaHive.nodes is forced ONLY through
 # attrNames: the lazy chain (nodeNames → attrNames hive → union keys)
 # never evaluates a single NixOS module tree. The drvPath parity
 # claim belongs to the CI gate (.github/workflows/ci.yml
@@ -74,7 +74,7 @@ let
   # same lens the emitter's `byCap (caps: caps.nixos-system)` reads.
   nixosHosts = builtins.filter (h: (hostShared h).caps.nixos-system) hostNames;
 
-  # ── the emitter itself, imported the way flake.nix imports it ───────
+  # ── the emitter itself, imported the way faces.nix imports it ───────
   hostTargets = import ../../../lib/shared/targets.nix {
     inherit (inputs) self nixpkgs nixpkgs-unstable;
     inherit inputs;

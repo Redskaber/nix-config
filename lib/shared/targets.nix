@@ -26,11 +26,15 @@
 #                               closures / the colmena deploy face — same
 #                               module doors, deployable packaging, T20.1)
 #
-# The consumer (flake.nix) only writes:
+# The consumer (lib/shared/faces.nix, the linker pass — R31) only
+# writes:
 #
 #   targets = import ./lib/shared/targets.nix { … };
 #   inherit (targets) nixosConfigurations homeConfigurations darwinConfigurations;
-#   inherit (targets) colmenaHive;
+#   inherit (targets) colmenaHive hostToplevels darwinToplevels;
+#
+# (flake.nix itself delegates the whole outputs body to faces.nix —
+# the entry layer registers inputs and nothing else.)
 #
 # Adding a target format = adding an emitter here; adding a host =
 # mkdir under hosts/; changing a host's class = editing
@@ -355,6 +359,21 @@ let
       // deployFacts host;
     };
 
+  # ── backend: the closure attrsets, constructed once (R31) ─────
+  # The emitters' listToAttrs projections, hoisted out of the output
+  # record so the toplevel FACES below (api.host-toplevels /
+  # api.darwin-toplevels — what CI hands to nix-fast-build) share the
+  # very thunks the *Configurations faces expose: one evaluation of
+  # each mk*System call, however many faces address it (the T5.10
+  # single-instantiation discipline, held at the projection layer
+  # too — these used to live inline in flake.nix's api outputs).
+  nixosClosures = builtins.listToAttrs (
+    builtins.map (h: lib.nameValuePair h (mkNixosSystem h)) nixosHosts
+  );
+  darwinClosures = builtins.listToAttrs (
+    builtins.map (h: lib.nameValuePair h (mkDarwinSystem h)) darwinHosts
+  );
+
   # The hive: meta carries the evaluation plumbing, one node attr per
   # nixosHost (inventory-driven — a new NixOS host joins the deploy
   # face by construction, same as every other emitter).
@@ -393,10 +412,10 @@ let
   );
 in
 {
-  # Ready-to-use closures — flake.nix maps these 1:1 onto the flake
+  # Ready-to-use closures — faces.nix maps these 1:1 onto the flake
   # protocol output names. No consumer-side assembly required.
 
-  # The pipeline's base policy IR handle (T5.10): flake.nix consumes
+  # The pipeline's base policy IR handle (T5.10): faces.nix consumes
   # THIS instead of importing lib/shared a second time — one base
   # instance across the whole flake evaluation (api.shared, checks,
   # packages, formatter and devShells read the same thunk the
@@ -406,23 +425,17 @@ in
 
   # 'sudo nixos-rebuild --flake <flake_path>#<host> switch'
   nixosConfigurations =
-    let
-      closures = builtins.listToAttrs (
-        builtins.map (h: lib.nameValuePair h (mkNixosSystem h)) nixosHosts
-      );
-    in
-    closures
-    // {
-      # Legacy alias (pre-T2.4 attr name) kept for existing consumers —
-      # an attr-level alias, NOT a re-emission (T5.10): the pre-T5.10
-      # code re-ran mkNixosSystem for the base host, paying the whole
-      # closure evaluation a second time whenever both names were
-      # forced (`nix flake check` evaluated it twice). Aliasing shares
-      # the one thunk; the values are identical by purity. Precondition
-      # unchanged from before: the base host is nixos-class, or this
-      # fails at eval (attr missing — previously: platform door
-      # missing — either way loud and immediate).
-      "${shared.user.username}-${shared.platform.tag}" = closures.${shared.hostName};
+    # Legacy alias (pre-T2.4 attr name) kept for existing consumers —
+    # an attr-level alias, NOT a re-emission (T5.10): the pre-T5.10
+    # code re-ran mkNixosSystem for the base host, paying the whole
+    # closure evaluation a second time whenever both names were
+    # forced (`nix flake check` evaluated it twice). Aliasing shares
+    # the one thunk; the values are identical by purity. Precondition
+    # unchanged from before: the base host is nixos-class, or this
+    # fails at eval (attr missing — previously: platform door
+    # missing — either way loud and immediate).
+    nixosClosures // {
+      "${shared.user.username}-${shared.platform.tag}" = nixosClosures.${shared.hostName};
     };
 
   # 'nix build .#homeConfigurations.<user>@<host>.activationPackage'
@@ -436,19 +449,35 @@ in
   # 'darwin-rebuild switch --flake .#<host>' — evaluation of the darwin
   # closure is exercised from any builder platform; 'switch' itself
   # needs a darwin host.
-  darwinConfigurations = builtins.listToAttrs (
-    builtins.map (h: lib.nameValuePair h (mkDarwinSystem h)) darwinHosts
+  darwinConfigurations = darwinClosures;
+
+  # ── toplevel projections (R31): the CI build faces, produced ──
+  # where the closures they read from are produced. api.host-
+  # toplevels (T8.2) is the Linux system-toplevel face — the
+  # x86_64-linux legs keep the cheap cross-system eval force, the
+  # Host Toplevels leg builds the whole face for closure-level
+  # depth. Both projections read the hoisted closure attrsets above
+  # (each mk*System evaluated once however many faces force it).
+  hostToplevels = builtins.listToAttrs (
+    builtins.map (h: lib.nameValuePair h nixosClosures.${h}.config.system.build.toplevel) nixosHosts
+  );
+
+  # api.darwin-toplevels (T8.3) — the sixth api face: the
+  # nix-darwin toplevels (what `darwin-rebuild` builds), consumed
+  # by CI's darwin leg on a macos-latest (aarch64) runner.
+  darwinToplevels = builtins.listToAttrs (
+    builtins.map (h: lib.nameValuePair h darwinClosures.${h}.system) darwinHosts
   );
 
   # The deployable view (T20.1): what `colmena` reads —
   # `colmenaHive = makeHive { meta; <node per nixosHost> }`. Exposed
-  # by flake.nix under the output name colmena 0.5 expects. Scope is
+  # by faces.nix under the output name colmena 0.5 expects. Scope is
   # the classifier's nixosHosts; a fresh deployment fact file joins
   # by mkdir (hosts/<h>/deploy.nix), no flake.nix edit.
   colmenaHive = colmenaHive;
 
   # Inventory surface (debug/CI): what the classifier saw. Exposed by
-  # flake.nix as api.targets — `nix eval .#api.targets.inventory`.
+  # faces.nix as api.targets — `nix eval .#api.targets.inventory`.
   inventory = {
     inherit
       hostNames

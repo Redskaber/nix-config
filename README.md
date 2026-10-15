@@ -58,8 +58,8 @@
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  ENTRY LAYER  ·  flake.nix                                 │
-│  统一入口 · 输入声明 · 协议名映射 · api.inputs             │
-│  （目标构造已在 SHARED LAYER 生产，此处只消费成品）        │
+│  统一入口 · 输入声明 · 一行委托 faces.nix · api.inputs     │
+│  （目标构造已在 SHARED LAYER 生产，链接层组装，R31）      │
 └──────────┬──────────────────────────────┬──────────────────┘
            │                              │
 ┌──────────▼──────────┐       ┌───────────▼──────────────────┐
@@ -88,7 +88,9 @@
 │  两阶段初始化：lang(前端) → runtime(IR 合成)               │
 │  目标工厂 targets.nix：hosts/ 清单 → caps 分类 →           │
 │  nixos / darwin / standalone-HM 三类 closure 发射器        │
-│  （生产端：flake.nix 只写 inherit (targets) …；            │
+│  + 两个 toplevel 投影面（R31 迁入）；链接层 faces.nix：  │
+│  checks 五门聚合 / module-docs / pdsh / tests 单次构造     │
+│  （生产端：faces.nix 只写 inherit (targets) …；            │
 │   策略 IR 每主机单实例化，T5.10）                          │
 └──────────────────────────────┬─────────────────────────────┘
                                │
@@ -113,8 +115,9 @@ shared.nix (策略)
 lib/shared (两阶段初始化：lang → runtime)
     ↓ specialArgs / extraSpecialArgs
 lib/shared/targets.nix (目标工厂：hosts/ 清单 → caps 分类 → 发射器)
-    ↓ 产出成品 closures
-flake.nix → inherit (targets) nixosConfigurations / homeConfigurations / darwinConfigurations
+    ↓ 产出成品 closures + toplevel 投影面
+lib/shared/faces.nix → inherit (targets) nixosConfigurations / homeConfigurations / darwinConfigurations / hostToplevels / darwinToplevels（链接层，R31）
+flake.nix → 一行委托 faces.nix（入口层只剩输入注册）
     ↓ 三门分发（发射器纯数据驱动目录引用，语法 v4：域地址显式）：
     ↓   nixos 系统门 platform/<tag>/system → default.nix · darwin 单门 platform/<tag>/system（系统路由，HM 内乘 import ../home） · HM 门 platform/<tag>/home → default.nix（门即 payload，arch 退役）
 platform/nixos/{system/{default.nix, core/ dm/ wm/}, home/default.nix} + home/（模块树；app 树按 app-set 重量级路由：full/lean/none）
@@ -200,9 +203,9 @@ imports = builtins.map (drive: ./${drive}.nix) shared.drive.value;
 
 ```
 nix-config/
-├── flake.nix          # entry layer：输入声明 + 协议名映射（成品由 lib/shared/targets.nix 生产）
+├── flake.nix          # entry layer：输入声明 + 一行委托（outputs 由 lib/shared/faces.nix 链接组装，R31）
 ├── shared.nix         # 策略层（just shared-generate 生成，禁止手动编辑用户名）
-├── lib/shared/        # 共享层：lang（前端）→ runtime（IR 合成）→ targets.nix（codegen）
+├── lib/shared/        # 共享层：lang（前端）→ runtime（IR 合成）→ targets.nix（codegen）→ faces.nix（链接）
 ├── platform/          # 分发层：平台主序·域显式（nixos · linux · darwin · wsl · nixos-wsl 五形态）
 ├── home/              # 用户层（HM）：core / wm / env 三域（无根入口，由各平台 home 门导入）
 ├── hosts/             # 主机事实：facter.json · disk.nix · persist.nix + shared.nix 覆盖
@@ -232,7 +235,7 @@ flake（nix-types · pdshell · configuration-orchestrator · commit-config 及�
 | --- | --- | --- |
 | 1 | 共享层 · 两阶段初始化 | `lang`（前端：类型/枚举/schema，无 pkgs）→ `runtime`（IR 合成：caps/pkgs/i18nScope）；scfpath 可覆盖，多机器各自策略 |
 | 2 | 策略层 · shared.nix 生成 | 模板 + 覆盖写入（不可 sed 原地 patch）；单一策略真相源 |
-| 3 | 分发层 · targets.nix | hosts/ 清单 → caps 分类 → nixos/darwin/standalone-HM 三类 closure 发射器；flake.nix 只 `inherit` 成品 |
+| 3 | 分发层 · targets.nix | hosts/ 清单 → caps 分类 → nixos/darwin/standalone-HM 三类 closure 发射器 + 两个 toplevel 投影面（R31）；链接层 faces.nix 只 `inherit` 成品，flake.nix 一行委托 |
 | 4 | 开发环境管道 · pdshell | 每语言一目录的 devShell 工厂；四阶段钩子；combinFrom 组合 |
 | 5 | 安全层 · SOPS + Age | TMPL → KEY → RULE → PLAIN → CIPHER → /run/secrets 六相分层 |
 | 6 | 配置编排器 · orc | wallust 主题色跨应用注入（activation hook，含 waybar 主题重载） |
