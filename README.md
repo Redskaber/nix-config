@@ -59,7 +59,7 @@
 ┌────────────────────────────────────────────────────────────┐
 │  ENTRY LAYER  ·  flake.nix                                 │
 │  统一入口 · 输入声明 · 一行委托 faces.nix · api.inputs     │
-│  （目标构造已在 SHARED LAYER 生产，链接层组装，R31）      │
+│  （目标构造已在 SHARED LAYER 生产，链接层组装，R31）       │
 └──────────┬──────────────────────────────┬──────────────────┘
            │                              │
 ┌──────────▼──────────┐       ┌───────────▼──────────────────┐
@@ -88,7 +88,7 @@
 │  两阶段初始化：lang(前端) → runtime(IR 合成)               │
 │  目标工厂 targets.nix：hosts/ 清单 → caps 分类 →           │
 │  nixos / darwin / standalone-HM 三类 closure 发射器        │
-│  + 两个 toplevel 投影面（R31 迁入）；链接层 faces.nix：  │
+│  + 两个 toplevel 投影面（R31 迁入）；链接层 faces.nix：    │
 │  checks 五门聚合 / module-docs / pdsh / tests 单次构造     │
 │  （生产端：faces.nix 只写 inherit (targets) …；            │
 │   策略 IR 每主机单实例化，T5.10）                          │
@@ -116,10 +116,13 @@ lib/shared (两阶段初始化：lang → runtime)
     ↓ specialArgs / extraSpecialArgs
 lib/shared/targets.nix (目标工厂：hosts/ 清单 → caps 分类 → 发射器)
     ↓ 产出成品 closures + toplevel 投影面
-lib/shared/faces.nix → inherit (targets) nixosConfigurations / homeConfigurations / darwinConfigurations / hostToplevels / darwinToplevels（链接层，R31）
+lib/shared/faces.nix
+    ↓ inherit (targets) nixosConfigurations / homeConfigurations / darwinConfigurations / hostToplevels / darwinToplevels（链接层，R31）
 flake.nix → 一行委托 faces.nix（入口层只剩输入注册）
     ↓ 三门分发（发射器纯数据驱动目录引用，语法 v4：域地址显式）：
-    ↓   nixos 系统门 platform/<tag>/system → default.nix · darwin 单门 platform/<tag>/system（系统路由，HM 内乘 import ../home） · HM 门 platform/<tag>/home → default.nix（门即 payload，arch 退役）
+    ↓   nixos 系统门 platform/<tag>/system → default.nix
+    ↓   · darwin 单门 platform/<tag>/system（系统路由，HM 内乘 import ../home）
+    ↓   · HM 门 platform/<tag>/home → default.nix（门即 payload，arch 退役）
 platform/nixos/{system/{default.nix, core/ dm/ wm/}, home/default.nix} + home/（模块树；app 树按 app-set 重量级路由：full/lean/none）
     ↓ sops-nix (initrd 阶段)
 /run/secrets/ (运行时 secret 挂载)
