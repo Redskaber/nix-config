@@ -73,7 +73,8 @@ just nixos-switch nixos     # 或手工 nixos-rebuild —— 落地
 ```console
 just key-new-host <alias>          # ① 生成 keypair（仓外交付副本）
 just init <username> <alias> age1… # ② 直达 USER+HOST（srv 域双收件人）
-# ③ host-<alias>.age → 目标机 /var/lib/sops-nix/key.txt（chmod 400）+ shred
+# ③ host-<alias>.age → 目标机 /var/lib/sops-nix/key.txt（chmod 400）
+#    （keyFile 落点现状见下方注记）+ shred
 ```
 
 **own host = srv host（个人机双 key 落位本机，五步）**:
@@ -109,16 +110,29 @@ just secrets-sync                   # ③ sops updatekeys ×N（存量 blob 迁�
 #    然后 shred 交付副本
 ```
 
+> keyFile 落点现状：模块侧（`platform/nixos/system/core/sec/secret/default.nix`）
+> 当前把 `sops.age.keyFile` 定在用户家目录
+> `~/.config/sops/age/keys.txt`（`generateKey = true`，own-host 形态）。
+> `/var/lib/sops-nix/key.txt` 是无家目录服务器形态的目标位——待第二台
+> 服务器机器落地时参数化（README 已知边界账本 #5 同源）。交付前以
+> 目标机实际 keyFile 配置为准。
+
 **新 secret 三层声明**（配置层是真值，脚本只执行）:
 
 1. `shared.nix.tmpl` 声明 dotted key → `just shared-generate <username>`
 2. `docs/tmpl/sops/<rel-path>.yaml` 模板（leaf key = 路径末段，占位符
    `__SECRET_VALUE__` + `__USERNAME__`）
-3. `secrets.just` 的 `_secrets-registry` 加一行
-   `alias|dotted-key|prompt|transform`
+3. 注册表 `secrets/registry.toml`（DATA，随仓提交）加一行
+   `alias = { key, rel, prompt, transform }` —— 经
+   `just secrets-add <alias> <rel-path> [prompt] [transform]` 一条命令
+   写全（shell 侧 `secrets-db.py` 负责同步落三处；手改 toml 后跑
+   `just secrets-db-sync` 刷新缓存）
 
 注册表（registry）是唯一的别名→秘密映射：`secret-set/get/edit/remove`
 与 `secrets-list` 都只是对它的薄遍历——新增秘密**零新 recipe**。
+`_secrets-registry` 只是内部转发 recipe（把 toml 渲染成管道行给
+脚本消费），不是注册入口；注册/退役/改提示语一律走
+`secrets-add` / `secrets-remove` / `secrets-edit`。
 
 ## 3. 当前状态（诚实账本）
 
@@ -129,7 +143,7 @@ just secrets-sync                   # ③ sops updatekeys ×N（存量 blob 迁�
 - [x] 全部生命周期动词 + 引导流（`just secrets-guide`）+ CI 门禁就绪。
 - [ ] **持有者引导**（一次性，见 §2b）: `just init <username>` →
       `just secret-set-all` → 提交你自己 key 加密的 `.sops.yaml` 与 blob。
-- [ ] CI 解密门禁见 §5——需要仓库 secret `SOPS_AGE_KEY`（用户 key 或两把都配）。
+- [ ] CI 解密门禁见 §5——需要仓库 secret `AGE_SECRET_KEY`（用户 key 或两把都配）。
 
 ## 4. 操作面：just 动词总表（create / update / destroy × key / rules / blob）
 
@@ -139,9 +153,13 @@ just secrets-sync                   # ③ sops updatekeys ×N（存量 blob 迁�
 | create | key (host) | `key-new-host <alias>` | 仓外交付副本 + chmod 400 + 接线指引 |
 | create | key (host→本机) | `key-install-host <alias>` | own host 双 key：identity 合并进本机 sops key 文件（幂等/原子/保持 400） |
 | create | rules | `secrets-init` | user-only 基线（存在即跳过） |
+| create | registry | `secrets-add <alias> <rel>` | 三层一次写全（declaration + 模板骨架 + registry.toml 行） |
+| update | registry | `secrets-edit <alias> [prompt] [transform]` | 改注册行（提示语 / 变换） |
+| audit | registry | `secrets-show` / `secrets-declared` / `secrets-db` | 单条全档案 / 声明↔注册表漂移 / 缓存状态 |
+| destroy | registry | `secrets-remove <alias>` | 退役注册行（密文存在时拒绝） |
 | create | blob | `secret-set <alias>` | 交互式录入（upsert 语义，覆盖即更新） |
 | update | key (user) | `key-rotate-user age1…` | 引导式三步（替换→sync→接受历史暴露） |
-| update | key (host) | `key-rotate-host age1…` | 引导式四步（先加后撤，无裸窗口） |
+| update | key (host) | `key-rotate-host age1…` | 引导式五步（0/4 选旧别名先行，先加后撤，无裸窗口） |
 | update | rules | `key-add-host` / `key-remove` | 增量演化（模板不重生成） |
 | update | blob | `secret-set <alias>` | 重新加密（同 create，overwrite） |
 | update | blob (all) | `secrets-sync` | sops updatekeys 全量重加密 |
@@ -159,7 +177,7 @@ just secrets-sync                   # ③ sops updatekeys ×N（存量 blob 迁�
 | `check`（`just secrets-verify`） | 校验每个 blob 的 metadata 收件人 == `.sops.yaml` 规则 | CI / 日常 |
 | `update`（`just secrets-sync`） | `sops updatekeys` 全量 re-encrypt 到当前规则 | 分层迁移、加 key |
 | `rotate user age1…`（`just key-rotate-user`） | 生成三步走指引（替换 key → sync → 历史暴露决策） | 定期 / 疑似失陷 |
-| `rotate host age1…`（`just key-rotate-host`） | 生成四步走指引（加 → sync → 撤旧 → sync） | 定期 / 疑似失陷 |
+| `rotate host age1…`（`just key-rotate-host`） | 生成五步走指引（选旧 → 加 → sync → 撤旧 → sync） | 定期 / 疑似失陷 |
 
 `check` 对 EMPTY 出厂态宽容（无规则无 blob → 通知并放行）；**有 blob 而无
 `.sops.yaml` 是唯一致命形**（分发层消失而密文尚存——明文风险级）。
@@ -171,9 +189,31 @@ just secrets-sync                   # ③ sops updatekeys ×N（存量 blob 迁�
 2. 由于 sops 的 metadata MAC，旧 key 持有者无法伪造新 blob。
 3. 数据库侧再执行一次 `ALTER USER … PASSWORD`（配置层轮换不替代数据层轮换）。
 
+### 明文 → 密文 → 运行时（六相管道的 runbook 视角）
+
+机制视角（七层管道全景图、权限矩阵表、数据驱动推导规则）在
+[mechanisms.md §5](../architecture/mechanisms.md)；本节只讲操作者要碰的三段：
+
+- **PLAIN（`secrets/plan/**`，本地参考，禁止提交）**：`secrets-plan-create`
+  生成明文实例骨架——它是 bootstrap 期的「参考答案」（看一眼某个 secret
+  该长什么结构），不是工作流常态：录入一律走 `secret-set`（交互读入 →
+  transform〔plain / mkpasswd sha-512 -R 5000〕→ 模板代入〔awk
+  ENVIRON 防注入〕→ sops encrypt → 临时文件原子 mv 进 `secrets/chipr/`），
+  明文从不落盘等待。`secrets/plan/` 整目录在 `.gitignore`。
+- **CIPHER（`secrets/chipr/**`，随仓提交）**：`secret-set` 的产出；
+  `secrets-verify` 校验收件人一致性，`secrets-sync` 全量重加密。
+- **RUNTIME（激活时刻）**：sops-nix 在激活时按声明解密落位——
+  `neededForUsers = true` 的 secret（当前仅 `user.password`）进
+  `/run/secrets-for-users/`（用户创建**之前**可用，密码必须在这个
+  时机）；其余进 `/run/secrets/`，每 secret 按 owner/mode 落权限
+  （7 个 secret 的完整 mode/owner/group 矩阵见 mechanisms.md §5）。
+  服务消费用 `config.sops.secrets.<name>.path`（路径引用，不复制）。
+  验收：激活后 `ls -l /run/secrets/` 对矩阵逐项核对。
+
 ## 5. CI 门禁（`.github/workflows/ci.yml` → security stage）
 
-- 设置仓库 secret `SOPS_AGE_KEY`（age 私钥，`AGE-SECRET-KEY-1…` 形态）。
+- 设置仓库 secret `AGE_SECRET_KEY`（age 私钥，`AGE-SECRET-KEY-1…` 形态；
+  workflow 内注入为 env `SOPS_AGE_KEY`——sops 只认后者）。
 - stage 行为: 对 `secrets/**/*.yaml` 逐个 `sops -d --output /dev/null`，
   任一解密失败 = 红。未配置 secret 时 stage 跳过（不静默成功也不阻塞）。
 - **key hierarchy check（新）**: `scripts/sh/secrets-rotate.sh check` 步骤——

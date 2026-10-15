@@ -380,3 +380,17 @@ nmt.flake = false;   # 原始 store path，无 flake 产物
 **全链流经守卫**。变异检查：`--override-input nmt github:Redskaber/nmt/0aa4699`
 （守卫前 rev）→ grep `unrecognized option '--colors=auto'` 原样复现——
 守卫的缺失在消费侧一行红。
+
+### 10.4 fork 治理（re-sync 与 bump 纪律）
+
+- **re-sync 节奏**：fork 的存在理由是 sourcehut 主源对 Nix fetchers 返回
+  403（镜像性），不是分叉性——upstream（rycee/nmt）每有演进，fork 以
+  「rebase delta」方式跟进（delta 只有两个：`--` 守卫 + 自测电池），
+  绝不让 delta 漂成两棵树。
+- **bump 双安全网**：flake.lock 钉 WHERE（当前 25fe4c8——delta 守卫
+  入库态），tests/ 钉 WHAT（第 98 号测试 + nmt-Plane 16 tests 即消费
+  级证明）；bump 一律「lock + 全量门同 commit」，详见
+  [external-repos.md §4](../architecture/external-repos.md)。
+- **待决态注记**：fork HEAD 的自测电池 commit（010158b）尚未被本仓
+  lock 消费——领先一个 commit 是常态（沙箱参考副本 ≠ lock 消费），
+  bump 与否由 owner 按需裁决。

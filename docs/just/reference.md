@@ -8,6 +8,8 @@
 > deploy / devenv / disk / flake / hardware / keys / maintenance / rules / secrets /
 > services / shared）——`just --list` 给出按组组织的全部入口；裸 `just`（无参数）打印
 > start-here 地图；secrets 侧的生命周期地图从 `just secrets-guide` 进入。
+> 内省：`just <recipe> --evaluate` 打印任意 recipe 的变量求值与展开后的
+> 命令体（不执行）——交互式工作流的自助排障面。
 >
 > 描述约定（R28）：`just --list` 展示的是 recipe 上方**最后一条连续 `#` 注释行**——
 > 该行必须是完整、精炼、自含的单句（示例与补充说明写在其上方，绝不做末行）。
@@ -231,11 +233,11 @@ just cachix-push /nix/store/…    # 推送指定 store 路径（cachix 二进�
 # 为 nix-config 仓库部署规则文件与钩子
 just commit-setup
 
-# 为任意 Git 仓库安装 husky 钩子（不复制配置文件）
-just commit-husky-install <path>
+# 为任意 Git 仓库安装 husky 钩子（不复制配置文件；缺省当前目录）
+just commit-husky-install [path=.]
 
-# 单独复制 commitlint 和 commitizen 配置文件到项目
-just commit-project-rules <path>
+# 单独复制 commitlint 和 commitizen 配置文件到项目（缺省当前目录）
+just commit-project-rules [path=.]
 
 # 部署全局兼容规则（可选）
 just commit-global-rules

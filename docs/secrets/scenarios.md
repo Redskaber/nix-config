@@ -13,6 +13,10 @@
 | 意图 | 命令 |
 | --- | --- |
 | 我有哪些加密内容 / 缺哪个 | `just secrets-list` |
+| 注册一个新秘密（三层一次写全） | `just secrets-add <alias> <rel-path> [prompt]` |
+| 改注册行的提示语 / 变换 | `just secrets-edit <alias> [prompt] [transform]` |
+| 退役一个秘密（先销毁密文） | `just secrets-remove <alias>` |
+| 声明 ↔ 注册表漂移视图 | `just secrets-declared` |
 | 录入 / 改一个秘密 | `just secret-set <alias>` |
 | 看一个秘密 | `just secret-get <alias>` |
 | 编辑一个秘密 | `just secret-edit <alias>` |
@@ -76,6 +80,8 @@ just key-new-host <alias>              # ① 服务器 keypair（你操作机上
 just key-add-host <alias> <age1…>      # ② 公钥接线进 .sops.yaml（srv 域）
 just secrets-sync                      # ③ 存量 blob 迁移到双收件人
 # ④ 交付: host-<alias>.age → 服务器 /var/lib/sops-nix/key.txt（chmod 400）
+#    （服务器形态 keyFile 目标位；当前模块实现为 own-host 家目录形态——
+#    详见 rotation.md 的 keyFile 落点现状注记）
 #    然后 shred 交付副本 —— 目标机唯一持有
 ```
 
@@ -125,7 +131,7 @@ just key-rotate-user $(age-keygen -y /tmp/new-user.age)
 # 轮换（先加后撤，无裸窗口）:
 just key-new-host <new-alias>
 just key-rotate-host $(just key-show-host <new-alias>)
-#    四步引导: key-add-host → secrets-sync → key-remove <old> → secrets-sync
+#    五步引导: 0/4 选旧别名 → key-add-host → secrets-sync → key-remove <old> → secrets-sync
 
 # 撤销（退役某台 host）:
 just key-remove <alias>     # 接受短名（lab → host_lab）或全名

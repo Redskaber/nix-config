@@ -262,14 +262,14 @@ flake（nix-types · pdshell · configuration-orchestrator · commit-config 及�
 curl -L https://install.determinate.systems/nix | sh -s -- install   # 非 NixOS
 mkdir -p ~/.config/nix
 echo "experimental-features = nix-command flakes pipe-operators" >> ~/.config/nix/nix.conf
-nix shell nixpkgs#just nixpkgs#git        # just 不全局安装，一次性进入
+nix shell nixpkgs#just nixpkgs#git           # just 不全局安装，一次性进入
 ```
 
 **Phase 1 — 克隆 + 策略与密钥基线**：
 
 ```bash
 git clone https://github.com/Redskaber/nix-config /etc/nix-config && cd /etc/nix-config
-just init <username>                       # = 策略生成 + 硬件探测 + user age 密钥 + .sops.yaml 基线
+just init <username>                         # = 策略生成 + 硬件探测 + user age 密钥 + .sops.yaml 基线
 # 服务器机双 key 直达：just key-new-host <alias> → just init <username> <alias> <age1…>
 ```
 
@@ -643,7 +643,8 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 | --- | --- | --- |
 | 架构理解 | [architecture/mechanisms.md](docs/architecture/mechanisms.md) | 核心机制十一层内幕 |
 | | [architecture/tree.md](docs/architecture/tree.md) | 完整注释树 |
-| | [architecture/dependency-graph.md](docs/architecture/dependency-graph.md) | 46 inputs 依赖图 |
+| | [architecture/dependency-graph.md](docs/architecture/dependency-graph.md) | 47 inputs 依赖图 |
+| | [architecture/external-repos.md](docs/architecture/external-repos.md) | 外置仓库分层分类（四类 × 四仓） |
 | | [architecture/nix-types.md](docs/architecture/nix-types.md) | 类型系统集成裁决 |
 | CI/CD | [ci/pipeline.md](docs/ci/pipeline.md) | 缘起、本地预检与部署流 |
 | 上手 | [guides/quickstart.md](docs/guides/quickstart.md) | 六 Phase 从 0 到部署 |

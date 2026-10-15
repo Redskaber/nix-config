@@ -4,7 +4,7 @@
 > 依赖速览（inputs 计数锚点）保留在 README。
 
 ```
-flake.nix（46 inputs）
+flake.nix（47 inputs）
 ├── nixpkgs (nixos-26.05)
 │   └── nixpkgs-unstable         # 双通道（shared.upkgs，第二实例非 overlay）
 ├── home-manager (release-26.05)

@@ -1,6 +1,7 @@
 # nix-types 集成裁决 — 现状盘点与参考演进（2026-10-11）
 
-> 背景：nix-types（github:Redskaber/nix-types，本仓 flake input）是
+> 背景：nix-types（github:Redskaber/nix-types，本仓 flake input，URL 钉
+> rev a1a2a13）是
 > 同作者的纯 Nix 代数数据类型库——enum 构造器 / match 穷尽分派 /
 > Option / Result ADT，lib 本体零 nixpkgs 耦合（仅 `builtins.*`），
 > 440 测自证。本文盘点它在 nix-config 中的既有消费面，裁决
@@ -9,7 +10,8 @@
 
 ### 1. 现状：不是候选，已是类型层地基
 
-- **input 声明**：flake.nix `nix-types.url = "github:Redskaber/nix-types"`；
+- **input 声明**：flake.nix
+  `nix-types.url = "github:Redskaber/nix-types/a1a2a13…"`（rev 钉死）；
   pdshell 以 `follows = "nix-types"` 钉到同一实例（注释明言防
   nix-types_2 漂移——SSOT）。
 - **三层消费**（4 处一手锚点）：
