@@ -313,7 +313,7 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **107 checks = 101 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **107 checks = 101 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**（计数与 TOC 导航由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移、TOC 死链/孤儿节即 CI 红灯；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
@@ -564,6 +564,25 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 
 ---
 
+## 已知边界与设计债
+
+机器可断言的部分已全部由六道仓库卫生门承载；本表是门管不到的残余边界——
+需要真机、需要所有者决策或需要外部协作的事项账本，显式追踪防止静默蒸发
+（豁免类条目在对应门内另有 STALE-red tripwire 兜底）。
+
+| # | 边界 / 债 | 现状 | 归属 |
+| --- | --- | --- | --- |
+| 1 | darwin activation 待真 Mac | aarch64 闭包已 CI 原机构建（macos-latest），激活与切换语义未在真机验收 | 真机 |
+| 2 | hosts/nixos facter 迁移 | 仓库侧全量落地（`just hardware-migrate` 四步 + targets 三律测试），root 探测门控真机执行 | 真机 |
+| 3 | cachix 推送步待激活 | 推送闭包已实证（wechat 762 MB），CI push 步待 secret 注入后生效 | 所有者 |
+| 4 | CI 步名残留历史任务号 | 注释面已清偿，`.github/workflows/ci.yml` 步名与 summary 中的历史编号待裁决改名 | 所有者 |
+| 5 | exp/sys/re 悬垂三选一 | 可达性门豁免账本跟踪中——接线 / 移入 devShells 域 / 删除，产品决策 | 所有者 |
+| 6 | sound 真机裁决 | 策略轴已落地（pipewire 默认 + none 枚举 + 双律锁定），控制台主机翻转待真机听感 | 真机 |
+| 7 | 第二台机器 + ssh 公钥 | colmena 远程面与部署等价性门控已就绪，基策略 openssh-authKeys 仍空 | 硬件 |
+| 8 | 上游投递两件 | nmt 与 colmena 的粘贴即发文案已在 web 门户存档，待所有者投递 | 所有者 |
+
+---
+
 ## 路线图
 
 - [x] CI 全量 build 验证（nmt-Plane + QEMU VM tests，7 阶段流水线）
@@ -616,3 +635,28 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 - [x] devShells 腿成员枚举数据驱动
 - [x] hosts/nixos facter 迁移的仓库侧全量落地
 - [x] colmena 部署面落地
+
+---
+
+## 深入文档
+
+深度内容按受众分层至 `docs/`——README 只保留入口层，本节是全文索引：
+
+| 受众 | 文档 | 内容 |
+| --- | --- | --- |
+| 架构理解 | [architecture/mechanisms.md](docs/architecture/mechanisms.md) | 核心机制十一层内幕 |
+| | [architecture/tree.md](docs/architecture/tree.md) | 完整注释树 |
+| | [architecture/dependency-graph.md](docs/architecture/dependency-graph.md) | 46 inputs 依赖图 |
+| | [architecture/nix-types.md](docs/architecture/nix-types.md) | 类型系统集成裁决 |
+| CI/CD | [ci/pipeline.md](docs/ci/pipeline.md) | 缘起、本地预检与部署流 |
+| 上手 | [guides/quickstart.md](docs/guides/quickstart.md) | 六 Phase 从 0 到部署 |
+| | [guides/extending.md](docs/guides/extending.md) | 添加应用 / 语言环境 / Secret / 策略 |
+| | [guides/cache.md](docs/guides/cache.md) | 缓存本地拉取与推送 |
+| 裁决卷宗 | [guides/sound-adjudication.md](docs/guides/sound-adjudication.md) | sound 语义半部（债 #9） |
+| 日常运维 | [just/reference.md](docs/just/reference.md) | 98 recipe × 14 组全参考 |
+| 模块开发 | [modules/interface-standards.md](docs/modules/interface-standards.md) | 模块接口标准（改造即接线） |
+| secrets | [secrets/scenarios.md](docs/secrets/scenarios.md) | 九情景手册 |
+| | [secrets/rotation.md](docs/secrets/rotation.md) | 钥匙层级与轮换 runbook |
+| 测试 | [tests/test-matrix.md](docs/tests/test-matrix.md) | 测试矩阵（六平面计数） |
+| | [tests/nixosTest.md](docs/tests/nixosTest.md) | NixOS 测试完全手册 |
+| | [tests/nmt.md](docs/tests/nmt.md) | NMT 镜像方案完全指南 |

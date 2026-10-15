@@ -12,15 +12,23 @@
 #               // (import ./tests/pre-commit.nix { … })  # + pre-commit-check
 #               // (import ./tests/docs-ssot.nix { … });  # + this check
 #
-# WHY THIS EXISTS — count drift is this repo's recurring defect class:
-# prose numbers rot because nothing forces them.
+# WHY THIS EXISTS — count drift and dead navigation are this
+# repo's recurring defect classes: prose numbers rot because
+# nothing forces them, and TOC links outlive the sections they
+# point at (the gate was born after a real catch: the TOC
+# listed two sections the body no longer carried — every
+# other gate green, GitHub rendering dead links).
 #
 # WHAT IT DOES — the inverse of test-count.sh: instead of parsing the
 # tree to print numbers for humans to copy into README, it EVALUATES
 # the live facts (tests/planes/inputs/devShells/hosts — attrNames and
 # mapAttrs, never prose) and asserts that the canonical ANCHOR
 # sentences in README.md and docs/tests/test-matrix.md still carry
-# exactly those numbers. Pattern credit: wimpy's
+# exactly those numbers. On top of the count anchors, a TOC navigation
+# battery proves the README's own navigation: numbered TOC entries
+# (sequential, text ↔ heading, slug ↔ anchor), every internal
+# ](#target) link resolving to a real heading, and no orphan sections.
+# Pattern credit: wimpy's
 # checks.assistant-catalogue (generated-doc vs source-of-truth diff),
 # adapted to assert-embedded anchors because this README is
 # handcrafted prose, not a generated artifact.
@@ -304,14 +312,101 @@ let
         # claims, generated from the live facts at evaluation time.
         ${expectations}
 
+        # ── TOC navigation battery ──────────────────────────────────
+        # The anchors above prove numeric claims; this battery proves
+        # NAVIGATION claims. Born from a real defect: the TOC listed
+        # 已知边界与设计债 + 深入文档 while both sections were missing
+        # from the body — every count anchor green, GitHub rendering
+        # dead links. Three assertions:
+        #   A. numbered TOC entries — sequential numbering, entry text
+        #      equals a real ## heading, slug(heading) == anchor
+        #   B. every internal ](#target) link (TOC + inline prose)
+        #      resolves to some heading's slug
+        #   C. every ## heading except the TOC's own (目录) is indexed
+
+        gh_slug() {
+          # GitHub's heading → anchor rendering for this README's
+          # charset inventory: CJK retained, ASCII lowered, spaces
+          # → dashes, ASCII and typographic punctuation removed.
+          # LC_ALL=C makes sed byte-wise: the class keeps all high
+          # bytes (CJK) while dropping ASCII punctuation, then the
+          # explicit strips remove the typographic UTF-8 sequences
+          # that survived the class (em-dash · （） ： …).
+          local high
+          high=$(printf '\200-\377')
+          printf '%s\n' "$1" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed -E "s/[^a-z0-9 _''${high}-]//g" \
+            | sed -e $'s/\xe2\x80\x94//g' -e $'s/\xc2\xb7//g' \
+                  -e $'s/\xef\xbc\x88//g' -e $'s/\xef\xbc\x89//g' \
+                  -e $'s/\xef\xbc\x9a//g' -e $'s/\xe2\x80\xa6//g' \
+            | tr ' ' '-'
+        }
+
+        # Body headings and their GitHub slugs, one per line.
+        BODY_HEADINGS=$(mktemp)
+        HEADING_SLUGS=$(mktemp)
+        sed -n 's/^## //p' "$README" | tee "$BODY_HEADINGS" | while IFS= read -r h; do
+          gh_slug "$h"
+        done > "$HEADING_SLUGS"
+
+        # A. numbered TOC entries (the 目录 list at the top).
+        TOC_TEXTS=$(mktemp)
+        expected_num=1
+        while IFS= read -r entry; do
+          text=$(printf '%s' "$entry" | sed -E 's/^[0-9]+\. \[([^]]+)\].*/\1/')
+          anchor=$(printf '%s' "$entry" | sed -E 's/.*\]\(#([^)]+)\).*/\1/')
+          num=$(printf '%s' "$entry" | cut -d. -f1)
+
+          if [ "$num" != "$expected_num" ]; then
+            echo "docs-ssot: DRIFT TOC numbering — expected $expected_num, got $num at '$entry'" >&2
+            FAILED=1
+          fi
+          expected_num=$((expected_num + 1))
+
+          printf '%s\n' "$text" >> "$TOC_TEXTS"
+          if ! grep -qxF -- "$text" "$BODY_HEADINGS"; then
+            echo "docs-ssot: DRIFT TOC entry — '$text' has no '## $text' heading (dead link on GitHub)" >&2
+            FAILED=1
+          else
+            want=$(gh_slug "$text")
+            if [ "$want" != "$anchor" ]; then
+              echo "docs-ssot: DRIFT TOC anchor — '$text' targets #$anchor, but the heading slugs to #$want" >&2
+              FAILED=1
+            fi
+          fi
+        done < <(grep -E '^[0-9]+\. \[[^]]+\]\(#[^)]+\)' "$README")
+
+        # B. every internal ](#target) link resolves to a heading slug.
+        while IFS= read -r target; do
+          [ -n "$target" ] || continue
+          if ! grep -qxF -- "$target" "$HEADING_SLUGS"; then
+            echo "docs-ssot: DRIFT internal link — ](#$target) resolves to no ## heading" >&2
+            FAILED=1
+          fi
+        done < <(grep -oE '\]\(#[^)]+\)' "$README" | sed -e 's/^](#//' -e 's/)$//')
+
+        # C. completeness — every ## heading except the TOC's own is
+        # indexed (the 目录 heading IS the TOC; indexing it is circular).
+        while IFS= read -r h; do
+          [ "$h" = "目录" ] && continue
+          if ! grep -qxF -- "$h" "$TOC_TEXTS"; then
+            echo "docs-ssot: DRIFT orphan section — '## $h' is not indexed by the TOC" >&2
+            FAILED=1
+          fi
+        done < "$BODY_HEADINGS"
+
+        toc_total=$(wc -l < "$TOC_TEXTS" | tr -d ' ')
+
         if [ "$FAILED" -ne 0 ]; then
           echo "" >&2
-          echo "docs-ssot-check FAILED: documentation anchors drifted from live facts." >&2
-          echo "Counts are single-sourced from the evaluation; the docs must follow." >&2
+          echo "docs-ssot-check FAILED: documentation claims drifted (counts or navigation)." >&2
+          echo "Counts are single-sourced from the evaluation; navigation must resolve; the docs must follow." >&2
           exit 1
         fi
 
         echo "docs-ssot-check: all ${toString (builtins.length anchors)} anchors agree with live facts"
+        echo "  toc battery: $toc_total TOC entries resolved (numbering + text + slug), dead links 0, orphan sections 0"
         echo "  tests ${t testsTotal} (planes ${t planesTotal}: smoke ${t planeCounts.smoke} + nixos ${t planeCounts.nixos} + home ${t planeCounts.home} + lib ${t planeCounts.lib} + integration ${t planeCounts.integration} + nmt ${t planeCounts.nmt})"
         echo "  checks ${t checksTotal} (tests + pre-commit-check + docs-ssot-check + testscript-syntax-check + module-reachability-check + platform-grammar-check + cache-ssot-check)"
         echo "  inputs ${t inputsCount} · devShells ${t devShellsCount} · hosts ${t hostsCount}"
