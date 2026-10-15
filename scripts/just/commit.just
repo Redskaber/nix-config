@@ -3,14 +3,20 @@
 # ==============================================================================
 # 依赖: nix, git, jq, 且 flake.nix 中已暴露 api.inputs 输出
 
+# Resolve the commit-config input's store path — the one resolution every
+# deploy verb below shares (keeps --no-warn-dirty and the jq key in one
+# place).
+[private]
+_commit-config-src:
+    @cd "{{ROOT}}" && nix eval .#api.inputs --json --no-warn-dirty | jq -r '."commit-config"'
 
 # Deploy global commitlint rules and optional commitizen config to home
 [group('commit')]
 commit-global-rules:
     #!/usr/bin/env bash
     set -euo pipefail
-    cd {{ROOT}}
-    CC_SRC="$(nix eval .#api.inputs --json --no-warn-dirty 2>/dev/null | jq -r '."commit-config"')"
+    cd "{{ROOT}}"
+    CC_SRC="$(just _commit-config-src)"
 
     # commitlint global rules
     SRC="${CC_SRC}/commitlint.config.js"
@@ -34,8 +40,8 @@ commit-project-rules dir=".":
     #!/usr/bin/env bash
     set -euo pipefail
     TARGET_DIR="{{dir}}"
-    cd {{ROOT}}
-    CC_SRC="$(nix eval .#api.inputs --json --no-warn-dirty 2>/dev/null | jq -r '."commit-config"')"
+    cd "{{ROOT}}"
+    CC_SRC="$(just _commit-config-src)"
 
     # commitlint rules
     RULE_SRC="${CC_SRC}/commitlint.config.js"
@@ -60,8 +66,8 @@ commit-husky-install dir=".":
     #!/usr/bin/env bash
     set -euo pipefail
     TARGET_DIR="{{dir}}"
-    cd {{ROOT}}
-    CC_SRC="$(nix eval .#api.inputs --json --no-warn-dirty 2>/dev/null | jq -r '."commit-config"')"
+    cd "{{ROOT}}"
+    CC_SRC="$(just _commit-config-src)"
     HOOK_SRC="${CC_SRC}/husky/commit-msg"
 
     if [ ! -d "${TARGET_DIR}/.git" ]; then

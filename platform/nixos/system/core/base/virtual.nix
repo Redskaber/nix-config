@@ -266,18 +266,17 @@ shared.version.value.adb
     };
   };
 
-  # Waydroidconfig (whenenable)
+  # Waydroid display properties — the payload rides the enable fact
+  # (lib.optionalString, the same fact-keyed idiom as the wantedBy
+  # lines below), not a branch: no declaration, no effect.
   environment.etc."waydroid/waydroid.cfg".text =
-    if config.virtualisation.waydroid.enable then
-      ''
-        [properties]
-        persist.waydroid.width = 1280
-        persist.waydroid.height = 720
-        persist.waydroid.dummy_fps = 60
-        persist.waydroid.multi_windows = true
-      ''
-    else
-      "";
+    lib.optionalString config.virtualisation.waydroid.enable ''
+      [properties]
+      persist.waydroid.width = 1280
+      persist.waydroid.height = 720
+      persist.waydroid.dummy_fps = 60
+      persist.waydroid.multi_windows = true
+    '';
 
   # Virtualization service autostart control (install but not autostart = clear wantedBy)
   systemd.services.libvirtd.wantedBy = lib.mkForce (

@@ -135,10 +135,12 @@ nix-config/
 │   │   ├── shared.just     # shared.nix 生成（tmpl → generate → overwrite）
 │   │   ├── hardware.just   # 硬件事实生成（facter 声明式 / generate legacy）
 │   │   ├── disk.just       # disko 磁盘布局 + 状态策略（disk-show/persist-show 求值验收 / disk-format 应用）
-│   │   ├── flake.just      # flake inputs 依赖管理 + deploy 组（nixos/home-switch）
-│   │   ├── devenv.just     # 开发环境 profile 管理（pdshell，username 从 shared.nix 读取）
-│   │   ├── services.just   # 按需服务管理（systemctl 动词封装）
+│   │   ├── flake.just      # flake inputs 依赖管理（update 子集策略 + lock 检视）
+│   │   ├── deploy.just     # 主机闭包激活三通道（nixos-rebuild / home-switch / colmena deploy）
+│   │   ├── devenv.just     # 开发环境 profile 管理（pdshell，shell 清单 = flake devShells SSOT）
+│   │   ├── services.just   # 按需服务管理（systemctl 动词封装 + db 轴 IR 检视）
 │   │   ├── secrets.just    # Age 密钥 + SOPS 加密生命周期（双域密钥层级 + 注册表驱动）
+│   │   ├── cachix.just     # 公共二进制缓存轴（status 探测 / token 注册 / 本地 push）
 │   │   ├── commit.just     # 数据驱动的提交规范部署（基于 commit-config flake input）
 │   │   └── dump.just       # 项目文本导出（文档/审计用）
 │   └── sh/                 # 工具（path_headers @path 头部守卫 · test-count 计数单一

@@ -502,8 +502,8 @@
       # nix-darwin configuration entrypoints (T3.2): hosts/<h> whose
       # policy declares platform.tag = "darwin" are built through
       # nix-darwin instead of nixosSystem; the platform system
-      # customs (platform/<tag>/default.nix — single live door, the
-      # T5.8 fold; directory-as-domain, T5.11) carries the system
+      # customs (platform/<tag>/system/default.nix — the v4 grammar
+      # door, single live system door per tag) carries the system
       # assembly with home-manager riding in module mode.
       # 'darwin-rebuild switch --flake .#<host>'.
       inherit (targets) darwinConfigurations;

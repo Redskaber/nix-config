@@ -74,11 +74,14 @@ service-status name:
 service-restart name:
     @sudo systemctl restart {{name}}
 
-# List all database services (installed, from shared.nix).
+# List all database services (installed, from shared.nix service-profile):
+# the profile IR's db axis (nix eval .#api.shared.services.db) — engine ×
+# install × autostart, the same face the srv/db modules consume.
+# List every database service with its install/autostart state (from the service profile).
 [group('services')]
 db-list:
-    @echo "Database services (from shared.nix service-profile):"
-    @nix eval .#nixosConfigurations.kilig-nixos.config.systemd.services --apply 'svc: builtins.filter (n: builtins.match ".*(mysql|postgres|redis|mongodb).*" n != null) (builtins.attrNames svc)' --json 2>/dev/null | jq -r '.[]' || echo "  (run from project root)"
+    @cd {{ROOT}} && set -o pipefail && nix eval --json .#api.shared.services.db --no-warn-dirty \
+        | jq -r 'to_entries[] | "\(.key)\tinstall=\(.value.install)\tautostart=\(.value.autostart)"'
 
 # Start a database service (alias for service-start).
 [group('services')]

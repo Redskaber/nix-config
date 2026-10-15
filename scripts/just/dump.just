@@ -1,4 +1,4 @@
-# Dump current project file tree + concat to tmp/
+# Dump the project file tree and concatenated sources into tmp/ (offline review).
 [group('maintenance')]
 dump:
   @mkdir -p tmp
