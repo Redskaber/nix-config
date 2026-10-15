@@ -2,7 +2,7 @@
 # @path: ~/projects/configs/nix-config/scripts/sh/secrets-rotate.sh
 # @author: redskaber
 # @datetime: 2026-10-08
-# @description: sops key rotation / hierarchy migration runbook (T3.3 + lifecycle verbs)
+# @description: sops key rotation / hierarchy migration runbook (lifecycle verbs)
 #
 # Architecture (dispatch-layer principle, mirroring a compiler pipeline):
 #

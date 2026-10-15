@@ -403,26 +403,26 @@ push / PR
     │       ├── statix check .                       (Nix 反模式检查)
     │       ├── nixfmt check / deadnix check
     │       ├── Build pre-commit-check derivation
-    │       └── Build docs-ssot-check derivation     (T8.1：文档计数锚点)
+    │       └── Build docs-ssot-check derivation     （文档计数锚点）
     │           + Build testscript-syntax / module-reachability /
     │             platform-grammar / cache-ssot derivations
     │
-    ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，T15.1 面分片形态）
+    ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
     │           （107 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
-    │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1）
+    │           纯求值腿：无 magic-nix-cache + infra 签名单次重试）
     │
     ├─► [STAGE 3: nmt-Plane]           HM dotfile 断言，纯 eval，无 KVM（< 1 min）
-    │       └── nix-fast-build --flake .#api.checks.planes.nmt（并行求值+构建，T7.3）
+    │       └── nix-fast-build --flake .#api.checks.planes.nmt（并行求值+构建）
     │
-    ├─► [STAGE 4: devShells dry-run]   逐成员 dry-run（面 attrNames，T18.1）
+    ├─► [STAGE 4: devShells dry-run]   逐成员 dry-run（面 attrNames）
     │       └── 枚举 = devShells 面自身 attrNames（25 员点名；新 shell 按构造入列，
-    │           零 CI 侧维护；失败成员点名，T9.2 归因哲学）
+    │           零 CI 侧维护；失败成员点名——归因哲学）
     │
-    ├─► [STAGE 4.5: Output Faces]     无独立腿的输出面 drvPath 强制（T11.1，并行）
+    ├─► [STAGE 4.5: Output Faces]     无独立腿的输出面 drvPath 强制（并行）
     │       ├── packages.* 逐成员 drvPath（wslview 教训——deep-eval 的
     │       │   面覆盖是路径依赖的：前面红，后面坏不见；失败成员点名）
     │       ├── homeConfigurations.* activationPackage.drvPath
@@ -431,7 +431,7 @@ push / PR
     │           darwin 求值步在 deep-eval 绿后才跑，本腿不受此门）
     │
     ├─► [STAGE 5: Security Audit]      SOPS 完整性审计（并行）
-    │       ├── 供应链钉版契约：全部 action 引用必须 40-hex SHA（T16.1，fail-fast）
+    │       ├── 供应链钉版契约：全部 action 引用必须 40-hex SHA（fail-fast）
     │       ├── secrets/chipr/*.yaml 必须含 sops: 元数据
     │       ├── secrets/plan/ 不得被 git 追踪
     │       ├── .sops.yaml 含 age: + creation_rules:
@@ -439,21 +439,21 @@ push / PR
     │
     ├─► [STAGE 6: VM Tests]            QEMU 测试，按平面并行子矩阵（需 KVM）
     │       ├── 每腿一平面，整面交 nix-fast-build（nix-eval-jobs 并行求值
-    │       │   + 流水线构建，--skip-cached 对接 magic-nix-cache，T7.3）：
+    │       │   + 流水线构建，--skip-cached 对接 magic-nix-cache）：
     │       ├── smoke        — 基线（1）
     │       ├── nixos        — 系统模块（29）
     │       ├── home         — HM 模块（41）
     │       ├── lib          — lib 纯表达式（5）
     │       └── integration  — NixOS + HM 联合激活（1）
     │
-    ├─► [STAGE 6.5: Host Toplevels]   系统闭包构建（T8.2，无 KVM）
+    ├─► [STAGE 6.5: Host Toplevels]   系统闭包构建（无 KVM）
     │       ├── .#api.host-toplevels 整面交 nix-fast-build（inventory 驱动：
     │       │   nixos · vm · nixos-wsl——新 NixOS 主机按构造入列；
     │       │   cache.nixos.org 替代 + magic-nix-cache 跨次缓存）
     │       └── darwin 闭包跨系统求值步（linux 腿的零成本交叉检查；
     │           构建深度归 6.6 腿）
     │
-    ├─► [STAGE 6.6: Darwin Toplevels]  darwin 闭包原机构建（T8.3，macos-latest
+    ├─► [STAGE 6.6: Darwin Toplevels]  darwin 闭包原机构建（macos-latest
     │       │   aarch64 runner，无需交叉工具链：api.darwin-toplevels 第六
     │       │   api 面整面交 nix-fast-build——同工具同纪律，inventory
     │       │   驱动，新 darwin 主机按构造入列）
@@ -575,11 +575,8 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 | 1 | darwin activation 待真 Mac | aarch64 闭包已 CI 原机构建（macos-latest），激活与切换语义未在真机验收 | 真机 |
 | 2 | hosts/nixos facter 迁移 | 仓库侧全量落地（`just hardware-migrate` 四步 + targets 三律测试），root 探测门控真机执行 | 真机 |
 | 3 | cachix 推送步待激活 | 推送闭包已实证（wechat 762 MB），CI push 步待 secret 注入后生效 | 所有者 |
-| 4 | CI 步名残留历史任务号 | 注释面已清偿，`.github/workflows/ci.yml` 步名与 summary 中的历史编号待裁决改名 | 所有者 |
-| 5 | exp/sys/re 悬垂三选一 | 可达性门豁免账本跟踪中——接线 / 移入 devShells 域 / 删除，产品决策 | 所有者 |
-| 6 | sound 真机裁决 | 策略轴已落地（pipewire 默认 + none 枚举 + 双律锁定），控制台主机翻转待真机听感 | 真机 |
-| 7 | 第二台机器 + ssh 公钥 | colmena 远程面与部署等价性门控已就绪，基策略 openssh-authKeys 仍空 | 硬件 |
-| 8 | 上游投递两件 | nmt 与 colmena 的粘贴即发文案已在 web 门户存档，待所有者投递 | 所有者 |
+| 4 | sound 真机裁决 | 策略轴已落地（pipewire 默认 + none 枚举 + 双律锁定），控制台主机翻转待真机听感 | 真机 |
+| 5 | 第二台机器 + ssh 公钥 | colmena 远程面与部署等价性门控已就绪，基策略 openssh-authKeys 仍空 | 硬件 |
 
 ---
 

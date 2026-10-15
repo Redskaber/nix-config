@@ -6,7 +6,8 @@
 # The sixth repo-hygiene gate, the docs-SSOT gate's sibling: it pins
 # the fleet binary-cache identity (name / url / public key) to ONE
 # source and audits every plane that cannot consume that source by
-# value.
+# value — plus, since round 27, the one plane that must carry NO
+# identity at all.
 #
 # WHY THIS EXISTS — the identity is declared once in
 # lib/shared/lang/const.nix (shared.const.cache.fleet). Distribution
@@ -14,20 +15,24 @@
 # consume it BY VALUE — platform/nixos/system/core/base/nix.nix and
 # platform/darwin/system/nix compose shared.const.cache.fleet.url/
 # publicKey into the host substituter policy, which cannot drift.
-# Every other plane cannot (or must not) evaluate the const and
-# carries LITERAL mirrors, which rot silently (rename the cache or
-# rotate the key and the workflow legs would keep speaking the old
-# identity until someone notices):
+# Every other plane cannot evaluate the const and carries LITERAL
+# mirrors, which rot silently (rename the cache or rotate the key
+# and the workflow legs would keep speaking the old identity until
+# someone notices):
 #   - the CI workflows and scripts/just/cachix.just — the YAML/shell
 #     planes cannot import nix at all;
-#   - flake.nix's nixConfig — nix reads it WITHOUT evaluation
-#     (forceTrivialValue semantics: only trivially forceable values,
-#     list elements checked by type without any forcing — settings
-#     that steer trusted substituters must not run arbitrary code at
-#     metadata time), so a delegated/imported nixConfig is impossible
-#     by design; the literal block is the only legal form and thus a
-#     pinned mirror like the YAML/shell ones;
 #   - docs/guides/cache.md — the prose identity humans copy from.
+#
+# flake.nix's nixConfig is deliberately ABSENT (round-27
+# adjudication, knowledge-searched): every consumer the fleet
+# actually has is covered by the host sides and the CI legs; a
+# flake-level literal would be the only mirror sitting on a plane
+# that CAN evaluate the const (an architectural misfit), and
+# nixConfig's trust semantics make it a liability for outside
+# consumers — accept-flake-config prompts for the cautious and
+# silent substitution-ignore for the untrusted (no gain, real
+# friction). The gate therefore asserts the entry layer's SILENCE:
+# the identifier, the url and the key must stay out of flake.nix.
 #
 # WHAT IT DOES — evaluates the production handle (shared.const — the
 # same instantiation checks.<sys> pays, never a re-import) and
@@ -39,6 +44,9 @@
 #               is present (restating the literal inside the one
 #               by-value plane is the SSOT defect this gate exists
 #               to catch)
+#   absentees — neither: the plane carries no identity at all (the
+#               nixConfig identifier, the url and the key are all
+#               banned; any re-add is the regression this catches)
 #
 # GATING — same shape as docs-ssot: `nix flake check --no-build` only
 # evaluates this derivation; the drift assertion fires at BUILD
@@ -59,19 +67,11 @@ let
   lib = shared.pkgs.lib;
   fleet = shared.const.cache.fleet;
 
-  # ── Mirror planes — cannot (or must not) evaluate the const; ────
-  # literals ARE the contract, this gate keeps them honest.
+  # ── Mirror planes — cannot evaluate the const; literals ARE the ─
+  # contract, this gate keeps them honest.
   # fields: which identity literals the plane carries. cachix.just
   # composes its url from the name variable, so only name + key.
   mirrors = [
-    {
-      path = "/flake.nix";
-      why = "flake metadata nixConfig (non-evaluative by design)";
-      fields = [
-        "url"
-        "publicKey"
-      ];
-    }
     {
       path = "/.github/workflows/ci.yml";
       why = "CI substituter legs + push legs";
@@ -115,6 +115,20 @@ let
     }
   ];
 
+  # ── Absent planes — must carry NO cache identity at all ─────────
+  # (round 27): the entry layer's silence is part of the SSOT
+  # contract now. Not a mirror (nothing to mirror — the plane can
+  # evaluate the const), not a consumer (it imports nothing): the
+  # only honest state for flake.nix is to carry none of it. The
+  # identifier assertion is the hard form — ANY nixConfig block,
+  # even one pointing elsewhere, is the regression this exists for.
+  absentees = [
+    {
+      path = "/flake.nix";
+      why = "entry layer carries no cache identity (nixConfig removed, round 27)";
+    }
+  ];
+
   # ── Consumer planes — must consume, never restate ────────────────
   consumers = [
     {
@@ -144,11 +158,22 @@ let
     ''must_contain "${self}${c.path}" "${c.why} · const reference" "${c.ref}" ''
   ]) consumers;
 
+  # The hard form of the round-27 contract: the attribute binding
+  # itself is banned, not just the current identity's literals —
+  # any nixConfig block (even pointing elsewhere) is the regression.
+  # The needle is `nixConfig =` (the binding), not the bare word:
+  # prose may still discuss the decision, bindings may not exist.
+  absentLines = lib.concatMap (a: [
+    ''must_not_contain "${self}${a.path}" "${a.why} · no nixConfig block" "nixConfig =" ''
+    ''must_not_contain "${self}${a.path}" "${a.why} · no url literal" '${fleet.url}' ''
+    ''must_not_contain "${self}${a.path}" "${a.why} · no key literal" '${fleet.publicKey}' ''
+  ]) absentees;
+
   drv =
     shared.pkgs.runCommand "cache-ssot-check"
       {
         # Traceability: every audited file as a derivation input.
-        audit = map (f: "${self}${f.path}") (mirrors ++ consumers);
+        audit = map (f: "${self}${f.path}") (mirrors ++ consumers ++ absentees);
       }
       ''
         set -u
@@ -185,9 +210,9 @@ let
           fi
         }
 
-        # The identity battery — ${toString (builtins.length (mirrorLines ++ consumerLines))}
+        # The identity battery — ${toString (builtins.length (mirrorLines ++ consumerLines ++ absentLines))}
         # assertions, generated from the live const at evaluation time.
-        ${lib.concatStringsSep "\n" (mirrorLines ++ consumerLines)}
+        ${lib.concatStringsSep "\n" (mirrorLines ++ consumerLines ++ absentLines)}
 
         if [ "$FAILED" -ne 0 ]; then
           echo "" >&2
@@ -195,7 +220,7 @@ let
           exit 1
         fi
 
-        echo "cache-ssot-check: ${toString (builtins.length mirrors)} mirror planes + ${toString (builtins.length consumers)} consumer planes agree with shared.const.cache.fleet"
+        echo "cache-ssot-check: ${toString (builtins.length mirrors)} mirror planes + ${toString (builtins.length consumers)} consumer planes + ${toString (builtins.length absentees)} absent planes agree with shared.const.cache.fleet"
         touch "$out"
       '';
 

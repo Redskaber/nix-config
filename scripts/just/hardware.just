@@ -285,8 +285,7 @@ hardware-migrate:
             '  hardware.facter.reportPath = ./facter.json;' \
             '' \
             '  # Mounts are not report facts (facter never generates fileSystems —' \
-            '  # the eventual home is a disko layout, the T5.13 path). Moved verbatim' \
-            '  # from the retired hardware.nix:'
+            '  # the eventual home is a disko layout).'
         cat "${MOVED}"
     } > "${REPL}"
     awk -v repl="${REPL}" '

@@ -18,13 +18,15 @@
 **身份单源（SSOT）**：缓存身份（名/URL/公钥）只声明在
 `lib/shared/lang/const.nix`（`shared.const.cache.fleet`），分发按各面能力：
 nix 消费面**按值消费**——platform/nixos/system/core/base/nix.nix 主机侧组合
-引用 `shared.const.cache.fleet`，不可能漂移；无法/不应求值的面持**钉死的字面
+引用 `shared.const.cache.fleet`，不可能漂移；无法求值的面持**钉死的字面
 量镜像**——CI workflows、scripts/just/cachix.just（YAML/shell 面无法 import
-nix）、flake.nix 的 nixConfig（nix 对其**不求值读取**：forceTrivialValue 语义
-——导向受信 substituter 的设置不得在 metadata 阶段运行任意代码，import
-委托在任何 nix 版本都不可行，字面量是唯一合法形态）与本文档的散文。
-第六个仓库卫生门 `tests/cache-ssot.nix` 把每个镜像钉到 const 值上——改名/
-换钥后字面量不跟随即 CI 红灯。
+nix）与本文档的散文。flake.nix **不携带**任何缓存身份（第 27 轮裁决：
+入口层零缓存身份——真实消费面〔主机 ×2 + CI〕已全部闭合，flake 级字面
+量将是唯一「能求值 const 却持字面量」的镜像面，且 nixConfig 的信任语义
+对外部消费者是负债而非服务——accept 提示摩擦 + 非受信用户下静默忽略；
+无主机侧 nix.conf 的消费者按本文两种拉取形式显式接入）。
+第六个仓库卫生门 `tests/cache-ssot.nix` 把每个镜像钉到 const 值上，并把
+flake.nix 的沉默钉为断言（任何 nixConfig 回归即 CI 红灯）。
 
 **客户端覆盖优先级**：如需本缓存绝对先行（官方也有的路径也从这里取），
 可在 substituters 的 URL 后追加 `?priority=30`（nix 的 per-URL priority
@@ -62,31 +64,16 @@ nix store ping --store https://redskaber-nix-config.cachix.org
 # 缓存为空时 narinfo 404 是无害空操作，nix 自然回退 cache.nixos.org
 ```
 
-**形式三：flake 自带 nixConfig**（本仓 checkout 的消费者，零配置）
-
-flake.nix 声明 `extra-substituters` + `extra-trusted-public-keys`——
-字面量块是 const.nix 的钉死镜像（见上「身份单源」：nix 对 nixConfig 不
-求值读取，委托形态不可行），由 cache-ssot 门对账。任何从本仓 build/eval
-的机器自动获得该缓存（首次会提示 accept-flake-config，或机器信任配置跳
-过）。`extra-` 语义：追加到机器默认 substituters 之后（不在前面抢占），只补
-官方没有的路径——与本缓存 priority 41 的定位一致。
-
-```bash
-nix build .#checks.x86_64-linux.module-reachability-check --no-link
-# 首次运行问 "Extra substituters... accept?" → y（或 nix config set
-# accept-flake-config true 预授权）
-```
-
 拉取**不需要** auth token——公开缓存零鉴权。这也是 CI 侧 PULL
 无条件 ×11 腿成立的原因（见 pipeline.md 第 16 轮）。
 
-**darwin 主机运行时注意**：darwin-rebuild 用的是 /etc/nix/nix.conf，
-flake nixConfig 不落盘——平台侧 platform/darwin/system/nix 已经生成
-它（nix-darwin 的 nix 模块，与 NixOS 主机同一身份单源：
-shared.const.cache.fleet 按值消费，拉取侧四面闭合：CI runner ·
-NixOS 主机 · darwin 主机 · flake 元数据）。nix-darwin 按已知哈希
-白名单接管安装器版的 /etc/nix/nix.conf，switch 即落盘；非本 flake
-管理的 darwin 机器仍走形式一/二。
+**darwin 主机运行时注意**：darwin-rebuild 用的是 /etc/nix/nix.conf——
+平台侧 platform/darwin/system/nix 生成它（nix-darwin 的 nix 模块，与
+NixOS 主机同一身份单源：shared.const.cache.fleet 按值消费，拉取侧三面
+闭合：CI runner · NixOS 主机 · darwin 主机；flake 入口层不携带缓存身份，
+见上「身份单源」）。nix-darwin 按已知哈希白名单接管安装器版的
+/etc/nix/nix.conf，switch 即落盘；非本 flake 管理的 darwin 机器仍走
+形式一/二。
 
 ## 推送（owner 侧动词，需 token）
 
@@ -146,11 +133,11 @@ CI 侧 host-toplevels 与 darwin-toplevels 两条腿都会自动推（owner 设
 
 - **分发逻辑归位分发层**：substituters 属于机器的 nix.conf（NixOS 主机
   由 platform/nixos/system/core/base/nix.nix、darwin 主机由
-  platform/darwin/system/nix 生成）、runner 的 extra-conf、
-  或 flake 的 nixConfig 元数据（声明式缓存广告，追加式、非构建依赖）。
-  缓存身份本身单源在 lib/shared/lang/const.nix，按各面能力分发（见上
-  「身份单源」）。构建永不依赖缓存的存在——outputs、lib、hosts 的求值
-  对缓存零感知，缓存缺失时一切照常从官方源构建。
+  platform/darwin/system/nix 生成）或 runner 的 extra-conf——flake.nix
+  入口层不携带缓存身份（第 27 轮裁决，见上「身份单源」；门把沉默钉为
+  断言）。缓存身份本身单源在 lib/shared/lang/const.nix，按各面能力分发
+  （见上「身份单源」）。构建永不依赖缓存的存在——outputs、lib、hosts 的
+  求值对缓存零感知，缓存缺失时一切照常从官方源构建。
 - **配额诚实账**：闭包约 1–1.5 GB ZSTD/代，锁周更 → 5 GB 免费层约
   3–4 代满。满了在 cachix.org 面板清老代；规模化出口（attic 自建 /
   harmonia 复用 kilig-nixos 零边际）见 pipeline.md 第 16 轮裁决。

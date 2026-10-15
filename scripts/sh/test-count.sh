@@ -39,9 +39,8 @@ PY
 nmt="$(grep -c '= buildTest ./' tests/nmt/default.nix)"
 hooks="$(python3 - << 'PY'
 import re
-# T5.1 moved the git-hooks block out of flake.nix into its own module;
-# the counter follows the move (this was the 2026-10 AttributeError:
-# flake.nix no longer contains a `hooks = {` block to parse).
+# the hooks block lives in its own module — flake.nix itself carries no
+# `hooks = {` block to parse.
 s = open("tests/pre-commit.nix", encoding="utf-8").read()
 m = re.search(r"hooks\s*=\s*\{", s)
 i = s.index("{", m.start()); depth = 0

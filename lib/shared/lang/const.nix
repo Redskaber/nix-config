@@ -15,14 +15,17 @@
   # host sides consume it BY VALUE (platform/nixos/system/core/base/
   # nix.nix + platform/darwin/system/nix via shared.const —
   # impossible to drift), while the planes that cannot evaluate nix
-  # carry pinned LITERAL mirrors: flake.nix's nixConfig (nix reads
-  # it without evaluation — forceTrivialValue semantics: trusted-
-  # substituter steering must not run arbitrary code at metadata
-  # time), the CI workflows, scripts/just/cachix.just, and the prose
-  # in docs/guides/cache.md. tests/cache-ssot.nix pins every mirror
-  # to these values. Query order is priority-driven: the cache
-  # advertises priority 41, behind cache.nixos.org's 40, so shared
-  # paths stay official and the free tier serves only the Hydra gap.
+  # carry pinned LITERAL mirrors: the CI workflows,
+  # scripts/just/cachix.just, and the prose in docs/guides/cache.md.
+  # The flake's own nixConfig is deliberately absent (round 27) —
+  # the entry layer carries no cache identity: every consumer the
+  # fleet actually has is covered by the planes above, and a
+  # flake-level literal would be the only mirror on a plane that CAN
+  # evaluate the const. tests/cache-ssot.nix pins every mirror to
+  # these values and pins flake.nix's silence. Query order is
+  # priority-driven: the cache advertises priority 41, behind
+  # cache.nixos.org's 40, so shared paths stay official and the
+  # free tier serves only the Hydra gap.
   cache = {
     fleet = rec {
       name = "redskaber-nix-config";

@@ -218,7 +218,7 @@ jobs:
       # assertions fire at build time), so it is built here, right
       # next to its sibling repo-hygiene gate. A count that drifts in
       # README.md or docs/tests/test-matrix.md turns this step red.
-      - name: Build docs-ssot-check derivation (T8.1)
+      - name: Build docs-ssot-check derivation
         run: nix build .#checks.x86_64-linux.docs-ssot-check --no-link
 
       # The third repo-hygiene gate — python-compiles every
@@ -228,7 +228,7 @@ jobs:
       # closure — this gate surfaces the same class at the cheapest
       # possible layer, which is why it belongs in STAGE 1 with the
       # other gates.
-      - name: Build testscript-syntax-check derivation (T32)
+      - name: Build testscript-syntax-check derivation
         run: nix build .#checks.x86_64-linux.testscript-syntax-check --no-link
 
       # The fourth repo-hygiene gate — module-tree reachability
@@ -239,7 +239,7 @@ jobs:
       # a self-healing exemption ledger). Dead code that SHOULD be
       # wired is invisible to every other gate. Same gating shape as
       # the siblings: constructs at eval, asserts at build.
-      - name: Build module-reachability-check derivation (T41)
+      - name: Build module-reachability-check derivation
         run: nix build .#checks.x86_64-linux.module-reachability-check --no-link
 
       # The fifth repo-hygiene gate — the platform tree-shape
@@ -250,7 +250,7 @@ jobs:
       # are invisible to every gate). Shape rejects the address space
       # outright, at zero evaluation cost. Same gating shape as the
       # siblings.
-      - name: Build platform-grammar-check derivation (T46)
+      - name: Build platform-grammar-check derivation
         run: nix build .#checks.x86_64-linux.platform-grammar-check --no-link
 
       # The sixth repo-hygiene gate — the fleet binary-cache identity
@@ -697,7 +697,7 @@ jobs:
       # Local composite actions (./path) are exempt (in-tree code is already
       # content-addressed by git). This makes the convention a machine-checked
       # invariant: a new unpinned ref cannot land green.
-      - name: Enforce SHA-pinned action refs (T16.1)
+      - name: Enforce SHA-pinned action refs
         run: |
           set -euo pipefail
           # The initial grep is ANCHORED to the YAML key form (line content is
@@ -1201,7 +1201,7 @@ jobs:
       # colmena-injected module surface drifted from inert), not noise.
       # Hosts enumerate from the inventory face — no hardcoded member
       # list to rot.
-      - name: Colmena emission parity (T20.1)
+      - name: Colmena emission parity
         run: |
           HOSTS=$(nix eval ".#api.targets.nixosHosts" --json \
             | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')
@@ -1219,11 +1219,11 @@ jobs:
               echo "versionSuffix AND trivial.revisionWithDefault — the suffix" >&2
               echo "names the drv, the revision fills @revision@ and the json's" >&2
               echo "nixpkgsRevision inside the closure); mkColmenaNode restores" >&2
-              echo "both stamps over colmena's raw eval (T22.1 + T24.1, run" >&2
-              echo "38171937689 and its re-run: a suffix difference in the drv" >&2
-              echo "names below is the first class; equal names with different" >&2
-              echo "hashes is the second — diff the two derivations, the drift" >&2
-              echo "converges on the identity leaf)." >&2
+              echo "both stamps over colmena's raw eval: a suffix" >&2
+              echo "difference in the drv names below is the first class;" >&2
+              echo "equal names with different hashes is the second — diff" >&2
+              echo "the two derivations, the drift converges on the" >&2
+              echo "identity leaf." >&2
               exit 1
             fi
             echo "parity: $h — $A"
@@ -1407,11 +1407,11 @@ jobs:
           echo "| Deep Evaluation          | ${{ needs.deep-eval.result }}                                |" >> "$GITHUB_STEP_SUMMARY"
           echo "| nmt-Plane (HM dotfiles)  | ${{ needs.nmt-plane.result }}                                |" >> "$GITHUB_STEP_SUMMARY"
           echo "| devShells dry-run        | ${{ needs.evaluate-devshells.result }}                       |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Output Faces (T11.1)    | ${{ needs.output-faces.result }}                             |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Output Faces             | ${{ needs.output-faces.result }}                             |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Security Audit           | ${{ needs.security.result }}                                 |" >> "$GITHUB_STEP_SUMMARY"
           echo "| VM Tests (QEMU)          | ${{ needs.vm-tests.result }}                                 |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Host Toplevels (T8.2)   | ${{ needs.host-toplevels.result }}                           |" >> "$GITHUB_STEP_SUMMARY"
-          echo "| Darwin Toplevels (T8.3) | ${{ needs.darwin-toplevels.result }}                         |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Host Toplevels           | ${{ needs.host-toplevels.result }}                           |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Darwin Toplevels         | ${{ needs.darwin-toplevels.result }}                         |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "### Test Plane Reference (live from scripts/sh/test-count.sh)" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"

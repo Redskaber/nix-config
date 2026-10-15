@@ -121,8 +121,10 @@ in
   # identity single-sourced in lib/shared/lang/const.nix; the
   # by-value consumers are the host sides (nixos · darwin), every
   # plane that cannot evaluate the const — the CI workflows, just,
-  # the flake's own nixConfig (read by nix without evaluation) —
-  # carries a literal mirror pinned to it). The FLAT face only —
+  # the guide prose — carries a literal mirror pinned to it, and
+  # the flake itself carries no cache identity at all (nixConfig
+  # deliberately absent, round 27 — the gate asserts the entry
+  # layer's silence). The FLAT face only —
   # `nix flake check` requires each attribute here to be a
   # derivation, so the planes grouping lives behind api.checks.planes,
   # never inside this output. The docs-SSOT gate is deliberately NOT
