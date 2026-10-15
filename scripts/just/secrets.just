@@ -1049,7 +1049,12 @@ _secrets-plan-gen key:
 # ==============================================================================
 # Private — chipr decrypt reader
 # ==============================================================================
-# Decrypt a secret by dotted key (path resolved at runtime via _secrets-paths).
+# Decrypt a secret's VALUE by dotted key (path resolved at runtime via
+# _secrets-paths). Leaf-extract: prints the raw scalar on stdout (the
+# blob's YAML tree mirrors its own rel path — segments -> the sops
+# --extract tree; the registry's dotted key is the shared.nix DECLARATION
+# identity and can differ in shape, so the extract path derives from the
+# rel path, never the key). Wrong paths fail fast inside sops.
 # Usage:  just _secrets-decrypt "nixos.core.srv.db.mongodb.user.password"
 [private]
 _secrets-decrypt key:
@@ -1061,7 +1066,22 @@ _secrets-decrypt key:
     [[ -n "${REL}" ]] || { echo "Error: _secrets-paths returned incomplete data for '{{key}}'" >&2; exit 1; }
     TARGET="{{SECRETS_CHIPR_PATH}}/${REL}.yaml"
     [[ -f "${TARGET}" ]] || { echo "Error: cannot operate on non-existent file \"${TARGET}\"" >&2; echo "  create it first: just secrets-list   (find the alias) → just secret-set <alias>" >&2; exit 100; }
-    sops decrypt "${TARGET}"
+    # rel path segments -> sops extract tree, each segment quoted
+    # (backslash and double-quote escaped defensively — registry
+    # segments are identifiers + the username, but the derivation
+    # stays correct for anything that can legally appear in a path).
+    EXTRACT=$(printf '%s' "${REL}" | awk -F/ '
+        BEGIN { ORS = "" }
+        {
+            for (i = 1; i <= NF; i++) {
+                seg = $i
+                gsub(/\\/, "\\\\", seg)
+                gsub(/"/, "\\\"", seg)
+                printf "[\"%s\"]", seg
+            }
+        }')
+    sops decrypt --extract "${EXTRACT}" "${TARGET}"
+    echo
 
 
 # ==============================================================================

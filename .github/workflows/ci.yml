@@ -1347,7 +1347,13 @@ jobs:
           # flake, not code). Pin the download to GitHub's own release CDN
           # instead (same origin as the checkout itself; keep in sync with
           # https://github.com/DeterminateSystems/nix-installer/releases).
-          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
+          # R29 correction: this leg's pin carried the LINUX binary onto
+          # the macOS runner — Node spawns an x86_64-linux ELF on
+          # aarch64-darwin and the kernel refuses it (spawn ENOEXEC, the
+          # whole leg red in 3s, before any nix ran). The asset must match
+          # the RUNNER arch — aarch64 here (v3.23.2 ships no x86_64-darwin
+          # asset at all).
+          source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-aarch64-darwin
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
@@ -1426,6 +1432,46 @@ jobs:
               done
             fi
             exit "$RC"
+          fi
+
+      # P0 cache axis, darwin half (R29) — the PUSH that mirrors the linux
+      # host-toplevels step above. The leg just built the darwin closures
+      # in this store; pushing them extends the SAME opt-in contract to
+      # the darwin axis: one secret (CACHIX_AUTH_TOKEN), both platforms.
+      # Same discipline as the linux step: the emptiness guard lives
+      # INSIDE the script (the secrets context is not legal in step-level
+      # if:), `if: always()` still caches the built prefix on a partial
+      # failure, tools come from the LOCKED nixpkgs (aarch64-darwin
+      # member — cachix builds and runs on this runner), paths via
+      # outPath forcing filtered to what the store holds, and cachix
+      # pushes each path's CLOSURE with chunk-level dedup.
+      - name: Push built darwin closures to Cachix
+        if: always()
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        run: |
+          if [ -z "${CACHIX_AUTH_TOKEN:-}" ]; then
+            echo "::notice title=cachix-push::CACHIX_AUTH_TOKEN unset - push step INERT (opt-in). Set the repository secret to enable."
+            exit 0
+          fi
+          # bash 3.2 discipline (macOS runner /bin/bash — no mapfile, no
+          # arrays-as-collections): the leg's own $HOSTS word-split idiom.
+          # Store paths contain no whitespace by construction, so the
+          # unquoted expansion is exact.
+          PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
+          HOSTS=$(nix eval ".#api.darwin-toplevels" --apply builtins.attrNames --json \
+            | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))')
+          [ -n "$HOSTS" ] || { echo "ERROR: darwin-toplevels face is empty" >&2; exit 1; }
+          PATHS=""
+          for h in $HOSTS; do
+            P=$(nix eval --raw ".#api.darwin-toplevels.$h.outPath")
+            if [ -e "$P" ]; then PATHS="$PATHS $P"; fi
+          done
+          if [ -n "$PATHS" ]; then
+            # shellcheck disable=SC2086 -- store paths carry no whitespace
+            nix run "$PKGS#cachix" -- push redskaber-nix-config $PATHS
+          else
+            echo "nothing built to push (build failed before any darwin host completed)"
           fi
 
   # ─────────────────────────────────────────────────────────────

@@ -1,4 +1,10 @@
 set shell := ["bash", "-c"]
+# Recipe arguments reach shebang scripts as POSITIONAL parameters ($1, $2,
+# …; variadic as "$@") — just does NOT export them as environment
+# variables (verified against 1.40.0: `${paths[@]}`-style references are
+# unbound under `set -u`). Scripts that consume arguments read "$@" /
+# "$1", never a shell variable named after the parameter.
+set positional-arguments
 
 # ==============================================================================
 # Global — single source of truth

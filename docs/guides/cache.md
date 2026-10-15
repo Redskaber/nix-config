@@ -50,21 +50,34 @@ nix store ping --store https://redskaber-nix-config.cachix.org
 
 ## 推送（owner 侧动词，需 token）
 
-**token 一次性落地**（cachix.org → cache 设置页创建，写入本机）：
+**首选形态：仓内动词一条龙**（token 从秘密系统解析，无需手设环境）：
 
 ```bash
-nix run nixpkgs#cachix -- authtoken <CACHIX_AUTH_TOKEN>
-# 落 ~/.config/cachix/cachix.dhall；或每次经 CACHIX_AUTH_TOKEN 环境变量传入
+just cachix-status                 # 推送前看一眼：可达性 / 受信 / 两半场状态
+just cachix-token                  # 一次性：注册 cachix-token 秘密 + 引导录入值
+just cachix-push /nix/store/…-nixos-system-…
+# 或构建即推：
+nix build .#checks.x86_64-linux.module-reachability-check --no-link && \
+  just cachix-push $(nix build --print-out-paths .#checks.x86_64-linux.module-reachability-check)
 ```
 
-**推送已构建的闭包**：
+动词的解析链：token 取 `CACHIX_AUTH_TOKEN` env → 秘密系统
+（`just cachix-token` 落地的 blob，**叶提取裸值**）；cachix 二进制取
+`$CACHIX_BIN` → PATH → `nix shell nixpkgs#cachix`。多路径一次推全，
+每路径推**完整闭包**。
+
+**底层 CLI**（动词包装的就是它——理解语义或脱离本仓时用）：
 
 ```bash
-# 形态一：显式路径（推每个路径的完整闭包）
+# token 一次性落地（cachix.org → cache 设置页创建，写入本机）
+nix run nixpkgs#cachix -- authtoken <CACHIX_AUTH_TOKEN>
+# 落 ~/.config/cachix/cachix.dhall；或每次经 CACHIX_AUTH_TOKEN 环境变量传入
+
+# 显式路径推送
 nix run nixpkgs#cachix -- push redskaber-nix-config \
   /nix/store/…-nixos-system-…
 
-# 形态二：stdin 管道（CLI 的经典形态——无 PATHS 参数且 stdin 非 TTY
+# stdin 管道（CLI 的经典形态——无 PATHS 参数且 stdin 非 TTY
 # 时从 stdin 读换行分隔的路径）
 nix-store -qR /nix/store/…-nixos-system-… \
   | nix run nixpkgs#cachix -- push redskaber-nix-config
@@ -83,11 +96,11 @@ CI push 步曾漏写，本地 CLI 验证在第 18 轮抓到并修复（该步 op
 - **ZSTD**：缓存声明优先压缩法，CLI 默认遵从
 
 **本地推送的典型场景**：owner 在 kilig-nixos 上 `just deploy` 后顺手
-把新 toplevel 推上去——CI 的下一个 run 直接替代掉冷构建尾部（正是
-38085235502 / 38385434464 两次 90 分钟超时的病灶）。CI 侧
-host-toplevels 腿也会自动推（owner 设 `secret.CACHIX_AUTH_TOKEN` 后，
-opt-in，见 pipeline.md 第 16/17 轮）——本地与 CI 推送共同维护同一
-缓存，互不冲突（chunk 去重兜底）。
+`just cachix-push` 把新 toplevel 推上去——CI 的下一个 run 直接替代掉
+冷构建尾部（正是 38085235502 / 38385434464 两次 90 分钟超时的病灶）。
+CI 侧 host-toplevels 与 darwin-toplevels 两条腿都会自动推（owner 设
+`secret.CACHIX_AUTH_TOKEN` 后，opt-in，见 pipeline.md 第 16/17 轮）——
+本地与 CI 推送共同维护同一缓存，互不冲突（chunk 去重兜底）。
 
 ## 边界与原则
 

@@ -112,19 +112,22 @@ cachix-token:
 
 # Push store paths to {{CACHE_NAME}}. Token resolution order:
 #   1. CACHIX_AUTH_TOKEN env (explicit)
-#   2. just secret-get cachix-token (the registered blob)
+#   2. just secret-get cachix-token (the registered blob — leaf-extracted
+#      raw value, see _secrets-decrypt)
 #
 #   just cachix-push /nix/store/… /nix/store/…
 #   nix build .#checks.x86_64-linux.module-reachability-check --no-link && just cachix-push $(nix build --print-out-paths .#checks.x86_64-linux.module-reachability-check)
 #
 # The cachix binary resolves in order: $CACHIX_BIN, PATH, then
-# `nix shell nixpkgs#cachix` (flakes machine).
+# `nix shell nixpkgs#cachix` (flakes machine). Arguments reach this
+# script as positional parameters (`set positional-arguments` in the
+# root justfile) — quoted args survive intact.
 # Push store paths to the cache (token: env, or the secrets system).
 [group('cachix')]
 cachix-push *paths:
     #!/usr/bin/env bash
     set -euo pipefail
-    if [ ${#paths[@]} -eq 0 ]; then
+    if [ "$#" -eq 0 ]; then
         echo "Error: no store paths given." >&2
         echo "  just cachix-push /nix/store/… [more paths]" >&2
         echo "  build + push a check:" >&2
@@ -161,4 +164,4 @@ cachix-push *paths:
         exit 1
     fi
     # 3. push
-    "${CACHIX[@]}" push {{CACHE_NAME}} "${paths[@]}"
+    "${CACHIX[@]}" push {{CACHE_NAME}} "$@"
