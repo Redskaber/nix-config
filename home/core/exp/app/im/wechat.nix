@@ -11,7 +11,7 @@
   ...
 }:
 {
-  # T3.2: sub-repo packages publish linux builds only — the
+  # sub-repo packages publish linux builds only — the
   # darwin closure skips this leaf (config-position mkIf).
   home.packages = lib.mkIf shared.caps.linux-family (
     with shared.upkgs;

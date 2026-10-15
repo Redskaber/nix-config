@@ -95,8 +95,7 @@
       # db service secrets are gated on their service-profile install flag
       # and reference users/group by LITERAL name: `config.users.users.<db>`
       # would force-instantiate the (incomplete) user on hosts that do not
-      # install the service — found by the second-machine evaluation of the
-      # server-pg-only profile (multi-host dividend, T2.5).
+      # install the service.
       ${shared.secrets.nixos.core.srv.db.mongodb.user.password} =
         lib.mkIf shared.services.db.mongodb.install
           {

@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/pkgs/wslview/default.nix
 # @author: redskaber
 # @datetime: 2026-10-08
-# @description: pkgs::wslview — minimal "open on the Windows side" shim (T3.1)
+# @description: pkgs::wslview — minimal "open on the Windows side" shim
 # @directory: https://learn.microsoft.com/en-us/windows/wsl/
 #
 # wslu was removed from nixpkgs (upstream archived). The one piece this
@@ -12,10 +12,9 @@
 #   wslview https://example.com     → opens in the default Windows browser
 #   wslview ./report.pdf           → opens in the default Windows viewer
 #
-# Design notes (compiler-pipeline view): the package is a leaf node with
-# a stable CLI surface — when nixpkgs ever re-adds a maintained helper,
-# swapping the body of THIS derivation swaps it for every consumer
-# without touching platform/wsl again.
+# Leaf node with a stable CLI surface: when nixpkgs ever re-adds a
+# maintained helper, swapping the body of THIS derivation swaps it
+# for every consumer without touching platform/wsl again.
 
 {
   lib,

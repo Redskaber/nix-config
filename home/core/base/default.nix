@@ -17,7 +17,7 @@
     ./fonts.nix
     ./i18n.nix
     ./portal.nix
-    # WSL user-space specialisation (T7.1) — caps.wsl-gated: the
+    # WSL user-space specialisation — caps.wsl-gated: the
     # shared-tree address for wslview/WSLENV interop, consumed by
     # every wsl-capable host (standalone-wsl and nixos-wsl alike).
     ./wsl.nix

@@ -10,13 +10,12 @@
 #
 # Design: dependency-free — importable at schema stage (phase 1) without pkgs.
 #
-# T4.0 (dispatch-layer convergence): the isNixOS/isLinux/isMacOS/isWSL
-# tag-comparison predicates are GONE — deliberately. Platform semantics
-# now live in exactly one place, the platform dispatch table
-# (enum.nix: caps vectors + strategy payloads). Consumers read resolved
-# facts (shared.caps.*, shared.platform.value.*) instead of re-deriving
-# "what does this platform mean" at every call site — the compiler-pipeline
-# rule: later passes query the target description, they never re-lex it.
+# Platform semantics live in exactly one place — the platform dispatch
+# table (enum.nix: caps vectors + strategy payloads). Consumers read
+# resolved facts (shared.caps.*, shared.platform.value.*) instead of
+# re-deriving "what does this platform mean" at every call site — the
+# compiler-pipeline rule: later passes query the target description,
+# they never re-lex it.
 
 {
   ...
@@ -46,14 +45,14 @@ let
   # Build a sops secret file path for runtime path use
   sopsRuntimePath = rbase: rpath: "${rbase}/${rpath}";
 
-  # ── T2.6: dual-source governance ─────────────────────────────
+  # ── Dual-source governance ──────────────────────────────────
   # Package-set fingerprint: identifies the nixpkgs instance a scope was
   # imported from (stable "26.05" vs unstable "26.11pre…" etc.). Pure —
   # works on any set that carries lib.trivial.version (module-system pkgs,
   # shared.pkgs, shared.upkgs, or test marker sets).
   pkgsFingerprint = scope: scope.lib.trivial.version;
 
-  # Eval-time same-source contract guard (the 995d8c9 incident class).
+  # Eval-time same-source contract guard.
   #   contract — human-readable name for the failing site
   #   daemon  — package set the daemon side is assembled from
   #   actual  — package set the addons side is drawn from

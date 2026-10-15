@@ -4,7 +4,7 @@
 # @description: tests::home::core::exp::sys::base::git-source
 # @source: home/core/exp/sys/base/git.nix
 #
-# T1.2 (production-tree import): asserts the REAL git/delta/lazygit module
+# Production-tree import: asserts the REAL git/delta/lazygit module
 # against its shared policy contract. Mutating the production module (a
 # renamed policy key, a dropped alias, a scope flip on pkgs.lazygit) makes
 # this check red at eval time — the mirror test home_*_git only checks

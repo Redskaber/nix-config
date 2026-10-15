@@ -4,9 +4,9 @@
 # @description: tests::pre-commit — git-hooks eval gate (checks half)
 # @directory: https://github.com/cachix/git-hooks.nix
 #
-# The pre-commit half of `checks` (T5.1): moved out of the entry
-# file so it only maps names. Composed in lib/shared/faces.nix (the
-# linker pass, R31) as
+# The pre-commit half of `checks` (kept out of the entry file so it
+# only maps names). Composed in lib/shared/faces.nix (the linker
+# pass) as
 #
 #   checks.<sys> = (import ./tests { … }) // (import ./tests/pre-commit.nix { … });
 #

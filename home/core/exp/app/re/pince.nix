@@ -12,7 +12,7 @@
   ...
 }:
 {
-  # T3.2: linux-only package(s) — skipped on the darwin closure.
+  # linux-only package(s) — skipped on the darwin closure.
   home.packages = lib.mkIf shared.caps.linux-family (with shared.upkgs; [ pince ]);
 
 }

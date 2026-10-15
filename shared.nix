@@ -23,7 +23,7 @@ shared.schema.shared {
   platform = shared.enum.platform.nixos;
   window-manager = shared.enum.window-manager.hyprland;
   display-manager = shared.enum.display-manager.ly;
-  # T10.1: the local sound server (strategy axis, README debt #9's
+  # The local sound server (strategy axis, README debt #9's
   # mechanical half) — the workstation default; console hosts flip
   # this row to `none` when the real-machine adjudication lands.
   sound = shared.enum.sound.pipewire;
@@ -34,8 +34,8 @@ shared.schema.shared {
   editor-set = shared.enum.editor-set.dev;
   terminal-set = shared.enum.terminal-set.both;
   browser-set = shared.enum.browser-set.all;
-  # App tree weight class (T5.10 demand-driven module loading): the
-  # desktop workstation merges every app category tree.
+  # App tree weight class: the desktop workstation merges every app
+  # category tree.
   app-set = shared.enum.app-set.full;
   # Service profile: controls install vs autostart
   service-profile = shared.enum.service-profile.dev-on-demand;

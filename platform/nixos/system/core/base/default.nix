@@ -15,10 +15,10 @@
   imports = [
     ./bluetooth.nix
     ./boot.nix
-    # Disk-layout interpreter registration (T5.13) — capability here,
+    # Disk-layout interpreter registration — capability here,
     # layouts as host facts in hosts/<h>/disk.nix.
     ./disk.nix
-    # Ephemeral-root / persistence interpreter registration (T5.14) —
+    # Ephemeral-root / persistence interpreter registration —
     # capability here, state strategy as host facts in
     # hosts/<h>/persist.nix.
     ./impermanence.nix
@@ -32,7 +32,7 @@
     ./systemd.nix
     ./user.nix
     ./virtual.nix
-    # WSL2 system declaration (T3.1) — mkIf shared.caps.wsl inside (T4.0).
+    # WSL2 system declaration — mkIf shared.caps.wsl inside.
     ./wsl.nix
   ];
 

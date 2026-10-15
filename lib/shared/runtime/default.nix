@@ -21,7 +21,7 @@
 let
   inherit (inputs.nix-types.lib) result;
 
-  # ── T4.0: capability resolution ───────────────────────────────────
+  # ── Capability resolution ───────────────────────────────────
   # THE one place platform semantics get resolved for downstream passes.
   # The platform dispatch table (enum.nix) declares caps vectors; this pass
   # publishes the host's row as `shared.caps` so leaves read resolved facts
@@ -29,19 +29,18 @@ let
   # through predicate calls or raw tag comparisons.
   caps = user_shared.platform.value.caps;
 
-  # Dual-source scope resolution, centralised (T4.0) — dispatch as DATA
-  # (T4.1, README 数据驱动 principle): the declared source string selects
-  # its scope from one table; an unknown declaration fails loudly with
-  # the legal surface spelled out (front-end diagnostic). The only
-  # writers are the schema default ("stable") and shared.nix / hosts
-  # overrides — both upstream of this pass.
+  # Dual-source scope resolution, centralised — dispatch as DATA (the
+  # data-driven principle): the declared source string selects its scope
+  # from one table; an unknown declaration fails loudly with the legal
+  # surface spelled out (front-end diagnostic). The only writers are the
+  # schema default ("stable") and shared.nix / hosts overrides — both
+  # upstream of this pass.
   #
   # nix-types adjudication (docs/architecture/nix-types.md): the legal
-  # surface in the diagnostic is DERIVED from the table now — a single
-  # source of truth, so a scope added below updates the error message
-  # for free. The mechanical enum-ization of this bridge was examined
-  # and rejected with evidence (schema-default lexical scope, string
-  # interpolation consumers, diagnostic regression) — see the dossier.
+  # surface in the diagnostic is DERIVED from the table — a single source
+  # of truth, so a scope added below updates the error message for free.
+  # (Mechanical enum-ization of this bridge was examined and rejected
+  # with evidence — see the dossier.)
   source-scopes = {
     stable = pkgs;
     unstable = upkgs;
@@ -50,7 +49,7 @@ let
     source-scopes.${user_shared.i18n.nixpkgs-source}
       or (throw "i18n.nixpkgs-source \"${user_shared.i18n.nixpkgs-source}\" is not one of [ ${builtins.concatStringsSep " " (builtins.attrNames source-scopes)} ] — fix the declaration in shared.nix or hosts/<host>/shared.nix");
 
-  # ── T4.1: Result-typed secret path boundary ─────────────────────
+  # ── Result-typed secret path boundary ─────────────────────
   # The railway lives in shared.validate (ok/err/andThen — nix-types
   # ADT): shape checks are the front end, the existence check is the
   # resolution pass, so a declared-but-missing secret dies at EVAL
@@ -104,7 +103,7 @@ let
         orc = orc-lib; # resolved per-arch
       };
 
-      # ── T2.6: package-set provenance (dual-source governance) ─────
+      # ── Package-set provenance (dual-source governance) ─────
       # Fingerprints of the two nixpkgs instances this flake wires.
       # Modules assert against these via fn.sameSource to keep
       # daemon/addon style contracts single-sourced at eval time.
@@ -113,7 +112,7 @@ let
         unstable = shared.fn.pkgsFingerprint upkgs;
       };
 
-      # shellIntegrations (T4.1): arrives as DATA from the shell enum
+      # shellIntegrations: arrives as DATA from the shell enum
       # row — the payload table in enum.nix answers all three bits per
       # variant, exhaustively. No truth table re-derived here, no
       # `.tag == "zsh"` comparisons at this layer.
@@ -124,7 +123,7 @@ let
       editors = user_shared.editor-set.value.editors;
       terminals = user_shared.terminal-set.value.terminals;
       browsers = user_shared.browser-set.value.browsers;
-      # App tree categories (T5.10 demand-driven module loading):
+      # App tree categories (demand-driven module loading):
       # which home/core/exp/app/ category TREES the host merges at all.
       # Config: imports = builtins.map (c: ./${c}) shared.appCategories;
       appCategories = user_shared.app-set.value.categories;
@@ -138,13 +137,8 @@ let
   runtime_shared = core_shared // {
     # Positional call, matching the file's `pkgs: { ... }` signature and
     # the other call site (overlays/default.nix additions: `import ../pkgs
-    # final.pkgs`). The 2026-10 audit caught this site passing
-    # `{ inherit pkgs; }` — a wrapper attrset — since the tree's oldest
-    # commit, so `packages.<system>.wslview` evaluated to
-    # "attribute 'callPackage' missing". Nothing forced it: no CI leg
-    # builds .#packages, and deep-eval had never survived earlier
-    # failures to reach the packages output. Both call sites now pass
-    # the real package set; both produce the same wslview derivation.
+    # final.pkgs`) — a wrapper attrset here fails with "attribute
+    # 'callPackage' missing" at `packages.<system>.wslview`.
     packages = import "${core_shared.self}/pkgs" pkgs;
     overlays = import "${core_shared.self}/overlays" { shared = core_shared; };
   };

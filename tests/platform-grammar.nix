@@ -1,22 +1,18 @@
 # @path: ~/projects/configs/nix-config/tests/platform-grammar.nix
 # @author: redskaber
 # @datetime: 2026-10-14
-# @description: tests::platform-grammar — the fifth repo-hygiene gate (T46)
+# @description: tests::platform-grammar — the fifth repo-hygiene gate
 # @source: the README「目录语法」six laws (grammar v4), asserted as tree shape
 #
 # THE CLASS THIS GATE KILLS — shape violations the tree can carry while
-#   every semantic gate stays green:
-#   run #369 (38614372367, 0dbf93b) — the additive v4 adoption left 82
-#   v3 corpses on disk: three v3 top doors (platform/<tag>/default.nix),
-#   five arch-line payload rows (home/<arch>.nix), and 74 top-level
-#   module trees (platform/nixos/{core,dm,wm}). The reachability gate
-#   caught them — but only as DANGLING nodes, after a full graph walk,
-#   and only because their default.nix files made them module dirs; a
-#   corpse WITHOUT a default.nix is not even a module dir and is
-#   invisible to it. Shape is decidable from the tree alone: the
-#   grammar says exactly which names may sit at which depth, and this
-#   gate asserts that — the fast-feedback layer the roadmap promised
-#   for this defect class, permanently.
+#   every semantic gate stays green. The v3→v4 migration once left 82
+#   corpses on disk (v3 top doors, arch-line payload rows, top-level
+#   module trees) that module-reachability caught only as dangling
+#   nodes — and a corpse WITHOUT a default.nix is not even a module
+#   dir and is invisible to it. Shape is decidable from the tree
+#   alone: the grammar says exactly which names may sit at which
+#   depth, and this gate asserts that — the fast-feedback layer for
+#   this defect class, permanently.
 #
 # WHAT THIS GATE DOES — the v4 grammar, as four invariants (a pure
 #   readDir walk, zero evaluation of anything outside platform/):

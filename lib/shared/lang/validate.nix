@@ -3,10 +3,10 @@
 # @datetime: 2026-10-08
 # @description: lib::shared::lang::validate — Result-typed path validation
 #
-# T4.1 (README roadmap: Option/Result 类型化错误处理): secret path
-# construction as a Result railway over the nix-types ADT — errors are
-# VALUES that carry their own diagnostics, composed with andThen, and
-# thrown exactly once, at the edge where a bare string is required.
+# Secret path construction as a Result railway over the nix-types ADT —
+# errors are VALUES that carry their own diagnostics, composed with
+# andThen, and thrown exactly once, at the edge where a bare string is
+# required.
 #
 #   ok rel
 #     └─ andThen nonEmpty      ("" is not a path)
@@ -27,24 +27,19 @@
 # The resolution pass is BOOTSTRAP-AWARE (lifecycle state machine, see
 # scripts/just/secrets.just): the EMPTY state — zero blobs under the
 # secrets tree, i.e. a fresh clone before `just init` / `just secret-set`
-# — is the legitimate ENTRY state of the key lifecycle, not an error.
-# Exactly like a compiler treats an empty symbol table as "fresh parse",
-# not as an unresolved-symbol storm:
+# — is the legitimate ENTRY state of the key lifecycle, not an error:
 #
 #   tree EMPTY (no *.yaml under the base)  → trace + Ok <path>
-#       (eval proceeds; deploying now would fail at sops activation —
-#       the hard failure moves to the layer that owns it)
+#       (eval proceeds; the hard failure belongs to sops activation)
 #   tree provisioned (≥ 1 blob)            → strict per-secret check
-#       (any DECLARED secret missing = "declared but not provided" Err,
-#       T4.1 unchanged — once bootstrap starts, completeness is owed)
+#       (any DECLARED secret missing = "declared but not provided" Err —
+#       once bootstrap starts, completeness is owed)
 #
 # Boundary discipline (railway-oriented programming): everything in
-# this file returns Result. `throw` appears nowhere here — the single
+# this file returns Result; `throw` appears nowhere here. The single
 # edge that needs a bare string lives in the runtime layer
 # (result.unwrapOrElse (e: throw e)), so the Err diagnostic becomes
-# the eval error verbatim. Same fail-early discipline as fn.sameSource,
-# but the error VALUE carried its full context through the pipeline
-# first — instead of a throw assembling it at one site.
+# the eval error verbatim.
 #
 # Layer: lib/shared (Phase 1, no pkgs dependency; needs only inputs +
 #        fn — path interpolation stays single-sourced in fn.sopsFile)

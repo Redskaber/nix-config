@@ -43,8 +43,8 @@ let
   # ── Runner: nixosTest ──────────────────────────────────────────────
   # pkgs.testers.runNixOSTest auto-injects name + hostPkgs.
   # All QEMU-based planes (0–4) use this runner.
-  # (deadnix-cleaned: the low-level `runTest` and `nmtTest` helpers had
-  # zero call sites — plane 5 wires its own harness via ./nmt.)
+  # (the low-level `runTest` and `nmtTest` helpers had zero call
+  # sites — plane 5 wires its own harness via ./nmt.)
   nixosTest =
     path:
     pkgs.testers.runNixOSTest {
@@ -72,23 +72,23 @@ let
     nixos_core_base_i18n = nixosTest ./nixos/core/base/i18n.nix;
     nixos_core_base_i18n_source = nixosTest ./nixos/core/base/i18n-source.nix;
     nixos_core_base_i18n_samesource = nixosTest ./nixos/core/base/i18n-samesource.nix;
-    # T5.14: the ephemeral-root interpreter (eval-guard, two machines).
+    # The ephemeral-root interpreter (eval-guard, two machines).
     nixos_core_base_impermanence = nixosTest ./nixos/core/base/impermanence.nix;
-    # T7.1: the NixOS-WSL fifth system form (the customs door + the
-    # chrony delta + the inert law).
+    # The NixOS-WSL fifth system form (the customs door + the chrony
+    # delta + the inert law).
     nixos_core_base_wsl = nixosTest ./nixos/core/base/wsl.nix;
 
-    # ── export (T2.1: external-flake import acceptance) ────────────
+    # ── export (external-flake import acceptance) ────────────
     nixos_export_modules = nixosTest ./nixos/export-modules.nix;
     nixos_core_base_network = nixosTest ./nixos/core/base/network.nix;
     nixos_core_base_nix = nixosTest ./nixos/core/base/nix.nix;
-    # T7.2: the portal capability gate (desktop on / console off)
-    # + the vm console flip's whole subtraction, on the real machine.
+    # The portal capability gate (desktop on / console off) + the vm
+    # console flip's whole subtraction, on the real machine.
     nixos_core_base_portal = nixosTest ./nixos/core/base/portal.nix;
     nixos_core_base_sound = nixosTest ./nixos/core/base/sound.nix;
-    # T10.1: the sound strategy gate (pipewire form on / none form
-    # subtracted whole — the mechanism half of debt #9; the console-host
-    # flip stays env-gated).
+    # The sound strategy gate (pipewire form on / none form subtracted
+    # whole — the mechanism half of debt #9; the console-host flip stays
+    # env-gated).
     nixos_core_base_sound_gate = nixosTest ./nixos/core/base/sound-gate.nix;
     nixos_core_base_user = nixosTest ./nixos/core/base/user.nix;
 
@@ -116,7 +116,7 @@ let
     # ── core/srv/log ──────────────────────────────────────────────────
     nixos_core_srv_log_logrotate = nixosTest ./nixos/core/srv/log/logrotate.nix;
 
-    # ── core/srv/monitor (T3.4 observability) ─────────────────────
+    # ── core/srv/monitor (observability) ─────────────────────
     nixos_core_srv_monitor_policy = nixosTest ./nixos/core/srv/monitor-policy.nix;
 
     # ── core/srv/security ─────────────────────────────────────────────
@@ -131,7 +131,7 @@ let
     # ── home/core/base ────────────────────────────────────────────────
     home_core_base_fonts = nixosTest ./home/core/base/fonts.nix;
     home_core_base_i18n = nixosTest ./home/core/base/i18n.nix;
-    # T1.2 production-tree imports (real modules, marker package sets):
+    # Production-tree imports (real modules, marker package sets):
     home_core_base_i18n_source = nixosTest ./home/core/base/i18n-source.nix;
 
     # ── home/core/exp/app/editor ──────────────────────────────────────
@@ -160,7 +160,7 @@ let
     home_core_exp_sys_shell_zsh = nixosTest ./home/core/exp/sys/shell/zsh.nix;
     home_core_exp_sys_shell_zsh_source = nixosTest ./home/core/exp/sys/shell/zsh-source.nix;
 
-    # ── export (T2.1: external-flake import acceptance) ──────────────
+    # ── export (external-flake import acceptance) ──────────────
     home_export_modules = nixosTest ./home/export-modules.nix;
 
     # ── home/core/exp/sys/monitor ─────────────────────────────────────
@@ -199,56 +199,51 @@ let
   # Plane 3: Lib-Plane — lib/shared pure-nix (minimal QEMU VM)
   # ══════════════════════════════════════════════════════════════════
   plane3_lib = {
-    # T4.0: the platform dispatch-table contract (caps vectors +
-    # strategy lambdas) — the distribution layer has its own test now.
+    # The platform dispatch-table contract (caps vectors + strategy
+    # lambdas).
     lib_shared_lang_caps = nixosTest ./lib/shared/lang/caps.nix;
     lib_shared_lang_enum = nixosTest ./lib/shared/lang/enum.nix;
     lib_shared_lang_fn = nixosTest ./lib/shared/lang/fn.nix;
     lib_shared_lang_schema = nixosTest ./lib/shared/lang/schema.nix;
-    # T4.1: the Result railway contract (ok/err lanes, front-end
-    # precedence, boundary throw) — typed error handling has a test now.
+    # The Result railway contract (ok/err lanes, front-end precedence,
+    # boundary throw).
     lib_shared_lang_validate = nixosTest ./lib/shared/lang/validate.nix;
-    # T25.2: the nix-types version contract (the lock's WHERE and the
+    # The nix-types version contract (the lock's WHERE and the
     # battery's WHAT must agree) — a bump is a two-file deliberate
     # decision by construction; either side drifting alone is a
     # one-line red naming both.
     lib_shared_lang_version = nixosTest ./lib/shared/lang/version.nix;
-    # T19.1: the fact-source census (hosts/ × the classifier's caps —
+    # The fact-source census (hosts/ × the classifier's caps —
     # exactly one fact shape per bare-metal host, zero for hosted-
     # elsewhere forms, never both).
     lib_shared_targets = nixosTest ./lib/shared/targets.nix;
-    # T21.1: the deploy-face census (T20.1's simulation, promoted to
-    # a locked test — no lying deploy facts, hive coverage exact, the
-    # per-node user door alive; attrNames-only laziness, the drvPath
-    # parity stays with the CI gate).
+    # The deploy-face census — no lying deploy facts, hive coverage
+    # exact, the per-node user door alive; attrNames-only laziness,
+    # the drvPath parity stays with the CI gate.
     lib_shared_deploy = nixosTest ./lib/shared/deploy.nix;
-    # T24.2: the overlay locality census (run 38171937689's darwin
-    # verdict, locked) — overlays are instance-local: a canary
-    # substitution proves every patched member reads the instance it
-    # was applied to, never a foreign package-set handle.
+    # The overlay locality census — overlays are instance-local: a
+    # canary substitution proves every patched member reads the
+    # instance it was applied to, never a foreign package-set handle.
     lib_shared_overlays = nixosTest ./lib/shared/overlays.nix;
-    # T28: the orc wallust copy-emitter consumption contract — all
+    # The orc wallust copy-emitter consumption contract — all
     # seven §6 sites evaluated through the production theme modules
     # (one homeManagerConfiguration, no mocks): the dag entry, its
     # writeBoundary ordering, the cp --remove-destination plant line
     # (source tree × destination key) and the writable bit.
     lib_shared_orc = nixosTest ./lib/shared/orc.nix;
 
-    # T30: the orc include-intent guard consumption contract — the
-    # third tool-library loop closed (T28 caught the silent failure →
-    # T29 fed the guard upstream → adopted 05c658f → this member
-    # consumes it back): a non-empty include selecting nothing must
-    # fail AT EVAL TIME through the production handle, the happy path
-    # must stay free, and the allowEmpty opt-out must merge as
-    # asserted (the 97th version contract's shape — the lock answers
-    # WHERE, this battery answers WHAT).
+    # The orc include-intent guard consumption contract: a non-empty
+    # include selecting nothing must fail AT EVAL TIME through the
+    # production handle, the happy path must stay free, and the
+    # allowEmpty opt-out must merge as asserted (the version
+    # contract's shape — the lock answers WHERE, this battery answers
+    # WHAT).
     lib_shared_orc_guard = nixosTest ./lib/shared/orc-guard.nix;
 
-    # T31: the pdshell loader consumption contract — the fourth and
-    # last self-built tool library (nix-types 97 / nmt 98 / orc
-    # 99+100 / pdshell 101): census / face / combinFrom / lifecycle /
-    # NamedFile, five groups through the production handle
-    # shared.pdshells × faces.nix's argument record, verbatim.
+    # The pdshell loader consumption contract — census / face /
+    # combinFrom / lifecycle / NamedFile, five groups through the
+    # production handle shared.pdshells × faces.nix's argument
+    # record, verbatim.
     lib_shared_pdshell = nixosTest ./lib/shared/pdshell.nix;
   };
 
@@ -268,7 +263,7 @@ in
 # Explicit plane composition via lib.foldl.
 # If two planes share a key, the later plane wins (no silent override).
 #
-# Two faces, one evaluation (T7.3): the flat `checks` attrset is
+# Two faces, one evaluation: the flat `checks` attrset is
 # what checks.${system} consumes (unchanged shape — one derivation
 # per attr, exactly what `nix flake check` expects); the `planes`
 # groups expose the SAME derivations under the taxonomy's own
@@ -276,7 +271,7 @@ in
 # based builders (nix-fast-build -f .#api.checks.planes.nixos)
 # instead of discovering members and building them one at a time.
 # Members are shared thunks — addressing them twice costs nothing
-# (the T5.10 single-instantiation discipline).
+# (the single-instantiation discipline).
 {
   checks = lib.foldl (a: b: a // b) { } [
     plane0_smoke

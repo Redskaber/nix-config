@@ -53,7 +53,7 @@ let
       ];
   };
 
-  # ── Platform dispatch table (T4.0) ─────────────────────────────────
+  # ── Platform dispatch table ─────────────────────────────
   #
   # The distribution layer for platform semantics. Each member carries:
   #
@@ -111,15 +111,12 @@ let
     };
     inherit (strategies) home-prefix btop trace-tools;
   };
-  # NixOS-WSL (T7.1): the NixOS system form hosted inside a WSL2
-  # distro — a full NixOS system layer that runs under the Windows
-  # host's kernel. A fifth row, not a mutation of `nixos`: capability
-  # cells the plain nixos row answers false are answered true here
-  # (wsl), and the customs that row selects (platform/nixos-wsl/ —
-  # the nixos customs + the NixOS-WSL interpreter) differ from the
-  # bare-metal ones the way the caps differ. The sibling `wsl` row
-  # stays what it was: a WSL distro whose system layer this flake
-  # does NOT own (standalone HM only, hosts/wsl).
+  # NixOS-WSL: the NixOS system form hosted inside a WSL2 distro — a
+  # fifth row, not a mutation of `nixos` (the wsl cell flips true; the
+  # customs live in platform/nixos-wsl/ — the nixos customs + the
+  # NixOS-WSL interpreter). The sibling `wsl` row stays what it was: a
+  # WSL distro whose system layer this flake does NOT own (standalone
+  # HM only, hosts/wsl).
   nixos-wsl = {
     caps = {
       linux-family = true;
@@ -174,7 +171,7 @@ let
       extraPortals = (pkgs: with pkgs; [ xdg-desktop-portal-gtk ]);
       wlr = false;
     };
-    # Null-Object portal (T3.1/T3.2): headless / non-Linux-WM platforms
+    # Null-Object portal: headless / non-Linux-WM platforms
     # (wsl console, darwin Aqua) route here so downstream consumers stay
     # unconditional — the absence of a windowing stack is expressed as a
     # strategy value, not as call-site conditionals.
@@ -188,7 +185,7 @@ let
   window-manager = enum "windowManager" {
     gnome = {
       portal = portal.gnome;
-      # T4.0: capability bit — a real desktop session exists (portal
+      # Capability bit — a real desktop session exists (portal
       # mediation meaningful). Leaves read the resolved fact instead of
       # comparing `.tag != "none"` strings.
       desktop-session = true;
@@ -201,7 +198,7 @@ let
       portal = portal.hyprland;
       desktop-session = true;
     };
-    # Null-Object member (T3.1/T3.2): lets platform/darwin and platform/wsl
+    # Null-Object member: lets platform/darwin and platform/wsl
     # import ../../../home/wm unconditionally — the router dispatches to an
     # empty implementation instead of the platform file special-casing
     # the import list. Adding a member here is the open/closed move; no
@@ -217,22 +214,20 @@ let
     "lemurs"
     "ly"
     "sddm"
-    # T7.1: the Null-Object row — no display manager. Console hosts
+    # The Null-Object row — no display manager. Console hosts
     # (WSL, headless servers) select it; platform/nixos/system/dm/none/ is
     # the deliberately-empty module that keeps the dm router
     # unconditional (same pattern as window-manager none).
     "none"
   ];
-  # T10.1: the local sound server as a strategy axis — the mechanical
-  # half of README known-debt #9. sound.nix stops being an
-  # unconditional burden on every system form: the rows answer "does
+  # The local sound server as a strategy axis: the rows answer "does
   # this machine run a local sound server", and the mixer toolbelt
   # rides the payload (the wm/portal pattern — strategy data in the
   # row, leaves stay unconditional). Both current console hosts still
-  # select pipewire: the flip is deliberately env-gated (the debt's
-  # semantic half — QEMU audio devices, WSLg's Windows-side pulse
-  # server — awaits first real-machine acceptance) and stays a
-  # one-data-row change per host.
+  # select pipewire: the flip is deliberately env-gated (QEMU audio
+  # devices, WSLg's Windows-side pulse server — the semantic half's
+  # adjudication lives in README) and stays a one-data-row change
+  # per host.
   sound = enum "sound" {
     # The workstation form: pipewire owns the server, the alsa/pulse
     # compatibility layers ride it, wireplumber manages the session.
@@ -244,17 +239,15 @@ let
           pavucontrol
         ];
     };
-    # Null-Object row: console/server forms where no local sound
-    # server has anything to serve — audio mediation, where it exists
-    # at all, belongs to the host environment (WSLg's Windows-side
-    # pulse server; a QEMU device decision). Expressed as a strategy
-    # value, never as call-site conditionals.
+    # Null-Object row: console/server forms — audio mediation, where it
+    # exists at all, belongs to the host environment (WSLg's
+    # Windows-side pulse server). A strategy value, never call-site
+    # conditionals.
     none = {
       sound-server = false;
       mixers = pkgs: [ ];
     };
   };
-  # drive           = enum "drive"          [ "amd" "intel" "nvidia" "nvidia-prime" ];
   drive-group = enum "driveGroup" {
     amd = [ "amd" ];
     intel = [ "intel" ];
@@ -277,11 +270,11 @@ let
       "nvidia-prime"
     ];
   };
-  # T4.1: the shell enum carries its HM integration truth table as DATA
+  # The shell enum carries its HM integration truth table as DATA
   # (platform-caps pattern): every row answers all three integration
   # bits, so adding a shell = ONE row here instead of three `.tag ==`
-  # comparisons re-derived in the runtime layer. The eight HM modules
-  # keep consuming the published resolved facts unchanged
+  # comparisons re-derived in the runtime layer. The HM modules keep
+  # consuming the published resolved facts unchanged
   # (programs.<t> = shared.shellIntegrations // { … }).
   shell = enum "shell" {
     bash = {
@@ -383,16 +376,14 @@ let
     };
   };
 
-  # Application set: which app trees a host's home MERGES (T5.10 —
-  # demand-driven module loading). The one weight axis the policy
-  # graph was missing: editor/browser/terminal sets answer "which
+  # Application set: which app trees a host's home MERGES
+  # (demand-driven module loading) — the one weight axis the policy
+  # graph was missing. editor/browser/terminal sets answer "which
   # leaves within a routed category"; this set answers "which
   # category TREES exist for the host at all" — lean machines stop
   # merging (and installing) desktop grab-bag modules they never
   # asked for, instead of paying the module-system fixed cost and
-  # carrying unconditional packages (pre-T5.10 a console wsl host
-  # and a lean darwin laptop both installed prismlauncher, wps and
-  # blender).
+  # carrying unconditional packages.
   #
   # Row payloads list home/core/exp/app/ category DIRECTORIES; the
   # router is `builtins.map (c: ./${c}) shared.appCategories` — same
@@ -406,7 +397,7 @@ let
   # ORDER IS LOAD-BEARING: the module-system merges imports in list
   # order, `home.packages` concatenates in merge order, and the drv
   # hash of the full host pins to the resulting closure. The `full`
-  # row therefore reproduces the pre-T5.10 static import list of
+  # row therefore reproduces the static import list of
   # home/core/exp/app/default.nix EXACTLY (alphabetical); the enum
   # test (tests/lib/shared/lang/enum.nix) enforces it — reorder the
   # row and the test fails before hashes drift mysteriously.
@@ -440,10 +431,8 @@ let
       ];
     };
     # Terminal-shaped machine (the darwin laptop): the set-routed
-    # triad + document/reading/reverse-engineering trees — the
-    # cross-platform tooling that survives a "lean, terminal-shaped"
-    # character. Desktop entertainment trees (game/im/model/note/
-    # video/dl/fm/music) don't; the linux-only leaves inside kept
+    # triad + document/reading/reverse-engineering trees; desktop
+    # entertainment trees don't ride. Linux-only leaves inside kept
     # trees (gimp, wps, imv, unoconv) self-gate on linux-family.
     lean = {
       categories = [
@@ -508,7 +497,7 @@ let
           autostart = true;
         };
       };
-      # T3.4 observability: full workstation stack — every exporter,
+      # Observability: full workstation stack — every exporter,
       # plus the loki+grafana observability pair (README roadmap item).
       monitor = {
         enable = true;
@@ -561,7 +550,7 @@ let
           autostart = true;
         };
       };
-      # T3.4 observability: dev box — node exporter only (resource
+      # Observability: dev box — node exporter only (resource
       # footprint matters; db services are on-demand anyway).
       monitor = {
         enable = true;
@@ -608,7 +597,7 @@ let
           autostart = true;
         };
       };
-      # T3.4 observability: server — collect metrics for the services
+      # Observability: server — collect metrics for the services
       # this profile actually runs (postgres); central infra scrapes.
       monitor = {
         enable = true;
@@ -658,7 +647,7 @@ let
           autostart = false;
         };
       };
-      # T3.4 observability: off — minimal machines stay minimal.
+      # Observability: off — minimal machines stay minimal.
       monitor = {
         enable = false;
         exporters = [ ];

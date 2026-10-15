@@ -1,35 +1,30 @@
 # @path: ~/projects/configs/nix-config/platform/nixos-wsl/system/default.nix
 # @author: redskaber
 # @datetime: 2026-10-14
-# @description: platform::nixos-wsl::system — the NixOS-WSL system door (T7.1, grammar v4)
+# @description: platform::nixos-wsl::system — the NixOS-WSL system door (grammar v4)
 # @directory: https://github.com/nix-community/NixOS-WSL
 #
 # THE system door of platform/nixos-wsl — the fifth system form
-# (T7.1, directory grammar v4, platform-major, domain-explicit):
-# a NixOS system layer hosted inside a WSL2 distro, running under
-# the Windows host's kernel. mkNixosSystem (and mkColmenaNode)
-# import platform/<tag>/system and land here.
+# (directory grammar v4, platform-major, domain-explicit): a NixOS
+# system layer hosted inside a WSL2 distro, running under the
+# Windows host's kernel. mkNixosSystem (and mkColmenaNode) import
+# platform/<tag>/system and land here.
 #
-# This door is deliberately THIN, and reading it tells you the whole
-# form definition: the nixos-wsl form IS the nixos customs plus the
-# NixOS-WSL interpreter. The import of ../../nixos/system reuses
-# the ENTIRE bare-metal customs tree (core/, dm/, wm/, the
-# hosts/<h>/ routing, stateVersion, nixpkgs pinning) — that reuse
-# is not duplication debt but the schema speaking: the fifth
+# Deliberately THIN — reading it tells you the whole form
+# definition: the nixos-wsl form IS the nixos customs plus the
+# NixOS-WSL interpreter. ../../nixos/system reuses the ENTIRE
+# bare-metal customs tree (core/, dm/, wm/, hosts/<h> routing,
+# stateVersion, nixpkgs pinning) — not duplication debt: the fifth
 # platform row answers every capability cell exactly like `nixos`
-# except `wsl = true`, so its customs are the nixos customs plus
-# exactly one interpreter. The cross-platform reference is explicit
-# in the path (../../nixos/system — a static edge the reachability
-# gate walks like any other).
+# except `wsl = true`. The cross-platform reference is explicit in
+# the path (a static edge the reachability gate walks like any
+# other).
 #
 # Division of labor (ownership boundary, single-owner rule):
 #
 #   inputs.nixos-wsl.nixosModules.default OWNS the WSL surface —
 #     wsl.conf generation, systemd hosting, interop + binfmt,
 #     the boot/kernel/loader subtraction (WSL supplies its own).
-#     Hand-rolled duplicates of any of that lived in
-#     platform/nixos/system/core/base/wsl.nix before T7.1 and were
-#     removed.
 #   platform/nixos/system/core/base/wsl.nix keeps ONLY this repo's
 #     deltas the upstream module does not ship (the chrony
 #     clock-drift guard), gated on shared.caps.wsl.
@@ -38,18 +33,15 @@
 #     Windows host's), no disk.nix (the rootfs is a Windows-managed
 #     VHDX provisioned by wsl --import, not by the OS — disko is
 #     semantically inapplicable and stays inert by absence), no
-#     persist.nix (impermanence on a WSL root buys nothing; stays
-#     inert by absence).
+#     persist.nix (impermanence on a WSL root buys nothing).
 #
 # Both doors stay live, the nixos policy: the system closure here,
 # and homeConfigurations.<user>@<host> through ../home/ — HM
-# standalone switches in seconds and rolls back independently of the
-# system generation, exactly like the bare-metal nixos hosts. The
-# home door (../home/default.nix) is itself a thin wrapper over the
-# nixos user-domain door; the WSL user-space specialisation rides in
-# the SHARED home tree (home/core/base/wsl.nix, caps.wsl-gated) so
-# every wsl-capable host — standalone or nixos-wsl — gets it from one
-# place.
+# standalone switches in seconds and rolls back independently of
+# the system generation. The home door is itself a thin wrapper
+# over the nixos user-domain door; the WSL user-space specialisation
+# rides in the SHARED home tree (home/core/base/wsl.nix,
+# caps.wsl-gated) so every wsl-capable host gets it from one place.
 
 {
   inputs,
@@ -77,12 +69,11 @@
 
   # The form's boot subtraction, completed: the upstream interpreter
   # plain-assigns boot.loader.grub.enable = false and swaps
-  # system.build.installBootLoader for a no-op, but it deliberately
-  # does NOT touch systemd-boot — a distro that wants it could (in
-  # theory) boot one. This form does not: the nixos base's
-  # mkDefault true would keep the systemd-boot module active and its
-  # installer then collides with the interpreter's installBootLoader.
-  # Plain false wins over the base's mkDefault — that priority spread
-  # IS the design (base declares defaults, forms subtract).
+  # system.build.installBootLoader for a no-op, but does NOT touch
+  # systemd-boot — the nixos base's mkDefault true would keep the
+  # systemd-boot module active and its installer would collide with
+  # the interpreter's installBootLoader. Plain false wins over the
+  # base's mkDefault — that priority spread IS the design (base
+  # declares defaults, forms subtract).
   boot.loader.systemd-boot.enable = false;
 }

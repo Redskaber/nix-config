@@ -1,24 +1,17 @@
 # @path: ~/projects/configs/nix-config/tests/testscript-syntax.nix
 # @author: redskaber
 # @datetime: 2026-10-13
-# @description: tests::testscript-syntax — the third repo-hygiene gate (T32)
+# @description: tests::testscript-syntax — the third repo-hygiene gate
 # @source: self (the flake source tree) × tests/**.nix (the fleet)
 #
-# THE CLASS THIS GATE KILLS — the CI lib-plane red of this round:
-# a multi-line nix value interpolated into a single-line python
-# comment inside a testScript literal. The 99th test (lib_shared_orc,
-# T28) spliced its 8-line contractHeld behind one '#':
-#
-#     # ${contractHeld} — renders only if every site held; the
-#
-# Only the spliced FIRST line stayed behind the '#'; the seven site
-# verdict lines arrived as bare python, and the CI driver's pylyzer
-# run (testScriptWithTypes) rejected the whole member — 83
-# diagnostics, one red plane, while the local eval-level verification
-# (drvPath) had been green all along: evaluating a derivation never
-# parses the python embedded in it. The driver build was the ONLY
-# place the parse happened — and it needs the whole VM closure, so it
-# is the most expensive possible layer for it.
+# THE CLASS THIS GATE KILLS — a multi-line nix value interpolated into
+# a single-line python comment inside a testScript literal: only the
+# spliced first line stays behind the '#', the rest arrives as bare
+# python, and the CI driver's pylyzer run (testScriptWithTypes)
+# rejects the whole member. Evaluating a derivation never parses the
+# python embedded in it — the driver build was the ONLY place the
+# parse happened, and it needs the whole VM closure, the most
+# expensive possible layer for it.
 #
 # WHAT THIS GATE DOES — moves the parse to the cheapest layer:
 #   1. EVAL time: walk tests/**.nix, call each file directly with the
@@ -46,17 +39,17 @@
 # the real runner. The gate's unique coverage is exactly the python
 # syntax class the driver build would otherwise be alone in catching.
 #
-# SPLICE DISCIPLINE (the rule the 99th now follows): a multi-line
+# SPLICE DISCIPLINE: a multi-line
 # nix value goes into a python STRING EXPRESSION ("""…${value}…"""),
 # never into a `#` comment or a single-quoted string — newlines
 # inside those break the python. Single-line values in comments are
 # fine (the fleet's `# ${evalAssertions} — renders only if…` idiom is
-# load-bearing and green since T3.4).
+# load-bearing).
 #
-# GATING — same shape as the other two hygiene gates (T8.1's
-# rationale): `nix flake check --no-build` only EVALUATES this
-# derivation (it always constructs fine); the syntax assertion fires
-# at BUILD time, which is why CI STAGE 1 builds this check
+# GATING — same shape as the other two hygiene gates (the same
+# rationale as docs-ssot-check): `nix flake check --no-build` only
+# EVALUATES this derivation (it always constructs fine); the syntax
+# assertion fires at BUILD time, which is why CI STAGE 1 builds this check
 # explicitly right after pre-commit-check and docs-ssot-check, and
 # deep-eval Face 3 forces its drvPath.
 {

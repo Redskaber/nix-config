@@ -1,12 +1,11 @@
 # @path: ~/projects/configs/nix-config/hosts/nixos-wsl/default.nix
 # @author: redskaber
 # @datetime: 2026-10-10
-# @description: hosts::nixos-wsl::default — the fifth host's data (T7.1)
+# @description: hosts::nixos-wsl::default — the fifth host's data
 #
-# The NixOS-WSL host of the multi-host design (T7.1): a WSL2 distro
-# whose SYSTEM layer this flake now owns too — the eval-level second
-# system host after vm, exercising the fifth platform row
-# end-to-end (policy chain → classification → both emitters).
+# The NixOS-WSL host: a WSL2 distro whose SYSTEM layer this flake
+# owns too — exercises the nixos-wsl platform row end-to-end (policy
+# chain → classification → both emitters).
 #
 # Deliberately NO machine-fact files, and that absence is the data:
 #
@@ -24,8 +23,7 @@
 # Runtime wiring on a real machine: build the distro tarball
 # (`config.system.build.tarballBuilder`, provided by the NixOS-WSL
 # interpreter) and import it — activation/boot-level acceptance is
-# the CI vm-tests stage / a Windows host (README known-debt #8's
-# environment-gated class).
+# the CI vm-tests stage / a Windows host.
 
 { shared, ... }:
 {

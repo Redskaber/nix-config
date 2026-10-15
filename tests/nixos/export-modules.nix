@@ -4,7 +4,7 @@
 # @description: tests::nixos::export-modules
 # @source: export/nixos/{portal,fcitx5}.nix
 #
-# T2.1 acceptance: "an external flake can import any exported module."
+# Acceptance: "an external flake can import any exported module."
 # Both nixosModules entries are imported THROUGH the flake output
 # (inputs.self.nixosModules.*) — exactly the path an external consumer
 # takes — and evaluated with nixpkgs.lib.nixosSystem, once enabled and

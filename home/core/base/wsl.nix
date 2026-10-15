@@ -1,28 +1,23 @@
 # @path: ~/projects/configs/nix-config/home/core/base/wsl.nix
 # @author: redskaber
 # @datetime: 2026-10-10
-# @description: home::core::base::wsl — WSL user-space specialisation (T7.1)
+# @description: home::core::base::wsl — WSL user-space specialisation
 # @directory: https://nix-community.github.io/home-manager/options.xhtml
 #
 # The user-domain half of the WSL specialisation, gated on the
-# capability fact (shared.caps.wsl, T4.0) — ONE place, consumed by
-# every wsl-capable host:
+# capability fact (shared.caps.wsl) — ONE shared-tree address,
+# consumed by every wsl-capable host:
 #
-#   hosts/wsl        platform.wsl          (standalone HM, non-NixOS)
-#   hosts/nixos-wsl  platform.nixos-wsl    (the fifth system form, T7.1)
+#   hosts/wsl        platform.wsl        (standalone HM, non-NixOS)
+#   hosts/nixos-wsl  platform.nixos-wsl  (NixOS system form)
 #
-# Before T7.1 this surface lived inline in
-# platform/wsl/home/default.nix — correct for the one host that
-# had caps.wsl, structurally unreachable for a second one. The
-# extraction keeps the values byte-equal (the standalone-wsl HM
-# closure must not move); what changed is the ADDRESS: caps-gated
-# shared-tree module, the same shape the system side has used since
-# T3.1 (platform/nixos/system/core/base/wsl.nix keeps the system-domain
-# deltas — the two files are the boundary, read together).
+# The system-domain deltas live in
+# platform/nixos/system/core/base/wsl.nix — the two files are the
+# boundary, read together.
 #
 # What belongs HERE (user space): wslview routing, WSLENV crossing,
 # USERPROFILE normalisation. What does NOT: wsl.conf, systemd
-# hosting, binfmt — NixOS-WSL interpreter owns those (and a
+# hosting, binfmt — the NixOS-WSL interpreter owns those (and a
 # non-NixOS WSL distro owns its own).
 
 {
@@ -50,11 +45,10 @@
       USERPROFILE = "\${HOME}";
     };
 
-    # Route "open link" to the Windows side: wslview(1) from wslu
-    # forwards URLs/files to the Windows default handler. (xdg.portal
-    # itself stays managed by home/core/base/portal.nix — the
-    # none-portal strategy it resolves to already installs zero portal
-    # backends, so there is nothing to fight over here.)
+    # Route "open link" to the Windows side: wslview(1) forwards
+    # URLs/files to the Windows default handler. xdg.portal stays with
+    # home/core/base/portal.nix — its none strategy installs zero
+    # backends, nothing to fight over here.
     xdg.enable = true;
     home.sessionVariables.BROWSER = "wslview";
   };

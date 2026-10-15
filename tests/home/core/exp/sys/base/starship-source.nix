@@ -4,7 +4,7 @@
 # @description: tests::home::core::exp::sys::base::starship-source
 # @source: home/core/exp/sys/base/starship.nix
 #
-# T1.2 (production-tree import): asserts the REAL starship module. The
+# Production-tree import: asserts the REAL starship module. The
 # interesting contract is the config-file handoff: the prompt itself is
 # maintained in the starship-config flake input and linked verbatim via
 # xdg.configFile — a broken input wiring (renamed file, dropped link)

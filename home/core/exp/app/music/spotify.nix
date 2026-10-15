@@ -17,10 +17,9 @@ let
     spotifyCache = "${config.xdg.cacheHome}/spotifyd"; # Spotify 缓存
   };
 
-  # T3.2: the whole Spotify stack is Linux-only (spotifyd's upstream
-  # module asserts non-darwin platforms; pulseaudio backend likewise).
-  # darwin gets its stack from the OS itself — gate the module to the
-  # Linux family instead of failing the darwin closure at eval time.
+  # The whole Spotify stack is Linux-only (spotifyd's upstream module
+  # asserts non-darwin platforms; pulseaudio backend likewise) — gate to
+  # the Linux family instead of failing the darwin closure at eval.
   # (Module-position mkIf is illegal — body goes under `config =`.)
   isLinuxFamily = shared.caps.linux-family;
 in

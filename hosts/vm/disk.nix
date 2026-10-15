@@ -1,13 +1,12 @@
 # @path: ~/projects/configs/nix-config/hosts/vm/disk.nix
 # @author: redskaber
 # @datetime: 2026-10-09
-# @description: hosts::vm::disk — the guest's one-disk layout (disko, T5.13; btrfs subvolumes, T5.14)
+# @description: hosts::vm::disk — the guest's one-disk layout (disko; btrfs subvolumes)
 #
 # THE DATA half of the disk fact pair (interpreter lives platform-side
-# in platform/nixos/system/core/base/disk.nix). T5.13 declared the whole disk
-# as a GPT partition table with an EF02 BIOS-boot staging partition
-# and a root ext4; T5.14 upgrades the root partition to btrfs so the
-# root can become EPHEMERAL — four subvolumes, four lifetimes:
+# in platform/nixos/system/core/base/disk.nix): one GPT disk, an EF02
+# BIOS-boot staging partition, and a btrfs root — four subvolumes,
+# four lifetimes:
 #
 #   root       mounted at /           EPHEMERAL — archived under
 #            old_roots/<timestamp> and re-created empty on every boot
@@ -30,29 +29,23 @@
 # uncompressed on purpose — PostgreSQL's reliability guidance flags
 # compressed btrfs for the data directory, and postgres is this
 # machine's one real service (server-pg-only profile). The ephemeral
-# root gets noatime-free plain defaults: its contents die at boot
-# anyway. /boot stays minimal too — grub's btrfs reader is the most
+# root gets plain defaults: its contents die at boot anyway.
+# /boot stays minimal too — grub's btrfs reader is the most
 # conservative code in the boot chain.
 #
-# Everything else from T5.13 stands unchanged: the EF02 partition
-# wires boot.loader.grub.devices (disko's rule: GPT + BIOS-boot
-# partition → grub on the whole disk); the device is addressed by
-# GPT partlabel (stable across re-plumbing); boot POLICY stays with
-# the platform, the host only overrides what its facts contradict
-# (BIOS guest, uefi false in facter.json).
+# The EF02 partition wires boot.loader.grub.devices (disko's rule:
+# GPT + BIOS-boot partition → grub on the whole disk); the device is
+# addressed by GPT partlabel (stable across re-plumbing); boot POLICY
+# stays with the platform — the host only overrides what its facts
+# contradict (BIOS guest, uefi false in facter.json).
 #
-# Apply-from-installer (fresh installs / reinstalls): `just
+# Apply-from-installer (fresh installs / reinstallations): `just
 # disk-format vm` builds and runs the pinned disko format+mount
-# script. DESTRUCTIVE — it partitions and formats /dev/vda. After a
-# fresh format the rollback script's first boot just creates the
-# root subvol (the `if` skips; find on missing old_roots/ no-ops).
+# script. DESTRUCTIVE — it partitions and formats /dev/vda.
 
 { lib, ... }:
 
 {
-  # The guest's one-disk layout: GPT with a BIOS-boot staging partition
-  # and a btrfs root filling the rest — four subvolumes, four
-  # lifetimes (see header).
   disko.devices.disk.vda = {
     device = "/dev/vda";
     type = "disk";
@@ -76,7 +69,7 @@
             # by contract (see disk.just) — re-installs re-forced.
             extraArgs = [ "-f" ];
             subvolumes = {
-              # The ephemeral root (T5.14) — subvol name "root": the
+              # The ephemeral root — subvol name "root": the
               # rollback recipe in the interpreter references it as
               # the top-level child directory it archives/re-creates.
               root = {

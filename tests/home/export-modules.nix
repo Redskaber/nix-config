@@ -4,7 +4,7 @@
 # @description: tests::home::export-modules
 # @source: export/home/{fcitx5,shell,waybar,yazi}.nix
 #
-# T2.1 acceptance (HM side): all four homeModules entries are imported
+# Acceptance (HM side): all four homeModules entries are imported
 # THROUGH the flake output (inputs.self.homeModules.*) and evaluated
 # with home-manager's own evaluator — the exact path an external flake
 # takes. waybar's configDir is wired to the real waybar-config input,

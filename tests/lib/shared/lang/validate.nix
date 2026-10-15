@@ -4,8 +4,8 @@
 # @description: tests::lib::shared::lang::validate
 # @source: lib/shared/lang/validate.nix (Result railway)
 #
-# T4.1 (Option/Result 类型化错误处理): secret path construction is a
-# Result railway over the nix-types ADT. This contract test locks:
+# Secret path construction is a Result railway over the nix-types
+# ADT. This contract test locks:
 #
 #   1. the Ok lane — a fixture-tree secret resolves to its .yaml source
 #      (front end + resolution pass, against a PROVISIONED tree)
@@ -16,7 +16,7 @@
 #      front end: lexing errors before resolution errors)
 #   4. the resolution pass, provisioned branch — a declared-but-missing
 #      secret reports "declared but not provided" (the eval-time
-#      diagnostic class; T4.1 strictness is owed once ANY blob exists)
+#      diagnostic class; strictness is owed once ANY blob exists)
 #   5. the boundary — unwrapOrElse throw on an Err throws
 #      (tryEval-catchable, same observable discipline as fn.sameSource)
 #   6. the runtime-path variant — same front end, mapped onto the
@@ -26,7 +26,7 @@
 #      declared secret resolves Ok (trace + path), not Err — the hard
 #      failure moves to sops activation, where it belongs
 #
-# Fixtures (committed, self-contained — the test no longer couples to
+# Fixtures (committed, self-contained — decoupled from
 # the live secrets/chipr tree, whose state is a LIFECYCLE property the
 # user owns: EMPTY on a fresh clone, provisioned after `just
 # secret-set`. Mutating a FIXTURE tree — git mv the yaml out of

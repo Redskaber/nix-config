@@ -1,10 +1,10 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/system/core/srv/monitor/healthcheck.nix
 # @author: redskaber
 # @datetime: 2026-10-08
-# @description: platform::nixos::core::srv::monitor::healthcheck — 60s observability (T3.4)
+# @description: platform::nixos::core::srv::monitor::healthcheck — 60s observability
 # @directory: https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html
 #
-# Acceptance for T3.4 is "a broken service is observable within 60s".
+# Acceptance: "a broken service is observable within 60s".
 # Two layers deliver it, both data-driven off the service-profile:
 #
 #   1. SELF-HEAL (systemd Restart policy, per installed db):

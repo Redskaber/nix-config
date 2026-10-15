@@ -3,7 +3,7 @@
 # @datetime: 2026-10-10
 # @description: hosts::vm::shared — second-machine policy overrides
 #
-# The second machine of the multi-host design (T2.3/T2.5): a virtual
+# The second machine of the multi-host design: a virtual
 # host used to prove the host-scoped policy chain end-to-end at
 # evaluation depth. Keys here replace their base shared.nix
 # counterparts WHOLESALE (shallow `//` merge — see
@@ -12,23 +12,22 @@
 
 { shared, inputs, ... }:
 {
-  # Console machine (T7.2, debt #6): a server-form VM runs no
-  # compositor and greets no login screen — wm/dm flip to the
-  # Null-Object rows, and the closure stops carrying the desktop
-  # stack it never started (hyprland + ly + their pull rode the
-  # evaluation-level host since T2.3). The base policy's defaults
-  # stay with the base host: this is a host override, not a policy
-  # change — the same wholesale-flip grammar hosts/wsl and
-  # hosts/nixos-wsl use for their console shapes.
+  # Console machine (debt #6): a server-form VM runs no compositor
+  # and greets no login screen — wm/dm flip to the Null-Object rows
+  # and the closure stops carrying the desktop stack. The base
+  # policy's defaults stay with the base host: a host override, not
+  # a policy change (the same wholesale-flip grammar the other
+  # console hosts use).
   window-manager = shared.enum.window-manager.none;
   display-manager = shared.enum.display-manager.none;
 
-  # Debt #9 semantic half — pre-ruled flip, staged (T17.1 dossier
-  # docs/guides/sound-adjudication.md §A): the declared facter report
-  # carries no audio device and the machine story is server-form, so
-  # the pre-ruling is the Null-Object row. Uncomment AFTER `just
-  # sound-audit` confirms on the booted machine (the whole stack —
-  # pipewire + wireplumber + rtkit + mixers — subtracts with it):
+  # Debt #9 semantic half — pre-ruled flip, staged
+  # (docs/guides/sound-adjudication.md §A): the declared facter
+  # report carries no audio device and the machine story is
+  # server-form, so the pre-ruling is the Null-Object row. Uncomment
+  # AFTER `just sound-audit` confirms on the booted machine (the
+  # whole stack — pipewire + wireplumber + rtkit + mixers —
+  # subtracts with it):
   # sound = shared.enum.sound.none;
 
   # Virtual display adapter — no NVIDIA/Prime on a QEMU guest.
@@ -41,8 +40,7 @@
   editor-set = shared.enum.editor-set.minimal;
   terminal-set = shared.enum.terminal-set.kitty-only;
   browser-set = shared.enum.browser-set.chrome-qute;
-  # No app grab-bag trees at all (T5.10): a maintenance VM wants its
-  # editors/browsers/terminals and the sys toolbelt, nothing else —
-  # pre-T5.10 it merged (and installed) the full desktop app universe.
+  # No app grab-bag trees at all: a maintenance VM wants its
+  # editors/browsers/terminals and the sys toolbelt, nothing else.
   app-set = shared.enum.app-set.none;
 }

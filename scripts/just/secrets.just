@@ -550,9 +550,8 @@ rules-destroy:
 # secrets/plan/** is gitignored — plaintext never enters the repo.
 
 # Generate all plaintext template instances (reference copies) —
-# registry-driven: the hardcoded key list this recipe used to carry was
-# the coupling the R27 refactor removed (the registry is the single row
-# source now; adding a secret needs no edit here).
+# registry-driven: the registry is the single row source; adding a
+# secret needs no edit here.
 # Generate all plaintext template instances (registry-driven).
 [group('secrets')]
 secrets-plan-create:
@@ -573,7 +572,7 @@ secrets-plan-destroy:
 
 
 # ==============================================================================
-# REGISTRY LAYER — data-driven CRUD (R27)
+# REGISTRY LAYER — data-driven CRUD
 # ==============================================================================
 # The alias table lives in secrets/registry.toml (DATA). These verbs own
 # it through scripts/sh/secrets-db.py, which also writes the template
@@ -907,11 +906,11 @@ _secrets-username:
 #   line 2: resolved secret rel-path      (REL  — real username substituted)
 #   line 3: username value                (U    — for in-content substitution)
 #
-# R27: the grep/perl resolution moved into scripts/sh/secrets-db.py (one
-# python implementation parses both declaration shapes and caches the
-# join in the sqlite database) — same contract, same output, same
-# canonical substitution rule. This recipe stays the single just-side
-# entry point so every consumer is unchanged.
+# Resolution is delegated to scripts/sh/secrets-db.py (one python
+# implementation parses both declaration shapes and caches the join in
+# the sqlite database) — same contract, same output, same canonical
+# substitution rule. This recipe stays the single just-side entry point
+# so every consumer is unchanged.
 #
 # Usage: just _secrets-paths "nixos.core.srv.db.redis.user.password"
 [private]

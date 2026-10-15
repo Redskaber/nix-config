@@ -1,24 +1,19 @@
 # @path: ~/projects/configs/nix-config/tests/docs-ssot.nix
 # @author: redskaber
 # @datetime: 2026-10-10
-# @description: tests::docs-ssot — docs single-source-of-truth contract check (T8.1)
+# @description: tests::docs-ssot — docs single-source-of-truth contract check
 # @directory: https://github.com/wimpysworld/nix-config
 #
-# The docs-SSOT half of `checks` (T8.1), the pre-commit-check's sibling
-# in repo hygiene. Composed in lib/shared/faces.nix (the linker pass,
-# R31) as
+# The docs-SSOT half of `checks`, the pre-commit-check's sibling
+# in repo hygiene. Composed in lib/shared/faces.nix (the linker
+# pass) as
 #
 #   checks.<sys> = (import ./tests { … })            # 92 tests
 #               // (import ./tests/pre-commit.nix { … })  # + pre-commit-check
 #               // (import ./tests/docs-ssot.nix { … });  # + this check
 #
 # WHY THIS EXISTS — count drift is this repo's recurring defect class:
-# T6.5 reconciled seven squashed-away facts (test-table counts, inputs
-# count, zen-browser rows), T7.3 found the CI diagram still saying 91
-# after T7.2's +1, and the very design pass for THIS check caught three
-# more live ones (devShells quick-ref missing the makeOs row while the
-# live output has 25 shells; two test-matrix section headers stuck at
-# pre-T5.14 counts). Prose numbers rot because nothing forces them.
+# prose numbers rot because nothing forces them.
 #
 # WHAT IT DOES — the inverse of test-count.sh: instead of parsing the
 # tree to print numbers for humans to copy into README, it EVALUATES
@@ -47,7 +42,7 @@
 #
 # ARGUMENTS are deliberately key-level only (attrNames / mapAttrs over
 # sets already evaluated elsewhere): this check adds zero evaluation
-# beyond what checks.<sys> pays anyway (T5.10 single-instantiation
+# beyond what checks.<sys> pays anyway (the single-instantiation
 # discipline), and it must not appear inside tests.planes — it counts
 # them, so membership would be circular (the flake-level composition
 # keeps the counted set and the counter in separate thunks).
@@ -124,11 +119,10 @@ let
       fact = "hosts count sentence";
       needle = "当前承载 **${t hostsCount} 台主机**（nixos · vm · darwin · wsl · nixos-wsl）";
     }
-    # T28: README's own per-plane table rows — these had drifted
-    # silently through T19–T27 (Lib claimed 5 while the live count
-    # was 9) because only the MATRIX file's rows were anchored.
-    # Same ERE shape as the matrix-row anchors below, adapted to the
-    # README table's prefix column.
+    # README's own per-plane table rows — anchored too, not just the
+    # MATRIX file's rows (a row count that drifts here is invisible
+    # to the matrix anchors). Same ERE shape as the matrix-row
+    # anchors below, adapted to the README table's prefix column.
     {
       file = "README";
       kind = "E";

@@ -12,15 +12,14 @@
   ...
 }:
 {
-  # The local sound server is a policy fact, not a default (T10.1 —
-  # the mechanical half of README known-debt #9): the sound enum's
-  # rows answer "does this machine run one". `pipewire` is the
-  # workstation form; `none` is the Null-Object row for console forms
-  # where audio mediation, if any, belongs to the host environment
-  # (WSLg's Windows-side pulse server; a QEMU device decision). The
-  # gate reads the resolved fact — the T4.0 law — so a host
-  # subtracts the whole stack by declaring a different row, never by
-  # editing this file.
+  # The local sound server is a policy fact, not a default (README
+  # known-debt #9): the sound enum's rows answer "does this machine
+  # run one" — `pipewire` is the workstation form; `none` is the
+  # Null-Object row for console forms where audio mediation, if
+  # any, belongs to the host environment (WSLg's Windows-side pulse
+  # server). The gate reads the resolved fact, so a host subtracts
+  # the whole stack by declaring a different row, never by editing
+  # this file.
   config = lib.mkIf shared.sound.value.sound-server {
     # pipewire replaces pulseaudio wholesale (compat via pipewire-pulse).
     services.pulseaudio.enable = false;

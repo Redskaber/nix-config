@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/hosts/nixos/deploy.nix
 # @author: redskaber
 # @datetime: 2026-10-12
-# @description: hosts::nixos::deploy — colmena deployment facts (T20.1)
+# @description: hosts::nixos::deploy — colmena deployment facts
 # @directory: https://colmena.cli.rs/0.5/reference/deployment.html
 #
 # Machine facts for the deploy face — the disk.nix/persist.nix family
@@ -21,9 +21,8 @@
 #   tags         — none until there is more than one node to group.
 {
   # The base machine is where colmena itself runs — the local flavor
-  # (`just deploy-local` → colmena apply-local --sudo) needs this opt-in
-  # on the node, parity with `nixos-switch` (the T10.2 push-host-boot
-  # family: the machine is its own deployment target until a second one
-  # exists).
+  # (`just deploy-local` → colmena apply-local --sudo) needs this
+  # opt-in on the node, parity with `nixos-switch`: the machine is its
+  # own deployment target until a second one exists.
   allowLocalDeployment = true;
 }

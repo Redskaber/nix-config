@@ -4,7 +4,7 @@
 # @description: tests::nixos::core::base::sound-gate
 # @source: platform/nixos/system/core/base/sound.nix, lib/shared/lang/enum.nix
 #
-# T10.1 eval-level acceptance of the sound strategy gate — the
+# Eval-level acceptance of the sound strategy gate — the
 # export-modules.nix pattern (see tests/nixos/core/base/wsl.nix and
 # the portal test): production modules imported into standalone
 # nixosSystem evaluations, contract checks as plain eval-time
@@ -17,7 +17,7 @@
 #     inherits): the whole stack rides — server, compat layers,
 #     rtkit, alsa persistence, the mixer toolbelt. This is the
 #     zero-drift law: the gate changed nothing for the forms that
-#     keep the default (mkIf true ≡ identity, the T7.2 precedent).
+#     keep the default (mkIf true ≡ identity).
 #
 #   none — the same module under a sound=none policy. No host flips
 #     the row yet (README known-debt #9: the real-machine

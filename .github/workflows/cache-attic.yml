@@ -22,15 +22,15 @@
 # is deployed, add ITS substituter to the installer legs' extra-conf
 # (needs one more var: ATTIC_PUBLIC_KEY) so CI pulls also benefit.
 #
-# Round-16 amendment: the INTERIM layer landed in ci.yml — the public
-# Cachix cache redskaber-nix-config now carries the pull (every leg)
-# and the opt-in push (host-toplevels, secret.CACHIX_AUTH_TOKEN). This
-# workflow stays the SELF-HOSTED scale-out for when the 5 GB Cachix
-# free tier saturates (weekly lock bumps ≈ 1–1.5 GB ZSTD/generation):
-# attic on own hardware (this file) or harmonia on the existing
-# kilig-nixos host (zero marginal cost — see docs/ci/pipeline.md's
-# round-16 entry). The Cachix public key is pinned in this workflow's
-# own extra-conf below for the same reason as every ci.yml leg.
+# Interim state: the public Cachix cache redskaber-nix-config carries
+# the pull (every ci.yml leg) and the opt-in push (host-toplevels,
+# secret.CACHIX_AUTH_TOKEN). This workflow stays the SELF-HOSTED
+# scale-out for when the 5 GB Cachix free tier saturates (weekly lock
+# bumps ≈ 1–1.5 GB ZSTD/generation): attic on own hardware (this
+# file) or harmonia on the existing kilig-nixos host (zero marginal
+# cost — see docs/ci/pipeline.md). The Cachix public key is pinned in
+# this workflow's own extra-conf below for the same reason as every
+# ci.yml leg.
 
 name: "cache · self-hosted attic push"
 
@@ -60,19 +60,18 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication):
-          # /stable resolved dynamically and could hand out Determinate's
-          # Nix fork, whose eval-cores / lazy-trees settings are unknown
-          # to the locked-nixpkgs upstream Nix. extra-args is dead code
-          # in action v13, so the env route is the only working one.
+          # Toolchain identity pinned: /stable resolved dynamically and
+          # could hand out Determinate's Nix fork, whose eval-cores /
+          # lazy-trees settings are unknown to the locked-nixpkgs
+          # upstream Nix. extra-args is dead code in action v13, so the
+          # env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
-            # P0 cache axis (round 16): public Cachix pull — same
-            # contract as every ci.yml leg (design rationale in
-            # ci.yml's header).
+            # Public Cachix pull — same contract as every ci.yml leg
+            # (design rationale in ci.yml's header).
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
           # Upstream Nix 2.35.2 — the version the locked nixpkgs ships.

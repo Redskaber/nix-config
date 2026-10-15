@@ -4,9 +4,9 @@
 # @description: tests::home::core::exp::sys::shell::zsh-source
 # @source: home/core/exp/sys/shell/zsh.nix
 #
-# T1.2 (production-tree import): asserts the REAL zsh module — the
+# Production-tree import: asserts the REAL zsh module — the
 # primary interactive shell (shared.user.shell.tag == "zsh"). This is
-# the heaviest production module of the five T1.2 samples: it consumes
+# the heaviest production module of the five import samples: it consumes
 # config.home.homeDirectory / config.xdg.{dataHome,cacheHome} (module
 # system references), shared.editor.tag and a package (zsh-fzf-tab).
 # The mirror test boots a VM and sources /etc/zshrc; this check instead

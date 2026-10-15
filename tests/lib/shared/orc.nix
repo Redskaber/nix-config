@@ -1,15 +1,15 @@
 # @path: ~/projects/configs/nix-config/tests/lib/shared/orc.nix
 # @author: redskaber
 # @datetime: 2026-10-12
-# @description: tests::lib::shared::orc — the orc wallust copy-emitter consumption contract (T28)
+# @description: tests::lib::shared::orc — the orc wallust copy-emitter consumption contract
 # @source: home/wm/hyprland/theme/*.nix × home/wm/hyprland/default.nix × home/core/exp/{app/terminal,sys/misc}
 #
 # The wallust theme-injection chain is the fleet's only consumption of
 # shared.orc (mechanisms.md §6: waybar · rofi · swaync · kitty · cava ·
-# quickshell · hyprland), and until this battery it had ZERO coverage:
-# the nmt plane asserts on home-files (the symlink face), but the copy
-# emitter's whole job lives in the ACTIVATION face (cp --remove-
-# destination at switch time) — invisible to every existing member.
+# quickshell · hyprland). The nmt plane asserts on home-files (the
+# symlink face), but the copy emitter's whole job lives in the
+# ACTIVATION face (cp --remove-destination at switch time) — invisible
+# to that plane.
 #
 # What the contract pins, per site (the observable text of the dag
 # entry, evaluated through the REAL modules — no mocks, the version.nix
@@ -29,26 +29,19 @@
 #   4. `run chmod u+w "$HOME/<dest>/<rel>"` — the planted file must be
 #      writable, or wallust's runtime overwrite hits EACCES next boot
 #
-# History: the first prototype run of this battery caught the swaync
-# site EMPTY (the swaync-config tree carried no wallust placeholder —
-# the include matched nothing and the activation ran a no-op while
-# claiming to plant). T28 answered with a two-half fix: the module
-# synthesized the FileMap entry from the wallust template (behind a
-# tree-wins merge order, planned to retire on its own) and the
-# config-repo half shipped as a paste-ready placeholder patch. Both
-# halves have since landed: swaync-config c8818d9 grew the tree's own
-# placeholder, and T30 retired the synthesis — the site below now
-# plants the TREE file, same shape as the other six. With orc 05c658f
-# (the T29 include-intent guard, consumed back through the lock in
-# the same round) this class of rot can no longer be silent at all:
-# an include that selects nothing fails AT EVAL TIME, fleet-wide.
+# History: the battery's first run caught the swaync site EMPTY — the
+# tree carried no wallust placeholder, the include matched nothing,
+# and the activation ran a silent no-op while claiming to plant. The
+# placeholder landed in swaync-config c8818d9, the module-side
+# synthesis retired with it, and orc 05c658f (the include-intent
+# guard) makes this class of rot fail AT EVAL TIME, fleet-wide.
 #
 # Mutation checks (all verified on the real eval):
 #   - point an include at a moved rel → that site's cp needle fails,
 #     the throw names the site and the reconciliation
 #   - revert the swaync-config lock to a pre-placeholder rev → the
-#     eval now FAILS LOUDLY (orc include-intent guard) — the T28
-#     mutation replayed as a loud failure instead of a silent one
+#     eval now FAILS LOUDLY (orc include-intent guard) — the original
+#     silent-no-op mutation replays as a loud failure
 #   - flip a destPrefix → destination needle fails
 
 {
@@ -105,9 +98,8 @@ let
     }
     {
       name = "swayncWallust";
-      # T30: the plant source is the TREE file now — the synthesis
-      # retired when swaync-config c8818d9 grew the placeholder (the
-      # T28 config-repo half, adopted upstream).
+      # The plant source is the TREE file (swaync-config grew the
+      # placeholder; the earlier module-side synthesis is retired).
       plants = [
         {
           src = "${inputs.swaync-config}/wallust/colors-wallust.css";
@@ -261,14 +253,13 @@ in
     virtualisation.memorySize = 256;
   };
 
-  # T32: the contract text is spliced as a STRING EXPRESSION, never
-  # into a `#` comment — contractHeld is multi-line (header + one line
-  # per site verdict), and only the first spliced line would land
-  # behind a single '#': the rest arrived as bare python and the CI
-  # driver's pylyzer run rejected the whole member (83 diagnostics,
-  # the lib-plane red this round fixed). The string expression carries
-  # the same traceability (the verdicts render into the driver source)
-  # with multi-line safety by construction.
+  # The contract text is spliced as a STRING EXPRESSION, never into a
+  # `#` comment — contractHeld is multi-line (header + one line per
+  # site verdict), and only the first spliced line would land behind
+  # a single '#': the rest would arrive as bare python and the CI
+  # driver's pylyzer run would reject the whole member. The string
+  # expression carries the same traceability (the verdicts render into
+  # the driver source) with multi-line safety by construction.
   testScript = ''
     start_all()
     machine.wait_for_unit("multi-user.target")

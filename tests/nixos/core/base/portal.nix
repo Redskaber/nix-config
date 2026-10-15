@@ -4,7 +4,7 @@
 # @description: tests::nixos::core::base::portal
 # @source: platform/nixos/system/core/base/portal.nix, hosts/vm/shared.nix
 #
-# T7.2 eval-level acceptance of the portal capability gate — the
+# Eval-level acceptance of the portal capability gate — the
 # export-modules.nix pattern (see tests/nixos/core/base/wsl.nix):
 # production modules imported into standalone nixosSystem evaluations,
 # contract checks as plain eval-time asserts in the let.
@@ -18,7 +18,7 @@
 #
 #   console — the REAL vm machine through the customs door (the
 #     emitter's own mkShared construction, same loader/args/hostName
-#     as lib/shared/targets.nix): post-T7.2 the vm is console-shaped
+#     as lib/shared/targets.nix): the vm is console-shaped
 #     (wm/dm none, debt #6) — the portal gate answers that with zero
 #     mediation, the desktop subtraction holds (no hyprland, no DM,
 #     no ly), and the machine's own story survives the flip (btrfs
@@ -58,7 +58,7 @@ let
   # ── console: the REAL vm machine, the emitter's construction ───
   # Same loader, same args, same hostName as lib/shared/targets.nix
   # mkShared — the policy chain (base shared.nix ⊕ hosts/vm/
-  # shared.nix with the T7.2 wm/dm none flip, schema re-validated,
+  # shared.nix with the wm/dm none flip, schema re-validated,
   # runtime IR synthesized) runs here exactly as it does for the
   # flake output; the customs door routes the whole machine (facter
   # data + disko layout + impermanence policy included).

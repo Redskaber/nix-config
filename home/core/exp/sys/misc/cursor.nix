@@ -3,23 +3,9 @@
 # @datetime: 2026-05-10
 # @description: home::core::exp::sys::misc::cursor
 # @directory: https://search.nixos.org/options?channel=25.11&query=home.pointerCursor.&source=home_manager#show=home-manager-option%253Ahome.pointerCursor
-# Cursor-Theme:
+# Cursor themes available in bibata-cursors (Modern/Original ×
+# Amber/Classic/Ice, plus -Right variants) — enumerate with:
 #   ❯ la $(nix-build '<nixpkgs>' --no-out-link -A bibata-cursors)/share/icons/
-# Base:
-#   Bibata-Modern-Amber
-#   Bibata-Modern-Amber-Right
-#   Bibata-Modern-Classic
-#   Bibata-Modern-Classic-Right
-#   Bibata-Modern-Ice
-#   Bibata-Modern-Ice-Right
-#   Bibata-Original-Amber
-#   Bibata-Original-Amber-Right
-#   Bibata-Original-Classic
-#   Bibata-Original-Classic-Right
-#   Bibata-Original-Ice
-#   Bibata-Original-Ice-Right
-#
-# Session-Level
 
 {
   inputs,
@@ -29,9 +15,9 @@
   pkgs,
   ...
 }:
-# T3.2: cursor themes ride X11/GTK/Wayland — darwin owns its own
-# cursor via Aqua; skip the whole module on darwin. (Body under
-# `config = mkIf` — module-position mkIf is illegal.)
+# Cursor themes ride X11/GTK/Wayland — darwin owns its cursor via
+# Aqua; skip the whole module on darwin. (module-position mkIf is
+# illegal: body under `config = mkIf`.)
 {
   config = lib.mkIf shared.caps.linux-family {
 

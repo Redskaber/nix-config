@@ -1,51 +1,35 @@
 # @path: ~/projects/configs/nix-config/hosts/vm/default.nix
 # @author: redskaber
 # @datetime: 2026-10-09
-# @description: hosts::vm — virtual machine host facts (facter T5.12, disk T5.13, persist T5.14)
+# @description: hosts::vm — virtual machine host facts (facter, disk, persist)
 #
-# Eval-level second machine (T2.5): this host exists to prove that one
-# flake evaluates two machines from two different policy files (see
-# hosts/vm/shared.nix). Boot-level validation runs under KVM in the CI
-# vm-tests stage; this sandbox has no /dev/kvm, so acceptance here is
-# evaluation depth (toplevel derivation + policy discriminators verified).
+# Eval-level machine: proves one flake evaluates two machines from
+# two different policy files (hosts/vm/shared.nix). Boot-level
+# validation runs under KVM in the CI vm-tests stage.
 #
 # Machine facts, two data files and one wiring line per source:
 #
-#   ./facter.json (T5.12 — nixos-facter): the hardware shape as a
-#   report — interpreted by the nixpkgs `hardware.facter` module (in
-#   the default module list), wired below. The report drives
-#   everything a report CAN drive —
+#   ./facter.json (nixos-facter): the hardware shape as a report —
+#   interpreted by the nixpkgs `hardware.facter` module, wired below.
+#   The report drives everything a report CAN drive — system →
+#   nixpkgs.hostPlatform (mkDefault); virtualisation → virtio/guest
+#   handling; disk/storage_controller driver_modules → initrd modules;
+#   uefi → boot-loader hints (BIOS guest: none). network_interface is
+#   omitted on purpose: the platform's NetworkManager policy owns
+#   DHCP (the CONTROLLER virtio-net is declared — the driver still
+#   reaches the initrd).
 #
-#     report.system          → nixpkgs.hostPlatform (mkDefault — the
-#                              report is the single source of the
-#                              platform fact)
-#     report.virtualisation  → virtio/guest handling ("kvm": qemu-class
-#                              virtio modules land in the initrd)
-#     disk/storage_controller driver_modules
-#                            → boot.initrd.availableKernelModules
-#     report.uefi           → boot-loader hints (BIOS guest: none)
-#     network_interface     → omitted from the report on purpose: the
-#                              platform's NetworkManager policy owns
-#                              DHCP (platform/nixos/system/core/base/network.nix);
-#                              the CONTROLLER (virtio-net) is declared —
-#                              the driver still reaches the initrd.
-#
-#   ./disk.nix (T5.13 — disko): the disk shape as a layout —
-#   interpreted by the disko module (registered platform-side in
-#   platform/nixos/system/core/base/disk.nix), imported below. The layout
-#   drives fileSystems, and its EF02 partition wires
+#   ./disk.nix (disko): the disk shape as a layout — interpreter
+#   platform-side (platform/nixos/system/core/base/disk.nix), imported
+#   below. Drives fileSystems; its EF02 partition wires
 #   boot.loader.grub.devices (the BIOS-boot story; the loader policy
 #   override rides along in the same file — see its header).
 #
-#   ./persist.nix (T5.14 — impermanence): the state strategy as a
-#   declaration — that the root is ephemeral, and the inventory of
-#   what survives — interpreted by the impermanence module + the
-#   rollback machinery (registered platform-side in
-#   platform/nixos/system/core/base/impermanence.nix), imported below.
-#   Together with the btrfs subvolume layout in ./disk.nix this
-#   makes the guest an ephemeral-root machine: / is archived and
-#   re-created empty on every boot; /persistent, /nix and /boot are
-#   sibling subvolumes and survive.
+#   ./persist.nix (impermanence): the state strategy — that the root
+#   is ephemeral, and the inventory of what survives — interpreter +
+#   rollback machinery platform-side, imported below. Together with
+#   the btrfs subvolume layout in ./disk.nix this makes the guest an
+#   ephemeral-root machine.
 #
 # The real machine (hosts/nixos) migrates the same way ON the machine:
 # `just hardware-facter` for the report; for the disk layout, on the
@@ -56,10 +40,9 @@
 
 {
   imports = [
-    # T5.13 — the disk layout (disko data; interpreter platform-side).
+    # the disk layout (disko data; interpreter platform-side).
     ./disk.nix
-    # T5.14 — the state strategy (impermanence data; interpreter
-    # platform-side).
+    # the state strategy (impermanence data; interpreter platform-side).
     ./persist.nix
   ];
 

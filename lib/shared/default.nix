@@ -5,7 +5,7 @@
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # - shared configurations loader design
 #
-# Layer naming (T5.2, compiler three-stage mirroring):
+# Layer naming (compiler three-stage mirroring):
 #
 #   lib/shared/lang/     language front-end — types, enums, schema,
 #                        constants, validators (no pkgs)
@@ -16,7 +16,7 @@
 #
 # This loader is the driver that threads them together.
 #
-# Host-scoped policy (T2.3 — the scfpath last mile):
+# Host-scoped policy:
 #
 #   base policy (scfpath, default ./../../shared.nix)
 #     └─ hosts/<host>/shared.nix   (optional override layer)
@@ -25,11 +25,10 @@
 #   the base policy's own hostName decides (the default host). Overrides
 #   replace top-level keys WHOLESALE (`//`, shallow) — enum instances are
 #   attrsets, so a recursive merge would corrupt their strategy payloads.
-#   The merged result is re-validated through `shared.schema.shared`,
-#   and `hostName` is force-aligned to the directory actually loaded:
-#   the nixos tree routes hardware via `../hosts/${shared.hostName}`, so
-#   loading hosts/foo/shared.nix while keeping hostName=bar would
-#   silently attach the wrong machine profile.
+#   The merged result is re-validated through `shared.schema.shared`, and
+#   `hostName` is force-aligned to the directory actually loaded: the
+#   nixos tree routes hardware via `../hosts/${shared.hostName}`, so a
+#   mismatched pair would silently attach the wrong machine profile.
 
 {
   self,
@@ -43,9 +42,8 @@
 let
   # Phase 1: language front-end (types/enum/schema/validate — no pkgs).
   # The logical name `shared` is the stable wire protocol every policy
-  # file and module tree speaks; the directory name says what the layer
-  # IS (the configuration language), the binding says what it provides
-  # (the shared contract).
+  # file and module tree speaks; the directory is the language, the
+  # binding is the contract.
   shared = import ./lang { inherit self inputs; };
   base_shared = import scfpath { inherit shared inputs; };
 

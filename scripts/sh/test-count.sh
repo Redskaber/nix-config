@@ -4,7 +4,7 @@
 # @datetime: 2026-10-08
 # @description: scripts::sh::test-count — local quick counter for test counts
 #
-# T8.1: the machine-enforced authority is now tests/docs-ssot.nix (a
+# The machine-enforced authority is now tests/docs-ssot.nix (a
 # checks member — README/test-matrix count anchors asserted against
 # live evaluation at build time, red CI on drift). This script stays
 # as the zero-eval local quick lookup for humans; its output must

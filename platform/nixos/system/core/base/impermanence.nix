@@ -1,103 +1,61 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/system/core/base/impermanence.nix
 # @author: redskaber
 # @datetime: 2026-10-09
-# @description: platform::nixos::core::base::impermanence — the ephemeral-root interpreter registration (T5.14)
+# @description: platform::nixos::core::base::impermanence — the ephemeral-root interpreter registration
 #
-# THE CAPABILITY, NOT THE DATA. This file does two things and nothing
-# else:
+# THE CAPABILITY, NOT THE DATA. This file registers impermanence's
+# NixOS module for every nixos host, and when a host declares
+# `redskaber.impermanence.ephemeral-root.enable = true` DERIVES the
+# btrfs subvolume-rollback recipe from the facts the layout already
+# declares — no restatement, no hand-copied script.
 #
-#   1. registers impermanence's NixOS module for every nixos host —
-#      the environment.persistence option surface (the inventory of
-#      what survives), inert on hosts that declare nothing;
-#   2. when a host declares `redskaber.impermanence.ephemeral-root
-#      .enable = true`, DERIVES the btrfs subvolume-rollback recipe
-#      from the facts the layout already declares — no restatement,
-#      no hand-copied script.
+#   hosts/<h>/persist.nix   the DATA — the state strategy: that the
+#                           root is ephemeral + the inventory of what
+#                           survives (environment.persistence).
+#   hosts/<h>/disk.nix      the DATA — the btrfs subvolume layout.
+#   THIS file               the INTERPRETER — reads the root's derived
+#                           mount facts (disko's _config output or
+#                           hand-written fileSystems), generates the
+#                           rollback script, enforces the contracts.
 #
-# The third fact pair of the hosts/ data doctrine (facter T5.12,
-# disko T5.13, impermanence T5.14):
+# The recipe is the upstream canonical one (impermanence README.org,
+# "BTRFS subvolumes") with the device/subvol/retention interpolated
+# from DECLARED facts, and the top-level view mounted `-o subvol=/`
+# (the pinned disko's own convention — stays correct even if a
+# default subvolume were ever set).
 #
-#   hosts/<h>/persist.nix     the DATA — the state strategy: that the
-#                             root is ephemeral, and the inventory of
-#                             what survives (environment.persistence).
-#   hosts/<h>/disk.nix        the DATA — the btrfs subvolume layout
-#                             (which subvol mounts where).
-#   THIS file                 the INTERPRETER — connects the two:
-#                             reads the ROOT's derived mount facts
-#                             (device, fsType, subvol — disko's
-#                             _config output, or hand-written
-#                             fileSystems), generates the rollback
-#                             script, and enforces the contracts.
-#
-# The recipe is the upstream canonical one — impermanence's own
-# README.org, "BTRFS subvolumes" section — with exactly two
-# mechanical adaptations, both cited in place:
-#   - the device/subvol/retention are interpolated from DECLARED
-#     facts instead of hardcoded (this is what makes it an
-#     interpreter instead of a snippet);
-#   - the top-level view is mounted with `-o subvol=/` (the pinned
-#     disko's own convention in its _create script), which stays
-#     correct even if a default subvolume were ever set.
-#
-# TWO INTRD MODES, ONE RECIPE. The platform boots systemd stage 1
-# (boot.nix: boot.initrd.systemd.enable = true — the fleet default),
-# where `boot.initrd.postResumeCommands` does not exist (eval-time
-# assertion in nixos' systemd/initrd.nix — the T5.14 verification
-# battery hit exactly that). The recipe therefore lands as an initrd
-# systemd oneshot, ordered before sysroot.mount and gated on the
-# root device unit (the systemd-repart precedent for initrd services
-# that must wait for a device). The classic-initrd branch keeps the
-# upstream hook: postResumeCommands run before the fsInfo-driven
-# mount loop (verified against the locked 26.05 stage-1-init.sh —
-# the recipe must archive/re-create the root subvol before "/" is
-# mounted on it). The mode dispatch is the interpreter's own concern
-# over a DECLARED mode option — the nixpkgs task-module idiom
-# (nixos/modules/tasks/filesystems/btrfs.nix branches the same way),
-# not a host-layer conditional.
-#
-# btrfs-progs availability is NOT a hand-wired concern in either
-# mode: nixos/modules/tasks/filesystems/btrfs.nix auto-derives from
-# fileSystems fsTypes (root=persistent=nix=boot on btrfs ⇒ btrfs ∈
-# boot.initrd.supportedFilesystems ⇒ classic: copied into
-# extraUtils; systemd: initrdBin — which also carries coreutils and
-# util-linux mount, verified against the locked tree).
+# TWO INITRD MODES, ONE RECIPE. The platform boots systemd stage 1
+# (the fleet default), where boot.initrd.postResumeCommands does
+# not exist — the recipe lands as an initrd systemd oneshot,
+# ordered before sysroot.mount and gated on the root device unit;
+# the classic-initrd branch keeps the upstream hook
+# (postResumeCommands run before the fsInfo-driven mount loop).
+# btrfs-progs availability is auto-derived by nixpkgs from
+# fileSystems fsTypes — not a hand-wired concern in either mode.
 #
 # Boot chain integrity (the trap this design exists to avoid): /boot
 # must NOT live on the ephemeral subvol or the second boot finds an
-# empty /boot. The vm layout gives the boot chain its own persistent
-# subvol (see hosts/vm/disk.nix). GRUB addresses btrfs paths from
-# the top-level view, where a top-level subvol is a directory —
-# /boot/grub resolves to the boot subvol's contents.
+# empty /boot — the vm layout gives the boot chain its own persistent
+# subvol (see hosts/vm/disk.nix).
 #
 # Why the contracts live HERE and not in the data: upstream
-# impermanence already asserts that every persistence path is
-# neededForBoot; this interpreter SATISFIES that contract by
-# deriving it (mkDefault — an explicit host override still wins),
-# and adds the one assertion upstream is deliberately lenient
-# about: in this tree every mount is a DECLARED layout fact, so a
-# persistence path with no fileSystems entry is a layout gap and
-# fails loudly here.
+# impermanence already asserts every persistence path is
+# neededForBoot — this interpreter SATISFIES that by derivation
+# (mkDefault — an explicit host override still wins) and adds the
+# one assertion upstream is lenient about: a persistence path with
+# no fileSystems entry is a layout gap and fails loudly.
 #
-# The preservation verdict (recorded per the knowledge-search
-# protocol): nix-community/preservation — impermanence's
-# nixpkgs-track successor (nixpkgs#265640, "interpreter-less"
-# state management) — was evaluated for T5.14 and NOT chosen:
-# neither module is in the locked nixos-26.05 tree, so the T5.12
-# zero-input precedent cannot apply yet, and the experiment
-# deliberately rides the most battle-tested persistence module
-# (impermanence: the canonical btrfs recipe is its own README).
-# When preservation lands in a future nixpkgs, the migration is
-# the T5.12 precedent verbatim: drop this input, swap the
-# declaration surface in hosts/<h>/persist.nix — the inventory
-# data and this rollback machinery are unaffected (they belong
-# to the layout layer, not the persistence-module layer).
+# preservation (impermanence's nixpkgs-track successor,
+# "interpreter-less" state management) was evaluated and NOT chosen:
+# neither module is in the locked nixos-26.05 tree. When preservation
+# lands in a future nixpkgs, the migration is — drop this input,
+# swap the declaration surface in hosts/<h>/persist.nix; the
+# inventory data and this rollback machinery are unaffected (they
+# belong to the layout layer, not the persistence-module layer).
 #
 # No declaration, no effect: a host without persist.nix sees only
 # inert options (enable defaults to false; environment.persistence
-# stays empty). Verified in T5.14: the nixos host's config probes
-# are bit-for-bit unchanged by this import; its toplevel drift
-# traces to the flake self tree hash + lock node, the established
-# funnel (T5.13).
+# stays empty).
 
 {
   inputs,

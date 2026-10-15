@@ -4,9 +4,8 @@
 # @description: tests::lib::shared::lang::caps
 # @source: lib/shared/lang/enum.nix (platform dispatch table)
 #
-# T4.0 (dispatch-layer convergence): the platform enum is now a
-# capability table — THE distribution layer for platform semantics.
-# This contract test locks the table itself:
+# The platform enum is a capability table — THE distribution layer
+# for platform semantics. This contract test locks the table itself:
 #
 #   1. exhaustivity — every platform row answers every capability
 #      dimension (adding a dimension forces every row to answer it,
@@ -17,7 +16,7 @@
 #      applied to marker scopes so selections are asserted by VALUE
 #   4. window-manager capability bits (desktop-session) — the
 #      Null-Object row must stay the only false one
-#   5. shell integration payload rows (T4.1) — every variant answers
+#   5. shell integration payload rows — every variant answers
 #      all three HM integration bits; the payload table replaced the
 #      runtime layer's three `.tag ==` comparisons
 #
@@ -140,7 +139,7 @@ let
     assert realEnum.window-manager.niri.value.desktop-session;
     assert realEnum.window-manager.gnome.value.desktop-session;
     assert !realEnum.window-manager.none.value.desktop-session;
-    # 5. shell integration rows (T4.1): every variant answers all three
+    # 5. shell integration rows: every variant answers all three
     #    bits — exhaustive by construction, like the caps vectors. The
     #    runtime layer publishes these verbatim as shellIntegrations.
     assert builtins.all

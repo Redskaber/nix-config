@@ -1,34 +1,32 @@
 # @path: ~/projects/configs/nix-config/tests/lib/shared/deploy.nix
 # @author: redskaber
 # @datetime: 2026-10-11
-# @description: tests::lib::shared::deploy — the deploy-face census (T21.1)
+# @description: tests::lib::shared::deploy — the deploy-face census
 # @source: lib/shared/targets.nix (the colmena emitter) × hosts/ (deploy facts)
 #
-# T20.1 shipped the fourth emitter (colmenaHive) with its census law
-# verified by static simulation only — this test locks the properties
-# the simulation argued, against the REAL tree, through the SAME
-# lenses the emitter reads (the T19.1 construction discipline):
+# The census laws, locked against the REAL tree, through the SAME
+# lenses the emitter reads:
 #
 #   Law D (no lying deploy facts) — a deploy.nix on a host outside the
 #       classifier's nixosHosts is a lying file: colmena deploys the
 #       nixosHosts only (darwin keeps darwin-rebuild, standalone
 #       home-only hosts keep home-switch), so the loader throws at
 #       eval instead of silently ignoring dead data. The census fires
-#       on file presence, imported or not — same family as T19.1's
+#       on file presence, imported or not — same family as the
 #       fact-source laws (a fact source nobody consumes is dead
 #       data; a deploy fact nobody can deploy is the same lie).
 #   Emission coverage — colmenaHive's node set IS the classifier's
 #       nixosHosts, both directions: every NixOS host joined the
 #       deploy face by construction (inventory-driven, zero hardcoded
-#       member tables — the T18.1 convention), and nothing else snuck
-#       into the hive. A drift here means someone hand-wrote a node.
+#       member tables), and nothing else snuck into the hive. A drift
+#       here means someone hand-wrote a node.
 #   The user door — every nixosHost's targetUser derives from its
 #       policy (user.username): empty or "root" is a dead door. ssh.nix
 #       pins PasswordAuthentication=false and PermitRootLogin="no",
 #       so colmena's stock targetUser "root" cannot log in — the
 #       policy user is the only way in.
 #
-# Construction discipline (the wsl.nix/T19.1 precedent): policy
+# Construction discipline (the wsl.nix precedent): policy
 # handles are built exactly like targets.nix mkShared — same loader,
 # same args, same hostName — and the emitter is imported the way
 # faces.nix imports it. colmenaHive.nodes is forced ONLY through
@@ -55,7 +53,7 @@
 let
   # ── the REAL host policies, the classifier's own construction ──────
   # (lazy attrs: forcing only .caps/.user keeps the unforced channels
-  # free — the same discipline the T19.1 census follows)
+  # free — the same discipline the fact-source census follows)
   hostShared =
     h:
     import ../../../lib/shared {

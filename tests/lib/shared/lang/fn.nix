@@ -4,15 +4,15 @@
 # @description: tests::lib::shared::lang::fn
 # @source: lib/shared/lang/fn.nix
 #
-# T1.1 (test-truthfulness): asserts run against the REAL production
-# sources — lib/shared/lang/{enum,const,fn}.nix are imported and
+# Asserts run against the REAL production sources —
+# lib/shared/lang/{enum,const,fn}.nix are imported and
 # evaluated at CHECK-BUILD time. If any production function regresses,
 # evaluation fails before a VM ever boots.
 #
-# T4.0 (dispatch-layer convergence): the isNixOS/isLinux/isMacOS/isWSL
+# The isNixOS/isLinux/isMacOS/isWSL
 # tag-comparison predicates are GONE from fn.nix — platform semantics
-# live in the enum.nix dispatch table now, and this test asserts the
-# new contract instead of the old predicates:
+# live in the enum.nix dispatch table, and this test asserts that
+# contract instead of the old predicates:
 #
 #   - fn.homeDir: pure interpolation over the platform table's
 #     home-prefix payload (no branching to mutate into a lie)
@@ -37,7 +37,7 @@ let
 
   dg = realEnum.drive-group.amd-nvidia;
 
-  # Marker scopes for the sameSource guard (T2.6): distinct
+  # Marker scopes for the sameSource guard: distinct
   # lib.trivial.version fingerprints stand in for stable/unstable.
   stableScope = {
     lib.trivial.version = "26.05";

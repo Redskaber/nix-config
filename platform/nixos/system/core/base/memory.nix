@@ -12,7 +12,6 @@
   ...
 }:
 {
-  # zram
   zramSwap = {
     enable = true;
     priority = 100;
@@ -21,8 +20,7 @@
     algorithm = "zstd";
   };
 
-  # battery
-  # T7.1: bare-metal defaults — mkDefault, because specialized system
+  # Bare-metal defaults — mkDefault, because specialized system
   # forms legitimately subtract them (the NixOS-WSL interpreter
   # plain-assigns powerManagement.enable = false: no batteries, no
   # suspend under the WSL kernel interface).

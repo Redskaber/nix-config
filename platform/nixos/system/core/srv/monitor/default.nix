@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/system/core/srv/monitor/default.nix
 # @author: redskaber
 # @datetime: 2026-10-08
-# @description: platform::nixos::core::srv::monitor — observability plane (T3.4)
+# @description: platform::nixos::core::srv::monitor — observability plane
 # @directory: https://search.nixos.org/options?channel=unstable&query=prometheus
 #
 # Metrics pipeline, strategy-driven like everything else in this tree:
@@ -19,8 +19,8 @@
 #                  ▼
 #     loki (logs) ─┬─ grafana (dashboards)  [full-autostart profile]
 #
-# Acceptance (T3.4): a broken service is observable within 60s —
-# the healthcheck timers in healthcheck.nix run on a 30s cadence
+# Acceptance: a broken service is observable within 60s — the
+# healthcheck timers in healthcheck.nix run on a 30s cadence
 # (30s interval + probe runtime < 60s worst case), and exporters
 # surface resource-level signals on the same window.
 

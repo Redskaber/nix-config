@@ -44,7 +44,7 @@
 
   # Control autostart: clear wantedBy when autostart=false (install but
   # not autostart) — gated at the option level so no phantom unit is
-  # registered on hosts that do not install redis (T2.5 dividend).
+  # registered on hosts that do not install redis.
   systemd.services = lib.mkIf shared.services.db.redis.install {
     "redis-${shared.user.username}".wantedBy = lib.mkForce (
       lib.optional shared.services.db.redis.autostart "multi-user.target"

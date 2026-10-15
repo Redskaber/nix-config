@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/tests/lib/shared/lang/version.nix
 # @author: redskaber
 # @datetime: 2026-10-12
-# @description: tests::lib::shared::lang::version — the nix-types version contract (T25.2)
+# @description: tests::lib::shared::lang::version — the nix-types version contract
 # @source: flake.nix (the pinned input) × inputs.nix-types.lib (the consumed library)
 #
 # The lock answers WHERE, this battery answers WHAT (nix-types
@@ -19,10 +19,8 @@
 #     (upstream changed identity — the deliberate-decision moment)
 #   - bump the version without the pin → same red, opposite direction
 #     (a phantom expectation nothing serves)
-# Before this contract, a stale pin failed three layers downstream as
-# "attribute 'version' missing" — T25.1's lock still carried the
-# 815fc3f (pre-identity) nix-types, and the probe failed exactly that
-# way. The one-line red is the whole point.
+# Without this contract a stale pin fails three layers downstream as
+# "attribute 'version' missing" — the one-line red is the whole point.
 #
 # Construction discipline (the fn.nix shape): the assertion runs at
 # CHECK-BUILD time against the REAL flake input — the same

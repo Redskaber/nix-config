@@ -1,7 +1,7 @@
 # ==============================================================================
 # scripts/just/disk.just
 # Responsibility: disk layout application + state-strategy inspection
-#                 (disko T5.13, impermanence T5.14)
+#                 (disko, impermanence)
 #
 # A host's disk layout lives in hosts/<hostname>/disk.nix as DATA —
 # interpreted by the disko module (registered platform-side in

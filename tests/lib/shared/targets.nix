@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/tests/lib/shared/targets.nix
 # @author: redskaber
 # @datetime: 2026-10-12
-# @description: tests::lib::shared::targets — the fact-source census (T19.1)
+# @description: tests::lib::shared::targets — the fact-source census
 # @source: lib/shared/targets.nix (host classification) × hosts/ (machine facts)
 #
 # Every host's hardware facts must be declared in EXACTLY the shape its
@@ -26,7 +26,7 @@
 # built exactly like targets.nix mkShared — same loader, same args, same
 # hostName — so the census reads the SAME caps the classifier reads;
 # hosts/ is enumerated the same way the inventory frontend enumerates
-# it. File presence IS the declaration (the T5.12 data-and-interpreter
+# it. File presence IS the declaration (the data-and-interpreter
 # split taken to its conclusion): a fact source that exists but is not
 # wired is still counted — that is the point.
 #

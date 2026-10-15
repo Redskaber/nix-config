@@ -45,8 +45,25 @@ nix store ping --store https://redskaber-nix-config.cachix.org
 # 缓存为空时 narinfo 404 是无害空操作，nix 自然回退 cache.nixos.org
 ```
 
+**形式三：flake 自带 nixConfig**（本仓 checkout 的消费者，零配置）
+
+flake.nix 声明 `extra-substituters` + `extra-trusted-public-keys`——任何从
+本仓 build/eval 的机器自动获得该缓存（首次会提示 accept-flake-config，
+或机器信任配置跳过）。`extra-` 语义：追加到机器默认 substituters 之后
+（不在前面抢占），只补官方没有的路径——与本缓存 priority 41 的定位一致。
+
+```bash
+nix build .#checks.x86_64-linux.module-reachability-check --no-link
+# 首次运行问 "Extra substituters... accept?" → y（或 nix config set
+# accept-flake-config true 预授权）
+```
+
 拉取**不需要** auth token——公开缓存零鉴权。这也是 CI 侧 PULL
 无条件 ×11 腿成立的原因（见 pipeline.md 第 16 轮）。
+
+**darwin 主机运行时注意**：darwin-rebuild 用的是 /etc/nix/nix.conf，
+flake nixConfig 不落盘——形式一/二任选其一落到机器；平台侧 darwin
+nix settings 模块属 roadmap 项（涉真实主机运行时语义，留 owner 决策）。
 
 ## 推送（owner 侧动词，需 token）
 
@@ -104,9 +121,11 @@ CI 侧 host-toplevels 与 darwin-toplevels 两条腿都会自动推（owner 设
 
 ## 边界与原则
 
-- **分发逻辑归位分发层**：substituters 属于 runner / 机器的 nix.conf，
-  绝不进 Nix 配置——flake、lib、hosts 对缓存的存在零感知。本仓 CI 腿
-  的 extra-conf 与本文的手动 nix.conf 是同一原则的两个落点。
+- **分发逻辑归位分发层**：substituters 属于机器的 nix.conf（NixOS 主机
+  由 platform/nixos/system/core/base/nix.nix 生成）、runner 的 extra-conf、
+  或 flake 的 nixConfig 元数据（声明式缓存广告，追加式、非构建依赖）。
+  构建永不依赖缓存的存在——outputs、lib、hosts 的求值对缓存零感知，
+  缓存缺失时一切照常从官方源构建。
 - **配额诚实账**：闭包约 1–1.5 GB ZSTD/代，锁周更 → 5 GB 免费层约
   3–4 代满。满了在 cachix.org 面板清老代；规模化出口（attic 自建 /
   harmonia 复用 kilig-nixos 零边际）见 pipeline.md 第 16 轮裁决。

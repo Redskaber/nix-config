@@ -4,11 +4,10 @@
 # @description: tests::lib::shared::lang::enum
 # @source: lib/shared/lang/enum.nix
 #
-# T1.1 (test-truthfulness): asserts run against the REAL production
-# enum.nix (imported, with the locked nix-types input). Enum semantics
-# asserted on actual instances — previously this file asserted Nix
-# language basics against inline copies, which could never catch a
-# regression in lib/shared/lang/enum.nix.
+# Asserts run against the REAL production enum.nix (imported, with
+# the locked nix-types input) — enum semantics asserted on actual
+# instances, not inline copies, so a regression in
+# lib/shared/lang/enum.nix cannot hide.
 #
 # Covered (real code paths):
 #   - single-select enums carry distinct tags (platform/arch/shell/editor)
@@ -53,7 +52,7 @@ let
     # collection sets used by multi-select routing
     assert builtins.isList realEnum.editor-set.dev.editors;
     assert builtins.length realEnum.editor-set.dev.editors == 6;
-    # T5.10 app-set: the category-tree weight axis. The full row IS
+    # app-set: the category-tree weight axis. The full row IS
     # the canonical import order — module merge order feeds
     # home.packages concat order, and the byte-identity of the full
     # host's home closure pins to this exact list. Reordering it

@@ -16,17 +16,17 @@ concurrency:
 #
 #   STAGE 1: lint          — static analysis (statix/nixfmt/deadnix) + shallow eval
 #   STAGE 2: deep-eval     — facet forcing: api envelope, host
-#                toplevels, misc checks + completeness audit (T15.1)
+#                toplevels, misc checks + completeness audit
 #   STAGE 3: nmt-plane     — HM dotfile assertions (pure Nix eval, no KVM)
-#   STAGE 4: devshells     — devShell dry-run, face attrNames (T18.1)
+#   STAGE 4: devshells     — devShell dry-run, face attrNames
 #   STAGE 4.5: output-faces — drvPath-force the faces deep-eval alone
-#                would cover only path-dependently (T11.1, no KVM)
+#                would cover only path-dependently (no KVM)
 #   STAGE 5: security      — SOPS secret integrity audit + supply-chain
 #                pinning contract (every action ref must be a 40-hex SHA)
 #   STAGE 6: vm-tests      — NixOS/HM/Lib/Integration QEMU tests (KVM)
-#   STAGE 6.5: host-toplevels — system closure builds (T8.2, no KVM)
+#   STAGE 6.5: host-toplevels — system closure builds (no KVM)
 #   STAGE 6.6: darwin-toplevels — native aarch64-darwin closure
-#                builds on a macos runner (T8.3, no cross toolchain)
+#                builds on a macos runner (no cross toolchain)
 #   STAGE 7: summary       — aggregate result report (gates ALL stages)
 #
 # Deep evaluation (STAGE 2):
@@ -37,19 +37,16 @@ concurrency:
 #   blobs): lib/shared/shared/validate.nix tolerates a zero-blob tree at
 #   eval with a trace and leaves the hard failure to sops activation,
 #   where it belongs; once ANY blob exists the check is strict again
-#   (declared-but-not-provided dies at eval). What deep eval ACTUALLY
-#   caught when first wired: git-hooks.nix had removed the
-#   nixfmt-rfc-style hook alias AND changed `run` to return a derivation
-#   directly, so the old `//` merge dropped pre-commit-check from checks
-#   entirely while shallow attrNames eval stayed green. Deep eval is now
-#   a hard gate.
+#   (declared-but-not-provided dies at eval). Deep eval has caught real
+#   regressions that shallow attrNames eval stayed green through — it
+#   is a hard gate.
 #
 # KVM note:
 #   QEMU VM tests (Plane 1–4) require /dev/kvm. GitHub-hosted ubuntu-latest
 #   runners provide KVM via nested virtualisation. nmt-Plane (Plane 5) is
 #   pure Nix eval — no QEMU, no KVM.
 #
-# Cache axis (P0, round 16 — the owner-side verb landed):
+# Cache axis (P0):
 #   The public Cachix cache redskaber-nix-config is live (ZSTD, priority
 #   41, public key pinned below in every leg). Two wiring halves, both
 #   CI-layer concerns — the distributer belongs in the distribution
@@ -61,15 +58,14 @@ concurrency:
 #     the path — the 5 GB free tier therefore serves ONLY the gap Hydra
 #     cannot: the lock pins the nixos-26.05 moving-branch HEAD, which
 #     runs AHEAD of Hydra's binary availability. That gap is exactly
-#     the 90-minute source-build tail that killed runs 38085235502 and
-#     38385434464 (13/14 jobs green; host-toplevels cancelled by its own
-#     bound; one timeout leaves the closure uncached and the next run
-#     cold again — the vicious cycle this wiring breaks).
+#     the 90-minute source-build tail that can kill a run before any
+#     push could exist (one timeout leaves the closure uncached and the
+#     next run cold again — the vicious cycle this wiring breaks).
 #     PUSH is opt-in with the cache-attic.yml discipline: INERT until
 #     the repository owner sets secret.CACHIX_AUTH_TOKEN (one secret,
 #     no vars — the cache name and public key are public facts, pinned
-#     like cache.nixos.org's identity). Round-17 correction on WHERE
-#     the guard lives: secrets are invisible to if: expressions
+#     like cache.nixos.org's identity). Guard placement: secrets are
+#     invisible to if: expressions
 #     (available contexts there: env/github/inputs/job/matrix/needs/
 #     runner/steps/strategy/vars — GitHub's validator rejects a
 #     secrets.* reference as "Unrecognized named-value"), so the
@@ -83,7 +79,7 @@ concurrency:
 #     generation; once the cache holds a full generation, the
 #     substituter collapses the rebuild into substitution and the
 #     bound can be revisited. MNC stays (it carries the intra-run eval
-#     legs) — its 418 rate-limit history (T12.1) and 10 GB / 7-day
+#     legs) — its 418 rate-limit history and 10 GB / 7-day
 #     eviction stay noted; this cache is the persistent layer MNC
 #     structurally cannot be. Quota honesty: ~1–1.5 GB ZSTD per lock
 #     generation, weekly bumps → the free tier holds ~3–4 generations;
@@ -104,24 +100,19 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication, closes
-          # the open item from the 38085235502 record): install.determinate.
-          # system's /stable resolved dynamically and could hand out
-          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
-          # are unknown to the locked-nixpkgs upstream Nix — every call
-          # warned. Verified on a live runner: with this env the installer
-          # plans distribution=Nix with the standard nix.conf (no fork
-          # settings, no determinate-nixd). The extra-args input is dead
-          # code in action v13 (args.concat result is dropped), so the env
-          # route is the only working one.
+          # Toolchain identity pinned: install.determinate.system's
+          # /stable resolves dynamically and can hand out Determinate's
+          # Nix fork, whose settings are unknown to the locked-nixpkgs
+          # upstream Nix. With this env the installer plans
+          # distribution=Nix with the standard nix.conf. The extra-args
+          # input is dead code in action v13 (args.concat result is
+          # dropped), so the env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
-          # R27 hardening (run 38638140684): the installer-binary download
-          # from cf.install.determinate.systems timed out twice on that run
-          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
-          # flake, not code). Pin the download to GitHub's own release CDN
-          # instead (same origin as the checkout itself; keep in sync with
-          # https://github.com/DeterminateSystems/nix-installer/releases).
+          # Installer-binary download pinned to GitHub's own release CDN
+          # (cf.install.determinate.systems proved flaky on runner
+          # networks). Keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases.
           source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -132,16 +123,14 @@ jobs:
             # Hydra gap.
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
-          # ships, closing the identity drift for good.
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
         with:
-          # Run 38085235502 paid 79 "Unable to authenticate to FlakeHub"
-          # annotations: use-flakehub defaults to true and this repo has no
-          # FlakeHub registration, so every run bought failed-auth noise.
+          # No FlakeHub registration in this repo — opt out of the
+          # failed-auth annotations use-flakehub defaults to.
           use-flakehub: false
 
       - name: Verify formatter evaluates
@@ -176,30 +165,29 @@ jobs:
           echo "Total checks: $COUNT (system: $SYS)"
           [ "$COUNT" -gt 0 ] || { echo "ERROR: checks is empty" >&2; exit 1; }
 
-          # Print plane breakdown (T7.3: read the planes face of the
-          # test matrix — the partition SSOT — instead of re-deriving
-          # membership from name prefixes)
+          # Print plane breakdown: read the planes face of the test
+          # matrix — the partition SSOT — instead of re-deriving
+          # membership from name prefixes
           nix eval .#api.checks.planes \
             --apply 'p: builtins.mapAttrs (_: v: builtins.length (builtins.attrNames v)) p' \
             --json | python3 -m json.tool
 
-      # Static analysis (Nix anti-patterns). T9.1: statix from the LOCKED
+      # Static analysis (Nix anti-patterns). statix from the LOCKED
       # nixpkgs — the same revision the flake pins and its own
       # pre-commit-check builds against. A registry ref resolves to
       # nixpkgs-unstable on the runner and drifts mid-pipeline: the same
       # run could disagree with the flake's own hooks. Same shape as the
-      # T7.3 nix-fast-build legs (store-path flake ref, zero registry).
+      # nix-fast-build legs (store-path flake ref, zero registry).
       - name: statix lint
         run: |
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
           nix run "$PKGS#statix" -- check .
 
       # Formatting drift gate (same formatter the flake exports).
-      # T9.1: locked-nixpkgs nixfmt — registry ref retired (statix note).
-      # SC2046 repayment: the file list rides a mapfile'd array and
-      # "${FILES[@]}" — one argument per file, zero word splitting;
-      # a future path name containing spaces survives intact (the
-      # unquoted $(git ls-files …) form was shellcheck-gated debt).
+      # locked-nixpkgs nixfmt. The file list rides a mapfile'd array
+      # and "${FILES[@]}" — one argument per file, zero word
+      # splitting; a future path name containing spaces survives
+      # intact.
       - name: nixfmt check
         run: |
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
@@ -209,9 +197,9 @@ jobs:
       # Dead-code gate — mirrors the pre-commit hook settings: the tree
       # standardises on uniform module heads ({ inputs, shared, lib,
       # config, pkgs, ... }) and overlay pairs (final: prev:), so unused
-      # lambda names/patterns are exempted; dead `let` bindings still fail.
-      # T9.1: locked-nixpkgs deadnix (statix note). SC2046 repayment:
-      # mapfile'd array + "${FILES[@]}" — see the nixfmt step note.
+      # lambda names/patterns are exempted; dead `let` bindings still
+      # fail. locked-nixpkgs deadnix; mapfile'd array + "${FILES[@]}" —
+      # see the nixfmt step note.
       - name: deadnix check
         run: |
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
@@ -225,7 +213,7 @@ jobs:
       - name: Build pre-commit-check derivation
         run: nix build .#checks.x86_64-linux.pre-commit-check --no-link
 
-      # T8.1: the docs-SSOT contract — same plane-less situation as
+      # The docs-SSOT contract — same plane-less situation as
       # pre-commit-check (deep-eval only EVALUATES it; the anchor
       # assertions fire at build time), so it is built here, right
       # next to its sibling repo-hygiene gate. A count that drifts in
@@ -233,7 +221,7 @@ jobs:
       - name: Build docs-ssot-check derivation (T8.1)
         run: nix build .#checks.x86_64-linux.docs-ssot-check --no-link
 
-      # T32: the third repo-hygiene gate — python-compiles every
+      # The third repo-hygiene gate — python-compiles every
       # composed testScript (eval-time direct module calls, build-
       # time compile()). The CI driver's pylyzer run is the
       # authoritative parser, but it sits behind the whole VM
@@ -243,43 +231,36 @@ jobs:
       - name: Build testscript-syntax-check derivation (T32)
         run: nix build .#checks.x86_64-linux.testscript-syntax-check --no-link
 
-      # T41: the fourth repo-hygiene gate — module-tree reachability
+      # The fourth repo-hygiene gate — module-tree reachability
       # (the directory side of the ledger): every module dir under
       # home/ + platform/ must be reachable from the flake's evaluated
       # faces (7 graph roots + the devShells domain root; static and
       # dynamic ./${...} edge extraction with comment stripping;
       # a self-healing exemption ledger). Dead code that SHOULD be
-      # wired is invisible to every other gate — round 19's srv/cache
-      # was exactly this class, and this gate's own first scan caught
-      # exp/sys/re dangling since 9440679. Same gating shape as the
-      # siblings: constructs at eval, asserts at build.
+      # wired is invisible to every other gate. Same gating shape as
+      # the siblings: constructs at eval, asserts at build.
       - name: Build module-reachability-check derivation (T41)
         run: nix build .#checks.x86_64-linux.module-reachability-check --no-link
 
-      # T46: the fifth repo-hygiene gate — the platform tree-shape
+      # The fifth repo-hygiene gate — the platform tree-shape
       # layer: a pure readDir walk of platform/ asserting the v4
       # grammar (tag dirs only; only system/+home/ domains, at least
       # one; default.nix doors; module-dir-only payloads — bare .nix
       # at domain level is the arch-line corpse class, door-less dirs
-      # are invisible to every gate). The 82 v3 corpses of run #369
-      # were all this class: reachability caught them via the graph
-      # walk, shape rejects the address space outright, at zero
-      # evaluation cost. Same gating shape as the siblings.
+      # are invisible to every gate). Shape rejects the address space
+      # outright, at zero evaluation cost. Same gating shape as the
+      # siblings.
       - name: Build platform-grammar-check derivation (T46)
         run: nix build .#checks.x86_64-linux.platform-grammar-check --no-link
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 2: Deep evaluation — facet forcing (T15.1)
+  # STAGE 2: Deep evaluation — facet forcing
   # ─────────────────────────────────────────────────────────────
   # The former `nix flake check --no-build` single-process walk was
-  # retired on evidence. It evaluates all 98 checks in ONE process,
-  # accumulating live evaluation state monotonically — the local 4GB
-  # sandbox OOMs at the 9th derivation (measured, anon-rss ~2GB and
-  # climbing), a 7GB runner sits at the cliff edge and crawls: run
-  # #338 hit the 90-min timeout mid-walk; the first 120-min-window
-  # run was STILL evaluating at 49min+ (same tree). Meanwhile the
-  # output-faces leg — same cold store, same inputs, same day —
-  # finishes in 1m52s because every member is a short-lived process.
+  # retired on evidence: it evaluates all checks in ONE process with
+  # monotonically accumulating live state — a 4GB sandbox OOMs, a 7GB
+  # runner crawls at the cliff edge — while per-member short-lived
+  # processes finish in minutes.
   # Facet forcing keeps the deep-eval CONTRACT (evaluation-level
   # proof for every flake output face) but distributes it across
   # short-lived processes (measured peak RSS ~1GB for the heaviest
@@ -289,7 +270,7 @@ jobs:
   #                          host-toplevels BUILD leg gates on)
   #   misc checks (2)      — this leg; the planes own the other 94
   #                          (vm-tests BUILDS them — stronger)
-  #   packages/home/darwin — output-faces leg (T11.1)
+  #   packages/home/darwin — output-faces leg
   #   devShells            — evaluate-devshells leg
   #   formatter            — lint leg (pinned nixfmt, and runs it)
   # The completeness audit (face 4) replaces flake check's implicit
@@ -300,7 +281,7 @@ jobs:
     name: Deep Evaluation (facet forcing)
     runs-on: ubuntu-latest
     needs: lint
-    # 45 min (T15.1): one short-lived process per face member. Cold-path
+    # 45 min: one short-lived process per face member. Cold-path
     # input materialisation happens once for the NixOS-side set (the
     # toplevel forcings pull most of it); the audit faces are
     # shape-level evals (attrNames — no member thunk forcing) and
@@ -313,24 +294,19 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication, closes
-          # the open item from the 38085235502 record): install.determinate.
-          # system's /stable resolved dynamically and could hand out
-          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
-          # are unknown to the locked-nixpkgs upstream Nix — every call
-          # warned. Verified on a live runner: with this env the installer
-          # plans distribution=Nix with the standard nix.conf (no fork
-          # settings, no determinate-nixd). The extra-args input is dead
-          # code in action v13 (args.concat result is dropped), so the env
-          # route is the only working one.
+          # Toolchain identity pinned: install.determinate.system's
+          # /stable resolves dynamically and can hand out Determinate's
+          # Nix fork, whose settings are unknown to the locked-nixpkgs
+          # upstream Nix. With this env the installer plans
+          # distribution=Nix with the standard nix.conf. The extra-args
+          # input is dead code in action v13 (args.concat result is
+          # dropped), so the env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
-          # R27 hardening (run 38638140684): the installer-binary download
-          # from cf.install.determinate.systems timed out twice on that run
-          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
-          # flake, not code). Pin the download to GitHub's own release CDN
-          # instead (same origin as the checkout itself; keep in sync with
-          # https://github.com/DeterminateSystems/nix-installer/releases).
+          # Installer-binary download pinned to GitHub's own release CDN
+          # (cf.install.determinate.systems proved flaky on runner
+          # networks). Keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases.
           source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -341,35 +317,26 @@ jobs:
             # Hydra gap.
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
-          # ships, closing the identity drift for good.
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
-      # NO magic-nix-cache here — deliberate (2026-10 run #336 incident).
-      # GitHub Actions Cache, the backend magic-nix-cache proxies, returned
-      # ResourceExhausted (Twirp 418) for narinfo queries. Every miss made
-      # Nix ban the substituter for 60 s, source paths mid-copy died as
-      # "path '/nix/store/…-source' is not valid" — three attrs went red
-      # (nixosConfigurations.kilig-nixos / .nixos,
-      # checks.lib_shared_lang_validate; each proven green by its own
-      # independent leg in the SAME run), and the stalled traversal ran
-      # the job into its 90-minute timeout.
-      # This leg is PURE EVALUATION: facet forcing evaluates
-      # derivations to drvPath, nothing substitutes — a build cache has
-      # nothing to offer, so its only effect was the failure surface
-      # itself. Flake input sources materialise from their upstream
-      # (github tarballs) regardless of substituters. The same reasoning
-      # removes the cache from the other two pure-eval legs
-      # (output-faces, evaluate-devshells). The BUILD legs (lint,
-      # nmt-plane, vm-tests, host-toplevels) keep it: there it
-      # substitutes real closures across runs and falls back to
+      # NO magic-nix-cache here — deliberate: this leg is PURE
+      # EVALUATION (facet forcing evaluates derivations to drvPath,
+      # nothing substitutes), so a build cache has nothing to offer and
+      # only adds a failure surface (the GitHub Actions Cache backend
+      # has 418-throttled before). Flake input sources materialise from
+      # their upstream (github tarballs) regardless of substituters.
+      # The same reasoning removes the cache from the other two
+      # pure-eval legs (output-faces, evaluate-devshells). The BUILD
+      # legs (lint, nmt-plane, vm-tests, host-toplevels) keep it: there
+      # it substitutes real closures across runs and falls back to
       # cache.nixos.org when throttled.
       - name: Force output faces (api, toplevels, misc) + completeness audit
         run: |
           set -eo pipefail
           LOG=/tmp/deep-eval.log
           : > "$LOG"
-          # Infrastructure signature class (T12.1): substituter and
+          # Infrastructure signature class: substituter and
           # network failures. Tree-side errors reproduce identically
           # and fail fast — retrying them only burns the window.
           INFRA_SIG='is not valid|unable to download|HTTP error|rate limit|ResourceExhausted|timed out|failed to fetch'
@@ -470,24 +437,19 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication, closes
-          # the open item from the 38085235502 record): install.determinate.
-          # system's /stable resolved dynamically and could hand out
-          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
-          # are unknown to the locked-nixpkgs upstream Nix — every call
-          # warned. Verified on a live runner: with this env the installer
-          # plans distribution=Nix with the standard nix.conf (no fork
-          # settings, no determinate-nixd). The extra-args input is dead
-          # code in action v13 (args.concat result is dropped), so the env
-          # route is the only working one.
+          # Toolchain identity pinned: install.determinate.system's
+          # /stable resolves dynamically and can hand out Determinate's
+          # Nix fork, whose settings are unknown to the locked-nixpkgs
+          # upstream Nix. With this env the installer plans
+          # distribution=Nix with the standard nix.conf. The extra-args
+          # input is dead code in action v13 (args.concat result is
+          # dropped), so the env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
-          # R27 hardening (run 38638140684): the installer-binary download
-          # from cf.install.determinate.systems timed out twice on that run
-          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
-          # flake, not code). Pin the download to GitHub's own release CDN
-          # instead (same origin as the checkout itself; keep in sync with
-          # https://github.com/DeterminateSystems/nix-installer/releases).
+          # Installer-binary download pinned to GitHub's own release CDN
+          # (cf.install.determinate.systems proved flaky on runner
+          # networks). Keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases.
           source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -498,19 +460,17 @@ jobs:
             # Hydra gap.
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
-          # ships, closing the identity drift for good.
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
         with:
-          # Run 38085235502 paid 79 "Unable to authenticate to FlakeHub"
-          # annotations: use-flakehub defaults to true and this repo has no
-          # FlakeHub registration, so every run bought failed-auth noise.
+          # No FlakeHub registration in this repo — opt out of the
+          # failed-auth annotations use-flakehub defaults to.
           use-flakehub: false
 
-      # T7.3: the plane address (.#api.checks.planes.nmt) replaces
+      # The plane address (.#api.checks.planes.nmt) replaces
       # prefix discovery + the per-check python loop — nix-fast-build
       # (from the LOCKED nixpkgs, the same revision the flake pins,
       # no registry drift) evaluates and builds the whole plane in
@@ -529,14 +489,9 @@ jobs:
   # devShells use self + "/home/env/dev" (materialised store path),
   # so path evaluation succeeds without the age private key.
   #
-  # T18.1: the member list is the face's own attrNames. The matrix
-  # this leg replaced was hardcoded once (9 shells) and silently
-  # rotted while the face grew to 25 members — 16 shells (including
-  # `default`, the 14-language combinFrom merge, and every
-  # multi-variant extra like cpython/godot/makeOs/rs_compiler_dev)
-  # had NO CI coverage at all. Same idiom as output-faces (T11.1)
-  # and cache-attic.yml: a new shell joins by construction, zero
-  # CI-side maintenance. Named failures per member (T9.2).
+  # The member list is the face's own attrNames — a new shell joins
+  # by construction, zero CI-side maintenance (same idiom as
+  # output-faces and cache-attic.yml). Named failures per member.
   evaluate-devshells:
     name: Evaluate devShells (dry-run)
     runs-on: ubuntu-latest
@@ -547,24 +502,19 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication, closes
-          # the open item from the 38085235502 record): install.determinate.
-          # system's /stable resolved dynamically and could hand out
-          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
-          # are unknown to the locked-nixpkgs upstream Nix — every call
-          # warned. Verified on a live runner: with this env the installer
-          # plans distribution=Nix with the standard nix.conf (no fork
-          # settings, no determinate-nixd). The extra-args input is dead
-          # code in action v13 (args.concat result is dropped), so the env
-          # route is the only working one.
+          # Toolchain identity pinned: install.determinate.system's
+          # /stable resolves dynamically and can hand out Determinate's
+          # Nix fork, whose settings are unknown to the locked-nixpkgs
+          # upstream Nix. With this env the installer plans
+          # distribution=Nix with the standard nix.conf. The extra-args
+          # input is dead code in action v13 (args.concat result is
+          # dropped), so the env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
-          # R27 hardening (run 38638140684): the installer-binary download
-          # from cf.install.determinate.systems timed out twice on that run
-          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
-          # flake, not code). Pin the download to GitHub's own release CDN
-          # instead (same origin as the checkout itself; keep in sync with
-          # https://github.com/DeterminateSystems/nix-installer/releases).
+          # Installer-binary download pinned to GitHub's own release CDN
+          # (cf.install.determinate.systems proved flaky on runner
+          # networks). Keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases.
           source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -575,8 +525,7 @@ jobs:
             # Hydra gap.
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
-          # ships, closing the identity drift for good.
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
       # No magic-nix-cache: pure-eval leg (see the deep-eval incident
@@ -602,18 +551,17 @@ jobs:
           [ "$COUNT" -gt 0 ] || { echo "ERROR: devShells face is empty" >&2; exit 1; }
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 4.5: Output faces — derivation-depth forcing (T11.1)
+  # STAGE 4.5: Output faces — derivation-depth forcing
   # ─────────────────────────────────────────────────────────────
-  # The wslview lesson (2026-10, T9.3): an output face that only
-  # deep-eval forces is covered PATH-DEPENDENTLY — `nix flake check`
-  # stops at the first failing face, so while any earlier face is red,
-  # later faces rot unseen. packages.wslview was broken for three
-  # months and surfaced only when deep-eval first survived past the
-  # checks face. This leg forces the three faces with no independent
-  # forcing, unconditionally, in the parallel eval tier:
+  # An output face that only deep-eval forces is covered
+  # PATH-DEPENDENTLY — `nix flake check` stops at the first failing
+  # face, so while any earlier face is red, later faces rot unseen
+  # (packages.wslview once rotting for months was exactly this class).
+  # This leg forces the three faces with no independent forcing,
+  # unconditionally, in the parallel eval tier:
   #   packages             — drvPath, member by member (a failing
   #                           member is NAMED, not lost inside a
-  #                           whole-face error — the T9.2 lesson)
+  #                           whole-face error)
   #   homeConfigurations   — activationPackage.drvPath per member
   #                           (the home plane tests are nixosTest VMs;
   #                           they never touch this face)
@@ -637,24 +585,19 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication, closes
-          # the open item from the 38085235502 record): install.determinate.
-          # system's /stable resolved dynamically and could hand out
-          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
-          # are unknown to the locked-nixpkgs upstream Nix — every call
-          # warned. Verified on a live runner: with this env the installer
-          # plans distribution=Nix with the standard nix.conf (no fork
-          # settings, no determinate-nixd). The extra-args input is dead
-          # code in action v13 (args.concat result is dropped), so the env
-          # route is the only working one.
+          # Toolchain identity pinned: install.determinate.system's
+          # /stable resolves dynamically and can hand out Determinate's
+          # Nix fork, whose settings are unknown to the locked-nixpkgs
+          # upstream Nix. With this env the installer plans
+          # distribution=Nix with the standard nix.conf. The extra-args
+          # input is dead code in action v13 (args.concat result is
+          # dropped), so the env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
-          # R27 hardening (run 38638140684): the installer-binary download
-          # from cf.install.determinate.systems timed out twice on that run
-          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
-          # flake, not code). Pin the download to GitHub's own release CDN
-          # instead (same origin as the checkout itself; keep in sync with
-          # https://github.com/DeterminateSystems/nix-installer/releases).
+          # Installer-binary download pinned to GitHub's own release CDN
+          # (cf.install.determinate.systems proved flaky on runner
+          # networks). Keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases.
           source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -665,8 +608,7 @@ jobs:
             # Hydra gap.
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
-          # ships, closing the identity drift for good.
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
       # No magic-nix-cache: pure-eval leg (see the deep-eval incident
@@ -732,7 +674,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      # T16.1: supply-chain pinning contract — fail-fast (pure grep, runs
+      # Supply-chain pinning contract — fail-fast (pure grep, runs
       # before nix/sops install). Every third-party action must be referenced
       # by an immutable 40-hex commit SHA, with the tag the SHA was resolved
       # from recorded as a trailing comment for humans and Dependabot.
@@ -761,31 +703,26 @@ jobs:
           fi
           echo "OK: every action ref is an immutable commit SHA (mutable tags rejected)"
 
-      # Conf drift found in the 38085235502 audit: the other seven legs'
-      # extra-conf all carry accept-flake-config = true; this leg's omission
-      # only survived because its nix usage never consults flake trust —
-      # align it rather than rely on that staying true.
+      # Conf drift: the other legs' extra-conf all carry
+      # accept-flake-config = true; this leg's omission only survived
+      # because its nix usage never consults flake trust — align it
+      # rather than rely on that staying true.
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication, closes
-          # the open item from the 38085235502 record): install.determinate.
-          # system's /stable resolved dynamically and could hand out
-          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
-          # are unknown to the locked-nixpkgs upstream Nix — every call
-          # warned. Verified on a live runner: with this env the installer
-          # plans distribution=Nix with the standard nix.conf (no fork
-          # settings, no determinate-nixd). The extra-args input is dead
-          # code in action v13 (args.concat result is dropped), so the env
-          # route is the only working one.
+          # Toolchain identity pinned: install.determinate.system's
+          # /stable resolves dynamically and can hand out Determinate's
+          # Nix fork, whose settings are unknown to the locked-nixpkgs
+          # upstream Nix. With this env the installer plans
+          # distribution=Nix with the standard nix.conf. The extra-args
+          # input is dead code in action v13 (args.concat result is
+          # dropped), so the env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
-          # R27 hardening (run 38638140684): the installer-binary download
-          # from cf.install.determinate.systems timed out twice on that run
-          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
-          # flake, not code). Pin the download to GitHub's own release CDN
-          # instead (same origin as the checkout itself; keep in sync with
-          # https://github.com/DeterminateSystems/nix-installer/releases).
+          # Installer-binary download pinned to GitHub's own release CDN
+          # (cf.install.determinate.systems proved flaky on runner
+          # networks). Keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases.
           source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -796,12 +733,11 @@ jobs:
             # Hydra gap.
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
-          # ships, closing the identity drift for good.
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
-      # T9.1: sops from the LOCKED nixpkgs (statix note in the lint job) —
-      # a registry sops could change decrypt semantics mid-pipeline.
+      # sops from the LOCKED nixpkgs — a registry sops could change
+      # decrypt semantics mid-pipeline.
       - name: Install SOPS
         run: |
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
@@ -844,7 +780,7 @@ jobs:
           fi
           echo "OK: secrets/plan/ is not git-tracked"
 
-      # ── T3.3: decrypt gate ─────────────────────────────────────────
+      # ── decrypt gate ───────────────────────────────────────────────
       # When the repo secret AGE_SECRET_KEY is provisioned (an age private
       # key, AGE-SECRET-KEY-1…), every blob under secrets/ must decrypt
       # end-to-end. This closes the loop the metadata check above can't:
@@ -856,9 +792,8 @@ jobs:
       # name: sops reads ONLY SOPS_AGE_KEY / SOPS_AGE_KEY_FILE /
       # SOPS_AGE_KEY_CMD (+ ssh/file fallbacks) — injecting the private
       # key under any other variable reproduces "failed to load age
-      # identities" with the key present (the 2026-10 incident this
-      # block was fixed from; vm-tests below already used the correct
-      # name). AGE_SECRET_KEY stays the REPO SECRET name only.
+      # identities" with the key present. AGE_SECRET_KEY stays the
+      # REPO SECRET name only.
       - name: Decrypt gate (AGE_SECRET_KEY)
         env:
           SOPS_AGE_KEY: ${{ secrets.AGE_SECRET_KEY }}
@@ -941,7 +876,7 @@ jobs:
   # support nested virtualisation. The AGE_SECRET_KEY secret is injected
   # for SOPS decryption if available; tests that don't need it still pass.
   #
-  # T7.3: one matrix leg per test PLANE. The planes face of the test
+  # One matrix leg per test PLANE. The planes face of the test
   # matrix (.#api.checks.planes.<plane>) is the partition SSOT — CI no
   # longer re-derives membership from name prefixes, so a new test
   # rides its plane by construction (plane membership is asserted
@@ -970,24 +905,19 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication, closes
-          # the open item from the 38085235502 record): install.determinate.
-          # system's /stable resolved dynamically and could hand out
-          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
-          # are unknown to the locked-nixpkgs upstream Nix — every call
-          # warned. Verified on a live runner: with this env the installer
-          # plans distribution=Nix with the standard nix.conf (no fork
-          # settings, no determinate-nixd). The extra-args input is dead
-          # code in action v13 (args.concat result is dropped), so the env
-          # route is the only working one.
+          # Toolchain identity pinned: install.determinate.system's
+          # /stable resolves dynamically and can hand out Determinate's
+          # Nix fork, whose settings are unknown to the locked-nixpkgs
+          # upstream Nix. With this env the installer plans
+          # distribution=Nix with the standard nix.conf. The extra-args
+          # input is dead code in action v13 (args.concat result is
+          # dropped), so the env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
-          # R27 hardening (run 38638140684): the installer-binary download
-          # from cf.install.determinate.systems timed out twice on that run
-          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
-          # flake, not code). Pin the download to GitHub's own release CDN
-          # instead (same origin as the checkout itself; keep in sync with
-          # https://github.com/DeterminateSystems/nix-installer/releases).
+          # Installer-binary download pinned to GitHub's own release CDN
+          # (cf.install.determinate.systems proved flaky on runner
+          # networks). Keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases.
           source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -998,16 +928,14 @@ jobs:
             # Hydra gap.
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
-          # ships, closing the identity drift for good.
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
         with:
-          # Run 38085235502 paid 79 "Unable to authenticate to FlakeHub"
-          # annotations: use-flakehub defaults to true and this repo has no
-          # FlakeHub registration, so every run bought failed-auth noise.
+          # No FlakeHub registration in this repo — opt out of the
+          # failed-auth annotations use-flakehub defaults to.
           use-flakehub: false
 
       - name: Enable KVM
@@ -1018,22 +946,21 @@ jobs:
           sudo udevadm trigger --name-match=kvm
           ls -la /dev/kvm
 
-      # T7.3: -j is explicit — nix-fast-build 1.4.0 otherwise inherits
+      # -j is explicit — nix-fast-build 1.4.0 otherwise inherits
       # Nix's own max-jobs (1 on stock runners). Exit code 1 on any
       # member failure; failures don't stop siblings (keep-going),
       # failing members are listed in the log.
       #
-      # Diagnose pass (2026-10 nixos-plane incident): nix-eval-jobs
-      # reports failures as "EVAL: N successes, M failures" plus the
-      # failing attr NAMES — but the verbatim error text scrolls past
-      # in a wall of parallel build output, so the log the incident
-      # arrived with had the failure and none of its cause. On a
-      # non-zero exit this step re-evaluates every member of the plane
-      # INDIVIDUALLY (same force depth nix-eval-jobs uses — .drvPath):
-      # a deterministic eval error reproduces with its full text right
-      # here; a plane whose members all evaluate cleanly in isolation
-      # points at build-side failures or transient workers (OOM), also
-      # stated right here. Either way the next failure carries its own
+      # Diagnose pass: nix-eval-jobs reports failures as
+      # "EVAL: N successes, M failures" plus the failing attr NAMES —
+      # but the verbatim error text scrolls past in a wall of parallel
+      # build output. On a non-zero exit this step re-evaluates every
+      # member of the plane INDIVIDUALLY (same force depth
+      # nix-eval-jobs uses — .drvPath): a deterministic eval error
+      # reproduces with its full text right here; a plane whose
+      # members all evaluate cleanly in isolation points at
+      # build-side failures or transient workers (OOM), also stated
+      # right here. Either way the next failure carries its own
       # diagnosis. Zero cost on the green path.
       - name: Build ${{ matrix.plane }} plane (nix-fast-build)
         env:
@@ -1068,9 +995,9 @@ jobs:
           fi
 
   # ─────────────────────────────────────────────────────────────
-  # STAGE 6.5: Host toplevels — closure-level build depth (T8.2)
+  # STAGE 6.5: Host toplevels — closure-level build depth
   # ─────────────────────────────────────────────────────────────
-  # The Mic92-parity move the T7.3 verdict deferred: building the real
+  # The Mic92-parity move: building the real
   # system closures (not just test planes) in CI. Feasible on stock
   # runners because almost every path substitutes from
   # cache.nixos.org (same locked nixpkgs rev); magic-nix-cache covers
@@ -1083,12 +1010,12 @@ jobs:
     name: Host Toplevels (closure build)
     runs-on: ubuntu-latest
     needs: [lint, deep-eval]
-    # Round 16 cache bootstrap: 150 while the Cachix push below
-    # captures the first full post-bump generation (the cold window —
-    # runs 38085235502 and 38385434464 both died at the old 90-minute
-    # bound mid desktop-stack, before any push could exist). Once the
-    # cache holds a complete generation the substituter collapses the
-    # rebuild into substitution; revisit toward the old bound then.
+    # Cache-bootstrap window: 150 while the Cachix push below captures
+    # the first full post-bump generation (the cold window — before
+    # any push exists, a cold run can die at the old 90-minute bound
+    # mid desktop-stack). Once the cache holds a complete generation
+    # the substituter collapses the rebuild into substitution; revisit
+    # toward the old bound then.
     timeout-minutes: 150
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
@@ -1096,24 +1023,19 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication, closes
-          # the open item from the 38085235502 record): install.determinate.
-          # system's /stable resolved dynamically and could hand out
-          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
-          # are unknown to the locked-nixpkgs upstream Nix — every call
-          # warned. Verified on a live runner: with this env the installer
-          # plans distribution=Nix with the standard nix.conf (no fork
-          # settings, no determinate-nixd). The extra-args input is dead
-          # code in action v13 (args.concat result is dropped), so the env
-          # route is the only working one.
+          # Toolchain identity pinned: install.determinate.system's
+          # /stable resolves dynamically and can hand out Determinate's
+          # Nix fork, whose settings are unknown to the locked-nixpkgs
+          # upstream Nix. With this env the installer plans
+          # distribution=Nix with the standard nix.conf. The extra-args
+          # input is dead code in action v13 (args.concat result is
+          # dropped), so the env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
-          # R27 hardening (run 38638140684): the installer-binary download
-          # from cf.install.determinate.systems timed out twice on that run
-          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
-          # flake, not code). Pin the download to GitHub's own release CDN
-          # instead (same origin as the checkout itself; keep in sync with
-          # https://github.com/DeterminateSystems/nix-installer/releases).
+          # Installer-binary download pinned to GitHub's own release CDN
+          # (cf.install.determinate.systems proved flaky on runner
+          # networks). Keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases.
           source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-x86_64-linux
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -1124,32 +1046,26 @@ jobs:
             # Hydra gap.
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
-          # ships, closing the identity drift for good.
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
         with:
-          # Run 38085235502 paid 79 "Unable to authenticate to FlakeHub"
-          # annotations: use-flakehub defaults to true and this repo has no
-          # FlakeHub registration, so every run bought failed-auth noise.
+          # No FlakeHub registration in this repo — opt out of the
+          # failed-auth annotations use-flakehub defaults to.
           use-flakehub: false
 
-      # T8.2: same tool + same determinism as the plane legs —
+      # Same tool + same determinism as the plane legs —
       # nix-fast-build from the LOCKED nixpkgs, whole-face handoff,
       # --skip-cached turns cache hits (cache.nixos.org substitution +
       # magic-nix-cache) into no-ops; -j explicit (see vm-tests note).
       #
-      # Diagnose pass (run 38085235502): this leg died cancelled by its
-      # own 90-minute timeout after 89 minutes, and the nix-fast-build
-      # wall of output was the ONLY signal — eval-side vs build-side
-      # was guesswork (the vm-tests leg already carries the same pass
-      # for the 2026-10 nixos-plane incident). On a non-zero exit,
-      # re-evaluate each host toplevel drvPath individually (same force
-      # depth nix-eval-jobs uses): a deterministic eval error reproduces
-      # verbatim right here; a clean sweep points at build-side failure
-      # with the cause in the log above. Zero cost on the green path.
+      # Diagnose pass: on a non-zero exit, re-evaluate each host
+      # toplevel drvPath individually (same force depth nix-eval-jobs
+      # uses): a deterministic eval error reproduces verbatim right
+      # here; a clean sweep points at build-side failure with the cause
+      # in the log above. Zero cost on the green path.
       - name: Build host toplevels (nix-fast-build)
         run: |
           PKGS=$(nix eval --raw .#api.inputs.nixpkgs.outPath)
@@ -1175,12 +1091,11 @@ jobs:
             done
             if [ "$FAILED_EVAL" -eq 0 ]; then
               echo "::warning::every toplevel evaluates cleanly in isolation — the failure was build-side (see the nix-fast-build log above; a package's check phase is the usual suspect)."
-              # T22.2 (run 38171937689): name the ROOT failing
-              # derivations — the raw job log is sign-in gated, the
-              # annotations are not. --keep-going drives the build
-              # past the first failure so every genuinely-failed
-              # derivation reports; the store already holds
-              # nix-fast-build's successes, so this rebuilds only
+              # Name the ROOT failing derivations — the raw job log
+              # is sign-in gated, the annotations are not. --keep-going
+              # drives the build past the first failure so every
+              # genuinely-failed derivation reports; the store already
+              # holds nix-fast-build's successes, so this rebuilds only
               # the failures. Same convention as the darwin leg.
               for h in $HOSTS; do
                 nix build --keep-going --no-link \
@@ -1196,38 +1111,32 @@ jobs:
             exit "$RC"
           fi
 
-      # P0 cache axis (round 16, fixed round 17) — the PUSH half. The
-      # build above just materialised the toplevel closures in this
-      # store; pushing them turns the next run's cold gap into
-      # substitution. Opt-in, INERT until the repository owner sets
-      # secret.CACHIX_AUTH_TOKEN (pull needs no secret — the cache is
-      # public). Round-17 correction: the secrets context is NOT
-      # available in step-level if: expressions (GitHub rejected
-      # `always() && secrets.CACHIX_AUTH_TOKEN != ''` as "Unrecognized
-      # named-value" — main@ccf9edb currently carries that invalid
-      # file), so the emptiness guard lives INSIDE the script, where
-      # the env-mapped token is legal — the same env-position
-      # discipline as cache-attic.yml's ATTIC_TOKEN (its job-level
-      # gate uses vars, which if: DOES see). `if: always()`
-      # deliberately: a mid-closure build failure still caches the
-      # successfully-built prefix for the retry (the timeout class
-      # kills the whole job and cannot — the 150-minute bootstrap
-      # bound above is what buys this step the time to exist). Tools
-      # from the LOCKED nixpkgs (same discipline as nix-fast-build);
-      # paths via outPath forcing (pure eval, no store realisation
-      # needed to NAME an output), filtered to what the store
-      # actually holds. cachix pushes each path's CLOSURE and skips
-      # what the cache already holds (chunk-level dedup) — re-pushes
-      # are no-ops. CLI shape note (round 18): `cachix push CACHE-NAME
+      # P0 cache axis — the PUSH half. The build above just
+      # materialised the toplevel closures in this store; pushing them
+      # turns the next run's cold gap into substitution. Opt-in,
+      # INERT until the repository owner sets secret.CACHIX_AUTH_TOKEN
+      # (pull needs no secret — the cache is public). The secrets
+      # context is NOT available in step-level if: expressions (GitHub
+      # rejects `always() && secrets.CACHIX_AUTH_TOKEN != ''` as
+      # "Unrecognized named-value"), so the emptiness guard lives
+      # INSIDE the script, where the env-mapped token is legal — the
+      # same env-position discipline as cache-attic.yml's ATTIC_TOKEN
+      # (its job-level gate uses vars, which if: DOES see).
+      # `if: always()` deliberately: a mid-closure build failure
+      # still caches the successfully-built prefix for the retry (the
+      # timeout class kills the whole job and cannot — the
+      # 150-minute bootstrap bound above is what buys this step the
+      # time to exist). Tools from the LOCKED nixpkgs (same discipline
+      # as nix-fast-build); paths via outPath forcing (pure eval, no
+      # store realisation needed to NAME an output), filtered to what
+      # the store actually holds. cachix pushes each path's CLOSURE
+      # and skips what the cache already holds (chunk-level dedup) —
+      # re-pushes are no-ops. CLI shape: `cachix push CACHE-NAME
       # [PATHS...]` — the cache name is a MANDATORY first positional
       # (one auth token can serve multiple caches); with no paths and
       # a non-TTY stdin the CLI reads newline-separated paths from
       # stdin (the `nix-store -qR … | cachix push <name>` pipe
-      # pattern). The round-16 version omitted the name — the first
-      # toplevel path would be silently treated as the cache name
-      # ("cache not found" once a token existed); caught by local CLI
-      # verification in round 18, before any run ever executed the
-      # step (opt-in kept the bug latent, never live).
+      # pattern).
       - name: Push built closures to Cachix
         if: always()
         env:
@@ -1257,14 +1166,13 @@ jobs:
       # Cross-system closure: evaluation is the depth this x86_64-linux
       # leg keeps (deep-eval already forces it; this makes the intent
       # and the attrpath explicit at the leg that owns linux closure
-      # depth). The build-depth upgrade this comment used to await
-      # landed as STAGE 6.6 — a macos-latest (aarch64) runner now
-      # builds the same closure natively; this eval force stays as the
-      # zero-cost linux-side cross-system check.
+      # depth) — STAGE 6.6 builds the same closure natively on a
+      # macos runner; this eval force stays as the zero-cost
+      # linux-side cross-system check.
       - name: Evaluate darwin system closure (cross-system, eval-only)
         run: nix eval --raw .#darwinConfigurations.darwin.system.drvPath
 
-      # T20.1: colmena emission parity — the deploy face must re-emit
+      # Colmena emission parity — the deploy face must re-emit
       # EXACTLY what this leg just built. colmena re-evaluates each
       # NixOS host through its own eval-config (plus four injected
       # modules: deployment options + key services over an empty
@@ -1278,8 +1186,8 @@ jobs:
       # mkBefore of an empty overlays list is a no-op) and gates
       # FIRST-RUN here — a mismatch is a loud, actionable signal (the
       # colmena-injected module surface drifted from inert), not noise.
-      # Hosts enumerate from the inventory face (T18.1 pattern — no
-      # hardcoded member list to rot).
+      # Hosts enumerate from the inventory face — no hardcoded member
+      # list to rot.
       - name: Colmena emission parity (T20.1)
         run: |
           HOSTS=$(nix eval ".#api.targets.nixosHosts" --json \
@@ -1311,10 +1219,8 @@ jobs:
   # ─────────────────────────────────────────────────────────────
   # STAGE 6.6: Darwin toplevels — native cross-system closure build
   # ─────────────────────────────────────────────────────────────
-  # T8.2 documented the gate ("building it needs a darwin runner or a
-  # cross toolchain — the path is prepared, the environment is the
-  # gate"); macos-latest settles it: GitHub arms public repos with
-  # M-series (aarch64-darwin) macOS runners, so the darwin closure
+  # macos-latest settles the old darwin gate: GitHub arms public repos
+  # with M-series (aarch64-darwin) macOS runners, so the darwin closure
   # builds NATIVELY — no cross toolchain, no emulation. Same face
   # discipline as the linux leg: .#api.darwin-toplevels is
   # inventory-driven (a second darwin host joins by construction),
@@ -1334,25 +1240,19 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Same toolchain identity discipline as the linux legs (run
-          # 38136560662 adjudication — the extra-args input is dead
-          # code in action v13, the env route is the only working
-          # one): upstream Nix, not the Determinate fork — here the
-          # aarch64-darwin build of the same pinned 2.35.2.
+          # Same toolchain identity discipline as the linux legs (the
+          # extra-args input is dead code in action v13, the env route
+          # is the only working one): upstream Nix, not the Determinate
+          # fork — here the aarch64-darwin build of the same pinned 2.35.2.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
-          # R27 hardening (run 38638140684): the installer-binary download
-          # from cf.install.determinate.systems timed out twice on that run
-          # (nmt-Plane + Security Audit, 30s fetch timeout — runner-network
-          # flake, not code). Pin the download to GitHub's own release CDN
-          # instead (same origin as the checkout itself; keep in sync with
-          # https://github.com/DeterminateSystems/nix-installer/releases).
-          # R29 correction: this leg's pin carried the LINUX binary onto
-          # the macOS runner — Node spawns an x86_64-linux ELF on
-          # aarch64-darwin and the kernel refuses it (spawn ENOEXEC, the
-          # whole leg red in 3s, before any nix ran). The asset must match
-          # the RUNNER arch — aarch64 here (v3.23.2 ships no x86_64-darwin
-          # asset at all).
+          # Installer-binary download pinned to GitHub's own release CDN
+          # (cf.install.determinate.systems proved flaky on runner
+          # networks). Keep in sync with
+          # https://github.com/DeterminateSystems/nix-installer/releases.
+          # The installer asset must match the RUNNER arch — aarch64
+          # here (v3.23.2 ships no x86_64-darwin asset at all; a linux
+          # binary fails as spawn ENOEXEC before any nix runs).
           source-url: https://github.com/DeterminateSystems/nix-installer/releases/download/v3.23.2/nix-installer-aarch64-darwin
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
@@ -1368,9 +1268,8 @@ jobs:
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
         with:
-          # Same 38085235502 lesson as everywhere: no FlakeHub
-          # registration in this repo — opt out of the failed-auth
-          # annotations.
+          # Same lesson as everywhere: no FlakeHub registration in
+          # this repo — opt out of the failed-auth annotations.
           use-flakehub: false
 
       # Same tool + same determinism as the linux legs — nix-fast-
@@ -1409,17 +1308,14 @@ jobs:
             done
             if [ "$FAILED_EVAL" -eq 0 ]; then
               echo "::warning::every darwin toplevel evaluates cleanly in isolation — the failure was build-side (see the nix-fast-build log above)."
-              # T22.2 (run 38171937689, this leg's first run): the
-              # build-side failure's root derivation was buried in a
-              # sign-in-gated log — the reporter could not even paste
-              # it, and the annotations carried only the workflow's
-              # own messages. --keep-going drives the build past the
-              # first failure so every genuinely-failed derivation
-              # reports as a ::error annotation naming the root; the
-              # store already holds nix-fast-build's successes, so
-              # this rebuilds only the failures (minutes, not the
-              # leg's 30-minute wall). Same convention as the linux
-              # host-toplevels leg.
+              # Name the ROOT failing derivations — the raw job log is
+              # sign-in gated, the annotations are not. --keep-going
+              # drives the build past the first failure so every
+              # genuinely-failed derivation reports as a ::error
+              # annotation naming the root; the store already holds
+              # nix-fast-build's successes, so this rebuilds only the
+              # failures (minutes, not the leg's 30-minute wall). Same
+              # convention as the linux host-toplevels leg.
               for h in $HOSTS; do
                 nix build --keep-going --no-link \
                   ".#api.darwin-toplevels.$h" \
@@ -1434,7 +1330,7 @@ jobs:
             exit "$RC"
           fi
 
-      # P0 cache axis, darwin half (R29) — the PUSH that mirrors the linux
+      # P0 cache axis, darwin half — the PUSH that mirrors the linux
       # host-toplevels step above. The leg just built the darwin closures
       # in this store; pushing them extends the SAME opt-in contract to
       # the darwin axis: one secret (CACHIX_AUTH_TOKEN), both platforms.
@@ -1513,12 +1409,11 @@ jobs:
           echo "> pre-commit-check (nixfmt/statix/deadnix) is built by the lint stage and deep-eval forces every output to a derivation outPath." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Fail if any required stage did not succeed
-        # T13.2 (run #338): the gate used to test only == 'failure' — a
-        # leg CANCELLED by its own timeout (deep-eval hit 90:00 exactly)
-        # escaped the gate entirely and the summary went green under a
-        # cancelled run. '!= success' catches that class AND the
-        # skipped-by-upstream-failure class (a cancelled lint starves the
-        # legs that need it; skipped is not green either).
+        # The gate must test '!= success', not only == 'failure': a leg
+        # CANCELLED by its own timeout escapes a failure-only gate (a
+        # green summary under a cancelled run), and the
+        # skipped-by-upstream-failure class is not green either (a
+        # cancelled lint starves the legs that need it).
         if: |
           needs.lint.result != 'success' ||
           needs.deep-eval.result != 'success' ||

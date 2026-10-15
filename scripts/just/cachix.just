@@ -5,11 +5,11 @@
 #
 # Cache topology (who pushes, who pulls):
 #   PULL  every CI leg + this machine — substituters config already
-#         carries redskaber-nix-config.cachix.org FIRST (nix.nix wiring,
-#         round 16/22); the public key is pinned trusted.
+#         carries redskaber-nix-config.cachix.org FIRST (nix.nix
+#         wiring); the public key is pinned trusted.
 #   PUSH  CI host-toplevels legs (secret.CACHIX_AUTH_TOKEN — owner verb),
 #         and LOCALLY via this module (token read from the secrets
-#         system — the R27 registry/CRUD makes that a one-liner).
+#         system — the registry/CRUD makes that a one-liner).
 #
 # The token is a SECRET: it lives in the sops blob tree (encrypted with
 # the user's age key), never in git history, never in env files. The

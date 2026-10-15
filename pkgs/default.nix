@@ -7,7 +7,7 @@
 # You can build them using 'nix build .#example'
 pkgs: {
   # example = pkgs.callPackage ./example { };
-  # wslview: minimal "open on the Windows side" shim (T3.1) — replaces
+  # wslview: minimal "open on the Windows side" shim — replaces
   # the archived wslu package this tree used to consume.
   wslview = pkgs.callPackage ./wslview { };
 }

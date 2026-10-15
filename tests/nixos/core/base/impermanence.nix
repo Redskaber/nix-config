@@ -4,7 +4,7 @@
 # @description: tests::nixos::core::base::impermanence
 # @source: platform/nixos/system/core/base/impermanence.nix
 #
-# Eval-level acceptance of the ephemeral-root interpreter (T5.14),
+# Eval-level acceptance of the ephemeral-root interpreter,
 # the export-modules.nix pattern applied to a fixpoint module: the
 # production module is imported into standalone nixosSystem
 # evaluations (the exact path an external consumer would take —

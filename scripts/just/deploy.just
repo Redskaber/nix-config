@@ -37,7 +37,7 @@ nixos-switch host:
 nixos-test host:
     @cd {{ROOT}} && sudo nixos-rebuild test --flake .#{{host}}
 
-# Set the boot generation WITHOUT activating (T10.2): build + register
+# Set the boot generation WITHOUT activating: build + register
 # the next-boot closure; the running system stays untouched until
 # reboot. The safer remote/rollback-flavoured deploy — wimpy's
 # push-host-boot pattern: flip the machine on your own schedule,
@@ -56,7 +56,7 @@ home-switch host:
     @cd {{ROOT}} && USER=$$(grep -oP 'username\s*=\s*"\K[^"]+' {{SHARED_NIX_PATH}}) && \
         nix run home-manager -- switch --flake ".#$${USER}@{{host}}"
 
-# ── Colmena deploy verbs (T20.1) ──────────────────────────────────────
+# ── Colmena deploy verbs ──────────────────────────────────────────
 # The remote-deploy lane: `just deploy <host>` pushes the SAME closures
 # nixos-rebuild builds (CI locks the equivalence), over ssh as the
 # policy user. CLI pinned to v0.5.0 to match the flake input — colmena

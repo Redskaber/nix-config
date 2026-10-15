@@ -56,15 +56,14 @@
   # User `mongodb` visited /run/secrets => 'keys'
   # (option-level mkIf: gating only the leaf value still registers the
   # `mongodb` key inside the users.users attrsOf and materialises an
-  # incomplete user on hosts that do not install this db — found by the
-  # second-machine evaluation of the server-pg-only profile.)
+  # incomplete user on hosts that do not install this db).
   users.users = lib.mkIf shared.services.db.mongodb.install {
     mongodb.extraGroups = [ "keys" ];
   };
 
   # Control autostart: clear wantedBy when autostart=false (install but not autostart)
   systemd.services = lib.mkIf shared.services.db.mongodb.install {
-    # T4.0: binding selection from service-profile strategy data —
+    # binding selection from service-profile strategy data —
     # lib.optional, the same idiom virtual.nix uses (branchless).
     mongodb.wantedBy = lib.mkForce (
       lib.optional shared.services.db.mongodb.autostart "multi-user.target"

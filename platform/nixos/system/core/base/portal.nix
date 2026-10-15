@@ -12,20 +12,17 @@
   ...
 }:
 {
-  # Portal mediation is a desktop-session capability (T7.2): the
-  # window-manager enum's `desktop-session` bit answers "does a real
+  # Portal mediation is a desktop-session capability: the window-
+  # manager enum's `desktop-session` bit answers "does a real
   # desktop session exist here" — and xdg-desktop-portal only means
   # something inside one (file dialogs, open-with, screenshots are
-  # session interactions). Console forms — the vm server shape since
-  # this task, the nixos-wsl WSL form since T7.1 — legally subtract
-  # the whole stack through this gate; desktop hosts are untouched.
-  # The gate reads the resolved fact (the enum row's payload), never
-  # a raw tag comparison — the T4.0 law. The home tree's counterpart
-  # (home/core/base/portal.nix) already routed console forms to the
-  # none strategy's zero backends; this gate completes that design on
-  # the system side (the service itself was still riding console
-  # closures — wlr portal + the base xdg-desktop-portal on a WSL
-  # distro where WSLg/Windows owns mediation).
+  # session interactions). Console forms (the vm server shape, the
+  # nixos-wsl WSL form) legally subtract the whole stack through
+  # this gate; desktop hosts are untouched. The gate reads the
+  # resolved fact (the enum row's payload), never a raw tag
+  # comparison. The home tree's counterpart (home/core/base/portal.nix)
+  # routes console forms to the none strategy's zero backends —
+  # this gate completes that design on the system side.
   config = lib.mkIf shared.window-manager.value.desktop-session {
     # base(wayland)
     xdg.portal = {

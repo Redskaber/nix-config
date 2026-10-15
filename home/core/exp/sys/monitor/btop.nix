@@ -14,10 +14,10 @@
 {
   programs.btop = {
     enable = true;
-    # T4.0: package selection is platform dispatch — the dispatch table
-    # (enum.nix platform rows) carries the strategy (GPU-stack build for
-    # the Linux family, stock for darwin). This leaf just applies the
-    # resolved strategy; version.wine/swww set the precedent.
+    # Package selection is platform dispatch — the dispatch table
+    # (enum.nix platform rows) carries the strategy (GPU-stack build
+    # for the Linux family, stock for darwin); this leaf just applies
+    # the resolved strategy.
     package = shared.platform.value.btop pkgs;
     settings = {
       vim_keys = true;

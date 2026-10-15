@@ -4,7 +4,7 @@
 # @description: tests::home::core::exp::sys::base::fzf-source
 # @source: home/core/exp/sys/base/fzf.nix
 #
-# T1.2 (production-tree import): asserts the REAL fzf module — the
+# Production-tree import: asserts the REAL fzf module — the
 # shellIntegrations composition contract plus the widget/preview wiring
 # that depends on eza/bat/fd being installed by sibling modules. The
 # mirror test only checks the fzf binary; this check pins the option

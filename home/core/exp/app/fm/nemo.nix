@@ -11,8 +11,8 @@
   ...
 }:
 {
-  # T3.2: nemo is a Linux/GTK file manager (dconf likewise). darwin
-  # owns Finder — the whole module is inert on the darwin closure.
+  # nemo is a Linux/GTK file manager (dconf likewise). darwin owns
+  # Finder — the whole module is inert on the darwin closure.
   config = lib.mkIf shared.caps.linux-family {
     home.packages = with pkgs; [
       nemo-with-extensions

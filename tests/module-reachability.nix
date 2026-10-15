@@ -1,25 +1,24 @@
 # @path: ~/projects/configs/nix-config/tests/module-reachability.nix
 # @author: redskaber
 # @datetime: 2026-10-15
-# @description: tests::module-reachability — the fourth repo-hygiene gate (T41)
+# @description: tests::module-reachability — the fourth repo-hygiene gate
 # @source: self (the flake source tree) × home/ + platform/ (the module trees)
 #
-# THE CLASS THIS GATE KILLS — dead code that no gate can see:
-#   round 19 (run 38459605632 era) — home/core/srv/cache sat in the tree,
-#   default.nix chain intact, but no path imported it: `cachix` never
-#   reached home.packages while all 14 CI jobs were green. Evaluators
-#   only see what is imported; a module that SHOULD be wired and isn't
-#   is invisible to every existing gate (eval, deep-eval, VM builds,
-#   docs-ssot — none of them walks the directory side of the ledger).
-#   The round-19 fix wired ./cache by hand and proposed this gate.
+# THE CLASS THIS GATE KILLS — dead code that no gate can see: a
+#   module dir can sit in the tree, default.nix chain intact, with
+#   no path importing it — every consumer of what it would have
+#   provided just silently misses it while all CI jobs stay green.
+#   Evaluators only see what is imported; a module that SHOULD be
+#   wired and isn't is invisible to every existing gate (eval,
+#   deep-eval, VM builds, docs-ssot — none of them walks the
+#   directory side of the ledger).
 #
 # WHAT THIS GATE DOES — the directory side of the ledger, asserted:
-#   1. NODES — every file under home/ and platform/ (277 at the
-#      grammar-v4 landing, 276 of them .nix — the one .toml is the
-#      yazi theme data; the count travels into the check output
-#      so a probe regression is a visible drop, not a silent green).
+#   1. NODES — every file under home/ and platform/ (the count
+#      travels into the check output so a probe regression is a
+#      visible drop, not a silent green).
 #   2. MODULE DIRS — every directory containing a default.nix (the
-#      unit of the assertion: 95 at the grammar-v4 landing).
+#      unit of the assertion).
 #   3. ROOTS — the faces the flake actually evaluates:
 #        platform/<tag>/system/default.nix
 #                                        the system domain (3 tags:
@@ -65,16 +64,13 @@
 #   5. ASSERTION — every module dir must be reachable from the roots.
 #      Dangling after exemptions → the check builds RED with the
 #      verbatim directory list and the reconciliation.
-#   6. DOORLESS REFS (run 38632140441's class, closed 2026-10-15) —
-#      static import-shaped references that name an EXISTING
-#      directory under the audited trees but no module door (no
-#      default.nix there). The v3→v4 grammar landing left two alive
-#      by masking: tests imported platform/<tag> — the v3 top gate —
-#      and evaluated green while the corpse doors still sat on disk
-#      (run 38630505084's tree passed this gate's step); the corpse
-#      sweep (97910e6) deleted the doors and the next eval (run
-#      38632140441, testscript-syntax-check) failed on the dangling
-#      reference. The discriminator is exact, both directions:
+#   6. DOORLESS REFS — static import-shaped references that name an
+#      EXISTING directory under the audited trees but no module door
+#      (no default.nix there). Grammar landings leave this class
+#      alive by masking: an import of an old door evaluates green
+#      while the corpse door still sits on disk; the sweep deletes
+#      the door and the reference dangles into eval. The
+#      discriminator is exact, both directions:
 #        - a token ending in "/" is the static prefix of a dynamic
 #          ./\${…} router (owned by the dynamic edge machinery —
 #          never an import itself);
@@ -93,10 +89,10 @@
 #   for a module that has since been WIRED is red (stale — remove the
 #   entry). Silent dangling becomes impossible in either direction.
 #
-# GATING — same shape as the other three hygiene gates (T8.1's
-#   rationale): `nix flake check --no-build` only EVALUATES this
-#   derivation (it always constructs fine); the assertion fires at
-#   BUILD time, which is why CI STAGE 1 builds this check explicitly
+# GATING — same shape as the other three hygiene gates (the same
+#   rationale as docs-ssot-check): `nix flake check --no-build` only
+#   EVALUATES this derivation (it always constructs fine); the
+#   assertion fires at BUILD time, which is why CI STAGE 1 builds this check explicitly
 #   right after pre-commit-check, docs-ssot-check, and
 #   testscript-syntax-check, deep-eval Face 3 forces its drvPath, and
 #   Face 4's owned list names it.
@@ -263,11 +259,10 @@ let
     in
     map of names;
 
-  # Comments are not wiring: a comment that MENTIONS ./cache (round
-  # 19's fix note does, verbatim) must not masquerade as reachability —
-  # the gate's own verification-matrix control B caught exactly this
-  # on first delivery (green with the import removed but the comment
-  # present). Stripping both comment forms can only REMOVE candidate
+  # Comments are not wiring: a comment that MENTIONS ./cache must
+  # not masquerade as reachability — the verification-matrix control
+  # B caught exactly this (green with the import removed but the
+  # comment present). Stripping both comment forms can only REMOVE candidate
   # edges, never add one: real imports in these trees are bare path
   # literals or dynamic ./\${…} forms (verified: no string-concat, no
   # quoted-path imports), so the strip never eats a real edge — what
@@ -335,9 +330,9 @@ let
 
   # ── 6. doorless directory references (header §6) ───────────────────
   # The scan domain widens for this assertion: the ORIGIN of a
-  # reference can be any .nix file in the flake source (run 38632140441's
-  # two lived under tests/ — outside the edge-extraction trees), only
-  # the TARGET must land inside the audited trees.
+  # reference can be any .nix file in the flake source (doorless
+  # references can live under tests/ — outside the edge-extraction
+  # trees), only the TARGET must land inside the audited trees.
   scanNix = filter (p: hasSuffix ".nix" p) (map str (lib.filesystem.listFilesRecursive self));
 
   inAuditedTrees =

@@ -1,7 +1,7 @@
 # @path: ~/projects/configs/nix-config/lib/shared/docs.nix
 # @author: redskaber
 # @datetime: 2026-10-09
-# @description: lib::shared::docs — options reference emitter (T5.3)
+# @description: lib::shared::docs — options reference emitter
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 #
 # Side-channel emitter (the compiler's -fdump pass): the main IR
@@ -53,12 +53,11 @@ let
   };
 
   # ── NixOS domain: the full system eval ──────────────────────────
-  # Same construction as the nixpkgs manual's options appendix: all
-  # exported NixOS modules are evaluated ONCE against the complete
-  # NixOS base module set, so every stock option they assign into is
-  # declared by construction — zero per-module provider bookkeeping
-  # to drift on nixpkgs bumps. The per-module doc split is recovered
-  # from the namespace key (one `redskaber.<module>` attr per export).
+  # All exported NixOS modules evaluated ONCE against the complete
+  # base module set (the nixpkgs manual's options-appendix construction)
+  # — zero per-module provider bookkeeping to drift on nixpkgs bumps;
+  # the per-module doc split is recovered from the namespace key
+  # (one `redskaber.<module>` attr per export).
   nixosEval = import "${nixpkgs}/nixos/lib/eval-config.nix" {
     system = arch;
     modules = builtins.attrValues (import "${self}/export/nixos");

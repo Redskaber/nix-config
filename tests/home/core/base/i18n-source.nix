@@ -4,7 +4,7 @@
 # @description: tests::home::core::base::i18n-source
 # @source: home/core/base/i18n.nix
 #
-# T1.2 (production-tree import, HM side of the 995d8c9 incident):
+# Production-tree import (HM side of the 995d8c9 incident):
 #
 #   The standalone-HM twin of nixos/core/base/i18n.nix: on non-NixOS
 #   platforms the fcitx5 daemon is assembled by Home Manager's own pkgs
@@ -28,7 +28,7 @@
 }:
 let
   # REAL production fn.nix (phase-1 pure) — provides sameSource/pkgsFingerprint
-  # for the T2.6 guard the production module now routes through.
+  # for the sameSource guard the production module routes through.
   realFn = import ../../../../lib/shared/lang/fn.nix {
     inputs = { };
     enum = { };
@@ -37,7 +37,7 @@ let
   };
 
   # Marker package set — same attr names the production module consumes.
-  # lib.trivial.version is the T2.6 fingerprint the guard compares.
+  # lib.trivial.version is the fingerprint the guard compares.
   markPkgs = prefix: fpVersion: {
     lib.trivial.version = fpVersion;
     fcitx5-rime = "${prefix}:fcitx5-rime";
@@ -56,19 +56,19 @@ let
   # Minimal shared contract consumed by the production module.
   mockShared = {
     # standalone HM platform: the module self-enables from resolved
-    # capability facts (T4.0) — linux-family, no nixos system layer.
+    # capability facts — linux-family, no nixos system layer.
     caps = {
       linux-family = true;
       nixos-system = false;
     };
     upkgs = unstablePkgs; # the trap: any `with shared.upkgs` shows up as UNSTABLE:*
-    pkgs = stablePkgs; # T2.6: the policy-declared (stable) scope
-    i18nScope = stablePkgs; # T4.0: runtime-resolved declared scope
-    fn = realFn; # T2.6: the sameSource guard itself
+    pkgs = stablePkgs; # the policy-declared (stable) scope
+    i18nScope = stablePkgs; # runtime-resolved declared scope
+    fn = realFn; # the sameSource guard itself
     i18n = {
       defaultLocale = "en_US.UTF-8";
       extraLocalSetting = "zh_CN.UTF-8";
-      nixpkgs-source = "stable"; # T2.6: declared source matches the daemon scope
+      nixpkgs-source = "stable"; # declared source matches the daemon scope
     };
   };
 

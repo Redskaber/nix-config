@@ -1,27 +1,22 @@
 # @path: ~/projects/configs/nix-config/tests/lib/shared/orc-guard.nix
 # @author: redskaber
 # @datetime: 2026-10-12
-# @description: tests::lib::shared::orc-guard — the orc include-intent guard consumption contract (T30)
+# @description: tests::lib::shared::orc-guard — the orc include-intent guard consumption contract
 # @source: flake.lock (the pinned configuration-orchestrator) × shared.orc (the production handle)
 #
-# The third tool-library feedback loop closes here, one member after
-# the loop it guards: T28 caught the silent failure in the wild (a
-# swaync theme chain whose include matched no tree entry — an
-# activation that planted nothing while claiming to), T29 fed the
-# guard back to orc (paste-ready patch, adopted upstream as 05c658f
-# "fail eval when non-empty include selects nothing"), and T30
-# consumes it back through the lock. This battery is the WHAT half of
-# that consumption (the 97th version contract's shape: the lock
+# This battery is the WHAT half of the consumption contract: the lock
 # answers WHERE, this test answers WHAT the pinned orc must carry —
-# the silent no-op class is dead, and this is the machine that says
-# so on the exact handle the production modules use).
+# the include-intent guard (a non-empty include selecting nothing
+# must fail eval; landed upstream as 05c658f), so the silent no-op
+# activation class is dead on the exact handle the production
+# modules use.
 #
 # What the contract pins (four assertions, one real FileMap):
 #
 #   1. guarded     — a non-empty include selecting NOTHING must fail
 #                    AT EVAL TIME (tryEval success = false). Pre-guard
 #                    orc merged silently (homeFiles = {}, activation
-#                    = "" — the T28 failure class). THE contract.
+#                    = "" — the silent-failure class). THE contract.
 #   2. normal      — a policy whose include matches the tree merges
 #                    exactly as before (the guard must be free on the
 #                    happy path): the copy policy produces its
@@ -33,20 +28,18 @@
 #   4. acceptAll   — include = [] keeps the accept-all semantics
 #                    (a census, not a filter: non-empty homeFiles)
 #
-# The FileMap is the REAL swaync-config census — the very tree whose
-# missing placeholder started this loop (carrying it since c8818d9)
-# — so the normal-path policy below is the fleet's own production
-# policy for that site, and the guarded case uses a pattern that
-# never exists ("wallust/never-exists.css").
+# The FileMap is the REAL swaync-config census — so the normal-path
+# policy below is the fleet's own production policy for that site,
+# and the guarded case uses a pattern that never exists
+# ("wallust/never-exists.css").
 #
 # Construction discipline (the version.nix shape): the assertions
 # run at CHECK-BUILD time through the runtime-resolved shared.orc —
 # the same handle the seven §6 sites call — no mock, no copy. The
 # guard's throw reaches WHNF through orc's own `builtins.deepSeq
-# allDecisions` return shape (the first T29 draft hid the throw in a
-# thunk and a shallow tryEval read false-green; the fix shipped with
-# the guard), so tryEval here is honest by construction. The VM is a
-# dummy (the contract is an eval-time property).
+# allDecisions` return shape (a thunk-hidden throw would let a
+# shallow tryEval read false-green), so tryEval here is honest by
+# construction. The VM is a dummy (the contract is an eval-time property).
 #
 # Mutation check: revert the orc lock to b432296 (pre-guard) →
 # assertion 1 goes red (the tryEval SUCCEEDS — the silent class is
@@ -64,7 +57,7 @@ let
   orc = shared.orc;
 
   # the real tree: the swaync-config census (carries wallust/
-  # colors-wallust.css since the T28.3 config-repo fix was adopted)
+  # colors-wallust.css since the config-repo fix)
   files = orc.listFilesRecursive inputs.swaync-config "";
 
   # ── the four assertions, as data ──────────────────────────────────

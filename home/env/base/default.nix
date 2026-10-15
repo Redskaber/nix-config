@@ -26,9 +26,9 @@
 
       file
     ]
-    # T4.0: Linux introspection/tracing toolbelt — meaningless or
-    # unavailable on the darwin closure (dtrace/lldb own that land).
-    # Dispatch-table row (enum.nix platform.trace-tools); the darwin
-    # row is the Null-Object empty list, so this stays unconditional.
+    # Linux introspection/tracing toolbelt — meaningless on the darwin
+    # closure (dtrace/lldb own that land). Dispatch-table row (enum.nix
+    # platform.trace-tools); the darwin row is the empty Null-Object
+    # list, so this stays unconditional.
     ++ (shared.platform.value.trace-tools shared.upkgs);
 }

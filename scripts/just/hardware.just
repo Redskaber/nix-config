@@ -8,7 +8,7 @@
 #                module (what nixos-generate-config would emit). hosts/nixos
 #                still uses this until the report is generated on the machine.
 #
-#   facter.json   DECLARATIVE (T5.12) — the standard nixos-facter report: raw
+#   facter.json   DECLARATIVE — the standard nixos-facter report: raw
 #                DATA, interpreted by the nixpkgs `hardware.facter` module
 #                (already in the default module list — the host entry wires
 #                it with `hardware.facter.reportPath = ./facter.json;` and
@@ -17,19 +17,18 @@
 # Both are run ON the machine the facts describe; re-run after hardware
 # changes. `hardware-facter` is the roadmap path that replaces
 # `hardware-generate` (see README §hosts for the migration guide), and
-# `hardware-migrate` is the ONE-COMMAND flip between them (T19.1): probe
+# `hardware-migrate` is the ONE-COMMAND flip between them: probe
 # the report, move what the report cannot express (mounts, kernel
 # modules) into the host entry verbatim, flip the wiring, retire the
 # legacy file. The end state — exactly one fact source per bare-metal
 # host — is machine-locked by the census (tests/lib/shared/targets.nix).
 #
-# A third, read-only fact surface lives here (T17.1): `sound-audit` probes
+# A third, read-only fact surface lives here: `sound-audit` probes
 # the machine's AUDIO form (QEMU device presence / WSLg bridge state) to
 # inform the shared-policy sound axis (README debt #9 semantic half). It
 # generates no file — it prints evidence and the pre-ruled matrix row from
 # docs/guides/sound-adjudication.md. Form detection reads runtime facts
-# (kernel release / virt detection), never hostname or policy (the T4.0
-# law at the verb level).
+# (kernel release / virt detection), never hostname or policy.
 #
 # Multi-host design:
 #   Both files live in hosts/<hostname>/ (not platform/nixos/system/core/base/).
@@ -89,7 +88,7 @@ hardware-show:
     fi
     cat "${HW_PATH}"
 
-# Generate a nixos-facter hardware report for the current host (T5.12).
+# Generate a nixos-facter hardware report for the current host.
 # The declarative fact source: writes hosts/<hostname>/facter.json (run ON
 # the machine — the scanner needs root). To then migrate the host entry,
 # prefer `just hardware-migrate` (one command — the whole dance below);
@@ -122,13 +121,13 @@ hardware-list:
     @ls -1 "{{ROOT}}/hosts/"
 
 # Migrate the current host from the legacy hardware.nix fact source to the
-# declarative facter report — the whole dance in ONE command (T19.1):
+# declarative facter report — the whole dance in ONE command:
 #
 #   1. PROBE    the machine (root scan — same command as hardware-facter)
 #   2. MOVE     what the report CANNOT express: fileSystems, swapDevices
 #               and a non-empty boot.kernelModules ride VERBATIM into the
 #               host entry (mounts are not report facts; the eventual home
-#               is a disko layout, the T5.13 path)
+#               is a disko layout)
 #   3. FLIP     the wiring: the template's hardware.nix import block →
 #               hardware.facter.reportPath = ./facter.json
 #   4. RETIRE   hosts/<hostname>/hardware.nix (git history is the

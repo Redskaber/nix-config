@@ -5,44 +5,12 @@
 # @derivation: home::core::exp::app::music
 # @description: 统一音乐生态系统配置 (MPD + ncurses客户端 + 音频增强)
 #
-# ========================================================================
-# 核心组件说明
-# ========================================================================
-# 1. MPD (Music Player Daemon)
-#    - 本地音乐服务核心，管理音乐库和播放队列
-#    - 服务地址: 127.0.0.1:6600
-#    - 音乐目录: ~/Music
-#    - 播放列表: ~/.local/share/mpd/playlists
-#
-# 2. ncmpcpp
-#    - ncurses 界面 MPD 客户端
-#    - 特性: 音频可视化 (频谱/波形)、歌词显示
-#    - 快捷键:
-#        Enter - 播放/暂停
-#        j/k   - 上下移动
-#        J/K   - 选择+移动
-#        ,/.   - 快退/快进10秒
-#        1-8   - 切换标签页 (1:播放列表, 2:文件浏览器, 8:可视化)
-#        u     - 更新音乐数据库
-#
-# 3. EasyEffects
-#    - 音频增强系统 (30段均衡器 + 低音增强)
-#    - 预设: "music" (专为音乐优化)
-#    - 配置工具: 安装后运行 `easyeffects` GUI 调整
-#
-# 4. MPRIS 代理
-#    - 蓝牙设备媒体控制桥接 (依赖系统级 bluez)
-#    - 支持设备: 蓝牙耳机/键盘媒体键
-#
-# ========================================================================
-# 标准化路径管理 (统一前缀)
-# ========================================================================
-# 所有音乐相关路径遵循 XDG 规范:
-# - 音乐文件: ~/Music
-# - 服务数据: ~/.local/share/mpd
-# - 缓存数据: ~/.cache/{app}
-# - 配置文件: ~/.config/{app}
-# ========================================================================
+# 统一音乐生态系统 (MPD + ncurses 客户端 + 音频增强)：
+#   MPD — 127.0.0.1:6600，音乐库 ~/Music，播放列表 ~/.local/share/mpd。
+#   EasyEffects — 音频增强 (30 段均衡器)，预设 "music"，GUI 可调。
+#   MPRIS 代理 — 蓝牙媒体键桥接 (依赖系统级 bluez)。
+# 路径遵循 XDG 规范：配置 ~/.config/{app}、数据 ~/.local/share/{app}、
+# 缓存 ~/.cache/{app}。
 
 {
   inputs,
@@ -58,12 +26,11 @@ let
     musicDir = "${config.home.homeDirectory}/Music"; # 主音乐库目录
   };
 
-  # T3.2: the whole music ecosystem rides on the Linux audio stack
-  # (pulseaudio/alsa/mpd) — darwin gets its stack from the OS. One gate
-  # at the ROUTER keeps every leaf unconditional; the darwin closure
-  # skips this subtree entirely. NOTE: module-position mkIf is illegal
-  # (imports-chain lambdas must return a plain attrset) — the body
-  # goes under `config = lib.mkIf`, imports under `lib.optionals`.
+  # The whole music ecosystem rides on the Linux audio stack — darwin
+  # gets its stack from the OS. One gate at the ROUTER keeps every leaf
+  # unconditional; darwin skips this subtree. (module-position mkIf is
+  # illegal: body under `config = lib.mkIf`, imports under
+  # `lib.optionals`.)
   isLinuxFamily = shared.caps.linux-family;
 in
 {

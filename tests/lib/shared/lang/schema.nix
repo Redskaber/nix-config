@@ -4,7 +4,7 @@
 # @description: tests::lib::shared::lang::schema
 # @source: lib/shared/lang/schema.nix
 #
-# T1.1 (test-truthfulness): asserts run against the REAL production
+# Asserts run against the REAL production
 # schema.nix destructuring validators. Lambda-pattern schemas fail at
 # eval time when required keys are missing — this test proves the
 # contract on real code BOTH ways:
@@ -12,23 +12,21 @@
 #   - positive: well-formed input passes every validator (identity)
 #   - negative (STATIC): every mandatory key is declared WITHOUT a
 #     default in the real pattern, via builtins.functionArgs.
-#   - T4.0 composition: schema.shared APPLIES the nested i18n
-#     validator — its defaults fire for real (previously dead
-#     machinery; identity for i18n no longer holds, the default is
-#     materialised into the result).
+#   - composition: schema.shared APPLIES the nested i18n
+#     validator — its defaults fire for real (identity for i18n does
+#     NOT hold; the default is materialised into the result).
 #
 # The negative direction is asserted statically because Nix ≥2.35 lets
-# missing-argument errors ESCAPE builtins.tryEval — the dynamic
-# "remove a key and expect rejection" harness of the first T1.1 pass
-# silently turned uncatchable on this Nix and was found red by the
-# T1.3 deep-evaluation work.
+# missing-argument errors ESCAPE builtins.tryEval — a dynamic
+# "remove a key and expect rejection" harness would silently turn
+# uncatchable on this Nix.
 #
 # Covered (real code paths):
 #   - schema.user / git / rbw / time / i18n identity on valid inputs
 #   - schema.shared requires all 18 mandatory keys (functionArgs)
 #   - sub-schemas declare their mandatory keys (functionArgs)
 #   - optional keys with defaults (nixpkgs.overlays / config,
-#     i18n.nixpkgs-source — the T2.6 dual-source declaration)
+#     i18n.nixpkgs-source — the dual-source declaration)
 
 {
   inputs,
@@ -49,8 +47,8 @@ let
     platform = "nixos";
     window-manager = "hyprland";
     display-manager = "ly";
-    # T10.1: the sound axis answers the schema like its dm/wm
-    # siblings — mandatory, so every policy chain declares it.
+    # The sound axis answers the schema like its dm/wm siblings —
+    # mandatory, so every policy chain declares it.
     sound = "pipewire";
     pointer-cursor = "bibata";
     version = "v26_05";
@@ -124,15 +122,15 @@ let
     assert realSchema.git validShared.git == validShared.git;
     assert realSchema.rbw validShared.rbw == validShared.rbw;
     assert realSchema.time validShared.time == validShared.time;
-    # T4.0: the i18n validator MATERIALISES its default — the `@`
+    # The i18n validator MATERIALISES its default — the `@`
     # capture alone returns the caller's attrset untouched, so the
-    # declared `nixpkgs-source ? "stable"` never reached any result
-    # before (dead machinery; identity held for the wrong reason).
+    # declared `nixpkgs-source ? "stable"` reaches the composed
+    # result (plain identity would hold for the wrong reason).
     assert realSchema.i18n validShared.i18n == validShared.i18n // { nixpkgs-source = "stable"; };
     assert
       (realSchema.i18n (validShared.i18n // { nixpkgs-source = "unstable"; })).nixpkgs-source
       == "unstable";
-    # T4.0: composed result — top level passes through untouched, the
+    # Composed result — top level passes through untouched, the
     # nested i18n validator materialises its default (SSOT: defaults
     # live in the schema, not in per-leaf `or` fallbacks).
     assert (realSchema.shared validShared).i18n.nixpkgs-source == "stable";
@@ -146,7 +144,7 @@ let
     assert (builtins.functionArgs realSchema.user).username == false;
     assert (builtins.functionArgs realSchema.git).email == false;
     # optional keys with defaults survive on the real pattern
-    assert (builtins.functionArgs realSchema.i18n).nixpkgs-source == true; # T2.6
+    assert (builtins.functionArgs realSchema.i18n).nixpkgs-source == true; # dual-source declaration
     assert (builtins.functionArgs realSchema.nixpkgs).overlays == true;
     "eval-assertions-passed";
 in

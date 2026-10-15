@@ -4,7 +4,7 @@
 # @description: tests::nixos::core::base::i18n-samesource
 # @source: lib/shared/lang/fn.nix, nixos/core/base/i18n.nix
 #
-# T2.6 acceptance: "mixed-source combinations abort at EVAL time."
+# Acceptance: "mixed-source combinations abort at EVAL time."
 #
 #   1. fn.sameSource unit contract — passes equal fingerprints, throws
 #      on mixed ones (with the 995d8c9 reference in the message).
@@ -64,7 +64,7 @@ let
   mockShared = declared: {
     upkgs = unstablePkgs;
     pkgs = stablePkgs;
-    # T4.0: the runtime layer resolves the declared scope once
+    # The runtime layer resolves the declared scope once
     # (shared.i18nScope); the mock mirrors that single resolution.
     i18nScope = if declared == "unstable" then unstablePkgs else stablePkgs;
     fn = realFn;
@@ -103,7 +103,7 @@ let
     assert builtins.all (a: lib.hasPrefix "STABLE:" (builtins.toString a)) good;
     assert builtins.any (a: lib.hasPrefix "STABLE:fcitx5-chinese-addons" (builtins.toString a)) good;
     # production wiring: declared unstable while daemon is stable →
-    # forcing the addon ELEMENTS aborts (T2.6: mixed source dies at eval
+    # forcing the addon ELEMENTS aborts (mixed source dies at eval
     # time — and every real consumer of the list forces its elements)
     assert
       !(builtins.tryEval (

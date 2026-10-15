@@ -26,16 +26,13 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@ab6bcb2d5af0e904d04aea750e2089e9dc4cbfdd # v13
         env:
-          # Toolchain identity pinned (run 38136560662 adjudication, closes
-          # the open item from the 38085235502 record): install.determinate.
-          # system's /stable resolved dynamically and could hand out
-          # Determinate's Nix fork, whose eval-cores / lazy-trees settings
-          # are unknown to the locked-nixpkgs upstream Nix — every call
-          # warned. Verified on a live runner: with this env the installer
-          # plans distribution=Nix with the standard nix.conf (no fork
-          # settings, no determinate-nixd). The extra-args input is dead
-          # code in action v13 (args.concat result is dropped), so the env
-          # route is the only working one.
+          # Toolchain identity pinned: install.determinate.system's
+          # /stable resolves dynamically and can hand out Determinate's
+          # Nix fork, whose settings are unknown to the locked-nixpkgs
+          # upstream Nix. With this env the installer plans
+          # distribution=Nix with the standard nix.conf. The extra-args
+          # input is dead code in action v13 (args.concat result is
+          # dropped), so the env route is the only working one.
           NIX_INSTALLER_PREFER_UPSTREAM_NIX: true
         with:
           extra-conf: |
@@ -47,32 +44,28 @@ jobs:
             # substitutes wherever the cache already holds them.
             substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
             trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs
-          # ships, closing the identity drift for good.
+          # Upstream Nix 2.35.2 tarball — the version the locked nixpkgs ships.
           nix-package-url: https://releases.nixos.org/nix/nix-2.35.2/nix-2.35.2-x86_64-linux.tar.xz
 
       - name: Cache Nix store
         uses: DeterminateSystems/magic-nix-cache-action@b46e247b898aa56e6d2d2e728dc6df6c84fdb738 # v7
         with:
-          # Run 38085235502 paid 79 "Unable to authenticate to FlakeHub"
-          # annotations: use-flakehub defaults to true and this repo has no
-          # FlakeHub registration, so every run bought failed-auth noise.
+          # No FlakeHub registration in this repo — opt out of the
+          # failed-auth annotations use-flakehub defaults to.
           use-flakehub: false
 
       # Capture current lock state for the PR diff summary
       - name: Snapshot current flake.lock
         run: cp flake.lock flake.lock.before
 
-      # Run 38085235502 root cause: a branch-HEAD nixpkgs lock runs AHEAD
-      # of what Hydra has built into the channel — the first CI on that
-      # lock then source-builds the uncached tail (that run: 89 minutes
-      # of desktop-stack builds, xdg-desktop-portal's integration battery
-      # included, then the host-toplevels 90-minute timeout cancelled the
-      # leg). Pin the weekly nixpkgs bump to the CHANNEL SNAPSHOT instead:
-      # channels.nixos.org exposes the exact git-revision the nixos-26.05
-      # channel currently serves — fully built by Hydra, fully
-      # substitutable from cache.nixos.org. Freshness becomes channel
-      # cadence (a release cut every day or two) instead of branch tip.
+      # A branch-HEAD nixpkgs lock runs AHEAD of what Hydra has built
+      # into the channel — the first CI on that lock then source-builds
+      # the uncached tail. Pin the weekly nixpkgs bump to the CHANNEL
+      # SNAPSHOT instead: channels.nixos.org exposes the exact
+      # git-revision the nixos-26.05 channel currently serves — fully
+      # built by Hydra, fully substitutable from cache.nixos.org.
+      # Freshness becomes channel cadence (a release cut every day or
+      # two) instead of branch tip.
       - name: Update all flake inputs
         run: |
           CHAN_REV=$(curl -fsSL https://channels.nixos.org/nixos-26.05/git-revision)
@@ -127,12 +120,11 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # NO "[skip ci]" here: the update PR is exactly where the
-          # pipeline earns its keep — T6.3's evidence chain relies on
-          # "every PR opened by this workflow runs the full CI"
-          # (external-input breakage caught before merge), and the PR
-          # body's own checklist asks for "CI passes on this branch
-          # before merging". A skip marker would suppress both — the
-          # marker was template residue, not intent.
+          # pipeline earns its keep — "every PR opened by this
+          # workflow runs the full CI" (external-input breakage caught
+          # before merge), and the PR body's own checklist asks for "CI
+          # passes on this branch before merging". A skip marker would
+          # suppress both.
           commit-message: "chore(flake): update flake inputs"
           title: "chore(flake): update flake inputs — ${{ github.run_id }}"
           body: ${{ steps.summary.outputs.body }}

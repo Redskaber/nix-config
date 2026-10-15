@@ -4,7 +4,7 @@
 # @description: tests::nixos::core::srv::monitor-policy
 # @source: platform/nixos/system/core/srv/monitor/{default,healthcheck}.nix
 #
-# T3.4 acceptance (eval depth, mirrors the i18n-source pattern): the
+# Acceptance (eval depth, mirrors the i18n-source pattern): the
 # REAL monitor modules are imported through a full nixpkgs.lib.nixosSystem
 # evaluation — not a mock — for three service-profile shapes. The 60s
 # observability contract is asserted structurally:
@@ -64,7 +64,7 @@ let
   server = monitorConfig "server-pg-only";
   minimal = monitorConfig "minimal";
 
-  # ── Eval-time assertions (T3.4 acceptance, structural) ────────────
+  # ── Eval-time assertions (structural) ────────────────────────────
   evalAssertions =
     # 1. full-autostart: the observability kitchen sink
     assert full.services.prometheus.enable == true;

@@ -1,22 +1,18 @@
 # @path: ~/projects/configs/nix-config/tests/lib/shared/pdshell.nix
 # @author: redskaber
 # @datetime: 2026-10-13
-# @description: tests::lib::shared::pdshell — the pdshell loader consumption contract (T31)
+# @description: tests::lib::shared::pdshell — the pdshell loader consumption contract
 # @source: flake.lock (the pinned pdshell, da51c57) × shared.pdshells (the production handle)
 #
-# The fourth and last self-built tool library joins the contract
-# family: nix-types got the 97th (version identity), nmt the 98th
-# (guard-rev consumption), orc the 99th + 100th (copy-emitter fleet +
-# include-intent guard), and pdshell gets this one — after it, every
-# tool-library input this config consumes has a WHAT battery
-# answering its lock's WHERE.
+# With this battery, every tool-library input the config consumes
+# (nix-types, nmt, orc, pdshell) has a WHAT battery answering its
+# lock's WHERE.
 #
-# Why pdshell came last: of the four, it is the only one whose output
-# never touches a deployment — devShells are developer-facing, so a
+# Why this battery matters: devShells are developer-facing, so a
 # rotten member fails `nix develop .#name` interactively instead of a
-# `switch`. Its failure classes are therefore the quietest of all:
-# nothing fails loudly, things just quietly stop being what the
-# README says. What this battery pins, against the REAL tree:
+# `switch` — nothing fails loudly, things just quietly stop being
+# what the README says. What this battery pins, against the REAL
+# tree:
 #
 #   1. census     — the exact 25-member set. docs-ssot anchors the
 #                   COUNT (25) against the quick-ref header, but a
@@ -45,14 +41,14 @@
 #                   renpy engine) and does NOT leak another file's
 #                   contribution — the loader isolates siblings.
 #
-# Construction discipline (the 100th's shape): the same handle
-# (shared.pdshells) × the same argument record faces.nix passes —
-# pkgs, inputs, shared, devDir, verbatim — re-run here so the
-# contract is an eval-time property of the check build. The flake's
-# single pdsh construction stays single (devShells output + the
-# docs-ssot count share it, T8.1); this battery deliberately re-runs
-# the loader because a test that did not go through the production
-# handle would test a copy, not the consumption.
+# Construction discipline: the same handle (shared.pdshells) × the
+# same argument record faces.nix passes — pkgs, inputs, shared,
+# devDir, verbatim — re-run here so the contract is an eval-time
+# property of the check build. The flake's single pdsh construction
+# stays single (devShells output + the docs-ssot count share it);
+# this battery deliberately re-runs the loader because a test that
+# did not go through the production handle would test a copy, not
+# the consumption.
 #
 # Version anchors: the four contribution probes and the SHELL export
 # derive from the same identity axes the shell files use — routine
@@ -76,13 +72,6 @@
 #      specifically the UNREFERENCED member drift; referenced
 #      renames never reach this battery
 #
-# T31r note: the original file was lost to a sandbox reset before
-# its branch could be pushed; this is a ground-truth re-authoring —
-# the census re-derived from the live tree, every probe re-verified
-# against the live devShells face BEFORE writing (25 members / 117
-# merged inputs / hook order indices / renpy isolation), so the
-# contract is the same even where the prose is not byte-identical.
-
 {
   inputs,
   shared,
@@ -91,8 +80,8 @@
 }:
 let
   # ── the REAL loader, through the production handle ────────────
-  # The argument record is faces.nix's, verbatim (devShells loader,
-  # T8.1) — pkgs from the shared instance, the flake inputs, the
+  # The argument record is faces.nix's, verbatim (the devShells
+  # loader) — pkgs from the shared instance, the flake inputs, the
   # shared axis set, and the schema's devDir pointing at the real
   # home/env/dev tree.
   pdsh = shared.pdshells {
@@ -103,8 +92,8 @@ let
   pkgs = shared.pkgs;
 
   # Pure substring search — substring comparison, no regex, no
-  # context sensitivity (the T28 cure: regex needles break on
-  # store-path and bracket content, and the hook text carries both).
+  # context sensitivity (regex needles break on store-path and
+  # bracket content, and the hook text carries both).
   hasSub =
     needle: haystack:
     let
@@ -444,10 +433,11 @@ in
     virtualisation.memorySize = 256;
   };
 
-  # T31r note: the contract text is spliced as a STRING EXPRESSION,
+  # The contract text is spliced as a STRING EXPRESSION,
   # never into a `#` comment — contractHeld is multi-line, and only
-  # the first spliced line would land behind a single '#' (the T32
-  # CI red class, caught by pylyzer at the driver build).
+  # the first spliced line would land behind a single '#' (the rest
+  # would be bare python, which the CI driver's pylyzer run rejects
+  # at the driver build).
   testScript = ''
     start_all()
     machine.wait_for_unit("multi-user.target")

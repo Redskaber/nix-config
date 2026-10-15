@@ -1,23 +1,16 @@
 # @path: ~/projects/configs/nix-config/tests/lib/shared/overlays.nix
 # @author: redskaber
 # @datetime: 2026-10-12
-# @description: tests::lib::shared::overlays — the overlay locality census (T24.2)
+# @description: tests::lib::shared::overlays — the overlay locality census
 # @source: overlays/default.nix × lib/shared/runtime/default.nix (the loader)
 #
-# run 38171937689's re-run named the darwin leg's root failure: a
-# cutter-2.5.0 drv requiring x86_64-linux inside the aarch64-darwin
-# closure. The forensic chain (read from the real tree, not guessed):
-# overlays/default.nix's patches defined cutter_patched as
-# `shared.upkgs.cutter.overrideAttrs …`, but shared.nix wires every
-# host's nixpkgs.overlays through `shared.self.overlays` — the
-# FLAKE-LEVEL output, instantiated once with the BASE host's IR
-# (targets.base, the x86_64-linux workstation). So the darwin host's
-# upkgs.cutter_patched resolved to the base instance's unstable
-# import: a linux drv in a macOS home closure. Cache-substitutable
-# members (gcc/gdb/rustc — the same class of cross-wiring, had any
-# OTHER overlay attr been consumed) masked nothing; cutter_patched's
-# unique postPatch made it uncacheable, and the macOS runner named
-# it: platform mismatch, root derivation cutter-2.5.0.
+# History: the darwin leg failed with a linux cutter drv inside the
+# aarch64-darwin closure — the patch defined cutter_patched from
+# `shared.upkgs` (the BASE host's instance, since shared.nix wires
+# every host's nixpkgs.overlays through `shared.self.overlays`, the
+# FLAKE-LEVEL output instantiated once with the base workstation's
+# IR): a linux drv in a macOS home closure, named by the macOS runner
+# because the drv's unique postPatch made it uncacheable.
 #
 # The law this census locks: overlays are INSTANCE-LOCAL — what an
 # overlay patches is the package set it is APPLIED to (the overlay

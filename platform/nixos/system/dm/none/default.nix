@@ -1,10 +1,10 @@
 # @path: ~/projects/configs/nix-config/platform/nixos/system/dm/none/default.nix
 # @author: redskaber
 # @datetime: 2026-10-10
-# @description: platform::nixos::dm::none — Null-Object display manager (T7.1)
+# @description: platform::nixos::dm::none — Null-Object display manager
 # @directory: https://search.nixos.org/options
 #
-# The "no display manager" row (T7.1): console hosts — the WSL form,
+# The "no display manager" row: console hosts — the WSL form,
 # headless servers — select display-manager = none. Deliberately
 # empty, the same pattern as window-manager none (home/wm/none): the
 # module's EXISTENCE is what keeps platform/nixos/system/dm/default.nix's

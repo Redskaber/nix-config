@@ -12,26 +12,18 @@
   pkgs,
   ...
 }:
-# T3.2: wine/lutris is a Linux gaming stack; desktopEntries likewise
-# live in Linux desktop environments. darwin App bundles own that land.
-# (Body under `config = mkIf` — module-position mkIf is illegal.)
+# wine/lutris is a Linux gaming stack; desktopEntries likewise live in
+# Linux desktop environments. darwin App bundles own that land. (Body
+# under `config = mkIf` — module-position mkIf is illegal.)
 {
   config = lib.mkIf shared.caps.linux-family {
-    # Compat: Platform Windows
-    # Wine:
-    #   - initial: winecfg
-    #   - win-con: wine control
-    #   - win-cmd: wine cmd
-    #   - win-run: wine <app>
-    #   - win-exp: wine explorer
-    #   - win-kall:wineserver -k
-    #   - wine-ver: wine --version
+    # Windows compat via wine (winecfg / wine cmd / wine explorer;
+    # wineserver -k kills a stuck session).
     home.packages = with pkgs; [
       lutris
       (shared.version.value.wine pkgs)
     ];
 
-    # Optional: auto create decktop icon
     xdg.desktopEntries.lutris = {
       name = "Lutris";
       exec = "lutris";

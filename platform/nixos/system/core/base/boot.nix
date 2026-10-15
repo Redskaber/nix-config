@@ -13,17 +13,15 @@
   ...
 }:
 {
-  # Bootloader
   boot = {
     consoleLogLevel = 3;
 
-    # T7.1: bare-metal defaults — mkDefault, because specialized
-    # system forms legitimately subtract the boot chain: the
-    # nixos-wsl customs (platform/nixos-wsl/) host the NixOS-WSL
-    # interpreter, which plain-assigns these to false (WSL supplies
-    # its own kernel and loader). A plain assignment here would be a
-    # conflicting definition; a default states the truth: this is
-    # what the bare-metal nixos form wants UNLESS a form says else.
+    # Bare-metal defaults — mkDefault, because specialized system
+    # forms legitimately subtract the boot chain: the NixOS-WSL
+    # interpreter (platform/nixos-wsl/) plain-assigns these to false
+    # (WSL supplies its own kernel and loader). A plain assignment
+    # here would be a conflicting definition; a default states what
+    # the bare-metal nixos form wants UNLESS a form says else.
     loader.efi.canTouchEfiVariables = true;
     loader.systemd-boot.enable = lib.mkDefault true;
     loader.timeout = 5;

@@ -38,11 +38,6 @@
 #   sudo -u postgres psql -U postgres -d postgres -c "\du"
 #   psql -U kilig -d root -c "SELECT current_user;"           # peer 认证（无密码）
 #   psql -h 127.0.0.1 -U kilig -d dev -W                      # TCP + 密码认证(1024)
-#
-# @reset: 重置数据库（开发环境）:
-#   sudo systemctl stop postgresql
-#   sudo rm -rf /var/lib/postgresql/${config.services.postgresql.package.psqlSchema}
-#   sudo systemctl start postgresql
 
 {
   inputs,
@@ -224,14 +219,14 @@
 
   # 🔒 专用服务：安全注入密码（运行时）— gated on the service-profile
   # install flag: the unit reads the postgresql sops secret, which only
-  # exists where postgresql is installed (second-machine dividend, T2.5).
+  # exists where postgresql is installed.
   systemd.services = lib.mkIf shared.services.db.postgresql.install {
     postgresql-set-user-passwords = {
       description = "Inject PostgreSQL user passwords from sops secrets";
       after = [ "postgresql.service" ];
       partOf = [ "postgresql.service" ];
       restartIfChanged = false;
-      # T4.0: on-demand units stay bound to their parent service;
+      # on-demand units stay bound to their parent service;
       # autostarted ones ride the boot target — expressed branchless
       # (service-profile is the dispatch layer for services).
       wantedBy = lib.mkForce (
@@ -291,7 +286,7 @@
     };
 
     # Control autostart: clear wantedBy when autostart=false (install but
-    # not autostart) — branchless selection (T4.0).
+    # not autostart) — branchless selection.
     postgresql.wantedBy = lib.mkForce (
       lib.optional shared.services.db.postgresql.autostart "multi-user.target"
     );

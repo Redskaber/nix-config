@@ -23,8 +23,6 @@
   ...
 }:
 {
-
-  # MYSQL VERSION
   environment.systemPackages = lib.optionals shared.services.db.mysql.install (
     with pkgs;
     [
@@ -33,7 +31,6 @@
     ]
   );
 
-  # MYSQLD SERVICES
   services.mysql = {
     enable = shared.services.db.mysql.install;
     package = pkgs.mariadb;
@@ -79,14 +76,14 @@
 
   # dedicated service：password（run secure）— gated on the service-profile
   # install flag: the unit reads the mysql sops secret, which only
-  # exists where mysql is installed (second-machine dividend, T2.5).
+  # exists where mysql is installed.
   systemd.services = lib.mkIf shared.services.db.mysql.install {
     mysql-set-user-passwords = {
       description = "Securely set MySQL user passwords from sops secrets";
       after = [ "mysql.service" ];
       partOf = [ "mysql.service" ];
       restartIfChanged = false;
-      # T4.0: on-demand units stay bound to their parent service;
+      # on-demand units stay bound to their parent service;
       # autostarted ones ride the boot target — expressed branchless
       # (service-profile is the dispatch layer for services).
       wantedBy = lib.mkForce (
