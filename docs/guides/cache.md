@@ -59,6 +59,25 @@ substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
 trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 ```
 
+**形式三：会话作用域**（NIX_CONFIG 环境变量——零落盘，一条命令的
+进程树即全部作用域）
+
+```bash
+NIX_CONFIG="
+substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
+trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
+" nix build github:Redskaber/nix-config#checks.x86_64-linux.module-reachability-check
+```
+
+nix 配置优先级链的最顶层：NIX_CONFIG 遮蔽一切文件配置（用户文件、
+系统文件全部让位）——因此该形式携带的是**完整**两行而非追加。若想
+在保留内置默认（cache.nixos.org 及其公钥）的前提下仅追加本缓存，
+用列表型设置的追加形态：`extra-substituters = https://redskaber-nix-config.cachix.org`
++ `extra-trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw=`
+（一对 extra-* 与上面的完整两行等价——内置默认本就只有官方源）。
+三个消费场景：一次性环境（CI 式容器 / 沙箱会话）零落盘；借用他人
+机器不改任何配置；先体验缓存收益再决定是否常驻（升级到形式一/二）。
+
 **验证拉取配置生效**：
 
 ```bash
