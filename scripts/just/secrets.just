@@ -173,6 +173,7 @@ SHARED_NIX_PATH    := ROOT          / "shared.nix"
 # Print the secrets lifecycle map: state machine, three-object verb map,
 # scenario flows (day-one / dual-key on one machine / add a server /
 # rotate). Start here — every other recipe is one verb in it.
+# Print the secrets lifecycle map (start here).
 [group('secrets')]
 secrets-guide:
     @echo ""
@@ -259,6 +260,7 @@ secrets-guide:
 # keypair first, then pass the printed pubkey here). Both paths land in
 # the same state the incremental verbs would reach — the state machine
 # simply skips a hop when the material is already at hand.
+# Init sops infra: user key + baseline rules (+ optional host key).
 [group('secrets')]
 secrets-init host_alias="" host_pubkey="":
     @just _assert-shared
@@ -268,6 +270,7 @@ secrets-init host_alias="" host_pubkey="":
 
 # Init sops infra and also generate all plaintext template instances
 # (secrets/plan/** — local reference copies, never committed).
+# Init sops infra + generate all plaintext plan instances.
 [group('secrets')]
 secrets-init-with-plan:
     @just secrets-init
@@ -286,6 +289,7 @@ secrets-init-with-plan:
 # identities there (host keys merged by key-install-host) — they are
 # listed below a separator so they can never be mistaken for the user
 # key when shared.
+# Print your user age public key (safe to share).
 [group('keys')]
 key-show:
     #!/usr/bin/env bash
@@ -300,6 +304,7 @@ key-show:
 
 # Destroy the user age key file (irreversible — every file it decrypts
 # becomes unreadable on this machine; blobs stay intact in the repo).
+# Destroy the user age key file (irreversible).
 [group('keys')]
 key-destroy:
     @rm -rf {{SECRETS_KEYS_PATH}}
@@ -381,6 +386,7 @@ key-show-host alias src="":
 # Idempotent: skips when the exact identity (secret-key line) is already
 # installed. After install the delivery copy is redundant on this machine
 # — shred it (the identity now lives in the key file).
+# Install a host key onto this machine (own-host branch).
 [group('keys')]
 key-install-host alias src="":
     #!/usr/bin/env bash
@@ -425,6 +431,7 @@ key-install-host alias src="":
 # key group (default domain "srv" — the only dual-key domain). Idempotent
 # refusal on duplicate alias or duplicate pubkey. Follow with
 # secrets-sync to re-encrypt existing blobs.
+# Register a host pubkey into .sops.yaml (then secrets-sync).
 [group('keys')]
 key-add-host alias pubkey domain="srv":
     #!/usr/bin/env bash
@@ -462,6 +469,7 @@ key-add-host alias pubkey domain="srv":
 # every key_groups reference). Works for host_* and user_* aliases alike.
 # Old ciphertexts stay readable by the revoked key until re-encryption —
 # always follow with secrets-sync.
+# Revoke a key from .sops.yaml (then secrets-sync).
 [group('keys')]
 key-remove alias:
     #!/usr/bin/env bash
@@ -501,6 +509,7 @@ key-remove alias:
 # it does not exist yet. Refuses on an evolved file: key evolution goes
 # through the lifecycle verbs (see secrets-guide). For a deliberate
 # hierarchy reset use rules-reset.
+# Create .sops.yaml from the baseline (refuses on existing).
 [group('rules')]
 rules-init:
     #!/usr/bin/env bash
@@ -516,6 +525,7 @@ rules-init:
 
 # Hard hierarchy reset: regenerate .sops.yaml from the baseline template,
 # overwriting the evolved policy truth (host keys and rotations are lost).
+# Hard reset .sops.yaml to the baseline (host keys lost).
 [group('rules')]
 rules-reset:
     #!/usr/bin/env bash
@@ -543,6 +553,7 @@ rules-destroy:
 # registry-driven: the hardcoded key list this recipe used to carry was
 # the coupling the R27 refactor removed (the registry is the single row
 # source now; adding a secret needs no edit here).
+# Generate all plaintext template instances (registry-driven).
 [group('secrets')]
 secrets-plan-create:
     #!/usr/bin/env bash
@@ -576,6 +587,7 @@ secrets-plan-destroy:
 # skipped). Refuses paths no .sops.yaml rule covers (plaintext-risk class)
 # and aliases that already exist.
 #   just secrets-add cachix-token nixos/core/base/nix/cachix/auth-token "Cachix auth token"
+# Register a secret end-to-end: three layers, one command.
 [group('secrets')]
 secrets-add alias rel prompt="" transform="plain":
     @python3 "{{ROOT}}/scripts/sh/secrets-db.py" add {{quote(alias)}} {{quote(rel)}} {{quote(prompt)}} {{quote(transform)}}
@@ -584,6 +596,7 @@ secrets-add alias rel prompt="" transform="plain":
 # removed together. REFUSES while the encrypted blob still exists
 # (destroy it first: `just secret-remove <alias>` — the blob is the live
 # value, this verb is the retirement of the SHAPE).
+# Retire a secret's shape: registry row + template + declaration.
 [group('secrets')]
 secrets-remove alias:
     @python3 "{{ROOT}}/scripts/sh/secrets-db.py" remove {{quote(alias)}}
@@ -591,6 +604,7 @@ secrets-remove alias:
 # Update a registry row's operator UX: prompt label and/or transform
 # (plain | mkpasswd). Empty arguments keep the current value.
 #   just secrets-edit postgresql "PostgreSQL (dev) password"
+# Edit a registry row's prompt / transform.
 [group('secrets')]
 secrets-edit alias prompt="" transform="":
     @python3 "{{ROOT}}/scripts/sh/secrets-db.py" edit {{quote(alias)}} {{quote(prompt)}} {{quote(transform)}}
@@ -601,6 +615,7 @@ secrets-edit alias prompt="" transform="":
 # leaf key, covering sops rule, blob size/mtime and its recipients.
 # Decryption stays an explicit separate verb (`secret-get`).
 #   just secrets-show postgresql
+# Print one secret's dossier (paths, rule, state — no decrypt).
 [group('secrets')]
 secrets-show alias:
     @python3 "{{ROOT}}/scripts/sh/secrets-db.py" q show {{quote(alias)}}
@@ -608,6 +623,7 @@ secrets-show alias:
 # Config-truth ↔ registry drift view: every shared.nix declaration ×
 # registry membership × blob state. Answers "what does the config
 # declare that the just surface does not cover" in one screen.
+# Config-truth vs registry drift, one screen.
 [group('secrets')]
 secrets-declared:
     @python3 "{{ROOT}}/scripts/sh/secrets-db.py" q declared
@@ -615,12 +631,14 @@ secrets-declared:
 # Database cache state: built_at, input fingerprint, row/declaration/blob
 # counts. The cache is secrets/.cache/secrets.db (sqlite, git-ignored);
 # queries refresh it transparently — this verb is inspection, not a chore.
+# Show the database cache state (fingerprint, counts).
 [group('secrets')]
 secrets-db:
     @python3 "{{ROOT}}/scripts/sh/secrets-db.py" q info
 
 # Force a cache rebuild (after hand edits to registry.toml / shared.nix,
 # or when a query's transparent refresh looks stale).
+# Force a database cache rebuild.
 [group('secrets')]
 secrets-db-sync:
     @python3 "{{ROOT}}/scripts/sh/secrets-db.py" sync
@@ -634,6 +652,7 @@ secrets-db-sync:
 
 # Interactive encrypt (upsert): type the value once, it lands encrypted.
 #   just secret-set postgresql
+# Interactive encrypt (upsert) of one secret.
 [group('secrets')]
 secret-set alias:
     #!/usr/bin/env bash
@@ -651,6 +670,7 @@ secret-set alias:
 # registry rows instead of the typed password — "confirmation mismatch"
 # on the first secret no matter what is typed. mapfile keeps the loop
 # body on the CALLER's stdin (the terminal the passwords are typed into).
+# Interactive encrypt of every secret, in registry order.
 [group('secrets')]
 secret-set-all:
     #!/usr/bin/env bash
@@ -662,7 +682,7 @@ secret-set-all:
         just _secrets-encrypt "${KEY}" "${PROMPT}" "${TRANSFORM:-plain}" || exit 1
     done
 
-# Decrypt and print one secret.   just secret-get postgresql
+# Decrypt and print one secret.
 [group('secrets')]
 secret-get alias:
     #!/usr/bin/env bash
@@ -673,60 +693,41 @@ secret-get alias:
 
 # Decrypt into $EDITOR, re-encrypt on save (sops edit).
 #   just secret-edit postgresql
+# Decrypt into $EDITOR, re-encrypt on save.
 [group('secrets')]
 secret-edit alias:
     #!/usr/bin/env bash
     set -euo pipefail
-    ROW="$(just _secrets-row "{{alias}}")" || exit 1
-    IFS='|' read -r _ KEY _ _ <<< "${ROW}"
-    OUT="$(just _secrets-paths "${KEY}")" || exit 1
-    mapfile -t LINES <<< "${OUT}"
-    REL="${LINES[1]:-}"
-    [[ -n "${REL}" ]] || { echo "Error: _secrets-paths returned incomplete data for '${KEY}'" >&2; exit 1; }
-    TARGET="{{SECRETS_CHIPR_PATH}}/${REL}.yaml"
+    TARGET="$(just _secrets-blob "{{alias}}")" || exit 1
     [[ -f "${TARGET}" ]] || { echo "Error: \"${TARGET}\" does not exist yet — create it first: just secret-set {{alias}}" >&2; exit 1; }
     exec sops edit "${TARGET}"
 
 # Destroy a single encrypted secret blob (granular). The shared.nix
 # declaration is config-layer truth — remove it separately when retiring
 # the secret for good.
+# Destroy one encrypted blob (declaration untouched).
 [group('secrets')]
 secret-remove alias:
     #!/usr/bin/env bash
     set -euo pipefail
-    ROW="$(just _secrets-row "{{alias}}")" || exit 1
-    IFS='|' read -r _ KEY _ _ <<< "${ROW}"
-    OUT="$(just _secrets-paths "${KEY}")" || exit 1
-    mapfile -t LINES <<< "${OUT}"
-    REL="${LINES[1]:-}"
-    [[ -n "${REL}" ]] || { echo "Error: _secrets-paths returned incomplete data for '${KEY}'" >&2; exit 1; }
-    TARGET="{{SECRETS_CHIPR_PATH}}/${REL}.yaml"
+    TARGET="$(just _secrets-blob "{{alias}}")" || exit 1
     [[ -f "${TARGET}" ]] || { echo "Error: cannot destroy non-existent file \"${TARGET}\"" >&2; exit 100; }
     rm -- "${TARGET}"
     echo "Destroyed ${TARGET}"
-    echo "Note: the shared.nix declaration of '${KEY}' is untouched —"
-    echo "remove it there too if the secret is being retired (config-layer truth)."
+    echo "Note: the shared.nix declaration of the retired blob is untouched —"
+    echo "retire the shape too when the secret is gone for good (just secrets-remove)."
 
 # List every declared secret: alias × domain × encrypted state — the
 # "what exists and what is missing" answer before secret-set-all.
+# The table comes from the materialized join (secrets-db.py q list):
+# one query, no per-row subprocess spawn; the rules/keys footer stays
+# this recipe's own (local audit context the database cannot know).
+# List every secret: alias × domain × state (one joined query).
 [group('secrets')]
 secrets-list:
     #!/usr/bin/env bash
     set -euo pipefail
-    printf '%-12s %-5s %-6s %s\n' "ALIAS" "DOM" "STATE" "SECRET"
-    while IFS='|' read -r ALIAS KEY _ _; do
-        OUT="$(just _secrets-paths "${KEY}")" || exit 1
-        mapfile -t LINES <<< "${OUT}"
-        REL="${LINES[1]:-}"
-        TARGET="{{SECRETS_CHIPR_PATH}}/${REL}.yaml"
-        if [[ -f "${TARGET}" ]]; then
-            STATE="set"
-        else
-            STATE="MISSING"
-        fi
-        case "${KEY}" in *.srv.*) DOM="srv";; *) DOM="base";; esac
-        printf '%-12s %-5s %-6s %s\n' "${ALIAS}" "${DOM}" "${STATE}" "${KEY}"
-    done < <(just _secrets-registry)
+    python3 "{{ROOT}}/scripts/sh/secrets-db.py" q list
     echo
     CONFIG="{{DOT_SOPS_FILENAME}}"
     if [[ -f "${CONFIG}" ]]; then
@@ -753,18 +754,21 @@ secrets-list:
 # Verify every secrets/**.yaml matches the .sops.yaml key hierarchy: rule
 # coverage (NO-RULE = plaintext risk) + recipient equality (DRIFT).
 # Wired into the CI security job.
+# Verify blobs match the .sops.yaml hierarchy (CI gate).
 [group('secrets')]
 secrets-verify:
     @bash "{{ROOT}}/scripts/sh/secrets-rotate.sh" check
 
 # Re-encrypt every blob onto the current .sops.yaml rules (sops updatekeys).
 # The migration step after key-add-host / rotations / revocations.
+# Re-encrypt every blob onto current rules (post-rotation).
 [group('secrets')]
 secrets-sync:
     @bash "{{ROOT}}/scripts/sh/secrets-rotate.sh" update
 
 # Guided USER key rotation: replace in rules → sync → accept git history
 # exposure (or rewrite it — see docs/secrets/rotation.md §compromise).
+# Guided USER key rotation: replace, sync, accept history.
 [group('keys')]
 key-rotate-user pubkey:
     @bash "{{ROOT}}/scripts/sh/secrets-rotate.sh" rotate user "{{pubkey}}"
@@ -781,6 +785,7 @@ key-rotate-host pubkey:
 
 # Keys, dispatch rules, blob count and a hierarchy check — the "look
 # before you leap" entry point for every rotation decision.
+# One-screen audit: keys, rules, blobs, hierarchy check.
 [group('secrets')]
 secrets-status:
     #!/usr/bin/env bash
@@ -825,6 +830,7 @@ secrets-status:
 
 # Destroy all sops artifacts: plaintext instances + blobs + rules + the
 # user key file (irreversible).
+# Destroy ALL sops artifacts (irreversible).
 [group('secrets')]
 secrets-destroy-all:
     @just secrets-plan-destroy
@@ -858,6 +864,23 @@ _secrets-row alias:
     set -euo pipefail
     ROW="$(python3 "{{ROOT}}/scripts/sh/secrets-db.py" q row {{quote(alias)}})" || exit 1
     printf '%s\n' "${ROW}"
+
+# Resolve an alias to its absolute encrypted-blob path (registry row →
+# dotted key → resolved rel path → SECRETS_CHIPR_PATH/<rel>.yaml). Fails
+# with the engine's message on unknown alias or missing declaration.
+# Whether the blob EXISTS is the caller's question — edit wants the
+# "create first" remedy, remove wants "nothing to destroy".
+[private]
+_secrets-blob alias:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ROW="$(just _secrets-row "{{alias}}")" || exit 1
+    IFS='|' read -r _ KEY _ _ <<< "${ROW}"
+    OUT="$(just _secrets-paths "${KEY}")" || exit 1
+    mapfile -t LINES <<< "${OUT}"
+    REL="${LINES[1]:-}"
+    [[ -n "${REL}" ]] || { echo "Error: _secrets-paths returned incomplete data for '${KEY}'" >&2; exit 1; }
+    printf '%s\n' "{{SECRETS_CHIPR_PATH}}/${REL}.yaml"
 
 
 # ==============================================================================

@@ -72,12 +72,14 @@ nixos-test host:
 # push-host-boot pattern: flip the machine on your own schedule,
 # `nixos-rebuild list-generations` to inspect, rollback stays a
 # boot-menu entry away.
+# Set the NEXT-BOOT generation without activating (the safe remote flip).
 [group('deploy')]
 nixos-boot host:
     @cd {{ROOT}} && sudo nixos-rebuild boot --flake .#{{host}}
 
 # Home Manager switch for the policy user on a specific host
 # ('just home-switch nixos' → kilig@nixos).
+# Home-Manager switch for the policy user on a host.
 [group('deploy')]
 home-switch host:
     @cd {{ROOT}} && USER=$$(grep -oP 'username\s*=\s*"\K[^"]+' {{SHARED_NIX_PATH}}) && \
@@ -93,6 +95,7 @@ home-switch host:
 
 # List colmena's deployment scope (the classifier's nixosHosts — darwin
 # and standalone-HM hosts deploy by their own verbs, never colmena).
+# List colmena's deployment scope (nixos hosts only).
 [group('deploy')]
 deploy-list:
     @cd {{ROOT}} && nix eval .#api.targets.nixosHosts --json
@@ -101,6 +104,7 @@ deploy-list:
 # the generation flips live; rollback stays a `colmena apply --rollback`
 # away). targetUser comes from the policy; coordinates from
 # hosts/<host>/deploy.nix (node name as host until it says otherwise).
+# Remote-deploy one host: build, upload, activate (ssh, colmena).
 [group('deploy')]
 deploy host:
     @cd {{ROOT}} && nix run github:zhaofengli/colmena/v0.5.0 -- apply --on {{host}}
@@ -108,6 +112,7 @@ deploy host:
 # Deploy to the machine you are ON (needs allowLocalDeployment on the
 # node — hosts/nixos/deploy.nix carries it). The sudo-parity of
 # nixos-switch for the colmena lane.
+# Colmena apply-local to THIS machine (sudo parity of nixos-switch).
 [group('deploy')]
 deploy-local:
     @cd {{ROOT}} && nix run github:zhaofengli/colmena/v0.5.0 -- apply-local --sudo

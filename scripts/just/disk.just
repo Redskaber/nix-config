@@ -39,6 +39,7 @@
 # and boot wiring — from disko.devices._config. (The raw .disko.devices
 # view holds script-valued internal options and is not JSON-serializable;
 # _config IS the eval-level acceptance surface.)
+# Show a host's disk layout as NixOS will see it (read-only).
 [group('disk')]
 disk-show host:
     #!/usr/bin/env bash
@@ -51,6 +52,7 @@ disk-show host:
 # ephemeral-root rollback recipe (postResumeCommands — empty on
 # persistent-root hosts; the recipe's device/subvol/retention come from
 # the layout facts, so what you see is what boot will run).
+# Show a host's state contract: persistence + rollback recipe (read-only).
 [group('disk')]
 persist-show host:
     #!/usr/bin/env bash
@@ -74,6 +76,7 @@ persist-show host:
 # format+mount script from the host's closure (the disko input pinned in
 # flake.lock, not a floating github: ref) and runs it with sudo.
 # Extra args pass through to the script (e.g. --dry-run).
+# DESTRUCTIVE: partition + format + mount a host's declared disks.
 [group('disk')]
 disk-format host *args:
     #!/usr/bin/env bash

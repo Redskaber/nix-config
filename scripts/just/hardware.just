@@ -37,17 +37,17 @@
 #   data-driven — no hardcoded host paths.
 #
 # NOTE: imported by justfile; all paths use ROOT (defined in root justfile).
-#       SHARED_NIX_PATH is defined in scripts/just/sops.just.
+#       SHARED_NIX_PATH is defined in scripts/just/secrets.just.
 # ==============================================================================
 
 # Resolve hostname from shared.nix (data-driven, no hardcoded path).
 _HOSTNAME_CMD := "grep -oP 'hostName\\s*=\\s*\"\\K[^\"]+' " + SHARED_NIX_PATH
 
-# Detect hardware and write hardware.nix for the current host (overwrites).
-# LEGACY fact source — the module-shaped output of nixos-generate-config.
-# For the declarative path prefer `hardware-facter` (same info as data).
-[group('hardware')]
-hardware-generate:
+# Resolve the current host's name from shared.nix — the single guard
+# every hardware verb shares: shared.nix must exist and carry a parseable
+# hostName, else the verb exits with the remedy. Prints HOSTNAME.
+[private]
+_hardware-hostname:
     #!/usr/bin/env bash
     set -euo pipefail
     SHARED="{{SHARED_NIX_PATH}}"
@@ -60,6 +60,17 @@ hardware-generate:
         echo "Error: could not parse hostName from ${SHARED}" >&2
         exit 1
     fi
+    printf '%s\n' "${HOSTNAME}"
+
+# Detect hardware and write hardware.nix for the current host (overwrites).
+# LEGACY fact source — the module-shaped output of nixos-generate-config.
+# For the declarative path prefer `hardware-facter` (same info as data).
+# Generate hardware.nix via nixos-generate-config (legacy path).
+[group('hardware')]
+hardware-generate:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    HOSTNAME="$(just _hardware-hostname)" || exit 1
     HW_PATH="{{ROOT}}/hosts/${HOSTNAME}/hardware.nix"
     mkdir -p "$(dirname "${HW_PATH}")"
     nixos-generate-config --show-hardware-config > "${HW_PATH}"
@@ -70,16 +81,7 @@ hardware-generate:
 hardware-show:
     #!/usr/bin/env bash
     set -euo pipefail
-    SHARED="{{SHARED_NIX_PATH}}"
-    if [[ ! -f "${SHARED}" ]]; then
-        echo "Error: ${SHARED} not found." >&2
-        exit 1
-    fi
-    HOSTNAME=$({{_HOSTNAME_CMD}} || true)
-    if [[ -z "${HOSTNAME}" ]]; then
-        echo "Error: could not parse hostName from ${SHARED}" >&2
-        exit 1
-    fi
+    HOSTNAME="$(just _hardware-hostname)" || exit 1
     HW_PATH="{{ROOT}}/hosts/${HOSTNAME}/hardware.nix"
     if [[ ! -f "${HW_PATH}" ]]; then
         echo "Error: ${HW_PATH} not found. Run: just hardware-generate" >&2
@@ -102,20 +104,12 @@ hardware-show:
 # documented quick start (the registry's nixpkgs); if the project bumps
 # nixpkgs across a report-schema break, regenerate with the pinned revision:
 #   nix shell github:NixOS/nixpkgs/<locked-rev>#nixos-facter
+# Generate the declarative facter.json report (roadmap path).
 [group('hardware')]
 hardware-facter:
     #!/usr/bin/env bash
     set -euo pipefail
-    SHARED="{{SHARED_NIX_PATH}}"
-    if [[ ! -f "${SHARED}" ]]; then
-        echo "Error: ${SHARED} not found. Run: just shared-generate <username>" >&2
-        exit 1
-    fi
-    HOSTNAME=$({{_HOSTNAME_CMD}} || true)
-    if [[ -z "${HOSTNAME}" ]]; then
-        echo "Error: could not parse hostName from ${SHARED}" >&2
-        exit 1
-    fi
+    HOSTNAME="$(just _hardware-hostname)" || exit 1
     OUT="{{ROOT}}/hosts/${HOSTNAME}/facter.json"
     mkdir -p "$(dirname "${OUT}")"
     sudo nix run --option experimental-features "flakes nix-command" \
@@ -155,20 +149,12 @@ hardware-list:
 # (tests/lib/shared/targets.nix): exactly ONE source per bare-metal host —
 # never both, never neither. One command, four steps: probe the report,
 # move the mounts verbatim, flip the wiring, retire the legacy file.
+# One command: probe, move mounts, flip wiring, retire legacy.
 [group('hardware')]
 hardware-migrate:
     #!/usr/bin/env bash
     set -euo pipefail
-    SHARED="{{SHARED_NIX_PATH}}"
-    if [[ ! -f "${SHARED}" ]]; then
-        echo "Error: ${SHARED} not found. Run: just shared-generate <username>" >&2
-        exit 1
-    fi
-    HOSTNAME=$({{_HOSTNAME_CMD}} || true)
-    if [[ -z "${HOSTNAME}" ]]; then
-        echo "Error: could not parse hostName from ${SHARED}" >&2
-        exit 1
-    fi
+    HOSTNAME="$(just _hardware-hostname)" || exit 1
     ENTRY="{{ROOT}}/hosts/${HOSTNAME}/default.nix"
     HW="{{ROOT}}/hosts/${HOSTNAME}/hardware.nix"
     OUT="{{ROOT}}/hosts/${HOSTNAME}/facter.json"
@@ -362,6 +348,7 @@ hardware-migrate:
 # the flip itself is a one-data-row change, pre-staged as a comment in
 # the host's shared.nix — this verb only turns "what does the machine
 # actually have" into evidence.
+# Collect audio-form evidence on this machine (read-only probe).
 [group('hardware')]
 sound-audit:
     #!/usr/bin/env bash

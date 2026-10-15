@@ -8,6 +8,9 @@
 > deploy / devenv / disk / flake / hardware / keys / maintenance / rules / secrets /
 > services / shared）——`just --list` 给出按组组织的全部入口；裸 `just`（无参数）打印
 > start-here 地图；secrets 侧的生命周期地图从 `just secrets-guide` 进入。
+>
+> 描述约定（R28）：`just --list` 展示的是 recipe 上方**最后一条连续 `#` 注释行**——
+> 该行必须是完整、精炼、自含的单句（示例与补充说明写在其上方，绝不做末行）。
 
 ### 全局（引导入口）
 

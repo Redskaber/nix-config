@@ -29,6 +29,7 @@ CACHIX_TOKEN_ALIAS := "cachix-token"
 # One screen: cache reachability (narinfo probe — 404 means reachable
 # but empty: nothing pushed yet), the trusted key on THIS machine, and
 # the push halves' state (CI secret + local token registration).
+# One-screen cache probe: reachability, local trust, push halves.
 [group('cachix')]
 cachix-status:
     #!/usr/bin/env bash
@@ -60,11 +61,18 @@ cachix-status:
     echo
     echo "═══ push halves ═══"
     echo "CI   : ci.yml host-toplevels legs push with secret.CACHIX_AUTH_TOKEN (owner verb to set)"
-    if python3 "{{ROOT}}/scripts/sh/secrets-db.py" q row {{CACHIX_TOKEN_ALIAS}} >/dev/null 2>&1; then
+    if just _cachix-token-registered; then
         echo "local: token alias '{{CACHIX_TOKEN_ALIAS}}' REGISTERED — resolve with: just secret-get {{CACHIX_TOKEN_ALIAS}}"
     else
         echo "local: token alias '{{CACHIX_TOKEN_ALIAS}}' not registered — see: just cachix-token"
     fi
+
+# Boolean probe: is the cachix-token alias registered in the secrets
+# registry? Exit 0 = yes, non-zero = no. Single implementation for the
+# three verbs that branch on it (status / token / push).
+[private]
+_cachix-token-registered:
+    @python3 "{{ROOT}}/scripts/sh/secrets-db.py" q row {{CACHIX_TOKEN_ALIAS}} >/dev/null 2>&1
 
 # ==============================================================================
 # TOKEN — the registration flow (the secrets-system preparation)
@@ -80,11 +88,12 @@ cachix-status:
 # → "Auth Tokens" (owner-only page). Re-run any time to rotate the value
 # (secret-set is an upsert); the registration step is skipped when the
 # alias already exists.
+# Register + record the Cachix auth token, guided (one shot).
 [group('cachix')]
 cachix-token:
     #!/usr/bin/env bash
     set -euo pipefail
-    if python3 "{{ROOT}}/scripts/sh/secrets-db.py" q row {{CACHIX_TOKEN_ALIAS}} >/dev/null 2>&1; then
+    if just _cachix-token-registered; then
         echo "Token secret already registered (alias '{{CACHIX_TOKEN_ALIAS}}')."
     else
         echo "Registering the Cachix token as a secret (alias '{{CACHIX_TOKEN_ALIAS}}')…"
@@ -110,6 +119,7 @@ cachix-token:
 #
 # The cachix binary resolves in order: $CACHIX_BIN, PATH, then
 # `nix shell nixpkgs#cachix` (flakes machine).
+# Push store paths to the cache (token: env, or the secrets system).
 [group('cachix')]
 cachix-push *paths:
     #!/usr/bin/env bash
@@ -125,7 +135,7 @@ cachix-push *paths:
     # 1. token resolution (fail fast, with the guided remedy)
     if [ -n "${CACHIX_AUTH_TOKEN:-}" ]; then
         echo "token: CACHIX_AUTH_TOKEN env"
-    elif python3 "{{ROOT}}/scripts/sh/secrets-db.py" q row {{CACHIX_TOKEN_ALIAS}} >/dev/null 2>&1; then
+    elif just _cachix-token-registered; then
         if ! TOKEN="$(just secret-get {{CACHIX_TOKEN_ALIAS}})" || [ -z "${TOKEN}" ]; then
             echo "Error: the token blob is not readable (no value recorded yet?)" >&2
             echo "  just secret-set {{CACHIX_TOKEN_ALIAS}}" >&2

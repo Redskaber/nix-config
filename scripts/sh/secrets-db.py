@@ -779,7 +779,9 @@ def cmd_remove(alias):
 
 
 def cmd_edit(alias, prompt, transform):
-    if transform is not None and transform not in TRANSFORMS:
+    # Empty string (just-side default "") and None (absent) both mean
+    # "keep the current value" — the doc contract of `just secrets-edit`.
+    if transform and transform not in TRANSFORMS:
         raise Fail(f"transform must be one of {TRANSFORMS} (got '{transform}')")
     if prompt and "|" in prompt:
         raise Fail('prompt must not contain "|" (pipe-format field boundary)')

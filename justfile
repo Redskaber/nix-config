@@ -27,6 +27,15 @@ import "scripts/just/dump.just"
 import "scripts/just/services.just"
 
 # ==============================================================================
+# Doc-comment convention (every module)
+# ==============================================================================
+# `just --list` shows the LAST consecutive `#` line above a recipe as its
+# hint — that line must be a complete, concise, self-contained sentence.
+# Rich context (examples, caveats, usage notes) belongs ABOVE it, never as
+# the final line: a trailing example or mid-sentence continuation becomes
+# the whole hint in `--list` (the only surface many operators ever see).
+
+# ==============================================================================
 # Start here — the map of the whole command surface
 # ==============================================================================
 # `just` with no arguments prints this map. Every entry point below is
