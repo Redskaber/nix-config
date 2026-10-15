@@ -8,10 +8,11 @@
 # platform-major, domain-explicit): mkDarwinSystem imports
 # platform/<tag>/system and lands here. One live door, one file:
 # the form imports the home-manager darwinModule (module mode) +
-# host facts from ../../../hosts/${hostName}, and mounts the user
-# domain from here — home-manager.users.<user> = import ../home
-# (the cross-domain reference is explicit in the path); HM rides
-# inside the system closure, one activation path (darwin-rebuild).
+# host facts from ../../../hosts/${hostName} + the platform's nix
+# settings from ./nix, and mounts the user domain from here —
+# home-manager.users.<user> = import ../home (the cross-domain
+# reference is explicit in the path); HM rides inside the system
+# closure, one activation path (darwin-rebuild).
 # The arch axis is GONE from the path: the payload door is
 # arch-free.
 #
@@ -47,6 +48,11 @@
 
     # host-specific facts (machine profile)
     ../../../hosts/${shared.hostName}
+
+    # the platform's nix settings — the fleet-cache pull half,
+    # composed BY VALUE from shared.const (the same SSOT composition
+    # as the nixos customs' core/base/nix.nix).
+    ./nix
   ];
 
   # ── home-manager, module mode ──────────────────────────────────────

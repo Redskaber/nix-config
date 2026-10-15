@@ -44,15 +44,19 @@ in
       # Opinionated: disable global registry
       flake-registry = "";
       # downloads and updated mapping original
+      # The fleet's own cache heads the list — identity single-sourced
+      # in lib/shared/lang/const.nix (shared.const.cache.fleet); this
+      # module is the one plane that consumes it BY VALUE. The CI push
+      # half lives in .github/workflows/ci.yml behind
+      # secret.CACHIX_AUTH_TOKEN. List order is documentation only —
+      # query order follows each cache's advertised priority (ours is
+      # 41, behind cache.nixos.org's 40), so paths both hold always
+      # come official and this cache serves only what official lacks.
+      # Pull/push guide: docs/guides/cache.md; the literal mirrors in
+      # the YAML/just/flake-metadata planes are pinned by
+      # tests/cache-ssot.nix.
       substituters = [
-        # The fleet's OWN cache (cachix.org/cache/redskaber-nix-config,
-        # public — pull needs no secret; the CI push half lives in
-        # .github/workflows/ci.yml behind secret.CACHIX_AUTH_TOKEN).
-        # First position: this flake's own derivations exist ONLY here,
-        # and everything else falls through to the mirrors below
-        # exactly as before — local pull/push guide in
-        # docs/guides/cache.md.
-        "https://redskaber-nix-config.cachix.org"
+        shared.const.cache.fleet.url
         "https://mirrors.tuna.tsinghua.edu.cn/nix-channels/store"
         "https://mirrors.ustc.edu.cn/nix-channels/store"
         "https://nix-community.cachix.org"
@@ -66,7 +70,7 @@ in
       ];
       # command: 'nix config show | grep trusted-public-keys'
       trusted-public-keys = [
-        "redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw="
+        shared.const.cache.fleet.publicKey
         "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
         "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
         "nix-gaming.cachix.org-1:nbjlureqMbRAxR1gJ/f3hxemL9svXaZF/Ees8vCUUs4="

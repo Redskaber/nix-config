@@ -106,7 +106,7 @@ in
   debug.test_devDir = devDir;
 
   # ── checks — the flat face `nix flake check` requires ─────────
-  # Test planes 0–5 + the five repo-hygiene gates: the pre-commit
+  # Test planes 0–5 + the six repo-hygiene gates: the pre-commit
   # eval gate (tests/pre-commit.nix), the docs-SSOT contract
   # (tests/docs-ssot.nix — README/test-matrix count anchors asserted
   # against live facts at BUILD time, which is why CI STAGE 1 builds
@@ -114,9 +114,15 @@ in
   # python-compiles every composed testScript at the cheapest
   # possible layer), the module-reachability gate
   # (tests/module-reachability.nix — every module dir under home/ +
-  # platform/ must be reachable from the flake's evaluated faces), and
-  # the platform-grammar gate (tests/platform-grammar.nix — the
-  # tree-shape layer of the same ledger). The FLAT face only —
+  # platform/ must be reachable from the flake's evaluated faces), the
+  # platform-grammar gate (tests/platform-grammar.nix — the
+  # tree-shape layer of the same ledger), and the cache-identity
+  # drift gate (tests/cache-ssot.nix — the fleet binary-cache
+  # identity single-sourced in lib/shared/lang/const.nix; the
+  # by-value consumers are the host sides (nixos · darwin), every
+  # plane that cannot evaluate the const — the CI workflows, just,
+  # the flake's own nixConfig (read by nix without evaluation) —
+  # carries a literal mirror pinned to it). The FLAT face only —
   # `nix flake check` requires each attribute here to be a
   # derivation, so the planes grouping lives behind api.checks.planes,
   # never inside this output. The docs-SSOT gate is deliberately NOT
@@ -159,6 +165,12 @@ in
     // (import ../../tests/platform-grammar.nix {
       inherit
         inputs
+        self
+        shared
+        ;
+    })
+    // (import ../../tests/cache-ssot.nix {
+      inherit
         self
         shared
         ;

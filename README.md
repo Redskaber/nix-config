@@ -102,7 +102,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 101 tests + 5 仓库卫生门 = 106 checks            │
+│  6 平面 · 101 tests + 6 仓库卫生门 = 107 checks            │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -179,7 +179,7 @@ platform/<tag>/
 | platform | system/ | home/ | 目录形态 |
 | -------- | ------- | ----- | -------- |
 | `nixos` | ✅ `default.nix` + `core/ dm/ wm/` | ✅ `default.nix`（门即 payload） | 双门双域，地址对称（策略：standalone HM 秒级切换、独立于系统世代回滚） |
-| `darwin` | ✅ `default.nix`（单门折叠：HM module mode 内乘，`import ../home` 跨域引用路径可见） | ✅（门即 payload，由系统门挂载，无独立门） | 双目录单活门 |
+| `darwin` | ✅ `default.nix`（单门折叠：HM module mode 内乘，`import ../home` 跨域引用路径可见）+ `nix/`（nix settings：fleet cache 拉取侧，`shared.const` 按值消费） | ✅（门即 payload，由系统门挂载，无独立门） | 双目录单活门 |
 | `linux` | ✗ | ✅ `default.nix` | home/ 即全部 |
 | `wsl` | ✗（Windows 宿主持有内核侧） | ✅ `default.nix` | home/ 即全部 |
 | `nixos-wsl` | ✅ 薄门：`../../nixos/system` 复用 + NixOS-WSL 解释器（T7.1） | ✅ 薄门：`imports = [ ../../nixos/home ]` | 双门双薄门：读门即知「nixos customs + WSL 解释器」 |
@@ -313,7 +313,7 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **106 checks = 101 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **107 checks = 101 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**（计数由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移即 CI 红灯，T8.1；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
@@ -384,7 +384,7 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 106 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制（T15.1）：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 107 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
 4. **测试覆盖** — 101 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
@@ -404,11 +404,13 @@ push / PR
     │       ├── nixfmt check / deadnix check
     │       ├── Build pre-commit-check derivation
     │       └── Build docs-ssot-check derivation     (T8.1：文档计数锚点)
+    │           + Build testscript-syntax / module-reachability /
+    │             platform-grammar / cache-ssot derivations
     │
     ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，T15.1 面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （106 checks 必须被平面或杂项清单拥有——新测试
+    │           （107 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试，T12.1）

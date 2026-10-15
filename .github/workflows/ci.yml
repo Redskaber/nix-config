@@ -253,6 +253,18 @@ jobs:
       - name: Build platform-grammar-check derivation (T46)
         run: nix build .#checks.x86_64-linux.platform-grammar-check --no-link
 
+      # The sixth repo-hygiene gate — the fleet binary-cache identity
+      # drift gate: the identity (name/url/public key) is declared once
+      # in lib/shared/lang/const.nix; the nix planes consume it by
+      # value, while the YAML/just planes cannot import nix and carry
+      # literal mirrors. This gate pins those literals to the evaluated
+      # const (rename the cache or rotate the key and the workflow
+      # legs stay honest only if this gate is red until they follow).
+      # Same gating shape as the siblings: constructs at eval, asserts
+      # at build.
+      - name: Build cache-ssot-check derivation
+        run: nix build .#checks.x86_64-linux.cache-ssot-check --no-link
+
   # ─────────────────────────────────────────────────────────────
   # STAGE 2: Deep evaluation — facet forcing
   # ─────────────────────────────────────────────────────────────
@@ -383,11 +395,11 @@ jobs:
               nix eval --raw ".#nixosConfigurations.$H.config.system.build.toplevel.drvPath"
           done
 
-          # Face 3 — the five misc checks. The planes own the rest
-          # (vm-tests builds them — stronger than eval); these five are
+          # Face 3 — the six misc checks. The planes own the rest
+          # (vm-tests builds them — stronger than eval); these six are
           # prefix-less, so this leg forces their evaluation level
           # (the lint leg BUILDS them — even stronger).
-          for C in docs-ssot-check pre-commit-check testscript-syntax-check module-reachability-check platform-grammar-check; do
+          for C in docs-ssot-check pre-commit-check testscript-syntax-check module-reachability-check platform-grammar-check cache-ssot-check; do
             force "checks.x86_64-linux.$C.drvPath" \
               nix eval --raw ".#checks.x86_64-linux.$C.drvPath"
           done
@@ -410,6 +422,7 @@ jobs:
             echo testscript-syntax-check
             echo module-reachability-check
             echo platform-grammar-check
+            echo cache-ssot-check
           } | sort -u > /tmp/owned.sorted
           UNOWNED=$(comm -23 /tmp/all-checks.sorted /tmp/owned.sorted)
           if [ -n "$UNOWNED" ]; then

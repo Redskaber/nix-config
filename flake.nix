@@ -7,11 +7,17 @@
 {
   description = "Kilig(Redskaber)'s declarative development environment";
 
-  # Binary-cache preference (pull side): try the fleet's own cachix cache
-  # first and fall through to the default substituters for anything it
-  # does not hold. CI passes the same pair via --option; NixOS hosts get
-  # it from platform/nixos/system/core/base/nix.nix. See
-  # docs/guides/cache.md for the pull/push story.
+  # Binary-cache preference (pull side). The identity's SSOT is
+  # lib/shared/lang/const.nix (shared.const.cache.fleet); the host
+  # sides consume it BY VALUE (platform/nixos/system/core/base/
+  # nix.nix · platform/darwin/system/nix), while this metadata
+  # block is a pinned LITERAL mirror of it — nix reads nixConfig
+  # without evaluation (only trivially forceable values: settings
+  # that steer trusted substituters must not run arbitrary code at
+  # metadata time), so it cannot import the const. tests/cache-ssot.nix
+  # keeps these literals honest against the const (rename the cache
+  # or rotate the key and the gate goes red until this block follows).
+  # Pull/push story: docs/guides/cache.md.
   nixConfig = {
     extra-substituters = [ "https://redskaber-nix-config.cachix.org" ];
     extra-trusted-public-keys = [

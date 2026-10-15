@@ -4,9 +4,14 @@
 # status probes, the token registration flow, and local pushes.
 #
 # Cache topology (who pushes, who pulls):
-#   PULL  every CI leg + this machine — substituters config already
-#         carries redskaber-nix-config.cachix.org FIRST (nix.nix
-#         wiring); the public key is pinned trusted.
+#   PULL  every CI leg + this machine — the identity (name/url/key) is
+#         single-sourced in lib/shared/lang/const.nix
+#         (shared.const.cache.fleet); this module's literals are a
+#         shell-plane mirror pinned to it by tests/cache-ssot.nix
+#         (rename the cache or rotate the key and the gate goes red
+#         until the mirrors follow). Query order is priority-driven:
+#         the cache advertises 41, behind cache.nixos.org's 40, so it
+#         serves only what official lacks.
 #   PUSH  CI host-toplevels legs (secret.CACHIX_AUTH_TOKEN — owner verb),
 #         and LOCALLY via this module (token read from the secrets
 #         system — the registry/CRUD makes that a one-liner).

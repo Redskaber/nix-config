@@ -10,6 +10,27 @@
 # Design: importable at schema stage (phase 1) without any external dependency.
 
 {
+  # The fleet's public binary-cache identity — the SSOT for the pull
+  # side. Distribution follows each consumer plane's capability: the
+  # host sides consume it BY VALUE (platform/nixos/system/core/base/
+  # nix.nix + platform/darwin/system/nix via shared.const —
+  # impossible to drift), while the planes that cannot evaluate nix
+  # carry pinned LITERAL mirrors: flake.nix's nixConfig (nix reads
+  # it without evaluation — forceTrivialValue semantics: trusted-
+  # substituter steering must not run arbitrary code at metadata
+  # time), the CI workflows, scripts/just/cachix.just, and the prose
+  # in docs/guides/cache.md. tests/cache-ssot.nix pins every mirror
+  # to these values. Query order is priority-driven: the cache
+  # advertises priority 41, behind cache.nixos.org's 40, so shared
+  # paths stay official and the free tier serves only the Hydra gap.
+  cache = {
+    fleet = rec {
+      name = "redskaber-nix-config";
+      url = "https://${name}.cachix.org";
+      publicKey = "redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw=";
+    };
+  };
+
   # Nix store secrets runtime mount points (sops-nix convention)
   secrets = {
     # Secrets store Base path from project

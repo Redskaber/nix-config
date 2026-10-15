@@ -64,10 +64,10 @@ let
   planesTotal = builtins.length (builtins.attrNames tests.planes);
   testsTotal = builtins.length (builtins.attrNames tests.checks);
   # + pre-commit-check + docs-ssot-check + testscript-syntax-check
-  # + module-reachability-check + platform-grammar-check — all five
-  # flake-level, all outside
+  # + module-reachability-check + platform-grammar-check
+  # + cache-ssot-check — all six flake-level, all outside
   # tests.checks, so the counted set never contains the counter.
-  checksTotal = testsTotal + 5;
+  checksTotal = testsTotal + 6;
   # `inputs` is the @-capture of the outputs arguments, which Nix
   # always augments with `self` — the README claim counts DECLARED
   # inputs only.
@@ -87,13 +87,13 @@ let
       file = "README";
       kind = "F";
       fact = "test-layer box formula";
-      needle = "${t planesTotal} 平面 · ${t testsTotal} tests + 5 仓库卫生门 = ${t checksTotal} checks";
+      needle = "${t planesTotal} 平面 · ${t testsTotal} tests + 6 仓库卫生门 = ${t checksTotal} checks";
     }
     {
       file = "README";
       kind = "F";
       fact = "test-suite SSOT sentence";
-      needle = "**${t checksTotal} checks = ${t testsTotal} tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check**";
+      needle = "**${t checksTotal} checks = ${t testsTotal} tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**";
     }
     {
       file = "README";
@@ -313,7 +313,7 @@ let
 
         echo "docs-ssot-check: all ${toString (builtins.length anchors)} anchors agree with live facts"
         echo "  tests ${t testsTotal} (planes ${t planesTotal}: smoke ${t planeCounts.smoke} + nixos ${t planeCounts.nixos} + home ${t planeCounts.home} + lib ${t planeCounts.lib} + integration ${t planeCounts.integration} + nmt ${t planeCounts.nmt})"
-        echo "  checks ${t checksTotal} (tests + pre-commit-check + docs-ssot-check + testscript-syntax-check + module-reachability-check + platform-grammar-check)"
+        echo "  checks ${t checksTotal} (tests + pre-commit-check + docs-ssot-check + testscript-syntax-check + module-reachability-check + platform-grammar-check + cache-ssot-check)"
         echo "  inputs ${t inputsCount} · devShells ${t devShellsCount} · hosts ${t hostsCount}"
         touch "$out"
       '';

@@ -45,6 +45,8 @@ nix-config/
 │   ├── darwin/             # macOS(nix-darwin)：system/ = 唯一活门（T5.8 单门折叠：
 │   │                       #   hm.darwinModule + hosts facts + home-manager.users 挂载
 │   │                       #   = import ../home 一体——系统门跨域引用，路径可见）；
+│   │                       #   system/nix/ = nix settings 模块（fleet cache 拉取侧，
+│   │                       #   shared.const 按值消费——与 nixos customs 同一身份单源）；
 │   │                       #   home/ = 用户域门（module mode 挂载，非独立门）
 │   ├── wsl/                # WSL2：home/ = 唯一活门（standalone HM + nixGL +
 │   │                       #   genericLinux + systemd；无 system/ 目录；WSL 用户空间
@@ -121,7 +123,7 @@ nix-config/
 ├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（wslview —— wslu 归档后的最小 shim）
 │
-├── tests/                  # 测试层（6 平面，101 tests + 5 仓库卫生 checks = 106 checks）
+├── tests/                  # 测试层（6 平面，101 tests + 6 仓库卫生 checks = 107 checks）
 │   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks（nixosTest runner）
 │   ├── test_calc.nix       # Plane 0: Smoke 基线
 │   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM，30 tests）
