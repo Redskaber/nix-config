@@ -169,7 +169,7 @@ home/core/exp/sys/base/git.nix
 | `home_env_dev_{c,cpp,rust,go,python,typescript,java,lua,zig,nix,re}`                            | toolchain binary + hello-world   |
 | `home_export_modules`                                                                          | T5.3 export/ 模块语义求值        |
 
-> 合计：base(2) + i18n_source(1) + editor(1) + sys/base(13 + 3 source) + shell(2 + 1 source) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(11) + export(1) = **41**
+> 合计：base(3) + i18n_source(1) + editor(1) + sys/base(13 + 3 source) + shell(2 + 1 source) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(11) + export(1) = **42**
 
 ### 3.3 Lib-Plane (12 tests)
 

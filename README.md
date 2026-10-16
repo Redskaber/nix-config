@@ -3,6 +3,8 @@
 > 声明式、可复现、多平台的系统与开发环境管理
 >
 > 作者: [@Redskaber](https://github.com/Redskaber) · 构建于 Nix Flakes + Home Manager + SOPS-Nix + nix-darwin + disko
+>
+> 语言：简体中文（权威源）· [English](README.en.md)（docs/ 英文镜像：[docs/en/](docs/en/)）
 
 ---
 
@@ -468,9 +470,9 @@ push / PR
     │       ├── 每腿一平面，整面交 nix-fast-build（nix-eval-jobs 并行求值
     │       │   + 流水线构建，--skip-cached 对接 magic-nix-cache）：
     │       ├── smoke        — 基线（1）
-    │       ├── nixos        — 系统模块（29）
+    │       ├── nixos        — 系统模块（30）
     │       ├── home         — HM 模块（42）
-    │       ├── lib          — lib 纯表达式（5）
+    │       ├── lib          — lib 纯表达式（12）
     │       └── integration  — NixOS + HM 联合激活（1）
     │
     ├─► [STAGE 6.5: Host Toplevels]   系统闭包构建（无 KVM）
@@ -665,6 +667,8 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 ## 深入文档
 
 深度内容按受众分层至 `docs/`——README 只保留入口层，本节是全文索引：
+
+> 英文镜像平面：本表每篇文档在 [docs/en/](docs/en/) 下有对应英文版（[README.en.md](README.en.md) 同镜像）——中文版为权威源，镜像存在性由 docs-ssot 门的 en-parity 电池机器断言。
 
 | 受众 | 文档 | 内容 |
 | --- | --- | --- |

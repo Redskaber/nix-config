@@ -28,6 +28,13 @@
 # battery proves the README's own navigation: numbered TOC entries
 # (sequential, text ↔ heading, slug ↔ anchor), every internal
 # ](#target) link resolving to a real heading, and no orphan sections.
+# The third battery (round 32) is EN-PARITY: docs/en/ is the English
+# mirror plane of docs/ and README.en.md the README mirror — the
+# Chinese originals are canonical, so the assertion is structural, not
+# content-equality: every translatable doc must have a mirror, no
+# orphan mirror may exist, and the README mirror must be present.
+# A mirror tree that can silently lose files is exactly the drift
+# class this gate family refuses to carry.
 # Pattern credit: wimpy's
 # checks.assistant-catalogue (generated-doc vs source-of-truth diff),
 # adapted to assert-embedded anchors because this README is
@@ -268,9 +275,12 @@ let
   drv =
     shared.pkgs.runCommand "docs-ssot-check"
       {
-        # Traceability: the two audited documents as derivation inputs.
+        # Traceability: the audited documents as derivation inputs —
+        # the two count-anchored files plus the English mirror plane's
+        # root file (its siblings enter via the tree walk below).
         documentation = [
           "${self}/README.md"
+          "${self}/README.en.md"
           "${self}/docs/tests/test-matrix.md"
         ];
       }
@@ -280,6 +290,9 @@ let
 
         README="${self}/README.md"
         MATRIX="${self}/docs/tests/test-matrix.md"
+        DOCS_DIR="${self}/docs"
+        EN_DIR="${self}/docs/en"
+        README_EN="${self}/README.en.md"
 
         FAILED=0
 
@@ -398,15 +411,59 @@ let
 
         toc_total=$(wc -l < "$TOC_TEXTS" | tr -d ' ')
 
+        # ── English-mirror parity battery (round 32) ──────────────
+        # docs/en/ mirrors docs/ (same sub-path), README.en.md mirrors
+        # README.md. The Chinese originals are canonical; the gate
+        # asserts STRUCTURE, not content: (A) every translatable doc
+        # has a mirror — modules/interface-standards.md is exempt, it
+        # is English canon already and must not be duplicated;
+        # (B) no orphan mirror exists without a Chinese counterpart;
+        # (C) the README mirror is present and non-empty.
+
+        en_pair=0
+        en_missing=0
+        while IFS= read -r zh; do
+          rel=''${zh#"$DOCS_DIR"/}
+          case "$rel" in
+            modules/interface-standards.md) continue ;;
+          esac
+          if [ ! -f "$EN_DIR/$rel" ]; then
+            echo "docs-ssot: DRIFT en-parity — missing docs/en/$rel (the English mirror plane is incomplete)" >&2
+            en_missing=1
+          else
+            en_pair=$((en_pair + 1))
+          fi
+        done < <(find "$DOCS_DIR" -type f -name '*.md' ! -path "$DOCS_DIR/en/*" ! -path "$DOCS_DIR/tmpl/*" | sort)
+
+        while IFS= read -r en; do
+          rel=''${en#"$EN_DIR"/}
+          if [ ! -f "$DOCS_DIR/$rel" ]; then
+            echo "docs-ssot: DRIFT en-parity — orphan docs/en/$rel (no Chinese counterpart to mirror)" >&2
+            en_missing=1
+          fi
+        done < <(find "$EN_DIR" -type f -name '*.md' | sort)
+
+        if [ ! -s "$README_EN" ]; then
+          echo "docs-ssot: DRIFT en-parity — README.en.md missing or empty" >&2
+          en_missing=1
+        fi
+
+        if [ "$en_missing" -ne 0 ]; then
+          echo "docs-ssot: en-parity says the mirror plane and the canonical tree disagree." >&2
+          echo "    Add the mirror, or retire it in the same commit that removes the Chinese file." >&2
+          FAILED=1
+        fi
+
         if [ "$FAILED" -ne 0 ]; then
           echo "" >&2
-          echo "docs-ssot-check FAILED: documentation claims drifted (counts or navigation)." >&2
-          echo "Counts are single-sourced from the evaluation; navigation must resolve; the docs must follow." >&2
+          echo "docs-ssot-check FAILED: documentation claims drifted (counts, navigation, or parity)." >&2
+          echo "Counts are single-sourced from the evaluation; navigation must resolve; the mirror plane must be whole; the docs must follow." >&2
           exit 1
         fi
 
         echo "docs-ssot-check: all ${toString (builtins.length anchors)} anchors agree with live facts"
         echo "  toc battery: $toc_total TOC entries resolved (numbering + text + slug), dead links 0, orphan sections 0"
+        echo "  en-parity battery: $en_pair docs ↔ docs/en mirrors paired, README.en.md present"
         echo "  tests ${t testsTotal} (planes ${t planesTotal}: smoke ${t planeCounts.smoke} + nixos ${t planeCounts.nixos} + home ${t planeCounts.home} + lib ${t planeCounts.lib} + integration ${t planeCounts.integration} + nmt ${t planeCounts.nmt})"
         echo "  checks ${t checksTotal} (tests + pre-commit-check + docs-ssot-check + testscript-syntax-check + module-reachability-check + platform-grammar-check + cache-ssot-check)"
         echo "  inputs ${t inputsCount} · devShells ${t devShellsCount} · hosts ${t hostsCount}"

@@ -1,9 +1,10 @@
 # 缓存指南 — 本地拉取与推送（redskaber-nix-config 公开层）
 
 > 本文覆盖 CI 之外的本地工作流：**拉取**（任何机器，零鉴权）与**推送**
-> （owner 侧动词，需 auth token）。CI 侧的接线与裁决见
-> [docs/ci/pipeline.md](../ci/pipeline.md) 第 16/17/18 轮条目——两份文档
-> 同源不同受众：pipeline.md 回答「CI 为什么这样设计」，本文回答
+> （owner 侧动词，需 auth token）。CI 侧的接线（PULL ×11 腿 extra-conf +
+> PUSH 两步）见 [.github/workflows/ci.yml](../../.github/workflows/ci.yml) 与
+> [README 的 CI/CD 节](../../README.md#cicd-完整执行流)；两份文档
+> 同源不同受众：CI 文法回答「为什么这样设计」，本文回答
 > 「我的机器怎么用这个缓存」。
 
 ## 缓存是什么（一段话）
@@ -26,7 +27,7 @@ nix）与本文档的散文。flake.nix **不携带**任何缓存身份（第 27
 入口层零缓存身份——真实消费面〔主机 ×3 + CI〕已全部闭合，flake 级字面
 量将是唯一「能求值 const 却持字面量」的镜像面，且 nixConfig 的信任语义
 对外部消费者是负债而非服务——accept 提示摩擦 + 非受信用户下静默忽略；
-无主机侧 nix.conf 的消费者按本文两种拉取形式显式接入）。
+无主机侧 nix.conf 的消费者按本文三种拉取形式显式接入）。
 第六个仓库卫生门 `tests/cache-ssot.nix` 把每个镜像钉到 const 值上，并把
 flake.nix 的沉默钉为断言（任何 nixConfig 回归即 CI 红灯）。
 
@@ -38,7 +39,7 @@ flake.nix 的沉默钉为断言（任何 nixConfig 回归即 CI 红灯）。
 
 ## 拉取（任何机器，无需 token）
 
-两种等价形式，落点都是机器的 nix.conf：
+机器常驻的两种等价形式，落点都是机器的 nix.conf；会话作用域的第三形式（零落盘）见本节末：
 
 **形式一：cachix CLI 一条命令**（常驻机器推荐）
 
@@ -86,7 +87,8 @@ nix store ping --store https://redskaber-nix-config.cachix.org
 ```
 
 拉取**不需要** auth token——公开缓存零鉴权。这也是 CI 侧 PULL
-无条件 ×11 腿成立的原因（见 pipeline.md 第 16 轮）。
+无条件 ×11 腿成立的原因（见 [.github/workflows/ci.yml](../../.github/workflows/ci.yml)
+各腿的 Install Nix extra-conf 钉版）。
 
 **darwin 主机运行时注意**：darwin-rebuild 用的是 /etc/nix/nix.conf——
 平台侧 platform/darwin/system/nix 生成它（nix-darwin 的 nix 模块，与
@@ -143,9 +145,10 @@ nix-store -qR /nix/store/…-nixos-system-… \
 
 **CLI 形态铁律**：`cachix push CACHE-NAME [PATHS...]`——**缓存名是
 必选首参数**（一个 token 可服务多个缓存）；漏写时第一个 store 路径会被
-静默当作缓存名（"cache not found"），无路径时 CLI 等 stdin——第 16 轮
-CI push 步曾漏写，本地 CLI 验证在第 18 轮抓到并修复（该步 opt-in 保持
-了它从未活跑——缺陷变门第五案的前半，pipeline.md 第 18 轮条目）。
+静默当作缓存名（"cache not found"），无路径时 CLI 等 stdin——CI push
+步曾漏写，本地 CLI 验证抓到并修复（该步 opt-in 保持
+了它从未活跑——缺陷变门第五案的前半，cache-ssot 门现把 CI 文件的
+缓存名/URL/公钥三字面量钉为镜像断言）。
 
 **推送语义**（与 CI 步同源）：
 
@@ -157,7 +160,7 @@ CI push 步曾漏写，本地 CLI 验证在第 18 轮抓到并修复（该步 op
 `just cachix-push` 把新 toplevel 推上去——CI 的下一个 run 直接替代掉
 冷构建尾部（正是 38085235502 / 38385434464 两次 90 分钟超时的病灶）。
 CI 侧 host-toplevels 与 darwin-toplevels 两条腿都会自动推（owner 设
-`secret.CACHIX_AUTH_TOKEN` 后，opt-in，见 pipeline.md 第 16/17 轮）——
+`secret.CACHIX_AUTH_TOKEN` 后 opt-in 生效——已知边界台账 #3 追踪）——
 本地与 CI 推送共同维护同一缓存，互不冲突（chunk 去重兜底）。
 
 ## 边界与原则
@@ -173,7 +176,9 @@ CI 侧 host-toplevels 与 darwin-toplevels 两条腿都会自动推（owner 设
   求值对缓存零感知，缓存缺失时一切照常从官方源构建。
 - **配额诚实账**：闭包约 1–1.5 GB ZSTD/代，锁周更 → 5 GB 免费层约
   3–4 代满。满了在 cachix.org 面板清老代；规模化出口（attic 自建 /
-  harmonia 复用 kilig-nixos 零边际）见 pipeline.md 第 16 轮裁决。
+  harmonia 复用 kilig-nixos 零边际）见
+  [.github/workflows/cache-attic.yml](../../.github/workflows/cache-attic.yml)
+  （attic 双轨预案，vars 门控）。
 - **拉取永远安全**：404 即无操作；公钥不匹配才会硬失败（那意味着
   配置错了公钥，不是缓存的问题）。
 
