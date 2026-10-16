@@ -60,7 +60,7 @@ The system follows a strictly layered pipeline architecture: every layer has a s
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  ENTRY LAYER  ·  flake.nix                                 │
-│  unified entry · input declaration · one-line handoff (R31)│
+│  unified entry · input declaration · one-line handoff      │
 │  to faces.nix · api.inputs (targets built in SHARED LAYER) │
 └──────────┬──────────────────────────────┬──────────────────┘
            │                              │
@@ -71,8 +71,8 @@ The system follows a strictly layered pipeline architecture: every layer has a s
 │  hardware · drivers │       │  the payload; arch retired)  │
 │  core/ · dm/ · wm/  │       │  apps · dev environments ·   │
 │  security · services│       │  window managers; home/: the │
-│ (domain-explicit v4)│       │  shared library (core·env·wm)│
-│                     │       │  user-domain nix plane (R30: │
+│ (domain-explicit)   │       │  shared library (core·env·wm)│
+│                     │       │  user-domain nix plane (     │
 │                     │       │  caps-gated user-level       │
 │                     │       │  nix.conf + registry, only in│
 │                     │       │  standalone form)            │
@@ -83,7 +83,7 @@ The system follows a strictly layered pipeline architecture: every layer has a s
            │      │  platform dir = machine description      │
            │      │  (platform half of target double; arch   │
            │      │  half = pipeline value): platform-major ·│
-           │      │  domain-explicit (v4): system/ = system  │
+           │      │  domain-explicit: system/ = system       │
            │      │  domain (default.nix = gate, system-form │
            │      │  only); home/ = user domain (gate IS     │
            │      │  payload) · file existence = capability  │
@@ -94,10 +94,10 @@ The system follows a strictly layered pipeline architecture: every layer has a s
 │  two-stage init: lang (frontend) → runtime (IR synthesis)  │
 │  target factory targets.nix: hosts/ inventory → caps       │
 │  classification → three closure emitters: nixos / darwin / │
-│  standalone-HM + two toplevel projections (moved in R31);  │
+│  standalone-HM + two toplevel projections;                 │
 │  the link layer faces.nix: five-gate checks / module-docs /│
 │  pdsh / tests built once (production: faces.nix writes only│
-│  inherit (targets) ...; policy IR once per host, T5.10)    │
+│  inherit (targets) ...; policy IR once per host)           │
 │  const.nix = identity SSOT (fleet cache: by-value to three │
 │  faces + entry-layer silence — cache-ssot's three bans     │
 └──────────────────────────────┬─────────────────────────────┘
@@ -138,7 +138,7 @@ platform/nixos/{system/{default.nix, core/ dm/ wm/}, home/default.nix} + home/ (
 the running system
 ```
 
-**Three-plane distribution of nix.conf (the cross-cutting flow closed out by R24–R30):**
+**Three-plane distribution of nix.conf (the cross-cutting flow closed):**
 
 ```
 lib/shared/lang/const.nix — identity SSOT (shared.const.cache.fleet)
@@ -150,7 +150,7 @@ lib/shared/lang/const.nix — identity SSOT (shared.const.cache.fleet)
                                               (+ nix.registry → registry.json; at build time the
                                                 checkPhase validates the syntax with nix config show)
 (faces that cannot eval const keep pinned literal mirrors: CI workflows · cachix.just ·
-  cache.md prose; the flake.nix entry layer stays silent by statute (R27) —
+  cache.md prose; the flake.nix entry layer stays silent by statute  —
   tests/cache-ssot.nix pins the mirror, the consumption, and the absence as assertions.
   Priority-chain ruling: user files shadow system files per setting, so the user plane
   renders only on hosts with no system nix — one nix.conf plane per machine, no drift.)
@@ -191,7 +191,7 @@ platform/<tag>/
     └── default.nix       # home gate: entry and dispatch (the gate IS the HM payload module)
 ```
 
-**The six laws of the grammar (v4):**
+**The six laws of the grammar:**
 
 1. **Two domains, two explicit addresses.** `system/` and `home/` are the only two reserved names under `<tag>/`, each holding a `default.nix` gate — `platform/<tag>/system` and `platform/<tag>/home` are fully symmetric on the two sides of the emitters (in v3 the system domain was an implicit top level and the user domain sat one level lower; v4 gives both domains equally explicit gates — clearer, and more general). File existence = capability declaration (the caps table's projection onto the filesystem): `linux/` and `wsl/` have no `system/` because they have no system form.
 2. **One boundary per live gate, and the gate IS the content assembly point.** The system gate = the subsystem registry (`./core ./wm ./dm` + `../../../hosts/<h>` facts); the home gate = the HM entry module itself (base facts + cross-platform user library `../../../home/{core,env,wm}` distribution).
@@ -208,9 +208,9 @@ platform/<tag>/
 | `darwin` | ✅ `default.nix` (single-gate folding: mounted in HM module mode, the `import ../home` cross-domain reference path stays visible) + `nix/` (nix settings: the fleet-cache pull side, `shared.const` consumed by value) | ✅ (gate IS payload, mounted by the system gate, no independent gate) | Two directories, one live gate |
 | `linux` | ✗ | ✅ `default.nix` | home/ is everything |
 | `wsl` | ✗ (the Windows host owns the kernel side) | ✅ `default.nix` | home/ is everything |
-| `nixos-wsl` | ✅ thin gate: `../../nixos/system` reuse + NixOS-WSL interpreter (T7.1) | ✅ thin gate: `imports = [ ../../nixos/home ]` | Two gates, both thin: read a gate and you know “nixos customs + WSL interpreter” |
+| `nixos-wsl` | ✅ thin gate: `../../nixos/system` reuse + NixOS-WSL interpreter | ✅ thin gate: `imports = [ ../../nixos/home ]` | Two gates, both thin: read a gate and you know “nixos customs + WSL interpreter” |
 
-**Machine enforcement of the grammar (T46):** `platform-grammar-check` (the fifth repository hygiene gate) asserts the shapes above at build time via a pure `readDir` tree walk — the top of `platform/` allows only platform-tag directories; under `<tag>/` only the two reserved subdomains `system/` + `home/` are allowed (at least one of them); every domain directory must hold a `default.nix` gate matching the regular expression; domain-level payloads allow only module directories (a bare `.nix` file = the corpse class of the v3 arch row; a gate-less directory = invisible to every gate, the reachability gate included). The 82 v3 corpses from run #369 all belong to this defect class — the reachability gate caught them after graph traversal, while the shape gate rejects them directly at the address-space level (zero evaluation cost). When the grammar itself evolves (a new reserved domain), `tests/platform-grammar.nix`'s `reservedDomains` and this section's six laws are updated in the same commit.
+**Machine enforcement of the grammar:** `platform-grammar-check` (the fifth repository hygiene gate) asserts the shapes above at build time via a pure `readDir` tree walk — the top of `platform/` allows only platform-tag directories; under `<tag>/` only the two reserved subdomains `system/` + `home/` are allowed (at least one of them); every domain directory must hold a `default.nix` gate matching the regular expression; domain-level payloads allow only module directories (a bare `.nix` file = the corpse class of the v3 arch row; a gate-less directory = invisible to every gate, the reachability gate included). The 82 v3 corpses from run #369 all belong to this defect class — the reachability gate caught them after graph traversal, while the shape gate rejects them directly at the address-space level (zero evaluation cost). When the grammar itself evolves (a new reserved domain), `tests/platform-grammar.nix`'s `reservedDomains` and this section's six laws are updated in the same commit.
 
 **Two shapes of subsystem routing (zero if-else):**
 
@@ -247,7 +247,7 @@ nix-config/
 └── justfile           # task-automation entry (a bare just prints the start-here map)
 ```
 
-**Scale facts** (counts are machine-anchored by `tests/docs-ssot.nix`, T8.1): the `hosts/` directory implements multi-host distribution —
+**Scale facts** (counts are machine-anchored by `tests/docs-ssot.nix`): the `hosts/` directory implements multi-host distribution —
 each machine gets independent hardware facts + an optional `shared.nix` override; it currently carries **5 hosts** (nixos · vm · darwin · wsl · nixos-wsl);
 flake.nix (47 inputs) — dual-channel nixpkgs (stable + unstable as a second instance), 5 in-house tool
 flakes (nix-types · pdshell · configuration-orchestrator · commit-config and the application flakes),
@@ -264,7 +264,7 @@ Eleven mechanisms, one deep-dive paragraph each ([docs/en/architecture/mechanism
 | --- | --- | --- |
 | 1 | Shared layer · two-stage initialization | `lang` (frontend: types/enums/schema, no pkgs) → `runtime` (IR synthesis: caps/pkgs/i18nScope); scfpath is overridable, so each machine carries its own policy |
 | 2 | Policy layer · shared.nix generation | Template + overwrite-write (no in-place sed patching); the single source of truth for policy |
-| 3 | Distribution layer · targets.nix | hosts/ inventory → caps classification → three kinds of closure emitters, nixos/darwin/standalone-HM, + two toplevel projection faces (R31); the link layer faces.nix only `inherit`s finished products, and flake.nix delegates in one line |
+| 3 | Distribution layer · targets.nix | hosts/ inventory → caps classification → three kinds of closure emitters, nixos/darwin/standalone-HM, + two toplevel projection faces; the link layer faces.nix only `inherit`s finished products, and flake.nix delegates in one line |
 | 4 | Dev-environment pipeline · pdshell | A devShell factory with one directory per language; four-stage hooks; combinFrom composition |
 | 5 | Security layer · SOPS + Age | TMPL → KEY → RULE → PLAIN → CIPHER → /run/secrets — a six-phase layering |
 | 6 | Configuration orchestrator · orc | wallust theme colors injected across applications (activation hook, including waybar theme reload) |
@@ -324,7 +324,7 @@ just home-switch <host>                      # C. non-NixOS (HM layer); macOS: d
 
 ```bash
 just nixos-test <host>                       # experimental switch (writes no boot entry; discarded on reboot)
-just nixos-boot <host>                       # set only the next-boot generation, no activation (T10.2)
+just nixos-boot <host>                       # set only the next-boot generation, no activation
 sudo nixos-rebuild rollback                  # one-step rollback to the previous generation
 just flake-update-not-sops && just nixos-switch <host>    # routine update (sops-nix stays version-locked)
 ```
@@ -337,8 +337,8 @@ just flake-update-not-sops && just nixos-switch <host>    # routine update (sops
 | ------------ | ------ | ------ | ---------------------- |
 | NixOS x86_64 | Full | Full | All (25 devShells) |
 | Linux x86_64 | — | Full (+ nixGL) | All |
-| macOS ARM64 | nix-darwin closure (build-level acceptance: the CI darwin leg builds on native hardware, T8.3; activation awaits a real machine) | Full (module mode; lean app-set) | CLI-first |
-| WSL2 | NixOS-WSL closure (eval-level acceptance, T7.1; activation awaits the Windows host) | Full (+ wslview shim, caps.wsl gated in the shared tree) | All (requires systemd enabled) |
+| macOS ARM64 | nix-darwin closure (build-level acceptance: the CI darwin leg builds on native hardware; activation awaits a real machine) | Full (module mode; lean app-set) | CLI-first |
+| WSL2 | NixOS-WSL closure (eval-level acceptance; activation awaits the Windows host) | Full (+ wslview shim, caps.wsl gated in the shared tree) | All (requires systemd enabled) |
 
 ---
 
@@ -351,7 +351,7 @@ The test suite covers 6 planes, **108 checks = 102 tests + 1 pre-commit-check + 
 | Smoke | `test_` | 1 | QEMU | basic system integrity | ~1 min |
 | NixOS | `nixos_` | 30 | QEMU | platform/nixos/* modules + system services | 2–10 min |
 | HM | `home_` | 42 | QEMU | home/* package installation + runtime behavior | 2–8 min |
-| Lib | `lib_` | 12 | QEMU 256MB min | lib/shared pure Nix expressions (including the orc consumption contract + the include-intent guard contract + the pdshell loader contract, T28/T30/T31) | <1 min |
+| Lib | `lib_` | 12 | QEMU 256MB min | lib/shared pure Nix expressions (including the orc consumption contract + the include-intent guard contract + the pdshell loader contract) | <1 min |
 | Integration | `integration_` | 1 | QEMU full | NixOS + HM joint activation | 5–15 min |
 | **nmt** | `nmt_` | **16** | **✗ zero VM** | HM dotfile content assertions (pure eval) | <10 s |
 
@@ -369,7 +369,7 @@ home/core/exp/sys/base/fd.nix
        fd --version, fd finds files by pattern
 ```
 
-**CI whole-plane handoff (no manually maintained lists, T7.3):**
+**CI whole-plane handoff (no manually maintained lists):**
 
 ```bash
 # plane membership is declared by the planes face in tests/default.nix — a new test lands in its plane by construction;
@@ -398,7 +398,7 @@ nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_git -L
 nix build .#checks.x86_64-linux.nixos_core_srv_db_postgresql -L
 nix build .#checks.x86_64-linux.integration_hm_activation -L
 
-# export/ module-doc regeneration (docs.nix side-channel emitter, T5.3)
+# export/ module-doc regeneration (docs.nix side-channel emitter)
 nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + index
 ```
 
@@ -415,7 +415,7 @@ See also [`docs/en/tests/test-matrix.md`](docs/en/tests/test-matrix.md) · [`doc
 Every change to nix-config is equivalent to declaring a new system state. The core value of CI:
 
 1. **Evaluation check** — catches Nix syntax/type errors (earlier than a failing nixos-rebuild)
-2. **Deep evaluation** — face-sharded enforcement (T15.1): the api envelope + per-host toplevel drvPath + misc checks + completeness reconciliation (all 108 checks must be owned by a plane or by the misc list; the single-process `nix flake check` has been retired because of its memory-accumulation floor)
+2. **Deep evaluation** — face-sharded enforcement: the api envelope + per-host toplevel drvPath + misc checks + completeness reconciliation (all 108 checks must be owned by a plane or by the misc list; the single-process `nix flake check` has been retired because of its memory-accumulation floor)
 3. **Secret integrity** — verifies the encrypted-file structure is correct and `secrets/plan/` has not been committed
 4. **Test coverage** — 102 tests covering the nixos/home/lib/integration/nmt planes
 5. **Automatic updates** — every Sunday, flake inputs are auto-updated and a PR opened
@@ -425,20 +425,20 @@ Every change to nix-config is equivalent to declaring a new system state. The co
 ```
 push / PR
     │
-    ├─► [STAGE 1: Lint & Evaluate]     static analysis + shallow eval (< 2 min)
-    │       ├── nix eval .#formatter.*.name          (formatter evaluable)
-    │       ├── nix eval .#devShells.* attrNames     (devShells non-empty)
+    ├─► [STAGE 1: Lint & Evaluate]        static analysis + shallow eval (< 2 min)
+    │       ├── nix eval .#formatter.*.name               (formatter evaluable)
+    │       ├── nix eval .#devShells.* attrNames          (devShells non-empty)
     │       ├── nix eval .#nixosConfigurations attrNames  (structure verification)
     │       ├── nix eval .#homeConfigurations attrNames
     │       ├── nix eval .#checks.* attrNames + plane counts
-    │       ├── statix check .                       (Nix anti-pattern check)
+    │       ├── statix check .                            (Nix anti-pattern check)
     │       ├── nixfmt check / deadnix check
     │       ├── Build pre-commit-check derivation
-    │       └── Build docs-ssot-check derivation     (doc count anchors)
+    │       └── Build docs-ssot-check derivation          (doc count anchors)
     │           + Build testscript-syntax / module-reachability /
     │             platform-grammar / cache-ssot derivations
     │
-    ├─► [STAGE 2: Deep Evaluation]     deep evaluation (hard gate, face-sharded)
+    ├─► [STAGE 2: Deep Evaluation]       deep evaluation (hard gate, face-sharded)
     │       └── face-sharded enforcement: api envelope + per-host toplevel drvPath
     │           + misc checks (docs-ssot/pre-commit) + completeness reconciliation
     │           (all 108 checks must be owned by a plane or the misc list — a new
@@ -507,11 +507,11 @@ push / PR
 ```bash
 just nixos-switch <host>       # = sudo nixos-rebuild switch --flake .#<host> (activation)
 just nixos-test <host>         # test: experimental switch, discarded on reboot
-just nixos-boot <host>         # boot: set only the next-boot generation, no activation (T10.2)
+just nixos-boot <host>         # boot: set only the next-boot generation, no activation
 just home-switch <host>        # standalone HM (→ <username>@<host>)
 just hosts-list                # host inventory (hosts/ directory, data-driven)
 
-just deploy-list               # colmena deployment face (= nixosHosts, T20.1)
+just deploy-list               # colmena deployment face (= nixosHosts)
 just deploy <host>             # colmena remote deployment: build → upload → activate (ssh, policy user)
 just deploy-local              # colmena local deployment (apply-local --sudo)
 ```
@@ -624,7 +624,7 @@ items that need real hardware, an owner decision, or external collaboration, tra
 - [x] sops data-driven architecture (zero hardcoded paths, phase-aware source separation)
 - [x] secrets just lifecycle redesign
 - [x] tools.nix unified tool management (nix-types / orc / pdshell short-path access)
-- [x] hosts/ multi-host support (per-machine facts + overrides; facter/disko declarative form, T5.12/T5.13)
+- [x] hosts/ multi-host support (per-machine facts + overrides; facter/disko declarative form)
 - [x] service-profile on-demand starting (install vs autostart separation, dev-on-demand / full-autostart / server-pg-only / minimal)
 - [x] editor-set / terminal-set / browser-set collection routing (a multi-select routing mode)
 - [x] version policy carrying (variant carries {stateVersion, wine, swww} policies)
