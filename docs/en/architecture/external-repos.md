@@ -11,7 +11,7 @@
 | Upstream community | 14 | nixpkgs (stable) · nixpkgs-unstable (second instance, `shared.upkgs`) · nixgl · nur · home-manager · sops-nix · nix-darwin · disko · impermanence · nixos-wsl · colmena · hyprland · hyprland-plugins · pre-commit-hooks | per layer, as needed (dependency graph in [dependency-graph.md](dependency-graph.md)) |
 | Self-owned tool libraries | 4 | nix-types · pdshell · configuration-orchestrator · nmt | §2 per-repository adjudication |
 | Self-owned application flakes | 6 | wechat · unrpyc · cnmplayer · trae · z-library · zcode | consumed by reference from home/env |
-| Self-owned non-flake sources | 23 | commit-config (commit toolchain) + 22 × `*-config` (externalized dotfiles: fcitx5 / nvim / emacs / kitty / hypr / waybar / …; full list in README §Directory structure, line 8) | orchestrated by orc into the home closure |
+| Self-owned non-flake sources | 23 | commit-config (commit toolchain) + 22 × `*-config` (externalized dotfiles: fcitx5 / nvim / emacs / kitty / hypr / waybar / ...; full list in README §Directory structure, line 8) | orchestrated by orc into the home closure |
 
 **The 47-vs-46 counting convention**: the README anchor sentence and the docs-ssot gate evaluate `builtins.attrNames inputs` (47); a textual grep for `.url = ` counts only 46 — `hyprland-plugins` is a pure follows input (no `.url`, carrying only `inputs.hyprland.follows`, sharing the same nixpkgs instance tree with the hyprland plugin ecosystem). Both numbers are correct; the conventions differ. In-repo references uniformly follow **47** (the evaluation-face/anchor convention); numbers under the grep convention never land in the docs.
 
@@ -22,13 +22,13 @@
 The four repositories are distributed orthogonally across pipeline phases — no two repositories share the same layer responsibility, hence no circular dependencies and no substitution relationships, only top-down one-way consumption:
 
 ```
-lang 前端（Phase 1，无 pkgs）        nix-types
-        ↓ 类型/ADT 供给
-runtime（IR 合成，按 arch 解析）    pdshell（devShell 面）
-                                    orc（配置树编排面）
-        ↓ shared.* 短路径注入
-faces（链接层）                     pdshells → devShells 输出
-tests（Plane 5，零 VM）             nmt（模块系统测试框架）
+lang frontend (Phase 1, no pkgs)         nix-types
+        ↓ type/ADT supply
+runtime (IR synthesis, resolved by arch) pdshell (devShell face)
+                                         orc (configuration-tree orchestration face)
+        ↓ shared.* short-path injection
+faces (link layer)                       pdshells → devShells output
+tests (Plane 5, zero VMs)                nmt (module-system test framework)
 ```
 
 #### 2.1 nix-types — the type foundation of the lang frontend (Phase 1)
@@ -42,7 +42,7 @@ tests（Plane 5，零 VM）             nmt（模块系统测试框架）
 
 - **What it is**: a pipeline-style devShell manager — the `mk-pdshell` seven-stage FSM + the `pdshells` directory loader; ContextPhase is built on the enums of its sister repository nix-types.
 - **Why this layer**: a devShell is a face that only takes shape at runtime (it depends on pkgs and on the user-policy IR), and its output face (the flake's `devShells` attrset) is emitted in the link pass by faces.nix — pdshell spans both the runtime and faces phases, but its type supply comes entirely from nix-types (pinned hard via follows).
-- **Consumption faces**: `lang/tools.nix:31` (`pdshell-raw` registered) → `runtime/default.nix:99` (injects `shared.pdshells`) → `faces.nix:62` (`pdsh = shared.pdshells { … }`, one construction with two consumers: the devShells output + the docs-ssot gate count); the defining data lives in `home/env/dev/` (`devDir` of `shared.nix`).
+- **Consumption faces**: `lang/tools.nix:31` (`pdshell-raw` registered) → `runtime/default.nix:99` (injects `shared.pdshells`) → `faces.nix:62` (`pdsh = shared.pdshells { ... }`, one construction with two consumers: the devShells output + the docs-ssot gate count); the defining data lives in `home/env/dev/` (`devDir` of `shared.nix`).
 - **Test safety net**: `tests/lib/shared/pdshell.nix` (five contract groups: directory loading, FSM phases, verbatim assertions on the parameter records).
 
 #### 2.3 configuration-orchestrator (orc) — the configuration-tree orchestrator resolved by arch at runtime

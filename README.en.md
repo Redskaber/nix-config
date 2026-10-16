@@ -60,99 +60,100 @@ The system follows a strictly layered pipeline architecture: every layer has a s
 ```
 ┌────────────────────────────────────────────────────────────┐
 │  ENTRY LAYER  ·  flake.nix                                 │
-│  统一入口 · 输入声明 · 一行委托 faces.nix · api.inputs     │
-│  （目标构造已在 SHARED LAYER 生产，链接层组装，R31）       │
+│  unified entry · input declaration · one-line handoff (R31)│
+│  to faces.nix · api.inputs (targets built in SHARED LAYER) │
 └──────────┬──────────────────────────────┬──────────────────┘
            │                              │
 ┌──────────▼──────────┐       ┌───────────▼──────────────────┐
 │  SYSTEM LAYER       │       │  USER LAYER                  │
 │  platform/<tag>/    │       │  platform/<tag>/home/        │
-│  system/default.nix │       │  home/default.nix（门即      │
-│  硬件·驱动·安全·服务│       │  payload，arch 轴已退役）    │
-│  core/ · dm/ · wm/  │       │  应用·开发环境·窗口管理器    │
-│  （域地址显式，     │       │  home/（共享库）core·env·wm  │
-│   语法 v4）         │       │                              │
-│                     │       │  用户域 nix 平面（R30：      │
-│                     │       │  caps 门控的用户级 nix.conf  │
-│                     │       │  + registry，仅 standalone   │
-│                     │       │  形态渲染）                  │
+│  system/default.nix │       │  home/default.nix (gate IS   │
+│  hardware · drivers │       │  the payload; arch retired)  │
+│  core/ · dm/ · wm/  │       │  apps · dev environments ·   │
+│  security · services│       │  window managers; home/: the │
+│ (domain-explicit v4)│       │  shared library (core·env·wm)│
+│                     │       │  user-domain nix plane (R30: │
+│                     │       │  caps-gated user-level       │
+│                     │       │  nix.conf + registry, only in│
+│                     │       │  standalone form)            │
 └──────────┬──────────┘       └───────────┬──────────────────┘
            │                              │
            │      ┌───────────────────────▼──────────────────┐
            │      │  HOST DISPATCH LAYER  ·  platform/       │
-           │      │  平台目录 = 目标机描述（target double    │
-           │      │  的 platform 半边；arch 半边为管道值）： │
-           │      │  平台主序·域显式（语法 v4）：            │
-           │      │  system/ = 系统域（default.nix = 门，    │
-           │      │  有系统形态的平台才有）；home/ = 用户    │
-           │      │  域（门即 payload）·  文件存在性         │
-           │      │  = 能力声明                              │
+           │      │  platform dir = machine description      │
+           │      │  (platform half of target double; arch   │
+           │      │  half = pipeline value): platform-major ·│
+           │      │  domain-explicit (v4): system/ = system  │
+           │      │  domain (default.nix = gate, system-form │
+           │      │  only); home/ = user domain (gate IS     │
+           │      │  payload) · file existence = capability  │
            │      └───────────────────────┬──────────────────┘
            │                              │
 ┌──────────▼──────────────────────────────▼──────────────────┐
 │  SHARED LAYER  ·  lib/shared/                              │
-│  两阶段初始化：lang(前端) → runtime(IR 合成)               │
-│  目标工厂 targets.nix：hosts/ 清单 → caps 分类 →           │
-│  nixos / darwin / standalone-HM 三类 closure 发射器        │
-│  + 两个 toplevel 投影面（R31 迁入）；链接层 faces.nix：    │
-│  checks 五门聚合 / module-docs / pdsh / tests 单次构造     │
-│  （生产端：faces.nix 只写 inherit (targets) …；            │
-│   策略 IR 每主机单实例化，T5.10）                          │
-│  const.nix = 身份 SSOT（fleet cache：三面按值分发 +        │
-│  入口层法定沉默——cache-ssot 门三禁断言）                   │
+│  two-stage init: lang (frontend) → runtime (IR synthesis)  │
+│  target factory targets.nix: hosts/ inventory → caps       │
+│  classification → three closure emitters: nixos / darwin / │
+│  standalone-HM + two toplevel projections (moved in R31);  │
+│  the link layer faces.nix: five-gate checks / module-docs /│
+│  pdsh / tests built once (production: faces.nix writes only│
+│  inherit (targets) ...; policy IR once per host, T5.10)    │
+│  const.nix = identity SSOT (fleet cache: by-value to three │
+│  faces + entry-layer silence — cache-ssot's three bans     │
 └──────────────────────────────┬─────────────────────────────┘
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  SECRET LAYER  ·  secrets/ + .sops.yaml                    │
-│  Age 加密 · SOPS 管理 · 最小权限 · 运行时注入              │
+│  Age-ciphered · SOPS · least privilege · runtime injection │
 │  TMPL → KEY → RULE → PLAIN → CIPHER → /run/secrets/        │
 └──────────────────────────────┬─────────────────────────────┘
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 102 tests + 6 仓库卫生门 = 108 checks            │
-│         · nmt(零VM) + QEMU · CI 平面整面交接               │
+│  6 planes · 102 tests + 6 repo hygiene gates = 108 checks  │
+│         · nmt (zero VM) + QEMU · CI whole-plane handoff    │
 └────────────────────────────────────────────────────────────┘
 ```
 
 **Data flow (the pipeline):**
 
 ```
-shared.nix (策略)
+shared.nix (policy)
     ↓ just shared-generate
-lib/shared (两阶段初始化：lang → runtime)
+lib/shared (two-stage init: lang → runtime)
     ↓ specialArgs / extraSpecialArgs
-lib/shared/targets.nix (目标工厂：hosts/ 清单 → caps 分类 → 发射器)
-    ↓ 产出成品 closures + toplevel 投影面
+lib/shared/targets.nix (target factory: hosts/ inventory → caps classification → emitters)
+    ↓ produces finished closures + toplevel projections
 lib/shared/faces.nix
-    ↓ inherit (targets) nixosConfigurations / homeConfigurations / darwinConfigurations / hostToplevels / darwinToplevels（链接层，R31）
-flake.nix → 一行委托 faces.nix（入口层只剩输入注册）
-    ↓ 三门分发（发射器纯数据驱动目录引用，语法 v4：域地址显式）：
-    ↓   nixos 系统门 platform/<tag>/system → default.nix
-    ↓   · darwin 单门 platform/<tag>/system（系统路由，HM 内乘 import ../home）
-    ↓   · HM 门 platform/<tag>/home → default.nix（门即 payload，arch 退役）
-platform/nixos/{system/{default.nix, core/ dm/ wm/}, home/default.nix} + home/（模块树；app 树按 app-set 重量级路由：full/lean/none）
-    ↓ sops-nix (initrd 阶段)
-/run/secrets/ (运行时 secret 挂载)
+    ↓ inherit (targets) nixosConfigurations / homeConfigurations / darwinConfigurations / hostToplevels / darwinToplevels (link layer, R31)
+flake.nix → one-line delegation to faces.nix (the entry layer keeps only input registration)
+    ↓ three-gate dispatch (data-driven directory references from the emitters; syntax v4: explicit domains):
+    ↓   nixos system gate platform/<tag>/system → default.nix
+    ↓   · darwin single gate platform/<tag>/system (system routing; HM mounted via import ../home)
+    ↓   · HM gate platform/<tag>/home → default.nix (gate IS payload; arch retired)
+platform/nixos/{system/{default.nix, core/ dm/ wm/}, home/default.nix} + home/ (module tree; app tree routed by app-set weight class: full/lean/none)
+    ↓ sops-nix (initrd stage)
+/run/secrets/ (runtime secret mounts)
     ↓ systemd services
-运行中的系统
+the running system
 ```
 
 **Three-plane distribution of nix.conf (the cross-cutting flow closed out by R24–R30):**
 
 ```
-lib/shared/lang/const.nix —— 身份 SSOT（shared.const.cache.fleet）
-    ↓ 按值消费（求值面不可能漂移；R30 用户平面补齐最后缺口）
-    ├── platform/nixos/…/core/base/nix.nix → nix.settings → /etc/nix/nix.conf（NixOS 主机）
-    ├── platform/darwin/system/nix         → nix.settings → /etc/nix/nix.conf（darwin 主机）
-    └── home/core/base/nix.nix（caps.system-nix 门控，仅 standalone 形态渲染）
+lib/shared/lang/const.nix — identity SSOT (shared.const.cache.fleet)
+    ↓ consumed by value (the eval face cannot drift; R30 closed the last gap — the user plane)
+    ├── platform/nixos/.../core/base/nix.nix → nix.settings → /etc/nix/nix.conf (NixOS hosts)
+    ├── platform/darwin/system/nix         → nix.settings → /etc/nix/nix.conf (darwin hosts)
+    └── home/core/base/nix.nix (caps.system-nix gated; rendered only in standalone form)
                                           → HM nix.settings → ~/.config/nix/nix.conf
-                                              （+ nix.registry → registry.json；构建期
-                                                checkPhase 以 nix config show 验证文法）
-（不能求值 const 的面持钉死字面镜像：CI workflows · cachix.just · cache.md 散文；
-  flake.nix 入口层法定沉默〔R27〕——tests/cache-ssot.nix 把镜像、消费、缺席三面
-  全部钉为断言。优先级链裁决：用户文件按设置遮蔽系统文件，故用户平面只在
-  无系统 nix 平台的主机渲染——一台机器一个 nix.conf 平面，无双份漂移。）
+                                              (+ nix.registry → registry.json; at build time the
+                                                checkPhase validates the syntax with nix config show)
+(faces that cannot eval const keep pinned literal mirrors: CI workflows · cachix.just ·
+  cache.md prose; the flake.nix entry layer stays silent by statute (R27) —
+  tests/cache-ssot.nix pins the mirror, the consumption, and the absence as assertions.
+  Priority-chain ruling: user files shadow system files per setting, so the user plane
+  renders only on hosts with no system nix — one nix.conf plane per machine, no drift.)
 ```
 
 ---
@@ -183,11 +184,11 @@ The platform distribution layer (`platform/`) follows the **platform-major · do
 
 ```
 platform/<tag>/
-├── system/             # 系统域 —— 有系统形态的平台才有（nixos · darwin · nixos-wsl）
-│   ├── default.nix     # 系统门：entry and dispatch（子系统注册 + hosts facts）
-│   └── core/ dm/ wm/ … # 系统配置（subdir | file，自由生长）
-└── home/               # 用户域 —— 每个平台都有
-    └── default.nix     # home 门：entry and dispatch（门即 HM payload 模块）
+├── system/               # system domain — only platforms with a system form have one (nixos · darwin · nixos-wsl)
+│   ├── default.nix       # system gate: entry and dispatch (subsystem registry + hosts facts)
+│   └── core/ dm/ wm/ ... # system config (subdir | file — grows freely)
+└── home/                 # user domain — every platform has one
+    └── default.nix       # home gate: entry and dispatch (the gate IS the HM payload module)
 ```
 
 **The six laws of the grammar (v4):**
@@ -214,10 +215,10 @@ platform/<tag>/
 **Two shapes of subsystem routing (zero if-else):**
 
 ```nix
-# 单选（目录插值）：platform/nixos/system/dm/default.nix
+# single choice (directory interpolation): platform/nixos/system/dm/default.nix
 imports = [ ./${shared.display-manager.tag} ];      # ly → ./ly
 
-# 多选（map 路由）：platform/nixos/system/core/drive/default.nix
+# multi choice (map routing): platform/nixos/system/core/drive/default.nix
 imports = builtins.map (drive: ./${drive}.nix) shared.drive.value;
 # shared.drive.value = [ "intel" "nvidia" ] → imports [ ./intel.nix ./nvidia.nix ]
 ```
@@ -231,26 +232,26 @@ Seven top-level layers — one directory per layer, one responsibility per direc
 
 ```
 nix-config/
-├── flake.nix          # entry layer：输入声明 + 一行委托（outputs 由 lib/shared/faces.nix 链接组装，R31）
-├── shared.nix         # 策略层（just shared-generate 生成，禁止手动编辑用户名）
-├── lib/shared/        # 共享层：lang（前端）→ runtime（IR 合成）→ targets.nix（codegen）→ faces.nix（链接）
-├── platform/          # 分发层：平台主序·域显式（nixos · linux · darwin · wsl · nixos-wsl 五形态）
-├── home/              # 用户层（HM）：core / wm / env 三域（无根入口，由各平台 home 门导入）
-├── hosts/             # 主机事实：facter.json · disk.nix · persist.nix + shared.nix 覆盖
-├── secrets/           # SOPS 密文（chipr/）+ 明文模板（plan/，不入仓）
-├── export/            # 可复用模块输出（nixosModules · homeModules）
-├── overlays/ · pkgs/  # nixpkgs overlay（additions/patches）· 自定义 derivation（wslview shim）
-├── tests/             # 测试层：6 平面（smoke/nixos/home/lib/integration/nmt）
-├── scripts/           # just 子模块（14 组动词）+ sh 工具（计数/轮换/导出/注册表引擎）
-├── docs/              # 深度文档（按受众分层，见文末「深入文档」索引）
-└── justfile           # 任务自动化入口（裸 just 打印 start-here 地图）
+├── flake.nix          # entry layer: input declaration + one-line delegation (outputs assembled by the lib/shared/faces.nix link layer, R31)
+├── shared.nix         # policy layer (generated by just shared-generate; never hand-edit the username)
+├── lib/shared/        # shared layer: lang (frontend) → runtime (IR synthesis) → targets.nix (codegen) → faces.nix (linking)
+├── platform/          # distribution layer: platform-major · domain-explicit (five forms: nixos · linux · darwin · wsl · nixos-wsl)
+├── home/              # user layer (HM): three domains core / wm / env (no root entry; imported by each platform's home gate)
+├── hosts/             # host facts: facter.json · disk.nix · persist.nix + shared.nix overrides
+├── secrets/           # SOPS ciphertext (chipr/) + plaintext templates (plan/, never committed)
+├── export/            # reusable module outputs (nixosModules · homeModules)
+├── overlays/ · pkgs/  # nixpkgs overlay (additions/patches) · custom derivations (wslview shim)
+├── tests/             # test layer: 6 planes (smoke/nixos/home/lib/integration/nmt)
+├── scripts/           # just submodules (14 verb groups) + sh tools (counting/rotation/export/registry engine)
+├── docs/              # deep-dive docs (layered by audience — see the "Deep-dive documentation" index at the end)
+└── justfile           # task-automation entry (a bare just prints the start-here map)
 ```
 
 **Scale facts** (counts are machine-anchored by `tests/docs-ssot.nix`, T8.1): the `hosts/` directory implements multi-host distribution —
 each machine gets independent hardware facts + an optional `shared.nix` override; it currently carries **5 hosts** (nixos · vm · darwin · wsl · nixos-wsl);
 flake.nix (47 inputs) — dual-channel nixpkgs (stable + unstable as a second instance), 5 in-house tool
 flakes (nix-types · pdshell · configuration-orchestrator · commit-config and the application flakes),
-22 external configuration repos (nvim · emacs · wezterm · hypr · waybar …, flake=false inputs) —
+22 external configuration repos (nvim · emacs · wezterm · hypr · waybar ..., flake=false inputs) —
 see [docs/en/architecture/dependency-graph.md](docs/en/architecture/dependency-graph.md) for the full dependency graph.
 
 ---
@@ -271,7 +272,7 @@ Eleven mechanisms, one deep-dive paragraph each ([docs/en/architecture/mechanism
 | 8 | External configuration repos | flake=false inputs ×22 — dotfiles externalized, revs pinned by flake.lock |
 | 9 | Commit discipline | Husky + Commitlint + Commitizen with zero node_modules (commit-config flake) |
 | 10 | Multi-host support · hosts/ | Machine facts (facter/disk/persist) separated from the interpreter (the platform structure tree); the host entry is one line of wiring |
-| 11 | Services on demand | service-profile: `install` vs `autostart` separation (dev-on-demand / server-pg-only …) |
+| 11 | Services on demand | service-profile: `install` vs `autostart` separation (dev-on-demand / server-pg-only ...) |
 
 ---
 
@@ -284,10 +285,10 @@ Eleven mechanisms, one deep-dive paragraph each ([docs/en/architecture/mechanism
 **Phase 0 — Nix + just ready** (preinstalled on NixOS, skip):
 
 ```bash
-curl -L https://install.determinate.systems/nix | sh -s -- install   # 非 NixOS
+curl -L https://install.determinate.systems/nix | sh -s -- install   # non-NixOS
 mkdir -p ~/.config/nix
 echo "experimental-features = nix-command flakes pipe-operators" >> ~/.config/nix/nix.conf
-nix shell nixpkgs#just nixpkgs#git           # just 不全局安装，一次性进入
+nix shell nixpkgs#just nixpkgs#git           # not installed globally; one-shot entry
 ```
 
 > Note: this hand-written `~/.config/nix/nix.conf` line is only a bootstrap bridge — after the first
@@ -299,33 +300,33 @@ nix shell nixpkgs#just nixpkgs#git           # just 不全局安装，一次性�
 
 ```bash
 git clone https://github.com/Redskaber/nix-config /etc/nix-config && cd /etc/nix-config
-just init <username>                         # = 策略生成 + 硬件探测 + user age 密钥 + .sops.yaml 基线
-# 服务器机双 key 直达：just key-new-host <alias> → just init <username> <alias> <age1…>
+just init <username>                         # = policy generation + hardware probing + user age key + .sops.yaml baseline
+# server machines with dual keys go direct: just key-new-host <alias> → just init <username> <alias> <age1...>
 ```
 
 **Phase 2 — secrets ready**:
 
 ```bash
-nix shell nixpkgs#mkpasswd --command just secret-set-all   # 逐项录入（输入即加密，明文不落盘）
-just secrets-verify                          # 收件人一致性审计（期望全绿）
+nix shell nixpkgs#mkpasswd --command just secret-set-all   # enter item by item (encrypted as you type; plaintext never hits disk)
+just secrets-verify                          # recipient-consistency audit (expect all green)
 ```
 
 **Phase 3 — First deployment**:
 
 ```bash
-just hosts-list                              # 数据驱动主机清单（hosts/ 目录）
-sudo nixos-install --flake /etc/nix-config#<host>    # A. 全新 NixOS（LiveISO 分区挂载后）
-just nixos-switch <host>                     # B. 接管已有 NixOS
-just home-switch <host>                      # C. 非 NixOS（HM 层）；macOS: darwin-rebuild switch --flake .#<host>
+just hosts-list                              # data-driven host inventory (the hosts/ directory)
+sudo nixos-install --flake /etc/nix-config#<host>    # A. fresh NixOS (after LiveISO partitioning and mounting)
+just nixos-switch <host>                     # B. take over an existing NixOS
+just home-switch <host>                      # C. non-NixOS (HM layer); macOS: darwin-rebuild switch --flake .#<host>
 ```
 
 **Phase 4/5 — Rollback verification and day-2**:
 
 ```bash
-just nixos-test <host>                       # 试验性切换（不写 boot 条目，重启即弃）
-just nixos-boot <host>                       # 只设下一代引导不激活（T10.2）
-sudo nixos-rebuild rollback                  # 一键回上一代
-just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-nix 锁版本）
+just nixos-test <host>                       # experimental switch (writes no boot entry; discarded on reboot)
+just nixos-boot <host>                       # set only the next-boot generation, no activation (T10.2)
+sudo nixos-rebuild rollback                  # one-step rollback to the previous generation
+just flake-update-not-sops && just nixos-switch <host>    # routine update (sops-nix stays version-locked)
 ```
 
 ---
@@ -360,10 +361,10 @@ The test suite covers 6 planes, **108 checks = 102 tests + 1 pre-commit-check + 
 
 ```
 home/core/exp/sys/base/fd.nix
-  ├─ nmt_home_core_exp_sys_base_fd     dotfile 内容断言（纯 eval，<10s）
+  ├─ nmt_home_core_exp_sys_base_fd     dotfile content assertions (pure eval, <10s)
   │    tests/nmt/home/core/exp/sys/base/fd.nix
-  │    .config/fd/ignore: .git/ / *.bak 条目
-  └─ home_core_exp_sys_base_fd          运行时行为（QEMU VM，~2min）
+  │    .config/fd/ignore: .git/ / *.bak entries
+  └─ home_core_exp_sys_base_fd          runtime behavior (QEMU VM, ~2min)
        tests/home/core/exp/sys/base/fd.nix
        fd --version, fd finds files by pattern
 ```
@@ -371,33 +372,33 @@ home/core/exp/sys/base/fd.nix
 **CI whole-plane handoff (no manually maintained lists, T7.3):**
 
 ```bash
-# 平面成员由 tests/default.nix 的 planes 面声明——新测试按构造落位其平面；
-# CI 直接把整面交给 nix-fast-build（从锁定 nixpkgs 解析，零 registry 漂移）：
+# plane membership is declared by the planes face in tests/default.nix — a new test lands in its plane by construction;
+# CI hands the whole plane to nix-fast-build (resolved from locked nixpkgs — zero registry drift):
 nix-fast-build --no-nom --skip-cached -j "$(nproc)" \
   --flake ".#api.checks.planes.nixos"
 
-# 平面分组可独立寻址（与 .#checks.<system> 同形态的 derivation 属性集）：
+# plane groups are independently addressable (derivation attrsets shaped like .#checks.<system>):
 nix eval ".#api.checks.planes.nmt" --apply builtins.attrNames --json
 ```
 
 **Run commands:**
 
 ```bash
-# 全量（需要 KVM；深层求值无 KVM 也可跑 --no-build）
+# full run (needs KVM; deep eval can also run --no-build without KVM)
 nix flake check
 
-# nmt only（最快，无 QEMU）
+# nmt only (fastest, no QEMU)
 nix eval .#checks.x86_64-linux --apply \
   'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
   --json | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]" \
   | xargs -I{} nix build ".#checks.x86_64-linux.{}" --no-link
 
-# 单个
+# single test
 nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_git -L
 nix build .#checks.x86_64-linux.nixos_core_srv_db_postgresql -L
 nix build .#checks.x86_64-linux.integration_hm_activation -L
 
-# export/ 模块文档再生（docs.nix 侧通道发射器，T5.3）
+# export/ module-doc regeneration (docs.nix side-channel emitter, T5.3)
 nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + index
 ```
 
@@ -424,71 +425,71 @@ Every change to nix-config is equivalent to declaring a new system state. The co
 ```
 push / PR
     │
-    ├─► [STAGE 1: Lint & Evaluate]     静态分析 + 浅层 eval（< 2 min）
-    │       ├── nix eval .#formatter.*.name          (formatter 可求值)
-    │       ├── nix eval .#devShells.* attrNames     (devShells 非空)
-    │       ├── nix eval .#nixosConfigurations attrNames  (结构验证)
+    ├─► [STAGE 1: Lint & Evaluate]     static analysis + shallow eval (< 2 min)
+    │       ├── nix eval .#formatter.*.name          (formatter evaluable)
+    │       ├── nix eval .#devShells.* attrNames     (devShells non-empty)
+    │       ├── nix eval .#nixosConfigurations attrNames  (structure verification)
     │       ├── nix eval .#homeConfigurations attrNames
-    │       ├── nix eval .#checks.* attrNames + 平面计数
-    │       ├── statix check .                       (Nix 反模式检查)
+    │       ├── nix eval .#checks.* attrNames + plane counts
+    │       ├── statix check .                       (Nix anti-pattern check)
     │       ├── nixfmt check / deadnix check
     │       ├── Build pre-commit-check derivation
-    │       └── Build docs-ssot-check derivation     （文档计数锚点）
+    │       └── Build docs-ssot-check derivation     (doc count anchors)
     │           + Build testscript-syntax / module-reachability /
     │             platform-grammar / cache-ssot derivations
     │
-    ├─► [STAGE 2: Deep Evaluation]     深层求值（硬门禁，面分片形态）
-    │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
-    │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （108 checks 必须被平面或杂项清单拥有——新测试
-    │           文件未注册平面即红；短命进程替换单进程 flake
-    │           check：内存安全 + 墙钟 120m→预计 15-25m；
-    │           纯求值腿：无 magic-nix-cache + infra 签名单次重试）
+    ├─► [STAGE 2: Deep Evaluation]     deep evaluation (hard gate, face-sharded)
+    │       └── face-sharded enforcement: api envelope + per-host toplevel drvPath
+    │           + misc checks (docs-ssot/pre-commit) + completeness reconciliation
+    │           (all 108 checks must be owned by a plane or the misc list — a new
+    │           test file that never registers a plane goes red; short-lived
+    │           processes replace the single-process flake check: memory safety
+    │           + wall clock 120m → est. 15-25m; pure-eval: no magic-nix-cache, infra-signed retry)
     │
-    ├─► [STAGE 3: nmt-Plane]           HM dotfile 断言，纯 eval，无 KVM（< 1 min）
-    │       └── nix-fast-build --flake .#api.checks.planes.nmt（并行求值+构建）
+    ├─► [STAGE 3: nmt-Plane]           HM dotfile assertions, pure eval, no KVM (< 1 min)
+    │       └── nix-fast-build --flake .#api.checks.planes.nmt (parallel eval + build)
     │
-    ├─► [STAGE 4: devShells dry-run]   逐成员 dry-run（面 attrNames）
-    │       └── 枚举 = devShells 面自身 attrNames（25 员点名；新 shell 按构造入列，
-    │           零 CI 侧维护；失败成员点名——归因哲学）
+    ├─► [STAGE 4: devShells dry-run]   per-member dry-run (face attrNames)
+    │       └── enumeration = the devShells face's own attrNames (25 members named;
+    │           new shells join by construction, zero CI upkeep; failures named for attribution)
     │
-    ├─► [STAGE 4.5: Output Faces]     无独立腿的输出面 drvPath 强制（并行）
-    │       ├── packages.* 逐成员 drvPath（wslview 教训——deep-eval 的
-    │       │   面覆盖是路径依赖的：前面红，后面坏不见；失败成员点名）
+    ├─► [STAGE 4.5: Output Faces]     drvPath enforcement for faces with no dedicated leg (parallel)
+    │       ├── packages.* per-member drvPath (the wslview lesson — deep-eval's
+    │       │   face coverage is path-dependent: an early red hides later breakage; failures named)
     │       ├── homeConfigurations.* activationPackage.drvPath
-    │       │   （home 平面测试是 nixosTest VM，从不触此面）
-    │       └── darwinConfigurations.* system.drvPath（host-toplevels 的
-    │           darwin 求值步在 deep-eval 绿后才跑，本腿不受此门）
+    │       │   (home-plane tests are nixosTest VMs; they never touch this face)
+    │       └── darwinConfigurations.* system.drvPath (host-toplevels'
+    │           darwin eval step runs after deep-eval goes green; this leg is exempt)
     │
-    ├─► [STAGE 5: Security Audit]      SOPS 完整性审计（并行）
-    │       ├── 供应链钉版契约：全部 action 引用必须 40-hex SHA（fail-fast）
-    │       ├── secrets/chipr/*.yaml 必须含 sops: 元数据
-    │       ├── secrets/plan/ 不得被 git 追踪
-    │       ├── .sops.yaml 含 age: + creation_rules:
-    │       └── .nix 文件扫描硬编码 token/password
+    ├─► [STAGE 5: Security Audit]      SOPS integrity audit (parallel)
+    │       ├── supply-chain pinning contract: every action ref must be a 40-hex SHA (fail-fast)
+    │       ├── secrets/chipr/*.yaml must carry sops: metadata
+    │       ├── secrets/plan/ must not be tracked by git
+    │       ├── .sops.yaml carries age: + creation_rules:
+    │       └── .nix files scanned for hardcoded token/password
     │
-    ├─► [STAGE 6: VM Tests]            QEMU 测试，按平面并行子矩阵（需 KVM）
-    │       ├── 每腿一平面，整面交 nix-fast-build（nix-eval-jobs 并行求值
-    │       │   + 流水线构建，--skip-cached 对接 magic-nix-cache）：
-    │       ├── smoke        — 基线（1）
-    │       ├── nixos        — 系统模块（30）
-    │       ├── home         — HM 模块（42）
-    │       ├── lib          — lib 纯表达式（12）
-    │       └── integration  — NixOS + HM 联合激活（1）
+    ├─► [STAGE 6: VM Tests]            QEMU tests, per-plane parallel sub-matrices (KVM required)
+    │       ├── one plane per leg, whole face handed to nix-fast-build (nix-eval-jobs
+    │       │   parallel eval + pipelined builds; --skip-cached meets magic-nix-cache):
+    │       ├── smoke        — baseline (1)
+    │       ├── nixos        — system modules (30)
+    │       ├── home         — HM modules (42)
+    │       ├── lib          — lib pure expressions (12)
+    │       └── integration  — NixOS + HM joint activation (1)
     │
-    ├─► [STAGE 6.5: Host Toplevels]   系统闭包构建（无 KVM）
-    │       ├── .#api.host-toplevels 整面交 nix-fast-build（inventory 驱动：
-    │       │   nixos · vm · nixos-wsl——新 NixOS 主机按构造入列；
-    │       │   cache.nixos.org 替代 + magic-nix-cache 跨次缓存）
-    │       └── darwin 闭包跨系统求值步（linux 腿的零成本交叉检查；
-    │           构建深度归 6.6 腿）
+    ├─► [STAGE 6.5: Host Toplevels]   system-closure builds (no KVM)
+    │       ├── .#api.host-toplevels — the whole face goes to nix-fast-build
+    │       │   (inventory-driven: nixos · vm · nixos-wsl — new NixOS hosts join by
+    │       │   construction; cache.nixos.org substitute + magic-nix-cache cross-run caching)
+    │       └── darwin closure cross-system eval step (a zero-cost cross-check on
+    │           the linux leg; build depth belongs to the 6.6 leg)
     │
-    ├─► [STAGE 6.6: Darwin Toplevels]  darwin 闭包原机构建（macos-latest
-    │       │   aarch64 runner，无需交叉工具链：api.darwin-toplevels 第六
-    │       │   api 面整面交 nix-fast-build——同工具同纪律，inventory
-    │       │   驱动，新 darwin 主机按构造入列）
+    ├─► [STAGE 6.6: Darwin Toplevels]  darwin closure native builds (macos-latest
+    │       │   aarch64 runner, no cross toolchain needed: the api.darwin-toplevels
+    │       │   sixth api face handed whole to nix-fast-build — same tools, same
+    │       │   discipline, inventory-driven; new darwin hosts join by construction)
     │
-    └─► [STAGE 7: Summary]             汇总报告（always，即使前序失败）
+    └─► [STAGE 7: Summary]             summary report (always, even after earlier failures)
 ```
 
 **Local pre-flight checklist (before push) · deployment workflows · generation-management details · automated-update strategy**
@@ -504,15 +505,15 @@ push / PR
 ### deploy — the deployment verbs (the three nixos-rebuild semantics + HM + the colmena remote face)
 
 ```bash
-just nixos-switch <host>       # = sudo nixos-rebuild switch --flake .#<host>（激活）
-just nixos-test <host>         # test：试验性切换，重启即弃
-just nixos-boot <host>         # boot：只设下一代引导不激活（T10.2）
-just home-switch <host>        # standalone HM（→ <username>@<host>）
-just hosts-list                # 主机清单（hosts/ 目录数据驱动）
+just nixos-switch <host>       # = sudo nixos-rebuild switch --flake .#<host> (activation)
+just nixos-test <host>         # test: experimental switch, discarded on reboot
+just nixos-boot <host>         # boot: set only the next-boot generation, no activation (T10.2)
+just home-switch <host>        # standalone HM (→ <username>@<host>)
+just hosts-list                # host inventory (hosts/ directory, data-driven)
 
-just deploy-list               # colmena 部署面（= nixosHosts，T20.1）
-just deploy <host>             # colmena 远程部署：构建→上传→激活（ssh，策略用户）
-just deploy-local              # colmena 本机部署（apply-local --sudo）
+just deploy-list               # colmena deployment face (= nixosHosts, T20.1)
+just deploy <host>             # colmena remote deployment: build → upload → activate (ssh, policy user)
+just deploy-local              # colmena local deployment (apply-local --sudo)
 ```
 
 ### Development environments — devShells and profiles
@@ -548,13 +549,13 @@ just deploy-local              # colmena 本机部署（apply-local --sudo）
 | `rs_compiler_dev`              | rust + a compiler-theory toolchain                  | rs development                       |
 
 ```bash
-# 一次性进入（不保存 profile）
-nix develop .#rust · .#python · .#python-machine …
-# 持久化 profile（离线可用；命名 <username>-<lang>[-<class>]，落 ~/.local/state/nix/profiles/dev/）
-just devenv-create rust                        # 单语言
-just devenv-create-from python machine         # 复合变体（C + Python ML/DL）
-just devenv-use [-from] <lang> [<class>]       # 进入已有
-# direnv 自动激活（推荐）
+# one-shot entry (no profile saved)
+nix develop .#rust · .#python · .#python-machine ...
+# persistent profiles (usable offline; named <username>-<lang>[-<class>], land in ~/.local/state/nix/profiles/dev/)
+just devenv-create rust                        # single language
+just devenv-create-from python machine         # composite variant (C + Python ML/DL)
+just devenv-use [-from] <lang> [<class>]       # enter an existing one
+# direnv auto-activation (recommended)
 echo "use flake github:Redskaber/nix-config#python-machine" > .envrc && direnv allow
 ```
 
@@ -587,8 +588,8 @@ echo "use flake github:Redskaber/nix-config#python-machine" > .envrc && direnv a
 ### Generations and rollback
 
 ```bash
-sudo nixos-rebuild rollback                                                   # 回上一代
-sudo nix-env --profile /nix/var/nix/profiles/system --switch-generation <N>   # 指定世代
+sudo nixos-rebuild rollback                                                   # roll back to the previous generation
+sudo nix-env --profile /nix/var/nix/profiles/system --switch-generation <N>   # switch to a specific generation
 sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 ```
 

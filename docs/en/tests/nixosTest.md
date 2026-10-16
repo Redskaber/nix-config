@@ -67,11 +67,11 @@ A NixOS test is a Nix module that must contain `nodes` (or `containers`) and `te
 
 ```nix
 {
-  name = "my-test";          # 可选（runNixOSTest 自动生成）
-  nodes = { ... };           # 或 containers
+  name = "my-test";          # optional (runNixOSTest generates it automatically)
+  nodes = { ... };           # or containers
   testScript = ''...'';
 
-  # 可选选项
+  # optional options
   enableOCR = false;
   globalTimeout = 3600;
   extraPythonPackages = p: [ p.numpy ];
@@ -79,9 +79,9 @@ A NixOS test is a Nix module that must contain `nodes` (or `containers`) and `te
   skipTypeCheck = false;
   enableDebugHook = false;
   meta = { ... };
-  defaults = { ... };        # 应用到所有节点的 NixOS 配置
-  extraBaseModules = { ... }; # 同上，但不可被 specialisation 覆盖
-  interactive = { ... };     # 交互模式额外配置
+  defaults = { ... };        # NixOS configuration applied to all nodes
+  extraBaseModules = { ... }; # same as above, but cannot be overridden by specialisation
+  interactive = { ... };     # extra configuration for interactive mode
   sshBackdoor = { enable = false; vsockOffset = 2; };
 }
 ```
@@ -232,8 +232,8 @@ checks.x86_64-linux.my-test = pkgs.testers.runNixOSTest (import ./my-test.nix);
 Run:
 
 ```bash
-nix flake check                         # 所有测试
-nix build .#checks.x86_64-linux.my-test -L  # -L 打印详细输出
+nix flake check                         # all tests
+nix build .#checks.x86_64-linux.my-test -L  # -L prints verbose output
 ```
 
 ### 4.4 A Standalone Test Flake (Recommended)
@@ -358,7 +358,7 @@ Therefore, **a screenshot cannot capture the output of commands inside `succeed(
 
 ```python
 machine.succeed("echo 'hello'")
-machine.screenshot("after-echo")  # 截图中看不到
+machine.screenshot("after-echo")  # not visible in the screenshot
 ```
 
 ✅ Correct:
@@ -366,7 +366,7 @@ machine.screenshot("after-echo")  # 截图中看不到
 ```python
 output = machine.succeed("echo 'hello'")
 assert output.strip() == "hello"
-print(f"验证输出: {output.strip()}")   # 日志中可见
+print(f"verification output: {output.strip()}")   # visible in the logs
 ```
 
 ✅ If you really must see it on the graphical terminal (demo only):
@@ -375,7 +375,7 @@ print(f"验证输出: {output.strip()}")   # 日志中可见
 machine.send_key("alt-f2")
 machine.wait_for_unit("getty@tty2.service")
 machine.wait_until_tty_matches("2", "login: ")
-machine.send_chars("root\n")                # 需 root 免密或自动登录
+machine.send_chars("root\n")                # needs passwordless root or autologin
 machine.wait_until_tty_matches("2", "root@")
 machine.send_chars("echo 'hello'\n")
 machine.screenshot("tty2-hello")
@@ -416,12 +416,12 @@ On failure, follow the prompt into the sandbox and log into the VM with `ssh -F 
 ### 9.4 Early Failure Detection: `polling_condition`
 
 ```python
-@polling_condition(seconds_interval=10, description="检查 nginx 存活")
+@polling_condition(seconds_interval=10, description="check nginx is alive")
 def nginx_running():
     machine.succeed("pgrep nginx")
 
 with nginx_running:
-    # 此段代码执行期间若 nginx 退出，测试立即失败
+    # if nginx exits while this code block runs, the test fails immediately
     machine.succeed("stress --cpu 1 &")
 ```
 
@@ -486,7 +486,7 @@ See `nixos/lib/testing/*.nix` for the full list.
 
 ## 12. Passing External Arguments to Tests (Flake Inputs, etc.)
 
-Most non-trivial tests need to pull configuration in from outside — e.g. `inputs.home-manager`, `inputs.sops-nix`. Test modules can receive these values through the `inputs`, `pkgs`, `lib`, and similar parameters, but `runNixOSTest` passes only the basic ones (`pkgs`, `lib`, …) by default. For anything extra, **you must inject it via `_module.args`** — not via `specialArgs` (the test module has no `specialArgs` option).
+Most non-trivial tests need to pull configuration in from outside — e.g. `inputs.home-manager`, `inputs.sops-nix`. Test modules can receive these values through the `inputs`, `pkgs`, `lib`, and similar parameters, but `runNixOSTest` passes only the basic ones (`pkgs`, `lib`, ...) by default. For anything extra, **you must inject it via `_module.args`** — not via `specialArgs` (the test module has no `specialArgs` option).
 
 ### 12.1 Recommended: Set `_module.args` Inside `runNixOSTest`
 
@@ -497,9 +497,9 @@ Create a common test runner (e.g. in `tests/default.nix`):
 let
   pkgs = shared.pkgs;
 
-  # 推荐的高阶测试运行器：自动注入 inputs 供所有测试模块使用
+  # the recommended higher-order test runner: injects inputs automatically for all test modules
   nixosTest = path: pkgs.testers.runNixOSTest {
-    _module.args = { inherit inputs; };   # 将 flake inputs 传给测试模块
+    _module.args = { inherit inputs; };   # pass the flake inputs to the test module
     imports = [ path ];
   };
 in
@@ -519,7 +519,7 @@ The test module simply declares the parameter of the same name — no default va
 ```nix
 { pkgs, lib, inputs, ... }:
 {
-  # 现在可以直接使用 inputs.home-manager 等
+  # inputs.home-manager and friends can now be used directly
   nodes.machine = { ... }: {
     imports = [ inputs.home-manager.nixosModules.home-manager ];
     ...
@@ -691,7 +691,7 @@ stdenv.mkDerivation {
     machine.wait_for_x()
     machine.wait_for_unit("nginx.service")
 
-    with subtest("打开浏览器验证标题"):
+    with subtest("open the browser and verify the title"):
         machine.succeed("firefox http://localhost &")
         machine.wait_for_window("Firefox")
         machine.wait_for_text("Welcome to nginx")

@@ -454,6 +454,48 @@ let
           FAILED=1
         fi
 
+        # ── English-mirror purity battery (round 33) ─────────────
+        # Round 32 delivered the mirror plane with byte-faithful
+        # code blocks (comments included — "code is artifact");
+        # the owner's verdict that round: an English version with
+        # Chinese content inside is not clean. The ruling this
+        # round narrows the artifact definition: commands, paths,
+        # attr names and identity literals stay byte-identical,
+        # while comments and display strings are LOCALIZABLE
+        # assets (translated to English). This battery pins the
+        # result: the whole English plane must carry zero CJK —
+        # ideographs, CJK punctuation, full-width forms, and the
+        # horizontal ellipsis. Byte-level UTF-8 sequences under
+        # LC_ALL=C (no locale dependency): U+4E00–U+9FFF spans
+        # \xe4\xb8+\xe5–\xe8\xe9 lead bytes; U+3001–U+303F (、。「」〔〕
+        # 《》); U+FF01–U+FF5E (full-width ASCII); U+2026 (…).
+        # Deliberately NOT flagged: em dash U+2014 and middle dot
+        # U+00B7 — legitimate English typography this repo keeps.
+        # docs/modules/interface-standards.md is English canon, not
+        # a mirror — outside the scan.
+
+        HAN=$'(\344[\260-\277]|[\345-\350][\200-\277]|\351[\200-\277])[\200-\277]'
+        CJK_PUNCT=$'(\343\200[\201-\277]|\357\274[\201-\236]|\342\200\246)'
+
+        en_dirty=0
+        en_scanned=0
+        while IFS= read -r f; do
+          en_scanned=$((en_scanned + 1))
+          if LC_ALL=C grep -qE "$HAN|$CJK_PUNCT" "$f"; then
+            bad=$(LC_ALL=C grep -nE "$HAN|$CJK_PUNCT" "$f" | head -3 | tr '\n' ' ')
+            echo "docs-ssot: DRIFT en-purity — $f carries CJK content (the English mirror plane must be pure English):" >&2
+            echo "    $bad" >&2
+            en_dirty=1
+          fi
+        done < <(find "$EN_DIR" -type f -name '*.md' | sort; echo "$README_EN")
+
+        if [ "$en_dirty" -ne 0 ]; then
+          echo "docs-ssot: en-purity says the English mirror plane is not pure — translate the" >&2
+          echo "    comments and display strings to English (commands, paths, attr names and" >&2
+          echo "    identity literals stay byte-identical; see the round-33 purification)." >&2
+          FAILED=1
+        fi
+
         if [ "$FAILED" -ne 0 ]; then
           echo "" >&2
           echo "docs-ssot-check FAILED: documentation claims drifted (counts, navigation, or parity)." >&2
@@ -464,6 +506,7 @@ let
         echo "docs-ssot-check: all ${toString (builtins.length anchors)} anchors agree with live facts"
         echo "  toc battery: $toc_total TOC entries resolved (numbering + text + slug), dead links 0, orphan sections 0"
         echo "  en-parity battery: $en_pair docs ↔ docs/en mirrors paired, README.en.md present"
+        echo "  en-purity battery: $en_scanned English files scanned, CJK content 0 (localization plane)"
         echo "  tests ${t testsTotal} (planes ${t planesTotal}: smoke ${t planeCounts.smoke} + nixos ${t planeCounts.nixos} + home ${t planeCounts.home} + lib ${t planeCounts.lib} + integration ${t planeCounts.integration} + nmt ${t planeCounts.nmt})"
         echo "  checks ${t checksTotal} (tests + pre-commit-check + docs-ssot-check + testscript-syntax-check + module-reachability-check + platform-grammar-check + cache-ssot-check)"
         echo "  inputs ${t inputsCount} · devShells ${t devShellsCount} · hosts ${t hostsCount}"

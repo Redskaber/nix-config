@@ -13,12 +13,12 @@
 
 ```
 keys:
-  &user_<name>  age1…            # 个人域: 登录密码 / github token
-  &host_<alias> age1…            # 基础设施域: 只存在于 host 机器上
+  &user_<name>  age1...          # user domain: login passwords / github token
+  &host_<alias> age1...          # infrastructure domain: exists only on the host machine
 
 creation_rules:
-  secrets/**/core/base/(user|nix)/**   → [ user_<name> ]               # 单 key
-  secrets/**/core/srv/**               → [ host_<alias>, user_<name> ]  # 双 key
+  secrets/**/core/base/(user|nix)/**   → [ user_<name> ]               # single key
+  secrets/**/core/srv/**               → [ host_<alias>, user_<name> ]  # dual key
 ```
 
 - **user domain** (`core/base/{user,nix}`): only the user key can decrypt. Leak blast radius = personal identity.
@@ -46,8 +46,8 @@ creation_rules:
 
 ```
 EMPTY ──just secrets-init──▶ USER_ONLY ──just key-add-host──▶ USER+HOST
-EMPTY ──just secrets-init <alias> <age1…>──▶ USER+HOST   （直达双 key）
-USER+HOST ──just key-remove──▶ USER_ONLY （随后 secrets-sync 重加密）
+EMPTY ──just secrets-init <alias> <age1...>──▶ USER+HOST   (direct to dual key)
+USER+HOST ──just key-remove──▶ USER_ONLY (followed by a secrets-sync re-encryption)
 ```
 
 **EMPTY is the repository's factory state** (what a fresh clone sees): `.sops.yaml`
@@ -66,7 +66,7 @@ mode**: the user key row renders unconditionally, while the host key row (marked
 | Bootstrap invocation | Rendering result | Landing state |
 | --- | --- | --- |
 | `just secrets-init` | host rows stripped (sed `/__HOST/d`) | USER_ONLY |
-| `just secrets-init <alias> <age1…>` | host rows substituted in (keys + srv domain) | USER+HOST |
+| `just secrets-init <alias> <age1...>` | host rows substituted in (keys + srv domain) | USER+HOST |
 
 After bootstrap, `.sops.yaml` is the policy truth — `rules-init` refuses to overwrite
 a file that has already evolved (only `rules-reset` resets it, preventing the
@@ -75,18 +75,18 @@ two-domain hierarchy from being knocked back to a single key).
 **New personal-machine bootstrap** (brand-new machine, three commands):
 
 ```console
-just init <username>        # shared.nix → hardware.nix → sops 基线
-just secret-set-all         # 交互式录入全部秘密（输入即加密）
-just nixos-switch nixos     # 或手工 nixos-rebuild —— 落地
+just init <username>        # shared.nix → hardware.nix → sops baseline
+just secret-set-all         # interactively enter every secret (encrypted as typed)
+just nixos-switch nixos     # or a manual nixos-rebuild — to land it
 ```
 
 **Server day-one direct bootstrap** (host key material first, two steps replacing three):
 
 ```console
-just key-new-host <alias>          # ① 生成 keypair（仓外交付副本）
-just init <username> <alias> age1… # ② 直达 USER+HOST（srv 域双收件人）
-# ③ host-<alias>.age → 目标机 /var/lib/sops-nix/key.txt（chmod 400）
-#    （keyFile 落点现状见下方注记）+ shred
+just key-new-host <alias>          # ① generate the keypair (out-of-repo delivery copy)
+just init <username> <alias> age1... # ② straight to USER+HOST (dual recipients for the srv domain)
+# ③ host-<alias>.age → the target machine's /var/lib/sops-nix/key.txt (chmod 400)
+#    (see the note below for the current keyFile landing spot) + shred
 ```
 
 **own host = srv host (the personal machine's dual key landing locally, five steps)**:
@@ -104,11 +104,11 @@ remains a valid decryptor of the srv domain — key group OR semantics). Merge r
 than build separate infrastructure:
 
 ```console
-just key-new-host <alias>           # ① 生成 keypair（仓外交付副本）
-just key-add-host <alias> age1…     # ② 公钥接线（或 init 直达双 key）
-just secrets-sync                   # ③ 存量 blob 迁移
-just key-install-host <alias>       # ④ identity 合并进本机 sops key 文件
-shred -u ~/Downloads/host-<alias>.age  # ⑤ 本机已持有，销毁交付副本
+just key-new-host <alias>           # ① generate the keypair (out-of-repo delivery copy)
+just key-add-host <alias> age1...   # ② wire the public key (or init straight to dual key)
+just secrets-sync                   # ③ migrate existing blobs
+just key-install-host <alias>       # ④ merge the identity into this machine's sops key file
+shred -u ~/Downloads/host-<alias>.age  # ⑤ this machine now holds it; destroy the delivery copy
 ```
 
 `key-install-host` is idempotent per secret-key row (re-installs are skipped),
@@ -121,11 +121,11 @@ time.
 **New srv host bootstrap** (incremental onboarding after a USER_ONLY bootstrap, four steps — see `just secrets-guide`):
 
 ```console
-just key-new-host <alias>           # ① 生成 keypair（仓外交付副本）
-just key-add-host <alias> age1…     # ② 公钥接线进 .sops.yaml（srv 域）
-just secrets-sync                   # ③ sops updatekeys ×N（存量 blob 迁移）
-# ④ host-<alias>.age → 目标机 /var/lib/sops-nix/key.txt（chmod 400）
-#    然后 shred 交付副本
+just key-new-host <alias>           # ① generate the keypair (out-of-repo delivery copy)
+just key-add-host <alias> age1...   # ② wire the public key into .sops.yaml (srv domain)
+just secrets-sync                   # ③ sops updatekeys ×N (migrate existing blobs)
+# ④ host-<alias>.age → the target machine's /var/lib/sops-nix/key.txt (chmod 400)
+#    then shred the delivery copy
 ```
 
 > Current state of the keyFile landing spot: the module side
@@ -184,8 +184,8 @@ through `secrets-add` / `secrets-remove` / `secrets-edit`.
 | audit | registry | `secrets-show` / `secrets-declared` / `secrets-db` | full dossier for a single entry / declaration↔registry drift / cache state |
 | destroy | registry | `secrets-remove <alias>` | retires the registry row (refuses while ciphertext still exists) |
 | create | blob | `secret-set <alias>` | interactive entry (upsert semantics — overwriting is updating) |
-| update | key (user) | `key-rotate-user age1…` | guided three steps (replace → sync → accept historical exposure) |
-| update | key (host) | `key-rotate-host age1…` | guided five steps (0/4 pick the old alias first; add before removing — no bare window) |
+| update | key (user) | `key-rotate-user age1...` | guided three steps (replace → sync → accept historical exposure) |
+| update | key (host) | `key-rotate-host age1...` | guided five steps (0/4 pick the old alias first; add before removing — no bare window) |
 | update | rules | `key-add-host` / `key-remove` | incremental evolution (template not regenerated) |
 | update | blob | `secret-set <alias>` | re-encrypt (same as create, overwrite) |
 | update | blob (all) | `secrets-sync` | sops updatekeys full re-encryption |
@@ -202,8 +202,8 @@ The rotation modes map one-to-one onto `scripts/sh/secrets-rotate.sh`:
 | --- | --- | --- |
 | `check` (`just secrets-verify`) | verifies each blob's metadata recipients == the `.sops.yaml` rules | CI / daily |
 | `update` (`just secrets-sync`) | `sops updatekeys` full re-encrypt to the current rules | hierarchy migration, adding a key |
-| `rotate user age1…` (`just key-rotate-user`) | generates the three-step guide (replace key → sync → historical-exposure decision) | scheduled / suspected compromise |
-| `rotate host age1…` (`just key-rotate-host`) | generates the five-step guide (pick old → add → sync → remove old → sync) | scheduled / suspected compromise |
+| `rotate user age1...` (`just key-rotate-user`) | generates the three-step guide (replace key → sync → historical-exposure decision) | scheduled / suspected compromise |
+| `rotate host age1...` (`just key-rotate-host`) | generates the five-step guide (pick old → add → sync → remove old → sync) | scheduled / suspected compromise |
 
 `check` is lenient toward the EMPTY factory state (no rules, no blobs → notify and
 pass); **blobs existing without a `.sops.yaml` is the only fatal form** (the
@@ -214,7 +214,7 @@ distribution layer has vanished while ciphertext remains — plaintext-risk leve
 1. Revoke: `just key-remove <alias>` → `just secrets-sync` re-encrypt (the
    compromised key can never decrypt new blobs again).
 2. Thanks to sops's metadata MAC, the old key's holder cannot forge new blobs.
-3. Run `ALTER USER … PASSWORD` once more on the database side (a configuration-layer
+3. Run `ALTER USER ... PASSWORD` once more on the database side (a configuration-layer
    rotation does not replace a data-layer rotation).
 
 ### Plaintext → ciphertext → runtime (the six-phase pipeline from the runbook's view)
@@ -247,7 +247,7 @@ three phases the operator touches:
 ## 5. CI gate (`.github/workflows/ci.yml` → security stage)
 
 - Set the repository secret `AGE_SECRET_KEY` (the age private key,
-  `AGE-SECRET-KEY-1…` form; injected inside the workflow as env `SOPS_AGE_KEY` —
+  `AGE-SECRET-KEY-1...` form; injected inside the workflow as env `SOPS_AGE_KEY` —
   sops only recognizes the latter).
 - Stage behavior: `sops -d --output /dev/null` on each `secrets/**/*.yaml` in turn;
   any decryption failure = red. When the secret is not configured the stage is

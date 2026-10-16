@@ -35,27 +35,27 @@ core value of CI:
 ### Local pre-flight checklist (before push)
 
 ```bash
-# 1. 静态检查
+# 1. Static checks
 nix run nixpkgs#statix -- check .
 
-# 2. 结构验证（无构建，无 sopsFile 触发）
+# 2. Structural validation (no builds, no sopsFile triggered)
 nix eval .#nixosConfigurations --apply builtins.attrNames --json
 nix eval .#homeConfigurations  --apply builtins.attrNames --json
 nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 
-# 3. nmt 平面（最快，< 30s，无 QEMU）
+# 3. nmt plane (fastest, < 30s, no QEMU)
 nix eval .#checks.x86_64-linux --apply \
   'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
   --json | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]" \
   | xargs -I{} nix build ".#checks.x86_64-linux.{}" --no-link
 
-# 4. devShell dry-run（逐成员，面 attrNames——T18.1）
+# 4. devShell dry-run (per member, enumeration via attrNames — T18.1)
 for s in $(nix eval .#devShells.x86_64-linux --apply builtins.attrNames --json \
   | python3 -c 'import json,sys; print(" ".join(json.load(sys.stdin)))'); do
   nix build ".#devShells.x86_64-linux.\"$s\"" --dry-run --no-link || exit 1
 done
 
-# 5. secret 文件验证
+# 5. Secret file validation
 find secrets/chipr -name "*.yaml" | xargs grep -L "^sops:" 2>/dev/null \
   && echo "ERROR: plaintext files found" || echo "OK"
 ```
@@ -63,7 +63,7 @@ find secrets/chipr -name "*.yaml" | xargs grep -L "^sops:" 2>/dev/null \
 ### Deployment workflow
 
 ```
-开发机 (本地)                        生产机 (NixOS)
+Dev machine (local)                        Production machine (NixOS)
     │                                      │
     ├── edit *.nix                         │
     ├── nix eval ... (structure check)     │
@@ -85,13 +85,13 @@ find secrets/chipr -name "*.yaml" | xargs grep -L "^sops:" 2>/dev/null \
 ### Generation management and rollback
 
 ```bash
-# 列出可用系统世代
+# List available system generations
 sudo nix-env --list-generations --profile /nix/var/nix/profiles/system
 
-# 回滚到上一代
+# Roll back to the previous generation
 sudo nixos-rebuild switch --rollback
 
-# 回滚到指定世代
+# Roll back to a specific generation
 sudo nix-env --profile /nix/var/nix/profiles/system --switch-generation <N>
 sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 ```

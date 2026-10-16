@@ -25,25 +25,25 @@
 ### Global (bootstrap entry points)
 
 ```bash
-# 完整初始化（新机器）—— <username> 是唯一必须提供的参数：
-#   1. docs/tmpl/shared.nix.tmpl → shared.nix（策略真值）
-#   2. 生成 hosts/<hostname>/hardware.nix（当前硬件探测）
-#   3. 初始化 sops：目录 + user age 密钥 + .sops.yaml 规则基线
+# Full initialization (new machine) — <username> is the only required argument:
+#   1. docs/tmpl/shared.nix.tmpl → shared.nix (policy source of truth)
+#   2. generate hosts/<hostname>/hardware.nix (current hardware probing)
+#   3. initialize sops: directory + user age key + .sops.yaml rule baseline
 just init <username>
 
-# 服务器机直达双 key（host 密钥材料先行时，状态机跳一跳）：
-#   先生成 host keypair（仓外交付副本），再把公钥传入引导：
-just key-new-host <alias>            # 生成 keypair，打印公钥
-just init <username> <alias> <age1…> # EMPTY → USER+HOST 直达
+# Server machine straight to dual keys (when host key material is prepared first, the state machine hops ahead):
+#   first generate the host keypair (out-of-repo delivery copy), then feed the public key into bootstrap:
+just key-new-host <alias>            # generate the keypair, print the public key
+just init <username> <alias> <age1...> # EMPTY → USER+HOST direct
 
-# own host = srv host（个人机同时跑 srv 服务）——host 私钥落位本机：
-just key-install-host <alias>        # identity 合并进本机 sops key 文件
-# （硬化 srv 策略后本机仍可解；交付副本此时可 shred）
+# own host = srv host (the personal machine also runs the srv services) — the host private key lands on this machine:
+just key-install-host <alias>        # merge the identity into this machine's sops key file
+# (after the srv policy is hardened this machine can still decrypt; the delivery copy can be shredded at this point)
 
-# POST-BOOTSTRAP（shared.nix 已存在）
-just secrets-init [alias age1…]    # 仅初始化 sops 基础设施（可选直达双 key）
-just secrets-plan-create           # 生成明文模板参考
-just rules-init                    # 仅当 .sops.yaml 缺失时重建（对已演化文件拒绝）
+# POST-BOOTSTRAP (shared.nix already exists)
+just secrets-init [alias age1...]    # initialize only the sops infrastructure (optional direct dual-key)
+just secrets-plan-create           # generate the plaintext template reference
+just rules-init                    # rebuild only when .sops.yaml is missing (refuses on already-evolved files)
 ```
 
 ### deploy — hosts & deployment targets (T2.4, data-driven)
@@ -54,104 +54,104 @@ just rules-init                    # 仅当 .sops.yaml 缺失时重建（对已�
 > - Two files, zero flake changes; the recipes here are likewise zero-hardcoded.
 
 ```bash
-just hosts-list                 # 列出全部可求值主机（nixosConfigurations 键）
-just home-targets               # 列出全部独立 home-manager 目标（<user>@<host>）
+just hosts-list                 # list all evaluable hosts (nixosConfigurations keys)
+just home-targets               # list all standalone home-manager targets (<user>@<host>)
 
-just nixos-switch <host>        # NixOS 切换（= sudo nixos-rebuild switch --flake .#<host>）
-just nixos-test <host>          # test 模式（不写 boot 条目，重启即弃）
-just nixos-boot <host>          # boot 模式（T10.2：只设下一代引导，不激活——重启才生效）
-just home-switch <host>         # HM 切换（读 shared.nix 用户名 → <user>@<host>）
+just nixos-switch <host>        # NixOS switch (= sudo nixos-rebuild switch --flake .#<host>)
+just nixos-test <host>          # test mode (no boot entry written; discarded on reboot)
+just nixos-boot <host>          # boot mode (T10.2: set only the next-generation boot entry, no activation — takes effect on reboot)
+just home-switch <host>         # HM switch (reads the shared.nix username → <user>@<host>)
 
-# colmena 远程部署面（T20.1）——同一模块树同一策略 IR，CI 锁发射等价：
-just deploy-list                # 列出 colmena 部署面（= nixosHosts；darwin/HM 走自己的动词）
-just deploy <host>              # 远程部署：构建→上传→激活（ssh，策略用户；CLI 钉 v0.5.0）
-just deploy-local               # 本机部署（apply-local --sudo；需 hosts/<h>/deploy.nix 开关）
-# 例: just nixos-switch nixos / just home-switch wsl / just deploy nixos
+# colmena remote deployment plane (T20.1) — same module tree, same policy IR; the CI lock emits an equivalent:
+just deploy-list                # list the colmena deployment plane (= nixosHosts; darwin/HM use their own verbs)
+just deploy <host>              # remote deployment: build → upload → activate (ssh, policy user; CLI pinned at v0.5.0)
+just deploy-local               # local deployment (apply-local --sudo; requires the hosts/<h>/deploy.nix switch)
+# Example: just nixos-switch nixos / just home-switch wsl / just deploy nixos
 ```
 
 ### shared — policy-layer generation
 
 ```bash
-just shared-generate <username>  # 从模板生成 shared.nix（唯一合法写入方式）
-just shared-show-username        # 显示当前 shared.nix 中的用户名（诊断）
-just shared-validate             # 验证模板占位符存在
-just shared-roundtrip            # 验证 shared.nix ⇄ 模板可双向字节一致再生（门禁同源）
+just shared-generate <username>  # generate shared.nix from the template (the only legal way to write it)
+just shared-show-username        # show the username currently in shared.nix (diagnostics)
+just shared-validate             # verify the template placeholders exist
+just shared-roundtrip            # verify shared.nix ⇄ template byte-identical regeneration in both directions (same source as the gate)
 ```
 
 ### hardware — hardware configuration
 
 ```bash
-just hardware-migrate         # 一键迁移：hardware.nix → facter.json（T19.1；探测报告 + 挂载/kernelModules
-                               # 原样搬入主机入口 + 翻转接线 + 退役 legacy 文件；终态由事实源普查锁定）
-just hardware-facter           # 生成 hosts/<hostname>/facter.json（声明式路线，T5.12；首次或硬件变更后）
-just hardware-generate         # 生成 hosts/<hostname>/hardware.nix（legacy 路线，nixos-generate-config）
-just hardware-show             # 显示当前 hardware.nix 内容
-just hardware-list             # 列出所有已配置主机
-just sound-audit               # 只读：采集本机音频形态证据（债 #9 语义半部，T17.1）——
-                               # 按运行时事实探测形态（WSL / 虚机 / 裸金属），打印匹配的
-                               # 裁决矩阵行与建议翻转（卷宗 docs/guides/sound-adjudication.md）
+just hardware-migrate         # one-shot migration: hardware.nix → facter.json (T19.1; probing report + mounts/kernelModules
+                               # carried verbatim into the host entry + wiring flipped + legacy file retired; end state locked by the fact-source census)
+just hardware-facter           # generate hosts/<hostname>/facter.json (declarative route, T5.12; first run or after a hardware change)
+just hardware-generate         # generate hosts/<hostname>/hardware.nix (legacy route, nixos-generate-config)
+just hardware-show             # show the current hardware.nix contents
+just hardware-list             # list all configured hosts
+just sound-audit               # read-only: collect this machine's audio-form evidence (the semantic half of debt #9, T17.1) —
+                               # probe the form from runtime facts (WSL / VM / bare metal), and print the matching
+                               # adjudication-matrix row and the suggested flip (dossier: docs/guides/sound-adjudication.md)
 ```
 
 ### disk — disk-layout application + state-policy inspection (T5.13 + T5.14)
 
 ```bash
-just disk-show <host>          # 只读：求值该主机 disko 布局的推导结果（fileSystems/boot 接线）
-just persist-show <host>       # 只读：该主机的状态契约（生存清单 + ephemeral-root 回滚配方）
-just disk-format <host>        # 破坏性：从锁定闭包构建并运行 pinned 分区/格式化/挂载脚本
-                               # （重装/installer 场景；extra args 透传，如 --dry-run）
+just disk-show <host>          # read-only: evaluate the derived result of the host's disko layout (fileSystems/boot wiring)
+just persist-show <host>       # read-only: the host's state contract (survival inventory + ephemeral-root rollback recipe)
+just disk-format <host>        # destructive: build the pinned partition/format/mount script from the locked closure and run it
+                               # (reinstall/installer scenario; extra args passed through, e.g. --dry-run)
 ```
 
 ### services — on-demand service management
 
 ```bash
-# 立即启动/停止（不持久，重启后失效）
+# Immediate start/stop (not persistent; lost on reboot)
 just service-start <name>        # systemctl start
 just service-stop <name>         # systemctl stop
 just service-restart <name>      # systemctl restart
 just service-status <name>       # systemctl status
 
-# 开机自启管理（持久，跨重启 + 跨 rebuild）
-just service-enable <name>       # systemctl enable（重启后自启）
-just service-disable <name>      # systemctl disable（重启后不自启）
-just service-is-enabled <name>   # 检查是否开机自启
+# Boot autostart management (persistent, across reboots + rebuilds)
+just service-enable <name>       # systemctl enable (auto-starts after reboot)
+just service-disable <name>      # systemctl disable (no autostart after reboot)
+just service-is-enabled <name>   # check whether autostart is enabled
 
-# 数据库别名
+# Database aliases
 just db-start <name>             # = service-start
 just db-stop <name>              # = service-stop
 just db-enable <name>            # = service-enable
 just db-disable <name>           # = service-disable
-just db-list                     # 列出所有数据库服务
-just autostart-list              # 列出所有已启用的服务
+just db-list                     # list all database services
+just autostart-list              # list all enabled services
 ```
 
 ### flake — dependency management
 
 ```bash
-just flake-update-all            # 更新所有 inputs
-just flake-update <pkg>          # 更新单个 input
-just flake-update-not-sops       # 更新除 sops-nix 外的所有 inputs（sops-nix 版本锁定）
-just flake-update-configs        # 仅更新 *-config inputs（外部配置仓库）
-just flake-update-dry            # dry-run：预览会变更哪些 inputs（不修改 flake.lock）
-just flake-show                  # 显示所有 flake 输出（含 devShells）
-just flake-lock-show             # 显示当前锁定版本（只读）
+just flake-update-all            # update all inputs
+just flake-update <pkg>          # update a single input
+just flake-update-not-sops       # update all inputs except sops-nix (the sops-nix version is locked)
+just flake-update-configs        # update only the *-config inputs (external config repositories)
+just flake-update-dry            # dry-run: preview which inputs would change (does not modify flake.lock)
+just flake-show                  # show all flake outputs (including devShells)
+just flake-lock-show             # show the currently locked versions (read-only)
 ```
 
 ### devenv — development environments
 
 ```bash
-just devenv-create rust                     # 创建单语言 profile（离线可用）
-just devenv-create-from python renpy        # 创建复合变体 profile
-just devenv-use rust                        # 进入已有单语言环境
-just devenv-use-from python machine         # 进入已有复合变体环境
-just devenv-update rust                     # 强制重建单语言环境
-just devenv-update-from python machine      # 强制重建复合变体环境
-just devenv-delete rust                     # 删除单语言 profile
-just devenv-delete-from python renpy        # 删除复合变体 profile
-just devenv-create-all                      # 创建所有已知环境（含复合变体）
-just devenv-delete-all                      # 删除所有 profile（强制重建用）
-just devenv-update-all                      # 删除并重建所有环境
-just devenv-show                            # 列出 flake 中所有可用 devShell
-just devenv-list                            # 树状显示已创建 profile
+just devenv-create rust                     # create a single-language profile (usable offline)
+just devenv-create-from python renpy        # create a composite-variant profile
+just devenv-use rust                        # enter an existing single-language environment
+just devenv-use-from python machine         # enter an existing composite-variant environment
+just devenv-update rust                     # force-rebuild a single-language environment
+just devenv-update-from python machine      # force-rebuild a composite-variant environment
+just devenv-delete rust                     # delete a single-language profile
+just devenv-delete-from python renpy        # delete a composite-variant profile
+just devenv-create-all                      # create all known environments (including composite variants)
+just devenv-delete-all                      # delete all profiles (for forced rebuilds)
+just devenv-update-all                      # delete and rebuild all environments
+just devenv-show                            # list all devShells available in the flake
+just devenv-list                            # show created profiles as a tree
 ```
 
 **Profile naming rule:** `<username>-<lang>[-<class>]`, stored under
@@ -170,97 +170,97 @@ just devenv-list                            # 树状显示已创建 profile
 > [docs/architecture/mechanisms.md §5 security layer](../architecture/mechanisms.md#5-security-layer--sops--age-layered-management).
 
 ```bash
-# ── 引导（BOOTSTRAP，需要先 just shared-generate <username>）────────────
-just secrets-guide                # 生命周期地图：状态机/动词矩阵/情景流（从这里开始）
-just secrets-init                 # 目录 + user 密钥 + 规则基线（USER_ONLY）
-just secrets-init <alias> <age1…> # 直达双 key（EMPTY → USER+HOST，host 行渲染）
-just secrets-init-with-plan       # 同 secrets-init + 生成所有明文模板实例
+# ── Bootstrap (BOOTSTRAP, requires just shared-generate <username> first)────────────
+just secrets-guide                # lifecycle map: state machine / verb matrix / scenario flows (start here)
+just secrets-init                 # directory + user key + rule baseline (USER_ONLY)
+just secrets-init <alias> <age1...> # straight to dual keys (EMPTY → USER+HOST, host row rendered)
+just secrets-init-with-plan       # same as secrets-init + generate all plaintext template instances
 
-# ── secrets：秘密值（REGISTRY 驱动，别名 → shared.nix dotted key）─────────
-just secrets-list                 # 别名表 × 域 × 加密状态（缺什么一目了然）
-just secret-set <alias>           # 交互式加密一个秘密（upsert，输入即加密）
-just secret-set-all               # 按注册表顺序录入全部秘密
-just secret-get <alias>           # 解密并打印
-just secret-edit <alias>          # 解密进 $EDITOR，保存即重新加密
-just secret-remove <alias>        # 删除单个密文 blob（提示配置层声明）
-# 别名: userpwd · nix · mongodb · mysql · mysql-root · postgresql · redis
+# ── secrets: secret values (REGISTRY-driven, alias → shared.nix dotted key)─────────
+just secrets-list                 # alias table × domain × encryption status (what is missing at a glance)
+just secret-set <alias>           # interactively encrypt one secret (upsert; encrypted as you type)
+just secret-set-all               # enter all secrets in registry order
+just secret-get <alias>           # decrypt and print
+just secret-edit <alias>          # decrypt into $EDITOR; saving re-encrypts
+just secret-remove <alias>        # delete a single ciphertext blob (reminds about the config-layer declaration)
+# aliases: userpwd · nix · mongodb · mysql · mysql-root · postgresql · redis
 
-# ── registry：注册表 CRUD（R27，数据驱动三层一次写全）─────────────────
+# ── registry: registry CRUD (R27, data-driven; all three layers written in one shot)─────────────────
 just secrets-add <alias> <rel-path> [prompt] [transform]
-                                  # 注册新秘密：registry.toml 行 + 模板骨架 +
-                                  #   shared.nix/tmpl 声明，一条命令三层齐
-                                  #   （cachix-token 例：见下方 cachix 组）
+                                  # register a new secret: registry.toml row + template skeleton +
+                                  #   shared.nix/tmpl declarations — one command covers all three layers
+                                  #   (cachix-token example: see the cachix group below)
 just secrets-edit <alias> [prompt] [transform]
-                                  # 改注册行的提示语 / 变换（plain|mkpasswd）
-just secrets-remove <alias>       # 退役秘密（拒绝在密文仍在时执行——先 secret-remove）
-just secrets-show <alias>         # 单个秘密全档案（行/路径/规则/收件人，不解密）
-just secrets-declared             # shared.nix 声明 ↔ 注册表漂移视图（谁没被动词覆盖）
-just secrets-db                   # 数据库缓存状态（行/声明/密文计数 + 指纹）
-just secrets-db-sync              # 强制重建缓存（手改 registry.toml / shared.nix 后）
+                                  # change the registry row's prompt / transform (plain|mkpasswd)
+just secrets-remove <alias>       # retire a secret (refuses while ciphertext still exists — run secret-remove first)
+just secrets-show <alias>         # full dossier of one secret (row/path/rules/recipients, no decryption)
+just secrets-declared             # shared.nix declarations ↔ registry drift view (who is not covered by a verb)
+just secrets-db                   # database cache status (row/declaration/ciphertext counts + fingerprint)
+just secrets-db-sync              # force-rebuild the cache (after hand-editing registry.toml / shared.nix)
 
-# ── keys：谁能解密（KEY LAYER）───────────────────────────────────────────
-just key-show                     # 显示 user age 公钥（可分享）
-just key-destroy                  # 销毁 user 密钥文件（不可逆）
-just key-new-host <alias> [dest]  # 生成 host keypair（仓外交付副本，chmod 400）
-just key-show-host <alias> [src]  # 显示 host 交付副本的公钥
-just key-add-host <alias> <age1…> [domain=srv]  # 公钥接线进 .sops.yaml（增量）
-just key-install-host <alias> [src]  # host identity 合并进本机 key 文件（own host，幂等）
-just key-remove <alias>           # 撤销密钥（接受短名 lab 或全名 host_lab）
-just key-rotate-user <age1…>      # user key 轮换（三步引导）
-just key-rotate-host <age1…>      # host key 轮换（四步：先加后撤，无裸窗口）
+# ── keys: who can decrypt (KEY LAYER)───────────────────────────────────────────
+just key-show                     # show the user age public key (safe to share)
+just key-destroy                  # destroy the user key file (irreversible)
+just key-new-host <alias> [dest]  # generate a host keypair (out-of-repo delivery copy, chmod 400)
+just key-show-host <alias> [src]  # show the public key of the host delivery copy
+just key-add-host <alias> <age1...> [domain=srv]  # wire the public key into .sops.yaml (incremental)
+just key-install-host <alias> [src]  # merge the host identity into this machine's key file (own host, idempotent)
+just key-remove <alias>           # revoke a key (accepts the short name lab or the full name host_lab)
+just key-rotate-user <age1...>      # rotate the user key (three-step walkthrough)
+just key-rotate-host <age1...>      # rotate a host key (four steps: add before removing — no bare window)
 
-# ── rules：策略（RULE LAYER，.sops.yaml = 策略真值 + 分发层）──────────────
-just rules-init                   # 仅缺失时重建；对已演化文件拒绝（防打回单 key）
-just rules-reset                  # 硬重置到基线（host keys + 轮换全部丢失，慎用）
-just rules-destroy                # 删除 .sops.yaml
+# ── rules: policy (RULE LAYER, .sops.yaml = policy source of truth + distribution layer)──────────────
+just rules-init                   # rebuild only when missing; refuses on already-evolved files (prevents falling back to a single key)
+just rules-reset                  # hard reset to the baseline (host keys + rotations all lost; use with care)
+just rules-destroy                # delete .sops.yaml
 
-# ── 明文模板实例（PLAIN LAYER，secrets/plan/**，不入仓）─────────────────
-just secrets-plan-create          # 生成所有明文模板实例（填写前对照）
-just secrets-plan-destroy         # 删除所有明文模板实例
+# ── plaintext template instances (PLAIN LAYER, secrets/plan/**, never committed)─────────────────
+just secrets-plan-create          # generate all plaintext template instances (reference before filling in)
+just secrets-plan-destroy         # delete all plaintext template instances
 
-# ── 一致性与审计 ─────────────────────────────────────────────────────
-just secrets-sync                 # sops updatekeys ×全部（规则↔密文对齐）
-just secrets-verify               # 收件人一致性审计（NO-RULE / DRIFT；CI 同款）
-just secrets-status               # 三层审计（key / rule / blob + 本机 identity）
-just secrets-destroy-all          # 销毁全部 sops 相关内容（不可逆）
+# ── Consistency & audit ─────────────────────────────────────────────────────
+just secrets-sync                 # sops updatekeys × all (rules ↔ ciphertext alignment)
+just secrets-verify               # recipient consistency audit (NO-RULE / DRIFT; same as CI)
+just secrets-status               # three-layer audit (key / rule / blob + local identity)
+just secrets-destroy-all          # destroy everything sops-related (irreversible)
 ```
 
 ### cachix — the public binary-cache axis (redskaber-nix-config)
 
 ```bash
-# 缓存可达性探测（公共信息，无需 token）+ 本机 substituter 接线 + 推送半场状态
-just cachix-status               # 一屏：URL 探测 / 受信公钥 / CI 与本地推送半场
+# Cache reachability probe (public information, no token needed) + local substituter wiring + push-half status
+just cachix-status               # one screen: URL probe / trusted public key / CI and local push halves
 
-# token 注册流（准备段：注册进 secrets 体系 + 交互录入，一条命令闭合）
-just cachix-token                # 注册 cachix-token 秘密（三层）+ secret-set 录入值
-                                  #   token 来自 https://app.cachix.org/cache/
-                                  #   redskaber-nix-config → Auth Tokens（owner-only）
+# Token registration flow (preparation stage: register into the secrets system + interactive entry, one command closes the loop)
+just cachix-token                # register the cachix-token secret (three layers) + secret-set to enter the value
+                                  #   the token comes from https://app.cachix.org/cache/
+                                  #   redskaber-nix-config → Auth Tokens (owner-only)
 
-# 本地推送（token 解析顺序：CACHIX_AUTH_TOKEN env → cachix-token 秘密）
-just cachix-push /nix/store/…    # 推送指定 store 路径（cachix 二进制：$CACHIX_BIN >
-                                  #   PATH > nix shell nixpkgs#cachix）
+# Local push (token resolution order: CACHIX_AUTH_TOKEN env → cachix-token secret)
+just cachix-push /nix/store/...    # push the given store path (cachix binary: $CACHIX_BIN >
+                                  #   PATH > nix shell nixpkgs#cachix)
 ```
 
 ### commit — commit-convention deployment
 
 ```bash
-# 为 nix-config 仓库部署规则文件与钩子
+# Deploy the rules files and hooks for the nix-config repository
 just commit-setup
 
-# 为任意 Git 仓库安装 husky 钩子（不复制配置文件；缺省当前目录）
+# Install husky hooks into any Git repository (no config files copied; defaults to the current directory)
 just commit-husky-install [path=.]
 
-# 单独复制 commitlint 和 commitizen 配置文件到项目（缺省当前目录）
+# Copy only the commitlint and commitizen config files into a project (defaults to the current directory)
 just commit-project-rules [path=.]
 
-# 部署全局兼容规则（可选）
+# Deploy the global compatibility rules (optional)
 just commit-global-rules
 ```
 
 ### Maintenance
 
 ```bash
-just dump                        # 导出项目文件树 + 拼接全文到 tmp/（文档/审计用）
+just dump                        # export the project file tree + concatenated full text to tmp/ (for docs/audits)
 ```
 
 ---

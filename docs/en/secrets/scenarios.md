@@ -37,13 +37,13 @@
 **Goal**: a brand-new personal machine, secrets from nothing. **Prerequisites**: Nix + just ready (Quick start Phase 0).
 
 ```bash
-just init <username>     # shared.nix + hardware.nix + 密钥/规则基线（生成 user age key）
-just secret-set-all      # 逐项录入（输入即加密；userpwd 需要 mkpasswd —— 见下）
-just secrets-verify      # 期望: all secret blobs match the .sops.yaml hierarchy
+just init <username>     # shared.nix + hardware.nix + key/rules baseline (generates the user age key)
+just secret-set-all      # enter each in turn (encrypted as typed; userpwd needs mkpasswd — see below)
+just secrets-verify      # expected: all secret blobs match the .sops.yaml hierarchy
 ```
 
 ```bash
-# userpwd 走 mkpasswd sha-512，一次性进入工具环境再录入：
+# userpwd goes through mkpasswd sha-512; enter the tool environment once, then do the entry:
 nix shell nixpkgs#mkpasswd --command just secret-set-all
 ```
 
@@ -62,14 +62,14 @@ file natively holds multiple identities, and `sops-nix`'s `keyFile` already poin
 there).
 
 ```bash
-just key-new-host <alias>              # ① 生成 host keypair（仓外交付副本 ~/Downloads）
-just init <username> <alias> <age1…>   # ② 直达 USER+HOST（①打印的公钥传入）
-just secret-set-all                    # ③ 录入（srv 域 blob 双收件人）
-just key-install-host <alias>          # ④ host identity 合并进本机 key 文件
-shred -u ~/Downloads/host-<alias>.age  # ⑤ 本机已持有 identity，销毁交付副本
+just key-new-host <alias>              # ① generate the host keypair (out-of-repo delivery copy in ~/Downloads)
+just init <username> <alias> <age1...> # ② straight to USER+HOST (pass in the public key printed by ①)
+just secret-set-all                    # ③ entry (srv-domain blobs get dual recipients)
+just key-install-host <alias>          # ④ merge the host identity into this machine's key file
+shred -u ~/Downloads/host-<alias>.age  # ⑤ this machine now holds the identity; destroy the delivery copy
 ```
 
-Already bootstrapped per Scenario 1? Incremental onboarding: `just key-add-host <alias> <age1…>` →
+Already bootstrapped per Scenario 1? Incremental onboarding: `just key-add-host <alias> <age1...>` →
 `just secrets-sync` (existing blobs migrate to dual recipients) → `key-install-host`.
 
 **Landing**: `USER+HOST` (the machine holds both identities). **Verification**:
@@ -88,13 +88,13 @@ identity remains a valid decryptor of the srv domain).
 **Goal**: the server (headless host) can decrypt the srv domain autonomously, no human present.
 
 ```bash
-just key-new-host <alias>              # ① 服务器 keypair（你操作机上生成）
-just key-add-host <alias> <age1…>      # ② 公钥接线进 .sops.yaml（srv 域）
-just secrets-sync                      # ③ 存量 blob 迁移到双收件人
-# ④ 交付: host-<alias>.age → 服务器 /var/lib/sops-nix/key.txt（chmod 400）
-#    （服务器形态 keyFile 目标位；当前模块实现为 own-host 家目录形态——
-#    详见 rotation.md 的 keyFile 落点现状注记）
-#    然后 shred 交付副本 —— 目标机唯一持有
+just key-new-host <alias>              # ① the server's keypair (generated on your operator machine)
+just key-add-host <alias> <age1...>     # ② wire the public key into .sops.yaml (srv domain)
+just secrets-sync                      # ③ migrate existing blobs to dual recipients
+# ④ delivery: host-<alias>.age → the server's /var/lib/sops-nix/key.txt (chmod 400)
+#    (the keyFile target position for the server form; the current module implementation is the own-host home-directory form —
+#    see the keyFile landing-spot status note in rotation.md)
+#    then shred the delivery copy — the target machine is the sole holder
 ```
 
 **Landing**: `USER+HOST`. **Verification**: on the server, `sudo sops -d
@@ -107,13 +107,13 @@ only the srv domain.
 **Goal**: the new personal machine decrypts the existing user domain. **Prerequisites**: the Scenario 1 key backup at hand.
 
 ```bash
-# ① 恢复 user key（备份的 keys.txt → 新机器同路径，chmod 400）:
+# ① restore the user key (the backed-up keys.txt → the same path on the new machine, chmod 400):
 mkdir -p ~/.config/sops/age && cp <backup>/keys.txt ~/.config/sops/age/
 chmod 400 ~/.config/sops/age/keys.txt
 
-just init <username>                 # ② 基线（检测到 key 已存在则跳过生成）
-just secrets-verify                  # ③ 既有 blob 直接收件人一致
-just secret-get nix                  # 验证: user 域可解
+just init <username>                 # ② baseline (key generation is skipped if the key already exists)
+just secrets-verify                  # ③ existing blobs' recipients already consistent
+just secret-get nix                  # verify: the user domain decrypts
 ```
 
 **Note**: `secrets-init` is idempotent — an existing key file is not overwritten (a
@@ -125,13 +125,13 @@ the machine's **existing** public key (read by `age-keygen -y`).
 **Goal**: scheduled rotation / precautionary rotation on suspected exposure.
 
 ```bash
-age-keygen -o /tmp/new-user.age 2>/dev/null             # ① 新 keypair（仓外）
+age-keygen -o /tmp/new-user.age 2>/dev/null             # ① new keypair (outside the repository)
 just key-rotate-user $(age-keygen -y /tmp/new-user.age)
-# ② 脚本打印三步引导:
-#    1/3 替换 .sops.yaml 中 user_* 公钥（示例给出精确行）
-#    2/3 just secrets-sync        # 全量重加密到新收件人
-#    3/3 提交。旧密文在 git 历史中仍可被旧 key 解——接受该暴露或重写历史
-# ③ 新 key 落位本机（替换 ~/.config/sops/age/keys.txt，旧文件备份后销毁）
+# ② the script prints a three-step guide:
+#    1/3 replace the user_* public key in .sops.yaml (the sample gives the exact line)
+#    2/3 just secrets-sync        # full re-encryption to the new recipients
+#    3/3 commit. Old ciphertext in git history remains decryptable by the old key — accept that exposure or rewrite history
+# ③ land the new key on this machine (replace ~/.config/sops/age/keys.txt; back up then destroy the old file)
 ```
 
 **Landing**: `USER_ONLY`/`USER+HOST` unchanged (the key changes, the layer does not).
@@ -143,14 +143,14 @@ machines.
 **Goal**: server migration, suspected host exposure, decommissioning.
 
 ```bash
-# 轮换（先加后撤，无裸窗口）:
+# rotation (add first, then remove — no bare window):
 just key-new-host <new-alias>
 just key-rotate-host $(just key-show-host <new-alias>)
-#    五步引导: 0/4 选旧别名 → key-add-host → secrets-sync → key-remove <old> → secrets-sync
+#    five-step guide: 0/4 pick the old alias → key-add-host → secrets-sync → key-remove <old> → secrets-sync
 
-# 撤销（退役某台 host）:
-just key-remove <alias>     # 接受短名（lab → host_lab）或全名
-just secrets-sync           # 失效 key 从此解不开新密文
+# revocation (retire a host):
+just key-remove <alias>     # accepts a short name (lab → host_lab) or the full name
+just secrets-sync           # the revoked key can never decrypt new ciphertext from here on
 ```
 
 **Verification**: `just secrets-status` (the keys section no longer lists the
@@ -165,32 +165,32 @@ alias) + `secrets-verify`.
    blast radii ([mechanisms §5 security layer](../architecture/mechanisms.md#5-security-layer--sops--age-layered-management)) —
    which domain was compromised decides the action surface.
 3. **Data-layer rotation**: a configuration-layer rotation does not replace the
-   data layer — run `ALTER USER … PASSWORD` once more on the database side.
+   data layer — run `ALTER USER ... PASSWORD` once more on the database side.
 4. **git history**: old ciphertext remains decryptable in history — accept the
    exposure or rewrite history (the trade-offs of rotation.md §compromise).
 
 ### Scenario 8 — Adding a new secret (one command, all three layers written at once)
 
 ```bash
-# R27 起注册表是数据文件（secrets/registry.toml），CRUD 动词一次写全三层：
-#   ① registry.toml 行（别名 → dotted key → 提示语 → 变换）
-#   ② 模板 YAML: docs/tmpl/sops/nixos/core/srv/db/newdb/users/__USERNAME__/password.yaml
-#      （叶子键 = 路径末段；占位符 __SECRET_VALUE__ / __USERNAME__）
-#   ③ shared.nix + docs/tmpl/shared.nix.tmpl 的声明行（结构化插入，保持往返等价）
+# Since R27 the registry is a data file (secrets/registry.toml); the CRUD verbs write all three layers at once:
+#   ① the registry.toml row (alias → dotted key → prompt → transform)
+#   ② template YAML: docs/tmpl/sops/nixos/core/srv/db/newdb/users/__USERNAME__/password.yaml
+#      (leaf key = the last path segment; placeholders __SECRET_VALUE__ / __USERNAME__)
+#   ③ the declaration row in shared.nix + docs/tmpl/shared.nix.tmpl (structured insertion, round-trip equivalence preserved)
 just secrets-add newdb nixos/core/srv/db/newdb/users/${username}/password "NewDB password"
 just secret-set newdb && just secrets-verify
-# 拒绝面：路径无 .sops.yaml 规则覆盖（明文风险类）、别名/键已存在、
-#        ${username} 作段内缀（无法静态命名——手工声明，见 redis 行）
+# Rejection face: the path is not covered by any .sops.yaml rule (the plaintext-risk class), alias/key already exists,
+#        ${username} as an infix segment (no static naming possible — declare by hand, see the redis row)
 ```
 
 ### Scenario 9 — Destruction / decommissioning
 
 ```bash
-just secret-remove <alias>     # 单个密文（shared.nix 声明另行移除——配置层真值）
-just secrets-plan-destroy      # 全部明文参考实例
+just secret-remove <alias>     # a single ciphertext (the shared.nix declaration is removed separately — the configuration layer is the truth)
+just secrets-plan-destroy      # all plaintext reference instances
 just rules-destroy             # .sops.yaml
-just key-destroy               # 本机 user key 文件（不可逆！blob 仍在仓库）
-just secrets-destroy-all       # 以上全部（明文实例+密文+规则+key 文件）
+just key-destroy               # this machine's user key file (irreversible! the blobs stay in the repository)
+just secrets-destroy-all       # all of the above (plaintext instances + ciphertext + rules + key files)
 ```
 
 > Destroying the key file does not affect the ciphertext in the repository (they

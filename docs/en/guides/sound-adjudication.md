@@ -59,11 +59,11 @@ nixosConfigurations need to answer this axis:
 ### Probes (run inside the booted VM)
 
 ```bash
-just sound-audit          # 本卷宗的机械采集动词（只读；下述探针的封装）
-# 或手动等价：
-lspci -nn | grep -iE 'audio|multimedia'   # PCI 音频设备存在性
-cat /proc/asound/cards                    # ALSA 卡枚举（空 = 无卡）
-ls /dev/snd 2>/dev/null                   # 设备节点
+just sound-audit          # this dossier's mechanical evidence-collection verb (read-only; a wrapper around the probes below)
+# or the manual equivalent:
+lspci -nn | grep -iE 'audio|multimedia'   # PCI audio device presence
+cat /proc/asound/cards                    # ALSA card enumeration (empty = no cards)
+ls /dev/snd 2>/dev/null                   # device nodes
 ```
 
 ### Adjudication matrix
@@ -81,7 +81,7 @@ ls /dev/snd 2>/dev/null                   # 设备节点
    "The system distro is a containerized Linux environment where the WSLg
    XServer, Wayland server and Pulse Audio server are running.
    Communication socket for each of these servers are projected into the
-   user distro…" — the user distro (NixOS-WSL) consumes the projected
+   user distro..." — the user distro (NixOS-WSL) consumes the projected
    sockets.
 2. **`PULSE_SERVER` is preconfigured by WSLg**: "We preconfigure the user
    distro environment variables DISPLAY, WAYLAND_DISPLAY and PULSE_SERVER
@@ -108,8 +108,8 @@ ls /dev/snd 2>/dev/null                   # 设备节点
 ### Probes (run inside the WSL distro; must be run from a WSLg terminal session — SSH sessions do not inherit the WSLg env)
 
 ```bash
-just sound-audit                        # 机械采集（只读）
-# 或手动等价：
+just sound-audit                        # mechanical evidence collection (read-only)
+# or the manual equivalent:
 test -S /mnt/wslg/PulseServer && echo socket-present
 echo "PULSE_SERVER=${PULSE_SERVER:-<unset}"
 ```
@@ -164,13 +164,13 @@ flip — **it changes no files**.
 ## 6. Post-flip verification checklist
 
 ```bash
-# 值面探针（三个 toplevel——已知边界 #10：drv 哈希追踪源树，值面才是等价面）
-nix eval --raw .#nixosConfigurations.vm.config.services.pipewire.enable        # 期望 false
-nix eval --raw .#nixosConfigurations.nixos-wsl.config.services.pipewire.enable # 期望 false
-nix eval --raw .#nixosConfigurations.nixos.config.services.pipewire.enable     # 期望 true（不变）
+# value-plane probes (three toplevels — known boundary #10: drv hashes track the source tree; the value plane is the equivalence plane)
+nix eval --raw .#nixosConfigurations.vm.config.services.pipewire.enable        # expected false
+nix eval --raw .#nixosConfigurations.nixos-wsl.config.services.pipewire.enable # expected false
+nix eval --raw .#nixosConfigurations.nixos.config.services.pipewire.enable     # expected true (unchanged)
 
-# 门测试（两形双律在树内已被锁定；翻转后 CI 侧自动复验）
-nix build .#api.checks.planes.nixos --no-link   # 含 nixos_core_base_sound_gate
+# gate test (the dual laws for both forms are already locked in-tree; CI re-verifies automatically after the flip)
+nix build .#api.checks.planes.nixos --no-link   # includes nixos_core_base_sound_gate
 ```
 
 Once pushed, CI's deep-eval / host-toplevels / vm-tests legs re-verify

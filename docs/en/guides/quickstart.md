@@ -20,10 +20,10 @@
 **Non-NixOS Linux / macOS / WSL2** (home-manager layer only):
 
 ```bash
-# 安装 Nix（Determinate Systems 安装器，带 flakes 支持开箱即用）
+# Install Nix (the Determinate Systems installer, with flakes support out of the box)
 curl -L https://install.determinate.systems/nix | sh -s -- install
 
-# 启用 flakes（官方安装器或已有安装需要手动开启）
+# Enable flakes (the official installer and existing installs need it turned on manually)
 mkdir -p ~/.config/nix
 echo "experimental-features = nix-command flakes pipe-operators" >> ~/.config/nix/nix.conf
 ```
@@ -32,7 +32,7 @@ echo "experimental-features = nix-command flakes pipe-operators" >> ~/.config/ni
 repository; not installed globally — entered ephemerally):
 
 ```bash
-nix shell nixpkgs#just nixpkgs#git      # 或: nix-shell -p just git
+nix shell nixpkgs#just nixpkgs#git      # or: nix-shell -p just git
 ```
 
 > From here on, all commands are executed at the repository root (that is
@@ -57,18 +57,18 @@ cd /etc/nix-config
 
 ```bash
 just init <username>
-#   = shared-generate（策略真值 shared.nix）
-#   + hardware-generate（hosts/<hostname>/hardware.nix 硬件探测）
-#   + secrets-init（目录 + user age 密钥 + .sops.yaml 基线）
+#   = shared-generate (policy truth in shared.nix)
+#   + hardware-generate (hosts/<hostname>/hardware.nix hardware probing)
+#   + secrets-init (directory + user age key + .sops.yaml baseline)
 ```
 
 **Server machine** (user + host dual-key direct bootstrap — two steps
 replacing three):
 
 ```bash
-just key-new-host <alias>                # ① 生成 host keypair（仓外交付副本，chmod 400）
-just init <username> <alias> <age1…>     # ② 直达 USER+HOST（srv 域双收件人）
-# ③ 交付副本 → 目标机 /var/lib/sops-nix/key.txt（chmod 400）后 shred
+just key-new-host <alias>                # ① generate the host keypair (out-of-repo delivery copy, chmod 400)
+just init <username> <alias> <age1...>   # ② straight to USER+HOST (dual recipients in the srv domain)
+# ③ deliver the copy to the target machine's /var/lib/sops-nix/key.txt (chmod 400), then shred
 ```
 
 > Already bootstrapped as a personal machine and want to bring a host key in
@@ -78,16 +78,16 @@ just init <username> <alias> <age1…>     # ② 直达 USER+HOST（srv 域双�
 ### Phase 2 — secrets ready
 
 ```bash
-just secrets-plan-create                # 可选：生成明文模板参考（填写前对照）
+just secrets-plan-create                # optional: generate the plaintext template reference (consult it before filling in)
 
 nix shell nixpkgs#mkpasswd --command just secret-set-all
-# 交互式逐项录入（输入即加密，明文不落盘）；或按需单独：
-#   just secret-set userpwd             # 用户系统密码（mkpasswd sha-512）
+# interactive entry, one item at a time (encrypted as typed, plaintext never hits disk); or individually as needed:
+#   just secret-set userpwd             # user system password (mkpasswd sha-512)
 #   just secret-set nix                 # GitHub access token
 #   just secret-set mongodb             # ...
 
-just secrets-verify                     # 收件人一致性审计（期望全绿，红则按提示修）
-just secrets-status                     # 三层状态总览（key / rule / blob + 本机 identity）
+just secrets-verify                     # recipient-consistency audit (expect all green; if red, fix per the hints)
+just secrets-status                     # three-layer status overview (key / rule / blob + this machine's identity)
 ```
 
 > **Personal machine that also runs srv services** (dev-on-demand db
@@ -101,13 +101,13 @@ just secrets-status                     # 三层状态总览（key / rule / blob
 ### Phase 3 — First deployment
 
 ```bash
-just hosts-list                  # 确认主机键（hosts/ 目录数据驱动）
+just hosts-list                  # confirm the host key (data-driven from the hosts/ directory)
 ```
 
 **A. Brand-new NixOS machine (installed from LiveISO)**:
 
 ```bash
-# 分区 + 挂载后（/ 与 /boot），在目标环境生成硬件配置并安装：
+# after partitioning + mounting (/ and /boot), generate the hardware config in the target environment and install:
 sudo nixos-install --flake /etc/nix-config#<host>
 ```
 
@@ -120,52 +120,52 @@ just nixos-switch <host>         # = sudo nixos-rebuild switch --flake .#<host>
 **C. Non-NixOS platforms (home-manager layer only)**:
 
 ```bash
-just home-switch <host>          # → <username>@<host>（如 just home-switch wsl）
+just home-switch <host>          # → <username>@<host> (e.g. just home-switch wsl)
 # macOS: darwin-rebuild switch --flake .#<host>
 ```
 
 ### Phase 4 — Verification and rollback
 
 ```bash
-just secrets-status              # secrets 三层健康
-nixos-rebuild list-generations   # 世代清单（每次 switch 一代）
-sudo nixos-rebuild rollback      # 一键回上一代
-just nixos-test <host>           # 试验性切换（不写 boot 条目，重启即弃）
-just nixos-boot <host>           # 只设下一代引导不激活（T10.2——远程/回滚风味更安全的部署面）
+just secrets-status              # secrets three-layer health
+nixos-rebuild list-generations   # generation list (one generation per switch)
+sudo nixos-rebuild rollback      # single command back to the previous generation
+just nixos-test <host>           # experimental switch (no boot entry written; discarded on reboot)
+just nixos-boot <host>           # set only the next generation's boot, without activating (T10.2 — a safer deployment face for remote/rollback flavors)
 ```
 
 ### Phase 5 — day-2 quick reference (after going live)
 
 ```bash
-# 例行更新（sops-nix 锁版本，防意外破坏解密链）
+# routine update (sops-nix stays pinned, guarding the decryption chain against accidental breakage)
 just flake-update-not-sops && just nixos-switch <host>
 
-# secrets 生命周期（地图: just secrets-guide / 文档: docs/secrets/rotation.md）
-just secrets-verify              # CI 同款审计
-just key-rotate-user <age1…>     # user key 轮换（三步引导）
-just key-rotate-host <age1…>     # host key 轮换（加新→重加密→撤旧）
+# secrets lifecycle (map: just secrets-guide / docs: docs/secrets/rotation.md)
+just secrets-verify              # the same audit CI runs
+just key-rotate-user <age1...>   # user key rotation (three-step guided)
+just key-rotate-host <age1...>   # host key rotation (add new → re-encrypt → revoke old)
 
-# 新机器接入 = mkdir hosts/<name> + 两个文件（零 flake 改动）
-# 新 secret 声明 = 三层（shared.nix.tmpl / 模板 YAML / 4 行 recipe，见扩展指南）
+# onboarding a new machine = mkdir hosts/<name> + two files (zero flake changes)
+# declaring a new secret = three layers (shared.nix.tmpl / template YAML / 4-line recipe; see the extending guide)
 ```
 
 ### Development environments
 
 ```bash
-# 一次性进入（不保存 profile）
+# one-off entry (no profile saved)
 nix develop .#rust
 nix develop .#python
 nix develop .#python-machine
 
-# 持久化 profile（离线可用，下次快速进入）
+# persistent profile (available offline; quick re-entry next time)
 just devenv-create rust
 just devenv-create-from python machine
 
-# 进入已有 profile
+# enter an existing profile
 just devenv-use rust
 just devenv-use-from python machine
 
-# 通过 direnv 自动激活（推荐工作流）
+# automatic activation via direnv (recommended workflow)
 echo "use flake github:Redskaber/nix-config#python-machine" > .envrc
 direnv allow
 ```

@@ -10,13 +10,13 @@
 ### Adding an application
 
 ```bash
-# GUI 应用
+# GUI application
 vim home/core/exp/app/<class>/<name>.nix
-# 在 home/core/exp/app/<class>/default.nix 的 imports 中添加引用
+# add the reference to the imports of home/core/exp/app/<class>/default.nix
 
-# CLI 工具
+# CLI tool
 vim home/core/exp/sys/<class>/<name>.nix
-# 在 home/core/exp/sys/<class>/default.nix 的 imports 中添加引用
+# add the reference to the imports of home/core/exp/sys/<class>/default.nix
 ```
 
 > The imports of `home/core/exp/app/<class>/default.nix` are routed by the
@@ -27,8 +27,8 @@ vim home/core/exp/sys/<class>/<name>.nix
 
 ```bash
 mkdir home/env/dev/<lang>
-# 参考 home/env/dev/python/ 的结构实现 default.nix
-# pdshell 会自动发现并注册到 devShells.<arch>.<lang>
+# implement default.nix following the structure of home/env/dev/python/
+# pdshell discovers it automatically and registers it into devShells.<arch>.<lang>
 ```
 
 ### Adding a new secret (three steps, zero changes to core logic)
@@ -74,8 +74,8 @@ secrets-list` (the alias appears in the table automatically).
 ### Modifying platform policies
 
 ```bash
-vim docs/tmpl/shared.nix.tmpl  # 修改 platform / drive / window-manager 等
-just shared-generate <username>  # 重新生成 shared.nix
+vim docs/tmpl/shared.nix.tmpl  # edit platform / drive / window-manager etc.
+just shared-generate <username>  # regenerate shared.nix
 ```
 
 ### Changing the username
@@ -84,34 +84,34 @@ A username change invalidates all secret paths (the paths contain the
 username), so the full procedure is required:
 
 ```bash
-# 1. 重新生成 shared.nix
+# 1. Regenerate shared.nix
 just shared-generate newname
 
-# 2. 销毁旧 secret（旧路径已失效）⚠️ 不可逆，确保已备份
+# 2. Destroy the old secrets (the old paths are dead) ⚠️ irreversible, ensure you have backups
 just secrets-destroy-all
 
-# 3. 重新初始化 sops 基础设施
+# 3. Re-initialize the sops infrastructure
 just secrets-init
 
-# 4. 重新加密所有 secret（需重新输入）
+# 4. Re-encrypt all secrets (re-entry required)
 just secret-set-all
 
-# 5. 可选：重新生成明文模板参考
+# 5. Optional: regenerate the plaintext template reference
 just secrets-plan-create
 ```
 
 > If you prefer to reuse the old age key (skipping key destruction):
 >
 > ```bash
-> just secrets-plan-destroy && just rules-destroy   # 保留密文与 key
-> just rules-init        # 用现有密钥重建 .sops.yaml
-> just secrets-verify    # 既有 blob 直接收件人一致（无需重录）
+> just secrets-plan-destroy && just rules-destroy   # keep the ciphertext and the key
+> just rules-init        # rebuild .sops.yaml with the existing key
+> just secrets-verify    # existing blobs pass recipient consistency as-is (no re-entry needed)
 > ```
 
 ### Adding a new AI CLI tool
 
 ```bash
-# 1. 创建工具模块
+# 1. Create the tool module
 cat > home/core/exp/sys/ai/<tool-name>.nix << 'EOF'
 { inputs, shared, lib, config, pkgs, ... }:
 {
@@ -119,8 +119,8 @@ cat > home/core/exp/sys/ai/<tool-name>.nix << 'EOF'
 }
 EOF
 
-# 2. 在 home/core/exp/sys/ai/default.nix 的 imports 中添加引用
-# 工具即刻在所有平台可用，无需额外配置
+# 2. Add the reference to the imports of home/core/exp/sys/ai/default.nix
+# the tool is available on all platforms immediately, no extra configuration needed
 ```
 
 ---

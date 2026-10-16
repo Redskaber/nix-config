@@ -58,7 +58,7 @@ Two equivalent machine-persistent forms; both land in the machine's nix.conf —
 **Form 1: one command via the cachix CLI** (recommended for permanent machines)
 
 ```bash
-# CLI 从锁定 nixpkgs 取（与 CI 同源同纪律，本机无需安装）
+# the CLI comes from the pinned nixpkgs (same source, same discipline as CI; nothing to install on this machine)
 nix run nixpkgs#cachix -- use redskaber-nix-config
 ```
 
@@ -71,7 +71,7 @@ snippet) / `root-nixconf` (writes /etc/nix/nix.conf) / `user-nixconf` (writes
 sandboxes — the same one the CI legs use)
 
 ```conf
-# ~/.config/nix/nix.conf（或 /etc/nix/nix.conf，按安装形态）
+# ~/.config/nix/nix.conf (or /etc/nix/nix.conf, depending on the install form)
 substituters = https://redskaber-nix-config.cachix.org https://cache.nixos.org
 trusted-public-keys = redskaber-nix-config.cachix.org-1:ziIAJzLVe11AexFTrAY3IZVTZQOWUa5vmFB3eeaW8zw= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
 ```
@@ -104,7 +104,7 @@ it permanent (upgrading to Form 1/2).
 
 ```bash
 nix store ping --store https://redskaber-nix-config.cachix.org
-# 缓存为空时 narinfo 404 是无害空操作，nix 自然回退 cache.nixos.org
+# when the cache is empty, narinfo 404s are harmless no-ops; nix falls back to cache.nixos.org naturally
 ```
 
 Pulling **requires no** auth token — a public cache with zero authentication.
@@ -141,10 +141,10 @@ root problem as trusted-users on the NixOS host side.
 secrets system; no manually set environment needed):
 
 ```bash
-just cachix-status                 # 推送前看一眼：可达性 / 受信 / 两半场状态
-just cachix-token                  # 一次性：注册 cachix-token 秘密 + 引导录入值
-just cachix-push /nix/store/…-nixos-system-…
-# 或构建即推：
+just cachix-status                 # a pre-push glance: reachability / trust / the state of both halves
+just cachix-token                  # one-time: register the cachix-token secret + guided value entry
+just cachix-push /nix/store/...-nixos-system-...
+# or build-and-push in one go:
 nix build .#checks.x86_64-linux.module-reachability-check --no-link && \
   just cachix-push $(nix build --print-out-paths .#checks.x86_64-linux.module-reachability-check)
 ```
@@ -159,17 +159,17 @@ each path pushed with its **complete closure**.
 semantics, or when working outside this repo):
 
 ```bash
-# token 一次性落地（cachix.org → cache 设置页创建，写入本机）
+# land the token once (created on cachix.org → the cache settings page, written to this machine)
 nix run nixpkgs#cachix -- authtoken <CACHIX_AUTH_TOKEN>
-# 落 ~/.config/cachix/cachix.dhall；或每次经 CACHIX_AUTH_TOKEN 环境变量传入
+# lands in ~/.config/cachix/cachix.dhall; or pass it each time via the CACHIX_AUTH_TOKEN environment variable
 
-# 显式路径推送
+# explicit-path push
 nix run nixpkgs#cachix -- push redskaber-nix-config \
-  /nix/store/…-nixos-system-…
+  /nix/store/...-nixos-system-...
 
-# stdin 管道（CLI 的经典形态——无 PATHS 参数且 stdin 非 TTY
-# 时从 stdin 读换行分隔的路径）
-nix-store -qR /nix/store/…-nixos-system-… \
+# stdin pipe (the CLI's classic shape — with no PATHS argument and stdin not
+# a TTY, it reads newline-separated paths from stdin)
+nix-store -qR /nix/store/...-nixos-system-... \
   | nix run nixpkgs#cachix -- push redskaber-nix-config
 ```
 

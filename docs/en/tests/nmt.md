@@ -101,19 +101,19 @@ Home Manager's test infrastructure lives under the `tests/` directory:
 
 ```
 tests/
-├── default.nix          # 测试入口，定义擦洗逻辑、模块集合和测试发现
-├── modules/             # 模块测试用例（按类别组织）
-│   ├── programs/        # 可自动发现
-│   └── services/        # 可自动发现
-├── integration/         # 集成测试（NixOS/standalone）
+├── default.nix          # test entry: defines the scrubbing logic, the module set, and test discovery
+├── modules/             # module test cases (organized by category)
+│   ├── programs/        # auto-discovered
+│   └── services/        # auto-discovered
+├── integration/         # integration tests (NixOS/standalone)
 │   ├── default.nix
-│   ├── nixos/           # 基于 NixOS 的集成测试
-│   └── standalone/      # 独立集成测试
-├── lib/                 # 测试辅助库
-├── asserts.nix          # 自定义断言（警告与断言校验）
-├── big-test.nix         # 大型测试标记
-├── stubs.nix            # 包桩定义
-└── tests.py             # 测试运行辅助脚本
+│   ├── nixos/           # NixOS-based integration tests
+│   └── standalone/      # standalone integration tests
+├── lib/                 # test helper library
+├── asserts.nix          # custom assertions (warnings and assertion checks)
+├── big-test.nix         # big-test marker
+├── stubs.nix            # package stub definitions
+└── tests.py             # test-runner helper script
 ```
 
 ### 3.3 Key structure of `tests/default.nix`
@@ -147,7 +147,7 @@ set of `nmt.script` assertions. Taking ledger as the example:
 { config, lib, pkgs, ... }:
 
 {
-  # 模块配置部分
+  # the module configuration part
   programs.ledger = {
     enable = true;
     settings = {
@@ -156,7 +156,7 @@ set of `nmt.script` assertions. Taking ledger as the example:
     };
   };
 
-  # 测试断言部分
+  # the test-assertion part
   nmt.script = ''
     assertFileExists home-files/.config/ledger/ledgerrc
     assertFileContent home-files/.config/ledger/ledgerrc \
@@ -203,7 +203,7 @@ defined inline or imported from an external file:
 
 ```nix
 nmt.script = ''
-  # 内联期望内容
+  # expected content inline
   assertFileContent home-files/result.txt ${
     pkgs.writeText "expected.txt" ''
       This is the expected content
@@ -211,7 +211,7 @@ nmt.script = ''
     ''
   }
 
-  # 从文件导入期望内容
+  # expected content imported from a file
   assertFileContent home-files/result.txt ${./expected-result.txt}
 '';
 ```
@@ -229,10 +229,10 @@ NMT provides a two-layer stubbing mechanism:
    `test.stubs` and `test.unstubs`.
 
 ```nix
-# 声明式桩：简单替换
+# declarative stub: a simple replacement
 test.stubs.my-package = { name = "my-package"; };
 
-# 编程式桩：使用 overlay 进行更复杂的替换
+# programmatic stub: use an overlay for more complex replacements
 test.stubOverlays = [
   (self: super: {
     my-package = pkgs.writeScriptBin "my-package" ''
@@ -429,7 +429,7 @@ authority.
 ```nix
 # flake.nix
 nmt.url = "github:Redskaber/nmt";
-nmt.flake = false;   # 原始 store path，无 flake 产物
+nmt.flake = false;   # raw store path, no flake outputs
 ```
 
 The upstream `git.sr.ht:~rycee/nmt` returns HTTP 403 to Nix fetchers (bot

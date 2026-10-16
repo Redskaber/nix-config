@@ -24,15 +24,15 @@
 
 ```
 tests/
-├── default.nix              ← 统一注册表: Plane 0–5 全部 checks
-├── test_calc.nix            ← Smoke 基线
+├── default.nix              ← unified registry: every check of Plane 0–5
+├── test_calc.nix            ← the Smoke baseline
 ├── nixos/                   ← NixOS-Plane (QEMU VM)
 ├── home/                    ← HM-Plane   (QEMU VM + packages)
 ├── lib/                     ← Lib-Plane  (pure Nix eval, minimal QEMU)
 ├── integration/             ← Integration-Plane (NixOS + HM)
 └── nmt/
     ├── default.nix          ← Plane 5 runner (buildHomeManagerTest impl)
-    └── home/…               ← 测试文件 (lib.nmt.buildHomeManagerTest)
+    └── home/...             ← test files (lib.nmt.buildHomeManagerTest)
 ```
 
 ### The nmt Acquisition Mechanism and Call Chain
@@ -40,7 +40,7 @@ tests/
 ```
 flake.nix
   nmt.url   = "github:Redskaber/nmt"   ← sourcehut mirror (flake = false)
-  nmt.flake = false                     ← 无 flake.nix，原始 store path
+  nmt.flake = false                     ← no flake.nix, the raw store path
 
 tests/nmt/default.nix
   nmtSrc  = inputs.nmt                  ← store path
@@ -54,7 +54,7 @@ tests/nmt/default.nix
         pkgs           = scrubbedPkgs;   ← derivations → "@pkg-name@"
         modules        = hmModules ++ [baseModule] ++ testSpec.modules;
         testedAttrPath = ["home" "activationPackage"];
-        tests          = { <name> = { nmt.script = …; }; };
+        tests          = { <name> = { nmt.script = ...; }; };
       }
     → result.build.<name>               ← derivation for flake check
 ```
@@ -64,7 +64,7 @@ tests/nmt/default.nix
 | Approach                                 | Result                                        |
 | ---------------------------------------- | --------------------------------------------- |
 | `sourcehut:~rycee/nmt` flake input       | ❌ HTTP 403 — go-away bot-protection           |
-| `fetchTarball "https://git.sr.ht/…"`     | ❌ HTTP 403 — the same blocking policy         |
+| `fetchTarball "https://git.sr.ht/..."`   | ❌ HTTP 403 — the same blocking policy         |
 | `inputs.home-manager.lib.hm.nmt`         | ❌ release-25.11 does not export this attribute |
 | `github:Redskaber/nmt` + `flake=false`   | ✅ GitHub reachable, store path referenced directly |
 
@@ -99,15 +99,15 @@ Every HM tool that owns a dotfile gets two-layer coverage:
 
 ```
 home/core/exp/sys/base/fd.nix
-  ├─ nmt_home_core_exp_sys_base_fd     dotfile 内容 (纯 eval, <10s)
-  │    .config/fd/ignore: .git/ / *.bak 条目
-  └─ home_core_exp_sys_base_fd         运行时行为 (QEMU VM, ~2min)
+  ├─ nmt_home_core_exp_sys_base_fd     dotfile content (pure eval, <10s)
+  │    .config/fd/ignore: .git/ / *.bak entries
+  └─ home_core_exp_sys_base_fd         runtime behavior (QEMU VM, ~2min)
        fd --version, fd finds files by pattern
 
 home/core/exp/sys/base/git.nix
-  ├─ nmt_home_core_base_git            dotfile 内容 (纯 eval, <10s)
+  ├─ nmt_home_core_base_git            dotfile content (pure eval, <10s)
   │    .config/git/config: [user] name/email/branch/[delta]
-  └─ home_core_exp_sys_base_git        运行时行为 (QEMU VM, ~2min)
+  └─ home_core_exp_sys_base_git        runtime behavior (QEMU VM, ~2min)
        git --version, git init + commit + log
 ```
 
@@ -179,12 +179,12 @@ home/core/exp/sys/base/git.nix
 | ------------------------------------ | --------------------------------- |
 | `lib_shared_shared_{enum,fn,schema}` | enum semantics / fn logic / schema merge |
 | `lib_shared_targets` | source-of-truth census (T19.1): hosts/ × classifier caps — a bare-metal NixOS host carries exactly one source of truth, host-held forms carry zero sources, and a double source is an immediate red (the failure mode of migrating itself is exactly Law A) |
-| `lib_shared_deploy` | deployment-plane census (T21.1): the T20.1 simulation upgraded into a pinned test — Law D: no lying deployment facts 〔no deploy.nix on non-nixosHosts〕+ launch coverage precise in both directions 〔colmenaHive nodes == the classifier's nixosHosts, zero hardcoded member tables〕+ the user gate alive 〔targetUser = the policy user, ssh forbids root and forbids password — empty or root is a death gate〕; an attrNames-only lazy chain 〔never evaluates a single whole tree, drvPath equivalence is left to the CI gate〕 |
-| `lib_shared_overlays` | overlay locality census (T24.2, pinned by the run 38171937689 re-run adjudication): the canary substituted-instance method — patches are applied to marked stub instances, and every patched member 〔cutter_patched/openldap/xdg-desktop-portal〕 must carry the canary mark 〔meta.description survives through overrideAttrs〕; taking a package from any external handle loses the mark and goes red — the overlay contract: patch exactly the one you changed, `prev`/`final` are the fixpoint of the very instance being applied |
-| `lib_shared_lang_version` | nix-types version contract (T25.2, the downstream assertion landed): rev answers where 〔the flake.nix 40-hex pin point〕, version answers what 〔this test's expected〕 — `inputs.nix-types.lib.version == "3.6.0"`, a bump = a deliberate two-file decision, one-sided drift is a single-line red (the diagnostic reports all three parties — lock rev / expected / observed — plus two-file reconciliation guidance; verified by mutation checks) |
-| `lib_shared_orc` | orc wallust copy-emitter consumption contract (T28): a single `homeManagerConfiguration` evaluated through the production modules, covering all seven stations (the mechanisms.md §6 inventory) — dag entry exists + writeBoundary post-order + the full `run cp --remove-destination <tree>/<rel> "$HOME/<dest>/<rel>"` line 〔source-tree carries-the-file + destination key + flags, three in one — an upstream file move / include rot / a destPrefix typo, any one of these goes red〕 + the `run chmod u+w` writable bit; the first run caught the swaync station's empty activation (the swaync-config tree has no placeholder — the dead-silent failure mode of a zero-match include), fixed with a module-side synthetic entry + the companion-repo patch archived in docs/feedback/; the eval-time adjudication uses plain substring search (lib.hasInfix internally forbids builtins.match patterns containing store paths — a language-level restriction worked around) |
-| `lib_shared_orc_guard` | orc include-intent guard consumption contract (T30, No. 100): the third-generation tool-library loop closed out — the orc pinned by the lock must carry the T29 guard 〔05c658f〕. The real `shared.orc` 〔the production handle〕 × the real swaync-config tree, four assertions: a non-empty include with zero matches must explode at eval time 〔`tryEval success = false` — fleet-scale proof of death for the T28 silent class〕 + zero tax on the normal path 〔the copy strategy yields an activation + empty homeFiles〕 + the `allowEmpty = true` escape gate 〔explicit waiver yields empty without exploding〕 + `include = []` fully accepted 〔census is not a filter〕. Same shape as the No. 97 version contract: the lock answers WHERE, the test answers WHAT, one-sided drift is a single-line red |
-| `lib_shared_pdshell` | pdshell loader consumption contract (T31, No. 101 — the four-library family closed out): the real `shared.pdshells` 〔the production handle〕 × the same arguments flake.nix passes, five groups of assertions: **census** 〔the exact 25-member set — membership, not the docs-ssot count; the only tripwire against `_`-prefix silent exclusion and upstream naming-rule drift〕 + **face** 〔`dev-shell-<member>` name injection〕 + **combinFrom** 〔the root default's own buildInputs is empty; all 117 merged inputs must arrive via the contributions of the fourteen language defaults — four probes, one language each〕 + **lifecycle** 〔section markers + inherited-before-own + FINAL SHELL OVERRIDE exporting the identity-axis shell〕 + **NamedFile isolation** 〔renpy ships its own engine, leaking no sibling or cross-scope inputs〕; double red on mutation (silent rename / `_` prefix); T31r ground truth re-recorded after the sandbox reset |
+| `lib_shared_deploy` | deployment-plane census (T21.1): the T20.1 simulation upgraded into a pinned test — Law D: no lying deployment facts (no deploy.nix on non-nixosHosts)+ launch coverage precise in both directions (colmenaHive nodes == the classifier's nixosHosts, zero hardcoded member tables)+ the user gate alive (targetUser = the policy user, ssh forbids root and forbids password — empty or root is a death gate); an attrNames-only lazy chain (never evaluates a single whole tree, drvPath equivalence is left to the CI gate) |
+| `lib_shared_overlays` | overlay locality census (T24.2, pinned by the run 38171937689 re-run adjudication): the canary substituted-instance method — patches are applied to marked stub instances, and every patched member (cutter_patched/openldap/xdg-desktop-portal) must carry the canary mark (meta.description survives through overrideAttrs); taking a package from any external handle loses the mark and goes red — the overlay contract: patch exactly the one you changed, `prev`/`final` are the fixpoint of the very instance being applied |
+| `lib_shared_lang_version` | nix-types version contract (T25.2, the downstream assertion landed): rev answers where (the flake.nix 40-hex pin point), version answers what (this test's expected) — `inputs.nix-types.lib.version == "3.6.0"`, a bump = a deliberate two-file decision, one-sided drift is a single-line red (the diagnostic reports all three parties — lock rev / expected / observed — plus two-file reconciliation guidance; verified by mutation checks) |
+| `lib_shared_orc` | orc wallust copy-emitter consumption contract (T28): a single `homeManagerConfiguration` evaluated through the production modules, covering all seven stations (the mechanisms.md §6 inventory) — dag entry exists + writeBoundary post-order + the full `run cp --remove-destination <tree>/<rel> "$HOME/<dest>/<rel>"` line (source-tree carries-the-file + destination key + flags, three in one — an upstream file move / include rot / a destPrefix typo, any one of these goes red) + the `run chmod u+w` writable bit; the first run caught the swaync station's empty activation (the swaync-config tree has no placeholder — the dead-silent failure mode of a zero-match include), fixed with a module-side synthetic entry + the companion-repo patch archived in docs/feedback/; the eval-time adjudication uses plain substring search (lib.hasInfix internally forbids builtins.match patterns containing store paths — a language-level restriction worked around) |
+| `lib_shared_orc_guard` | orc include-intent guard consumption contract (T30, No. 100): the third-generation tool-library loop closed out — the orc pinned by the lock must carry the T29 guard (05c658f). The real `shared.orc` (the production handle) × the real swaync-config tree, four assertions: a non-empty include with zero matches must explode at eval time (`tryEval success = false` — fleet-scale proof of death for the T28 silent class) + zero tax on the normal path (the copy strategy yields an activation + empty homeFiles) + the `allowEmpty = true` escape gate (explicit waiver yields empty without exploding) + `include = []` fully accepted (census is not a filter). Same shape as the No. 97 version contract: the lock answers WHERE, the test answers WHAT, one-sided drift is a single-line red |
+| `lib_shared_pdshell` | pdshell loader consumption contract (T31, No. 101 — the four-library family closed out): the real `shared.pdshells` (the production handle) × the same arguments flake.nix passes, five groups of assertions: **census** (the exact 25-member set — membership, not the docs-ssot count; the only tripwire against `_`-prefix silent exclusion and upstream naming-rule drift) + **face** (`dev-shell-<member>` name injection) + **combinFrom** (the root default's own buildInputs is empty; all 117 merged inputs must arrive via the contributions of the fourteen language defaults — four probes, one language each) + **lifecycle** (section markers + inherited-before-own + FINAL SHELL OVERRIDE exporting the identity-axis shell) + **NamedFile isolation** (renpy ships its own engine, leaking no sibling or cross-scope inputs); double red on mutation (silent rename / `_` prefix); T31r ground truth re-recorded after the sandbox reset |
 
 ### 3.4 Integration-Plane (1 test)
 
@@ -213,7 +213,7 @@ home/core/exp/sys/base/git.nix
 | `nmt_home_core_srv_security_gnupg`  | `nmt/home/core/srv/security/gnupg.nix`  | .gnupg/gpg.conf: use-agent                   | exists+contains       |
 | `nmt_home_core_srv_notify_mako`     | `nmt/home/core/srv/notify/mako.nix`     | .config/mako/config: font/colors             | exists+contains       |
 
-> Total: exp/sys/base(11) + shell(2) + app/editor(1) + srv/security(1) + srv/notify(1) = **16** (the pre-T27.2 table's 7 rows carried stale check names/paths 〔`nmt_home_core_base_*`〕 — this round aligned them with the registry's real names; docs-ssot anchors only the count and let the name/path drift pass)
+> Total: exp/sys/base(11) + shell(2) + app/editor(1) + srv/security(1) + srv/notify(1) = **16** (the pre-T27.2 table's 7 rows carried stale check names/paths (`nmt_home_core_base_*`) — this round aligned them with the registry's real names; docs-ssot anchors only the count and let the name/path drift pass)
 
 ---
 
@@ -223,7 +223,7 @@ home/core/exp/sys/base/git.nix
 tests/
 ├── default.nix
 ├── test_calc.nix
-├── nixos/core/{base,drive,sec,srv}/…
+├── nixos/core/{base,drive,sec,srv}/...
 ├── home/
 │   ├── core/
 │   │   ├── base/{fonts,i18n,i18n-source}.nix
@@ -265,35 +265,35 @@ tests/
 ## 5. Running Guide
 
 ```bash
-# 全部（本地需要 KVM）
+# everything (KVM required locally)
 nix flake check
 
-# nmt only — 最快，无 QEMU，无 KVM
+# nmt only — the fastest, no QEMU, no KVM
 nix eval .#checks.x86_64-linux --apply \
   'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
   --json \
   | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]" \
   | xargs -I{} nix build ".#checks.x86_64-linux.{}" -L --no-link
 
-# 单个 nmt 测试
+# a single nmt test
 nix build .#checks.x86_64-linux.nmt_home_core_base_git -L
 nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_fd -L
 nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_fzf -L
 nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_yazi -L
 nix build .#checks.x86_64-linux.nmt_home_core_exp_app_editor_nvim -L
 
-# NixOS plane (需要 KVM)
+# NixOS plane (KVM required)
 nix build .#checks.x86_64-linux.nixos_core_srv_db_postgresql -L
 nix build .#checks.x86_64-linux.nixos_core_base_user -L
 
-# HM plane 单个
+# HM plane, a single one
 nix build .#checks.x86_64-linux.home_core_exp_sys_base_fd -L
 nix build .#checks.x86_64-linux.home_env_dev_rust -L
 
 # Integration
 nix build .#checks.x86_64-linux.integration_hm_activation -L
 
-# 按平面过滤
+# filter by plane
 SYS=x86_64-linux
 for PREFIX in nixos_ home_ lib_ integration_ test_; do
   nix eval ".#checks.${SYS}" \
@@ -357,15 +357,15 @@ regex = "smart.case";
 ### test File Format
 
 ```nix
-# tests/nmt/home/**/*.nix — 固定接口，无需改动
+# tests/nmt/home/**/*.nix — the fixed interface, no changes needed
 { lib, ... }:
 lib.nmt.buildHomeManagerTest {
-  description = "tool: …";
-  modules = [{ home.username = "testuser"; … }];
+  description = "tool: ...";
+  modules = [{ home.username = "testuser"; ... }];
   tests = {
-    "tool: file exists"   = { path = ".config/…"; exists   = true; };
-    "tool: value written" = { path = ".config/…"; contains = [ "…" ]; };
-    "tool: regex match"   = { path = ".config/…"; regex    = "pattern"; };
+    "tool: file exists"   = { path = ".config/..."; exists   = true; };
+    "tool: value written" = { path = ".config/..."; contains = [ "..." ]; };
+    "tool: regex match"   = { path = ".config/..."; regex    = "pattern"; };
   };
 }
 ```
@@ -377,11 +377,11 @@ lib.nmt.buildHomeManagerTest {
 ### Adding a New nmt-Plane Test (checklist)
 
 ```nix
-# 1. 判断: 工具是否生成可断言的 dotfile?
+# 1. Decide: does the tool generate an assertable dotfile?
 #    - programs.foo → generates ~/.config/foo/config (plain text)? → YES
-#    - home.packages = [ foo ]? → NO, 用 Plane 2
+#    - home.packages = [ foo ]? → NO, use Plane 2
 
-# 2. 创建测试文件 (路径镜像源路径)
+# 2. create the test file (the path mirrors the source path)
 # tests/nmt/home/core/exp/sys/base/new-tool.nix
 { lib, ... }:
 lib.nmt.buildHomeManagerTest {
@@ -399,21 +399,21 @@ lib.nmt.buildHomeManagerTest {
   };
 }
 
-# 3. 注册到 tests/nmt/default.nix
+# 3. register it in tests/nmt/default.nix
 nmt_home_core_exp_sys_base_new_tool = buildTest ./home/core/exp/sys/base/new-tool.nix;
 
-# 4. tests/default.nix 无需修改 — 自动合并 (import ./nmt { ... })
+# 4. tests/default.nix needs no modification — auto-merged (import ./nmt { ... })
 
-# 5. 验证
+# 5. verify
 nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_new_tool -L
 ```
 
 ### Troubleshooting scrubbing Issues
 
 ```
-错误: "@some-pkg@/bin/some-pkg: No such file or directory"
-原因: 该包被 scrubDerivations 替换，需加入 whitelist
-修复: 在 tests/nmt/default.nix whitelist 中添加:
+Error: "@some-pkg@/bin/some-pkg: No such file or directory"
+Cause: the package was replaced by scrubDerivations, add it to the whitelist
+Fix: add to the whitelist in tests/nmt/default.nix:
       inherit (pkgs) some-pkg;
 ```
 
@@ -434,7 +434,7 @@ nix build .#checks.x86_64-linux.nmt_home_core_exp_sys_base_new_tool -L
   '';
 }
 
-# 注册到 tests/default.nix
+# register it in tests/default.nix
 nixos_core_srv_db_newdb = nixosTest ./nixos/core/srv/db/newdb.nix;
 ```
 
@@ -456,7 +456,7 @@ nixos_core_srv_db_newdb = nixosTest ./nixos/core/srv/db/newdb.nix;
   '';
 }
 
-# 注册到 tests/default.nix
+# register it in tests/default.nix
 home_core_exp_sys_base_new_tool = nixosTest ./home/core/exp/sys/base/new-tool.nix;
 ```
 
@@ -467,19 +467,19 @@ home_core_exp_sys_base_new_tool = nixosTest ./home/core/exp/sys/base/new-tool.ni
 The CI pipeline (`.github/workflows/ci.yml`) maps the test planes to independent jobs, maximizing parallelism and feedback speed:
 
 ```
-STAGE 1: lint              [always]      静态分析 + 浅层 eval（无构建）
+STAGE 1: lint              [always]      static analysis + shallow eval (no builds)
     │
-    ├─► STAGE 2: nmt-plane [parallel]   纯 Nix eval，无 KVM — 最快反馈
-    ├─► STAGE 3: devshells [parallel]   devShell dry-run 矩阵
-    ├─► STAGE 4: security  [parallel]   SOPS 完整性审计
+    ├─► STAGE 2: nmt-plane [parallel]   pure Nix eval, no KVM — fastest feedback
+    ├─► STAGE 3: devshells [parallel]   devShell dry-run matrix
+    ├─► STAGE 4: security  [parallel]   SOPS integrity audit
     │
-    └─► STAGE 5: vm-tests  [after nmt]  QEMU 测试（需 KVM），按平面并行子矩阵
+    └─► STAGE 5: vm-tests  [after nmt]  QEMU tests (KVM required), parallel sub-matrix by plane
             ├── smoke        (test_)
             ├── nixos        (nixos_)
             ├── home-lib     (home_ + lib_)
             └── integration  (integration_)
 
-STAGE 6: summary           [always]     汇总各阶段状态
+STAGE 6: summary           [always]     aggregate the stage statuses
 ```
 
 ### Plane → CI Job Mapping
@@ -497,7 +497,7 @@ STAGE 6: summary           [always]     汇总各阶段状态
 CI uses `nix eval --apply` to filter checks by prefix — **new tests are discovered by CI automatically**:
 
 ```bash
-# nmt 平面发现示例
+# nmt plane discovery example
 nix eval ".#checks.x86_64-linux" \
   --apply 'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
   --json
@@ -506,7 +506,7 @@ nix eval ".#checks.x86_64-linux" \
 ### Local Quick Pre-flight (Before Pushing)
 
 ```bash
-# 1. nmt 平面（<30s，无 QEMU）
+# 1. the nmt plane (<30s, no QEMU)
 nix eval .#checks.x86_64-linux --apply \
   'cs: builtins.attrNames (builtins.filterAttrs (n: _: builtins.substring 0 4 n == "nmt_") cs)' \
   --json | python3 -c "import sys,json; [print(c) for c in json.load(sys.stdin)]" \
@@ -515,7 +515,7 @@ nix eval .#checks.x86_64-linux --apply \
 # 2. statix lint
 nix run nixpkgs#statix -- check .
 
-# 3. 结构验证（无构建）
+# 3. structural verification (no builds)
 nix eval .#nixosConfigurations --apply builtins.attrNames --json
 nix eval .#homeConfigurations  --apply builtins.attrNames --json
 nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
@@ -531,4 +531,4 @@ nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 | Lib         | 12     | ✓     | enum + fn + schema + caps (the T4.0 capability-table contract) + validate (the T4.1 Result railway) + targets (the T19.1 source-of-truth census) + deploy (the T21.1 deployment-plane census) + overlays (the T24.2 overlay locality census) + version (the T25.2 nix-types version contract — rev answers where, version answers what; a bump is a deliberate two-file decision) + orc (the T28 orc wallust copy-emitter consumption contract — all seven stations under contract, first run caught the swaync empty activation) + orc-guard (the T30 include-intent guard consumption contract — the third-generation tool-library loop closed out: T28 catches the defect → T29 feeds the guard back upstream 05c658f → this round consumes it back) + pdshell (the T31 loader consumption contract — the four-library family closed out: census/face/combinFrom/lifecycle/NamedFile, five groups, double red on mutation) |
 | Integration | 1      | ✓     |                                                                           |
 | **nmt**     | **16** | **✗** | exp/sys/base(11)+shell(2)+app/editor(1)+srv(2); T27.2 +1: ripgrep — the consumption-grade regression proof of the fork `--` guard (leading-dash needle) |
-| **Total**   | **102** |       | VM 86 + nmt 16 (plus 6 repository hygiene checks: pre-commit-check + docs-ssot-check + testscript-syntax-check + module-reachability-check + platform-grammar-check + cache-ssot-check) → 108 checks (cache-ssot +1 gate: cache-ssot-check — the fleet cache-identity drift gate 〔identity (name/URL/public key) is declared single-source in lib/shared/lang/const.nix (shared.const.cache.fleet) and distributed per-face by capability: platform/nixos/…/nix.nix + platform/darwin/…/nix + home/core/base/nix.nix (round 30: the standalone user plane, gated on caps.system-nix) consume it by value and cannot drift; faces that cannot evaluate hold pinned literal mirrors — CI workflows, cachix.just (YAML/shell cannot import nix), cache.md prose; flake.nix's nixConfig was removed in round 27 — zero cache identity at the entry layer (the real consumption faces have closed, evaluable faces no longer hold literals, and nixConfig trust semantics are a liability for consumers); the gate pins flake.nix's silence as an assertion (the identifier/URL/public-key triple ban — any nixConfig regression goes red); after a rename or key change, a literal that does not follow makes this gate red〕; T46 +1 gate: platform-grammar-check — the platform directory grammar shape gate 〔a pure readDir tree walk: the platform/ top level allows only tag directories; under <tag>/ only the reserved system/ + home/ subdomains (at least one of them); every domain must carry a default.nix regex gate; domain-level payload allows only module directories — a bare .nix file = the v3 arch walking-corpse class, a gate-less directory = invisible to every gate; run #369's 82 v3 corpses were all of this defect class, caught by the reachability gate's graph walk, while the shape gate rejects them outright at the address-space layer; no exemption ledger — grammar evolution lands in the same commit as the gate〕; T41 +1 gate: module-reachability-check — the module-tree reachability gate 〔every default.nix directory under home/ + platform/ must be reachable from a flake evaluation face: 9 graph roots (3 system + 5 home dual-gate + the devShells domain root) + static/dynamic dual-form edge extraction + comment stripping + the self-healing dual tripwire of the exemption ledger; the first scan caught exp/sys/re dangling — the same class as round 19's srv/cache, a category-level cure for dead code invisible to 14 gates; mutation replay: removing the ./cache wiring makes the gate go red; the round-26 extension (run 38632140441 class): the gate-less-directory reference invariant — import-form static references pointing at directories that exist in the audited tree but carry no default.nix gate (v3 top-level gate residue masked by the corpses' presence, left dangling after the sweep — the class), the discriminant law precise in both directions (trailing slash = dynamic-routing prefix, skipped; out-of-tree target = data binding, skipped); a full-source scan of 420 files, zero violations on the fixed tree〕; T32 +1 gate: testscript-syntax-check — the python syntax gate over every post-composition testScript 〔the eval layer calls the module directly to fetch the true text, the build layer compile()s it〕+ the lib_shared_orc testScript fix 〔multi-line contractHeld spliced into a single-line `#` comment — the root cause of the CI lib-plane red〕; T31 +1: lib_shared_pdshell — the pdshell loader consumption contract 〔the four-library family closed out: nix-types 97 / nmt 98 / orc 99+100 / pdshell 101〕; T30 +1: lib_shared_orc_guard — the orc include-intent guard consumption contract 〔the lock answers WHERE, the test answers WHAT〕+ the swaync synthetic entry retired 〔the swaync-config c8818d9 placeholder adopted — the clean representation〕; T28 +1: lib_shared_orc — the seven-station wallust copy-emitter consumption contract, first run caught the swaync empty activation 〔the dead-silent failure mode of a zero-match include〕; T27.2 predecessor: nmt_home_core_exp_sys_base_ripgrep; T25.2 predecessor: lib_shared_lang_version; T24.2 predecessor: lib_shared_overlays) |
+| **Total**   | **102** |       | VM 86 + nmt 16 (plus 6 repository hygiene checks: pre-commit-check + docs-ssot-check + testscript-syntax-check + module-reachability-check + platform-grammar-check + cache-ssot-check) → 108 checks (cache-ssot +1 gate: cache-ssot-check — the fleet cache-identity drift gate (identity (name/URL/public key) is declared single-source in lib/shared/lang/const.nix (shared.const.cache.fleet) and distributed per-face by capability: platform/nixos/.../nix.nix + platform/darwin/.../nix + home/core/base/nix.nix (round 30: the standalone user plane, gated on caps.system-nix) consume it by value and cannot drift; faces that cannot evaluate hold pinned literal mirrors — CI workflows, cachix.just (YAML/shell cannot import nix), cache.md prose; flake.nix's nixConfig was removed in round 27 — zero cache identity at the entry layer (the real consumption faces have closed, evaluable faces no longer hold literals, and nixConfig trust semantics are a liability for consumers); the gate pins flake.nix's silence as an assertion (the identifier/URL/public-key triple ban — any nixConfig regression goes red); after a rename or key change, a literal that does not follow makes this gate red); T46 +1 gate: platform-grammar-check — the platform directory grammar shape gate (a pure readDir tree walk: the platform/ top level allows only tag directories; under <tag>/ only the reserved system/ + home/ subdomains (at least one of them); every domain must carry a default.nix regex gate; domain-level payload allows only module directories — a bare .nix file = the v3 arch walking-corpse class, a gate-less directory = invisible to every gate; run #369's 82 v3 corpses were all of this defect class, caught by the reachability gate's graph walk, while the shape gate rejects them outright at the address-space layer; no exemption ledger — grammar evolution lands in the same commit as the gate); T41 +1 gate: module-reachability-check — the module-tree reachability gate (every default.nix directory under home/ + platform/ must be reachable from a flake evaluation face: 9 graph roots (3 system + 5 home dual-gate + the devShells domain root) + static/dynamic dual-form edge extraction + comment stripping + the self-healing dual tripwire of the exemption ledger; the first scan caught exp/sys/re dangling — the same class as round 19's srv/cache, a category-level cure for dead code invisible to 14 gates; mutation replay: removing the ./cache wiring makes the gate go red; the round-26 extension (run 38632140441 class): the gate-less-directory reference invariant — import-form static references pointing at directories that exist in the audited tree but carry no default.nix gate (v3 top-level gate residue masked by the corpses' presence, left dangling after the sweep — the class), the discriminant law precise in both directions (trailing slash = dynamic-routing prefix, skipped; out-of-tree target = data binding, skipped); a full-source scan of 420 files, zero violations on the fixed tree); T32 +1 gate: testscript-syntax-check — the python syntax gate over every post-composition testScript (the eval layer calls the module directly to fetch the true text, the build layer compile()s it)+ the lib_shared_orc testScript fix (multi-line contractHeld spliced into a single-line `#` comment — the root cause of the CI lib-plane red); T31 +1: lib_shared_pdshell — the pdshell loader consumption contract (the four-library family closed out: nix-types 97 / nmt 98 / orc 99+100 / pdshell 101); T30 +1: lib_shared_orc_guard — the orc include-intent guard consumption contract (the lock answers WHERE, the test answers WHAT)+ the swaync synthetic entry retired (the swaync-config c8818d9 placeholder adopted — the clean representation); T28 +1: lib_shared_orc — the seven-station wallust copy-emitter consumption contract, first run caught the swaync empty activation (the dead-silent failure mode of a zero-match include); T27.2 predecessor: nmt_home_core_exp_sys_base_ripgrep; T25.2 predecessor: lib_shared_lang_version; T24.2 predecessor: lib_shared_overlays) |

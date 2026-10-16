@@ -1,11 +1,11 @@
 # Module Interface Standards
 
 > Status: **active** — new modules MUST follow this document; existing
-> modules convert incrementally ("改造即接线", see the migration policy).
-> Introduced by the P2 接口化 phase (T2.1/T2.2) of the optimization plan.
+> modules convert incrementally ("retrofit-as-wiring", see the migration policy).
+> Introduced by the P2 interfacing phase (T2.1/T2.2) of the optimization plan.
 
-This repository's design principles (README §设计原则) promise *增量模式*
-("modules can be enabled/disabled individually") and *依赖倒置*. Until
+This repository's design principles (README §Design principles) promise *the incremental
+model* ("modules can be enabled/disabled individually") and *dependency inversion*. Until
 Phase 2 those promises were structural only: the production tree had zero
 `options` — every module self-activated against the global `shared`
 policy. This document defines the interface contract that closes that gap.
@@ -24,7 +24,7 @@ are what an external consumer imports through:
 ```nix
 # some other flake
 inputs.nix-config.url = "github:Redskaber/nix-config";
-…
+...
 modules = [ inputs.nix-config.nixosModules.fcitx5 ];
 ```
 
@@ -41,7 +41,7 @@ modules = [ inputs.nix-config.nixosModules.fcitx5 ];
 3. **Zero `shared`.** No import of the policy layer, no flake inputs.
    Only `{ config, lib, pkgs, ... }`.
 4. **Scope-parameterized package strategies.** Package lists are exposed
-   as functions of the package set (`preset = scope: with scope; [ … ]`)
+   as functions of the package set (`preset = scope: with scope; [ ... ]`)
    and applied to the module's own `pkgs`. This is the *portal.extraPortals
    pattern* — it makes cross-instance package mixing structurally
    impossible (see §4).
@@ -56,7 +56,7 @@ modules = [ inputs.nix-config.nixosModules.fcitx5 ];
 
 - New production modules that are *candidates for reuse* go to `export/`
   first and get consumed by the production tree, not the other way round.
-- Existing production modules convert on touch ("改动即改造"): the next
+- Existing production modules convert on touch ("convert-on-touch"): the next
   time a module is edited for any reason, add the `redskaber.*` options
   surface if the module has reuse value. No big-bang conversion marathons
   (the plan's risk R1).
@@ -69,17 +69,17 @@ The second machine (`hosts/vm`, server-pg-only profile) exposed a whole
 class of violations the single-host tree could not see:
 
 - **Option-level `mkIf` only.** A leaf-level
-  `users.users.mongodb.extraGroups = lib.mkIf cond […]` still registers
+  `users.users.mongodb.extraGroups = lib.mkIf cond [...]` still registers
   the `mongodb` key inside the `attrsOf` submodule and materialises an
   incomplete user. Gate at the option value level:
-  `users.users = lib.mkIf cond { mongodb.… = …; }`.
+  `users.users = lib.mkIf cond { mongodb... = ...; }`.
 - **No cross-module forcing.** `config.users.users.<service>.name` inside
   an unrelated module (the secrets layer) force-instantiates that user
   on hosts that never install the service. Reference service users by
   literal name, and gate the referencing definition on the same install
   flag the service module uses.
 - **Secrets follow services.** A sops secret for a service exists only on
-  hosts where that service is installed (`lib.mkIf shared.services…install`).
+  hosts where that service is installed (`lib.mkIf shared.services...install`).
   Otherwise non-installing hosts fail toplevel evaluation on missing
   secrets — or worse, ship unread secret files.
 

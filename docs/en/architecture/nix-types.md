@@ -6,7 +6,7 @@
 
 ### 1. Status quo: not a candidate — already the type-layer foundation
 
-- **Input declaration**: flake.nix `nix-types.url = "github:Redskaber/nix-types/a1a2a13…"` (rev pinned hard); pdshell pins to the same instance with `follows = "nix-types"` (the comment explicitly guards against nix-types_2 drift — SSOT).
+- **Input declaration**: flake.nix `nix-types.url = "github:Redskaber/nix-types/a1a2a13..."` (rev pinned hard); pdshell pins to the same instance with `follows = "nix-types"` (the comment explicitly guards against nix-types_2 drift — SSOT).
 - **Three-layer consumption** (4 first-hand anchors):
   1. **Enum constructors**: `lib/shared/lang/enum.nix` `inherit (inputs.nix-types.lib) enum;` — platform / version / arch / portal / window-manager / display-manager / sound / shell / drive-group / editor / editor-set / terminal-set / browser-set / app-set / service-profile / pointer-cursor, 16 policy tables in active service in total (the drive table is reserved by a comment), all constructed as enum ADTs (payload rows carrying caps vectors, policy functions, and set routing).
   2. **Result railway**: `lib/shared/lang/validate.nix` and `lib/shared/runtime/default.nix` `inherit (inputs.nix-types.lib) result;` — ok/err/andThen composed over the data-driven pass lists, with `unwrapOrElse throw` as the repository's only throw boundary (Err diagnostics become eval errors verbatim).
@@ -27,7 +27,7 @@ Proposal: replace the source-scopes string-key dispatch in `lib/shared/runtime/d
 ### 3. Landed actions (this commit batch)
 
 - **runtime**: the legal face of source-scopes is now data-driven (the micro-fix above).
-- **flake**: the nix-types input URL is pinned to rev `815fc3f…` (upstream has no tags — `git ls-remote --tags` is an empty set — a 40-hex SHA is the only pinnable form), in the same family as 9ebe543's action-SHA machine contract: weekly updates no longer drag nix-types HEAD along, and an upgrade goes from "surprise" to "deliberate decision"; the 732-line battery + nix-types' own 440-test checks.testSuite are the dual safety net against bad bumps.
+- **flake**: the nix-types input URL is pinned to rev `815fc3f...` (upstream has no tags — `git ls-remote --tags` is an empty set — a 40-hex SHA is the only pinnable form), in the same family as 9ebe543's action-SHA machine contract: weekly updates no longer drag nix-types HEAD along, and an upgrade goes from "surprise" to "deliberate decision"; the 732-line battery + nix-types' own 440-test checks.testSuite are the dual safety net against bad bumps.
 
 ### 4. Idle-capability register (for future dispatch, not a commitment)
 
