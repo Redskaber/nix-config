@@ -151,10 +151,27 @@ let
   # cares about KEYS).
   validFleet = {
     inherit (validShared)
-      arch drive sound pointer-cursor version editor devDir hostName
-      user git rbw time i18n secrets nixpkgs
+      arch
+      drive
+      sound
+      pointer-cursor
+      version
+      editor
+      devDir
+      hostName
+      user
+      git
+      rbw
+      time
+      i18n
+      secrets
+      nixpkgs
       ;
-    roles = { nixos = { tag = "workstation"; }; };
+    roles = {
+      nixos = {
+        tag = "workstation";
+      };
+    };
   };
 
   # ── Eval-time assertions ───────────────────────────────────────────

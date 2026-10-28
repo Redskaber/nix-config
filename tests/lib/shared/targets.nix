@@ -157,31 +157,41 @@ let
   faceDiff =
     expected: actual:
     (map (k: "face is missing '${k}'") (builtins.filter (k: !builtins.elem k actual) expected))
-    ++ (map (k: "face carries unexpected '${k}'") (builtins.filter (k: !builtins.elem k expected) actual));
+    ++ (map (k: "face carries unexpected '${k}'") (
+      builtins.filter (k: !builtins.elem k expected) actual
+    ));
 
   namingIssues =
     # 1. Law G proper: the alias may never shadow a real host.
-    (if builtins.elem legacyAlias hostNames && legacyAlias != base.hostName then
-      [
-        "hosts/${legacyAlias}/ exists — the legacy output alias '${legacyAlias}' would shadow it (rename the directory, or change the fleet identity so the alias does not collide)"
-      ]
-    else
-      [ ])
+    (
+      if builtins.elem legacyAlias hostNames && legacyAlias != base.hostName then
+        [
+          "hosts/${legacyAlias}/ exists — the legacy output alias '${legacyAlias}' would shadow it (rename the directory, or change the fleet identity so the alias does not collide)"
+        ]
+      else
+        [ ]
+    )
     # 2. nixosConfigurations keys == the nixosHosts + the alias.
     ++ (faceDiff (targets.inventory.nixosHosts ++ [ legacyAlias ]) nixosFace)
     # 3. homeConfigurations keys == "<user>@<host>" over the
     #    standaloneHosts, per-host usernames (the open host layer
     #    may override user — the face follows the override).
-    ++ (faceDiff (map (h: "${(hostShared h).user.username}@${h}") targets.inventory.standaloneHosts) homeFace)
+    ++ (faceDiff (map (
+      h: "${(hostShared h).user.username}@${h}"
+    ) targets.inventory.standaloneHosts) homeFace)
     # 4. darwinConfigurations keys == the darwinHosts.
     ++ (faceDiff targets.inventory.darwinHosts darwinFace)
     # 5. arch never names anything.
-    ++ (map (k: "face key '${k}' carries an arch tag — arch is a pipeline value, never an address")
-      (builtins.filter (k: builtins.any (a: lib.hasInfix a k) archTags)
-        (nixosFace ++ homeFace ++ darwinFace)))
+    ++ (map (k: "face key '${k}' carries an arch tag — arch is a pipeline value, never an address") (
+      builtins.filter (k: builtins.any (a: lib.hasInfix a k) archTags) (
+        nixosFace ++ homeFace ++ darwinFace
+      )
+    ))
     # 6. hostName force-alignment, per host.
-    ++ (map (h: "hosts/${h}/ policy answers hostName '${(hostShared h).hostName}' — the loader's force-alignment is broken")
-      misaligned);
+    ++ (map (
+      h:
+      "hosts/${h}/ policy answers hostName '${(hostShared h).hostName}' — the loader's force-alignment is broken"
+    ) misaligned);
 
   namingVerdict =
     if namingIssues == [ ] then

@@ -92,21 +92,27 @@ let
 
   # ── Law F — the closed whitelist, every role row ───────────────────
   role-policy-keys = shared.enum.role-policy-keys;
-  lawF = map (
-    row:
-    let
-      leak = lib.subtractLists role-policy-keys (builtins.attrNames row.value);
-    in
-    if leak != [ ] then
-      throw "roles Law F: role '${row.tag}' carries non-strategy keys: ${toString leak} (allowed: ${toString role-policy-keys})"
-    else
-      true
-  ) (with shared.enum.role; [
-    workstation
-    console
-    server
-    laptop
-  ]);
+  lawF =
+    map
+      (
+        row:
+        let
+          leak = lib.subtractLists role-policy-keys (builtins.attrNames row.value);
+        in
+        if leak != [ ] then
+          throw "roles Law F: role '${row.tag}' carries non-strategy keys: ${toString leak} (allowed: ${toString role-policy-keys})"
+        else
+          true
+      )
+      (
+        with shared.enum.role;
+        [
+          workstation
+          console
+          server
+          laptop
+        ]
+      );
 
   # ── eval-time assertions (the migration proof) ─────────────────────
   evalAssertions =
@@ -127,23 +133,26 @@ let
     assert nix.display-manager.tag == "ly";
     assert nix.drive.tag == "intel";
     assert nix.sound.tag == "pipewire";
-    assert nix.editor-set.value.editors == [
-      "nvim"
-      "vscode"
-      "cursor"
-      "zed"
-      "emacs"
-      "kiro"
-    ];
-    assert nix.terminal-set.value.terminals == [
-      "kitty"
-      "wezterm"
-    ];
-    assert nix.browser-set.value.browsers == [
-      "google-chrome"
-      "qutebrowser"
-      "w3m"
-    ];
+    assert
+      nix.editor-set.value.editors == [
+        "nvim"
+        "vscode"
+        "cursor"
+        "zed"
+        "emacs"
+        "kiro"
+      ];
+    assert
+      nix.terminal-set.value.terminals == [
+        "kitty"
+        "wezterm"
+      ];
+    assert
+      nix.browser-set.value.browsers == [
+        "google-chrome"
+        "qutebrowser"
+        "w3m"
+      ];
     assert builtins.length nix.app-set.value.categories == 16;
     assert nix.service-profile.value.db.postgresql.install == true;
     assert nix.service-profile.value.db.mysql.install == true;
@@ -157,15 +166,17 @@ let
     assert vm.sound.tag == "pipewire";
     assert vm.editor-set.value.editors == [ "nvim" ];
     assert vm.terminal-set.value.terminals == [ "kitty" ];
-    assert vm.browser-set.value.browsers == [
-      "google-chrome"
-      "qutebrowser"
-    ];
-    assert vm.app-set.value.categories == [
-      "browser"
-      "editor"
-      "terminal"
-    ];
+    assert
+      vm.browser-set.value.browsers == [
+        "google-chrome"
+        "qutebrowser"
+      ];
+    assert
+      vm.app-set.value.categories == [
+        "browser"
+        "editor"
+        "terminal"
+      ];
     assert vm.service-profile.value.db.postgresql.install == true;
     assert vm.service-profile.value.db.postgresql.autostart == true;
     assert vm.service-profile.value.db.mysql.install == false;
@@ -179,11 +190,12 @@ let
     assert wsl.editor-set.value.editors == [ "nvim" ];
     assert wsl.terminal-set.value.terminals == [ "kitty" ];
     assert wsl.browser-set.value.browsers == [ "w3m" ];
-    assert wsl.app-set.value.categories == [
-      "browser"
-      "editor"
-      "terminal"
-    ];
+    assert
+      wsl.app-set.value.categories == [
+        "browser"
+        "editor"
+        "terminal"
+      ];
     # P1.5 — the bias fix: no databases inside a WSL distro.
     assert wsl.service-profile.value.db.postgresql.install == false;
     assert wsl.service-profile.value.db.mysql.install == false;
@@ -236,8 +248,7 @@ let
     # enum instances carry match lambdas, and Nix compares distinct
     # functions as unequal (tag-per-host is the registry's identity).
     assert
-      builtins.mapAttrs (_: row: row.tag) nix.roles
-      == builtins.mapAttrs (_: row: row.tag) shared.roles;
+      builtins.mapAttrs (_: row: row.tag) nix.roles == builtins.mapAttrs (_: row: row.tag) shared.roles;
     "eval-assertions-passed";
 in
 {
