@@ -28,6 +28,7 @@
     ./fd.nix
     ./fzf.nix
     ./git-filter-repo.nix
+    ./git-lfs.nix
     ./git.nix
     ./husky.nix
     ./jq.nix
