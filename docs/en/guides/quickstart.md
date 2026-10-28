@@ -145,7 +145,7 @@ just secrets-verify              # the same audit CI runs
 just key-rotate-user <age1...>   # user key rotation (three-step guided)
 just key-rotate-host <age1...>   # host key rotation (add new → re-encrypt → revoke old)
 
-# onboarding a new machine = mkdir hosts/<name> + two files (zero flake changes)
+# onboarding a new machine = one registry row in shared.nix + mkdir hosts/<name> + class/hardware files (zero flake changes)
 # declaring a new secret = three layers (shared.nix.tmpl / template YAML / 4-line recipe; see the extending guide)
 ```
 

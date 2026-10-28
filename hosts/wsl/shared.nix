@@ -1,33 +1,27 @@
 # @path: ~/projects/configs/nix-config/hosts/wsl/shared.nix
 # @author: redskaber
-# @datetime: 2026-10-08
-# @description: hosts::wsl::shared — third-machine policy overrides
+# @datetime: 2026-10-12
+# @description: hosts::wsl::shared — third-machine policy (host layer)
 #
 # The WSL host: a Windows-side distro whose user environment this
-# flake owns through standalone home-manager (platform/wsl). Keys here
-# replace their base shared.nix counterparts WHOLESALE (shallow `//`
-# merge — see lib/shared/default.nix).
+# flake owns through standalone home-manager (platform/wsl).
 #
-# Class-defining override: platform.tag = "wsl". The flake-level host
-# dispatch routes this host OUT of nixosConfigurations (it is not a
-# NixOS machine) and INTO homeConfigurations."kilig@wsl" +
-# the platform/wsl specialisation.
+# With the three-layer chain (fleet → role → host) this file
+# shrank to its class key alone: platform = wsl routes this host
+# OUT of nixosConfigurations (it is not a NixOS machine) and INTO
+# homeConfigurations."kilig@wsl" + the platform/wsl
+# specialisation. The `console` role (the fleet registry row)
+# supplies the rest: no windowing stack, the amd Null-Object
+# drive, lean sets, no app grab-bag trees, minimal services.
+#
+# P1.5 note: the minimal service profile is now an explicit part
+# of the console role — previously this host inherited
+# dev-on-demand from the pre-role baseline and silently installed
+# four databases inside a WSL distro (the inheritance-bias defect
+# the role layer was designed to remove).
 
 { shared, inputs, ... }:
 {
-  # Class flip: this host is WSL, not NixOS.
+  # Class key: this host is WSL, not NixOS.
   platform = shared.enum.platform.wsl;
-
-  # Console-oriented machine: no windowing stack (Null-Object wm).
-  window-manager = shared.enum.window-manager.none;
-
-  # No NVIDIA/Prime inside the WSL kernel interface.
-  drive = shared.enum.drive-group.amd;
-
-  # Maintenance-shaped sets: lean editors/terminals, no desktop apps.
-  editor-set = shared.enum.editor-set.minimal;
-  terminal-set = shared.enum.terminal-set.kitty-only;
-  browser-set = shared.enum.browser-set.cli-only;
-  # Console machine: the set-routed triad only — no desktop apps.
-  app-set = shared.enum.app-set.none;
 }

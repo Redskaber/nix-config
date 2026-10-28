@@ -129,7 +129,7 @@ just secrets-verify              # CI 同款审计
 just key-rotate-user <age1…>     # user key 轮换（三步引导）
 just key-rotate-host <age1…>     # host key 轮换（加新→重加密→撤旧）
 
-# 新机器接入 = mkdir hosts/<name> + 两个文件（零 flake 改动）
+# 新机器接入 = shared.nix 注册表一行 + mkdir hosts/<name> + 类键/硬件文件（零 flake 改动）
 # 新 secret 声明 = 三层（shared.nix.tmpl / 模板 YAML / 4 行 recipe，见扩展指南）
 ```
 

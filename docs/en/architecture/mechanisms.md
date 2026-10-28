@@ -7,6 +7,62 @@
 > orc orchestration / user environments / external config repos / commit conventions / multi-host / on-demand services.
 > For the overview table see the [README](../../../README.en.md#core-mechanisms).
 
+### 0. Pipeline Overview — The Compiler Shape
+
+The repo fancies itself a compiler: policy files are source, flake outputs are
+target code, `specialArgs` is the ABI. The pipeline flows one way (§1–§3 are
+the per-stage deep dives; cross-indexed with the [README architecture
+overview](../../../README.en.md#architecture-overview); the canonical
+pass-by-pass reference cards · the object-structure view ·
+layer×stage bridge · the cross-cutting dimensions (deps/secrets/
+UX/external configs) · invariants · change
+playbooks live in [pipeline.md](pipeline.md)):
+
+```
+source    shared.nix             fleet layer: identity · majority defaults · the roles registry
+          enum.nix `role` table  role layer: form strategy bundles (one per arch-
+                                 etype; Law F closed set)
+          hosts/<h>/shared.nix   host layer: class keys + hardware + specialisation
+                                 (optional file, open)
+             ↓
+front end lib/shared/lang/       const · enum · schema · fn · tools · validate
+                                 (the policy language + its type system; pure
+                                 Nix, zero pkgs)
+             ↓
+middle    lib/shared/default.nix the controlled three-layer merge
+end                              fleet ⊕ role ⊕ host (later layers win):
+                                 · Law F whitelist rejects off-whitelist role keys
+                                 · schema.shared re-validates the merged result
+                                   against the full 18-key contract
+                                 · hostName force-aligned to the directory ·
+                                   why per-key provenance
+             ↓
+IR synth  lib/shared/runtime/    inject caps · pkgs/upkgs · i18nScope · homeDir ·
+                                 orc · pdshell · the three sops path functions;
+                                 set flattening (editors/terminals/browsers/
+                                 appCategories/services)
+             ↓
+back end  lib/shared/targets.nix readDir hosts/ discovery → caps table lookup
+                                 classification (never re-lexing the target) →
+                                 four emitters (nixos / darwin / standalone-HM /
+                                 colmena Hive) + the two toplevel projections
+             ↓
+linker    lib/shared/faces.nix   flake outputs are pure inherit (flake.nix keeps
+                                 only input registration + the one-line delegation)
+             ↓
+loading   specialArgs / extraSpecialArgs → platform/ · home/ module trees { shared, ... }
+```
+
+**The compiler-metaphor mapping:**
+
+| Compiler concept | This repo's counterpart |
+| ---------------- | ----------------------- |
+| Front end (lexing/parsing/semantic checks) | `lib/shared/lang/`: construction-is-exhaustive enums, schema destructuring validators, the validate Result railway |
+| Middle end (IR + optimization passes) | the controlled three-layer merge + `runtime/` handle synthesis; optimizations like CSE (`sharedByHost`, one IR instance per host, T5.10) |
+| Back end (target-code generation) | the `targets.nix` four emitters: nixos / darwin / standalone-HM / colmena Hive closures generated per target description |
+| Target description (a target triple) | the `enum.platform` row's caps capability vector — later passes query the table, never re-lex (T4.0) |
+| Linker (symbol assembly) | `faces.nix`: the five hygiene-gate aggregation / module-docs / pdsh / single-construction tests (R31) |
+
 ### 1. Shared Layer — Two-Stage Initialization
 
 `lib/shared` solves the circular "configuration depends on pkgs, pkgs depends on configuration" problem in Nix:
@@ -15,8 +71,9 @@
 Stage 1 (lang/):  const (constants) + schema (structure definitions) + enum (legal states and capability tables) + fn (pure functions)
                   + tools (external tool-library registry) + validate (Option/Result railway)
                   ↓ Pure Nix expressions — no pkgs dependency; fully validatable at eval time
-Stage 2 (runtime/): base_shared ⊕ hosts/<h>/shared.nix (shallow // merge + schema re-validation
-                    + hostName alignment) → synthesize the full IR
+Stage 2 (runtime/): fleet base ⊕ role bundle ⊕ host overrides (controlled
+                    merge + schema re-validation + hostName alignment + why
+                    provenance) → synthesize the full IR
                     ↓ inject: caps · pkgs/upkgs · i18nScope · homeDir · orc · pdshell
                     · sopsFile/sopsPath/sopsUserPath · editors/terminals/browsers
                     · appCategories · services · shellIntegrations · provenance
@@ -143,7 +200,7 @@ nix eval .#api.inputs --json | jq -r 'keys - ["sops-nix"] | join(" ")'
 
 # The CI build stage hands over whole planes (members = thunks of the same evaluation, zero extra cost):
 nix eval .#api.checks.planes --apply 'p: builtins.mapAttrs (_: builtins.length) p'
-# → { "home": 42, "integration": 1, "lib": 5, "nixos": 29, "nmt": 15, "smoke": 1 }
+# → { "home": 42, "integration": 1, "lib": 13, "nixos": 30, "nmt": 16, "smoke": 1 }
 ```
 
 ### 2. Policy Layer — The shared.nix Generation Mechanism
@@ -156,13 +213,87 @@ nix eval .#api.checks.planes --apply 'p: builtins.mapAttrs (_: builtins.length) 
 docs/tmpl/shared.nix.tmpl   hand-maintained, carries the __USERNAME__ placeholder (committed to Git)
     ↓  just shared-generate <username>   (sed substitution → overwrite in place)
 shared.nix                  generated artifact, overwritten in place, never sed-patched (committed to Git)
-    ↓  lib/shared/default.nix: two-stage initialization + shallow // merge of hosts/<h>/shared.nix
+    ↓  lib/shared/default.nix: two-stage initialization + the controlled
+       three-layer merge (fleet base ⊕ role bundle ⊕ host overrides, see below)
 fullShared                  runtime synthesis (lang + user_shared + runtime)
     ↓  specialArgs / extraSpecialArgs
 platform/ · home/           consumed via { shared, ... }
 ```
 
-**Host policy overrides (wholesale semantics):** `hosts/<h>/shared.nix` is a **shallow wholesale replacement** of the base record — top-level keys are swapped out whole and never deep-merged (enum instances are attrsets; a deep merge would corrode the policy payload). After merging, the result passes schema re-validation, and `hostName` is force-aligned to the directory name by the loader (loading from hosts/foo while routing to bar is impossible). The base host (nixos) has no override file — the base record itself is its policy.
+**The three-layer policy chain (fleet → role → host, controlled merge):** the merge chain is `fleet ⊕ role ⊕ host` — later layers win earlier ones, and within a layer nothing is ever deep-merged (enum instances are attrsets; a deep merge would corrode the policy payload). Every layer's boundary is machine-enforced:
+
+- **fleet (`shared.nix`)** — identity and shared constants, majority defaults, and the `roles` registry (the management plane: one role-assignment row per host).
+- **role (the enum.nix 17th table)** — form strategy bundles (wm/dm/drive/editor·terminal·browser·app sets/service profile), selected by the registry row; **Law F**: a role row may carry strategy keys ONLY (identity keys belong to fleet, class keys to host) — violations throw at the merge point with the keys named.
+- **host (`hosts/<h>/shared.nix`)** — class (platform/arch) + hardware + specialisation; wins over any role key (pets, not cattle — specialisation stays one key away).
+
+After merging, the result passes schema re-validation, and `hostName` is force-aligned to the directory name by the loader (loading from hosts/foo while routing to bar is impossible). The winning layer of every key is recorded as `shared.why.<key>` ("fleet" | "role" | "host" | "loader") — the eval-time equivalent of git-config's `--show-origin`. The registry↔directory zero-drift law is locked by `tests/lib/shared/roles.nix` (Law E), together with the migration equivalence locks and the P1.5 console bias fix.
+
+**Layered validators (schema.fleet / schema.shared — which schema fires where):** the
+three-layer chain does not share one validator — each layer holds its own contract, and
+the loader holds the contract of the MERGED result:
+
+| Validator | Where it fires | Contract |
+| --------- | -------------- | -------- |
+| `schema.fleet` | the fleet file **self-check** (the shape of the call in the root shared.nix, i.e. `shared.schema.fleet { ... }`) | 16 mandatory keys: identity + majority defaults + the `roles` registry; **deliberately class-less** — platform belongs to the host layer, and the 7 form keys (wm/dm/editor-set/terminal-set/browser-set/app-set/service-profile) belong to the role layer (sound/drive are strategy axes too, but fleet-level majority defaults, hence inside the contract) |
+| `schema.shared` | the loader re-validates the **merged result** (`lib/shared/default.nix`) | the full 18 mandatory keys: the fleet's 15 shared keys + the three class keys platform/window-manager/display-manager (`roles` passes through the ellipsis) — after the three-layer merge the result must still be one complete policy |
+| Nested sub-validators | `schema.user/git/rbw/time/i18n/secrets/nixpkgs` | lambda-pattern **presence contracts** (a missing mandatory key fails at eval); only i18n carries a real default, `nixpkgs-source ? "stable"` (materialised via the applyI18n splice) |
+
+The pre-layering era called `schema.shared` on the base policy directly — that now
+fails fast on the missing class keys (by design: the fleet layer is deliberately
+class-less). Both key contracts are statically locked by
+`tests/lib/shared/lang/schema.nix` (`lib_shared_lang_schema`) via
+`builtins.functionArgs`: mandatory keys carry no defaults, the 8 class/form keys are
+absent from the fleet pattern, and the i18n default actually reaches the composed
+result.
+
+**The host-layer openness contract (the only whitelist-exempt layer of the three):** role
+rows are closed by Law F and the fleet key set is declared by `schema.fleet`, but the
+**host layer is deliberately open** — machine specialisation should not have to be
+pre-imagined by a central whitelist; `hosts/<h>/shared.nix` is the escape hatch:
+
+- The file is **optional** (the loader probes with `pathExists`; absence yields `{ }`);
+  it speaks the same wire protocol as the fleet file — the loader calls it with
+  `{ shared, inputs }`, and the parameter pattern's `...` tolerates future extra
+  arguments.
+- **Arbitrary new keys pass straight through**: the ellipsis of `schema.shared` lets
+  them into the handle for downstream modules to consume, and `why` stamps "host".
+- **Any existing key can be overridden wholesale**: host wins the `//` merge (later
+  layers win; nothing is ever deep-merged — enum instances are attrsets, and a deep
+  merge would corrode the policy payload).
+- Openness ≠ disorder — three invariants remain machine-enforced:
+  1. `hostName` is **force-aligned** to the directory name by the loader — the host
+     layer can never win it (hardware-routing safety);
+  2. the 18-mandatory-key contract holds **structurally** — `//` merging only
+     accumulates, never removes; the fleet already supplies every mandatory key, so
+     the host layer cannot "delete" a contract key;
+  3. validation of nested structures is **presence-level** (lambda destructuring),
+     not deep type-checking — deep validation lives in specific domains: the validate
+     Result railway for secret paths (`lib/shared/lang/validate.nix`), and
+     construction-is-exhaustive enums.
+
+**Cross-domain coordinates of the openness dial (R7):** "open + machine-enforced
+invariants" instead of "deny by default" is the same trade-off that recurs across
+four mature ecosystems:
+
+| System | Unknown-key policy | The trade-off |
+| ------ | ----------------- | ------------- |
+| serde (Rust) | Allow by default; `deny_unknown_fields` is an explicit opt-in | Forward compatibility: a new producer's new fields never break old consumers |
+| Kubernetes | Server-side field validation: `strict` / `warn` / `ignore` | strict rejects unknown keys (typo protection); the escape hatch stays |
+| TypeScript | Object-literal freshness (excess properties error); assignments don't check | Fresh literals are checkable at their declaration site; widening gives it up |
+| this repo's host layer | `...` pass-through + three invariants | The extensible shared: custom keys flow into the handle; structural safety is backstopped by the invariants |
+
+The critique of Postel's law (Allman, "The Robustness Principle Reconsidered")
+applies here: the debt that "liberal acceptance" accumulates must be repaid by
+**strict validation at the boundaries**. This repo places its strictness at each
+layer's contract point — the fleet file's self-check (`schema.fleet`, 16 keys), the
+closed whitelist on role rows (Law F), and the 18-key re-validation of the merged
+result (`schema.shared`) — not in the host file itself: a host file is a "fresh
+literal", but its consumers (the platform/home module trees) destructure on
+demand, and closing unknown keys would kill the "users may customize any key"
+extensibility (the same reason serde allows by default). Detecting problems relies
+on observability (per-key `why` provenance), not on closedness; an optional future
+hardening is Levenshtein typo suggestions (the did-you-mean precedent of git and
+nix themselves).
 
 **Configurable enums (lib/shared/lang/enum.nix):**
 
@@ -183,6 +314,7 @@ platform/ · home/           consumed via { shared, ... }
 | `service-profile` | `full-autostart` · `dev-on-demand` · `server-pg-only` · `minimal` (carried as policy; controls db/virt install vs autostart)                                                                                                                                                                                                                   |
 | `pointer-cursor`  | 12 Bibata variants, e.g. `Bibata-Modern-Amber`                                                                                                                                                                                                                                                                                                 |
 | `version`         | `v25_11` (carries `{stateVersion, wine, swww, adb}` policies) · `v26_05` (isomorphic)                                                                                                                                                                                                                                                            |
+| `role`            | `workstation` · `console` · `server` · `laptop` (the 17th table, the R4 three-layer chain's middle layer — each row carries a form strategy bundle: wm/dm/drive/editor·terminal·browser·app sets/service profile; `server` = the console bundle + server-pg-only; assigned by the fleet registry, Law F whitelist violations throw)             |
 
 `window-manager` enum values embed a `portal` policy that `platform/nixos/system/core/base/portal.nix` and `home/core/base/portal.nix` consume directly:
 
@@ -231,15 +363,16 @@ The contract test `tests/lib/shared/lang/caps.nix` locks the entire table (truth
 
 ```
 frontend    hostNames = readDir ../../hosts (directories only)
-             ↓ adding a machine = mkdir hosts/<name>, zero flake.nix changes
+             ↓ adding a machine = one registry row in shared.nix + mkdir hosts/<name>, zero flake.nix changes
 middle end  caps classification (consults the capability table, never re-lexes the targets):
              nixosHosts      = caps.nixos-system
              darwinHosts     = caps.darwin
              standaloneHosts = !caps.darwin (a darwin standalone would carry linux pkgs — structurally excluded)
-backend     three emitter classes (unified directory references, grammar v3):
+backend     four emitters (unified directory references, directory grammar v4):
              mkNixosSystem  → modules = [ ../../platform/${tag}/system ] (grammar v4: domain address explicit)
              mkDarwinSystem → modules = [ ../../platform/${tag}/system ] (system = arch.tag parameter absorption)
              mkHomeSystem   → modules = [ ../../platform/${tag}/home ]    (the gate is the payload, arch retired)
+             mkColmenaNode  → imports = [ ../../platform/${tag}/system ]  (deploy view; nodeSpecialArgs hands the per-host thunk)
 ```
 
 **Single instantiation of the policy IR (T5.10, distribution-layer CSE):** `sharedByHost = genAttrs hostNames mkShared` is the one table, and the classifier/emitters/naming/aliases all read that table; the default host's table entry = the base instance (handle sharing — the default host never pays twice for the same IR). The base `shared` of the link pass (faces.nix, R31) consumes `targets.base` (the backend exports the already-built base-IR handle) instead of importing a second time. Legacy aliases `<user>-<platform>` are attr-level thunk aliases (sharing the same closure, not a re-emission).
@@ -254,6 +387,94 @@ inherit (targets) colmenaHive;           # the deployment face (colmena 0.5+)
 inherit (targets) hostToplevels;         # the Linux toplevel projection of api.host-toplevels (R31)
 inherit (targets) darwinToplevels;       # the darwin toplevel projection of api.darwin-toplevels (R31)
 ```
+
+**The naming model and identifier spaces (Law G, R7):** the directory name is the
+single source of naming identity — `hosts/<name>/` is force-aligned into `hostName`
+by the loader (`default.nix`) and becomes the output-face keys verbatim; the arch
+axis **never enters a name** — it is a pipeline VALUE for pkgs synthesis (runtime
+instantiates nixpkgs with `system = arch.tag`), not an address on disk: two hosts
+of the same platform with different arches are two closures named by their own
+directories, each carrying its own pkgs instance (the per-host arch discipline —
+`mkHomeSystem` reads the HOST handle's pkgs, not the base instance's). The pipeline
+mints exactly **one** synthetic name, on `nixosConfigurations` only: the legacy
+alias `<user>-<platform>` (an attr-level thunk alias of the base host's closure).
+
+| Output face | Keys | Source of uniqueness |
+| ----------- | ---- | -------------------- |
+| `nixosConfigurations` | `<directory>` + the legacy alias `<user>-<platform>` | directory names are per-kind unique; the alias is guarded by Law G |
+| `homeConfigurations` | `<user>@<directory>` | directory × username (the host layer may override user; the face follows) |
+| `darwinConfigurations` | `<directory>` | the directory |
+| `colmenaHive.nodes` | `<directory>` (= nixosHosts) | the directory (emission coverage pinned by Law D) |
+
+This is Kubernetes' per-kind uniqueness semantics (a Deployment and a Service may
+share a name without colliding — namespaces are partitioned by kind), and the
+compiler's symbol-table semantics (same name in different scopes is legal). The
+`//` merge behind `nixosConfigurations` is silent last-wins — if a host directory
+happened to be named exactly like the legacy alias (say `hosts/kilig-nixos/`),
+that host's closure would be silently REPLACED by the base host's closure: the
+name would keep answering `nix build .#kilig-nixos` while building a DIFFERENT
+machine's config — a lying name, the worst failure mode (compilers make
+same-scope redeclaration a hard error and only allow shadowing across scopes; `//`
+has no such distinction). The Law G guard (targets.nix) turns exactly that
+redeclaration into an eval throw, and the `lib_shared_targets` naming census pins
+the whole naming model into tests: the alias shadows nothing, the three faces key
+exactly by inventory, no face name carries an arch tag, and hostName answers its
+directory on every host. Many differently-named hosts are handled by construction:
+the readDir inventory → per-host single-instantiated IR (`sharedByHost`) → per-host
+registry rows (Law E, zero drift in both directions) → each host's closures;
+`hosts/` directory names are unique by filesystem guarantee, and a duplicate key
+in the registry attrset literal is a Nix syntax error — a duplicate name cannot
+arise through either entrance.
+
+**Consumer verbs and the alias's multi-host semantics (R8):** names are ultimately
+resolved by their consumer verbs, and the three verb classes each have precise
+semantics:
+
+- `nixos-rebuild --flake .#<attr>` — resolves to `nixosConfigurations.<attr>`; the
+  attr must hit a face key (a host directory name or the alias). **Without a
+  fragment** (`--flake .`), nixos-rebuild completes the attr with the **running
+  machine's own hostname** — and since the loader force-aligns
+  `networking.hostName` to the directory name, the fragmentless form **resolves
+  correctly by construction** (on the nixos machine, `--flake .` ≡ `.#nixos`): the
+  naming loop is closed by force-alignment alone, with no hostname→attr mapping
+  table anywhere.
+- `.#kilig-nixos` is **not a platform selector** — it is an attr-level thunk alias
+  that always points at the **base host's** closure (the one the fleet-default
+  hostName selects). "Two hosts under platform nixos" is this fleet's live state,
+  not a hypothesis: nixos and vm coexist on the same platform, each addressed
+  directly by its directory name (`.#nixos` / `.#vm`); the alias and `.#nixos`
+  share **byte-identical toplevel drvPaths** (verified: both resolve to the
+  `nixos-system-nixos-26.05.20261007.2efa67f` derivation) — identity by purity,
+  not a re-emission. The derivation name itself carries the hostName
+  (`nixos-system-<hostName>-<version>`), so host identity stays visible at the
+  store layer. Precondition: the base host must be nixos-class (otherwise the
+  alias fails loudly at eval); the alias is a compat surface for pre-multihost
+  consumers — the canonical addressing is the directory name.
+- `home-manager --flake .#kilig@nixos` — the home face's key is a **two-part
+  coordinate** `<user>@<host>`: the user comes from that host's own policy (the
+  host layer may override user; the face follows), and the host part is the
+  directory name. NixOS hosts keeping **both doors live is policy, not residue**
+  (platform/nixos/home/default.nix header): the standalone HM closure switches in
+  seconds and rolls back independently of the system generation, while the system
+  door owns hardware and services — the two option universes share neither a file
+  nor a door. Darwin hosts are structurally excluded from the standalone face
+  (`!caps.darwin` — a darwin standalone closure would carry linux pkgs); their HM
+  rides the system closure in module mode. The wsl platform has only the home door
+  (no system directory — the door is the platform's entire live surface).
+
+Cross-domain coordinates (three domains beyond R7's seven): the **Rust target
+triple** community treats triples as **opaque identifiers** ("the division into
+parts is a heuristic for humans", users.rust-lang consensus) — this repo's
+arch ruling is the same call: arch is a synthesis value, never an address, and
+never enters a name. **Maven GAV** coordinates (groupId:artifactId:version) make
+names **never travel alone** — the home face's `user@host` is likewise coordinate
+naming (a user axis × a host axis, each independently overridable). The **Docker
+mutable tag** is the industry's textbook "lying name" (a tag keeps answering while
+its content drifts — hence the ECR tag-immutability and digest-addressing remedy
+ecosystem) — exactly the failure mode Law G prevents, while Nix's thunk alias +
+content addressing make the alias **unable to lie by construction** (it points at
+one derivation; identity is guaranteed by purity, in contrast with Docker's
+mutable tag pointers).
 
 ### 4. Dev-Environment Pipeline — pdshell
 
@@ -531,7 +752,7 @@ All commands dynamically fetch `commit-config`'s path in the Nix store from `fla
 
 ### 10. Multi-Host Support — hosts/
 
-The `hosts/` directory implements multi-host distribution: each machine gets independent hardware facts + an optional `shared.nix` override (the host-count anchor lives in the [README's Directory Structure](../../../README.en.md#directory-structure); the live inventory is `nix eval .#api.hosts`).
+The `hosts/` directory implements multi-host distribution: each machine gets independent hardware facts + its own `shared.nix` (the host layer: class + hardware + specialisation; the host-count anchor lives in the [README's Directory Structure](../../../README.en.md#directory-structure); the live inventory is `nix eval .#api.targets` — `{ hostNames nixosHosts darwinHosts standaloneHosts }`).
 
 **The three files of machine facts (T5.12 + T5.13 + T5.14 — the data + interpreter route):**
 

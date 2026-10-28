@@ -1,13 +1,27 @@
 # @path: ~/projects/configs/nix-config/docs/tmpl/shared.nix.tmpl
 # @author: redskaber
-# @description: self::shared — base policy (template → live instance)
+# @description: self::shared — fleet base policy (template → live instance)
 #
-# NOTE: repo-root shared.nix is the LIVE base policy (loaded by
+# NOTE: repo-root shared.nix is the LIVE fleet base policy (loaded by
 #       lib/shared/default.nix via scfpath). It is generated from this
 #       template: `just shared-generate <username>` renders it, and
 #       `just shared-roundtrip` gates regeneration as byte-identical.
-#       Edit the template, not the output; host-scoped overrides live
-#       in hosts/<h>/shared.nix.
+#       Edit the template, not the output.
+#
+# Three-layer policy chain (fleet → role → host):
+#
+#   THIS file       the fleet layer — identity, shared constants,
+#                   majority defaults, and the `roles` registry (the
+#                   management plane: one row per host).
+#   enum.nix `role` the role layer — form strategy bundles selected
+#                   by the registry row (composition over override).
+#   hosts/<h>/      the host layer — class + hardware + whatever the
+#     shared.nix    machine says about itself; wins over any role key.
+#
+# The merge is controlled (lib/shared/default.nix): role rows carry
+# strategy keys only (Law F whitelist), hostName is force-aligned to
+# the directory loaded, and `shared.why.<key>` reports which layer
+# won every key.
 #
 # Single source of truth:
 #   username appears only here; propagated to shared.nix via generation,
@@ -17,30 +31,42 @@
 let
   username = "__USERNAME__";
 in
-shared.schema.shared {
+shared.schema.fleet {
+  # Majority defaults (overridable per host / per role):
+  #   arch  — the x86_64-linux fleet default; darwin flips its row.
+  #   drive — the fleet default; console-form roles carry amd.
   arch = shared.enum.arch.x86_64-linux;
   drive = shared.enum.drive-group.intel;
-  platform = shared.enum.platform.nixos;
-  window-manager = shared.enum.window-manager.hyprland;
-  display-manager = shared.enum.display-manager.ly;
+
   # The local sound server (strategy axis, README debt #9's
-  # mechanical half) — the workstation default; console hosts flip
-  # this row to `none` when the real-machine adjudication lands.
+  # mechanical half) — the fleet default; the console-family role
+  # rows flip to `none` when the real-machine adjudication lands
+  # (docs/guides/sound-adjudication.md, ONE edit).
   sound = shared.enum.sound.pipewire;
+
   pointer-cursor = shared.enum.pointer-cursor.Bibata-Modern-Classic;
   version = shared.enum.version.v26_05;
   editor = shared.enum.editor.nvim;
-  # Application sets (multi-select routing)
-  editor-set = shared.enum.editor-set.dev;
-  terminal-set = shared.enum.terminal-set.both;
-  browser-set = shared.enum.browser-set.all;
-  # App tree weight class (demand-driven module loading): the
-  # desktop workstation merges every app category tree.
-  app-set = shared.enum.app-set.full;
-  # Service profile: controls install vs autostart
-  service-profile = shared.enum.service-profile.dev-on-demand;
   devDir = "${shared.self}/home/env/dev";
   hostName = "nixos";
+
+  # ── Fleet registry — the management plane ───────────────────
+  #
+  # One row per host: the role that shapes it. Adding a machine:
+  #
+  #   1. one row here          (role assignment)
+  #   2. mkdir hosts/<name>/   (class + hardware + host keys)
+  #
+  # The registry and the hosts/ directory are locked to zero drift
+  # in BOTH directions (tests/lib/shared/roles.nix, Law E); the
+  # loader throws on an unassigned host at eval time.
+  roles = {
+    nixos = shared.enum.role.workstation;
+    vm = shared.enum.role.server;
+    wsl = shared.enum.role.console;
+    nixos-wsl = shared.enum.role.console;
+    darwin = shared.enum.role.laptop;
+  };
 
   user = {
     inherit username;
@@ -106,7 +132,7 @@ shared.schema.shared {
       # Or define it inline, for example:
       # (final: prev: {
       #   helloworld-patched = final.helloworld.overrideAttrs (oldAttrs: {
-      #     patches = [ ./helloworld-to-helloworld-patched.patch ];
+      #     patches = [ ./helloworld-to-helloworld.patch ];
       #   });
       # })
     ];

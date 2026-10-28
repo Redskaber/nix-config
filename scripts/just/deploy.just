@@ -50,11 +50,24 @@ nixos-boot host:
 
 # Home Manager switch for the policy user on a specific host
 # ('just home-switch nixos' → kilig@nixos).
+#
+# The CLI runs from the SAME locked home-manager rev the closure was
+# built with, read live from flake.lock — `nix run home-manager` (the
+# old form) resolves the GLOBAL REGISTRY's floating master, a version
+# skew against the release-26.05-built activationPackage. Same
+# discipline as the colmena v0.5.0 pin below: the runner follows the
+# lock, never the registry.
 # Home-Manager switch for the policy user on a host.
 [group('deploy')]
 home-switch host:
-    @cd {{ROOT}} && USER=$$(grep -oP 'username\s*=\s*"\K[^"]+' {{SHARED_NIX_PATH}}) && \
-        nix run home-manager -- switch --flake ".#$${USER}@{{host}}"
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{ROOT}}"
+    USER="$(grep -oP 'username\s*=\s*"\K[^"]+' {{SHARED_NIX_PATH}})"
+    [[ -n "${USER}" ]] || { echo "Error: could not parse username from {{SHARED_NIX_PATH}}" >&2; exit 1; }
+    HM_REV="$(jq -r '.nodes["home-manager"].locked.rev' flake.lock)"
+    [[ -n "${HM_REV}" ]] || { echo "Error: no home-manager rev in flake.lock" >&2; exit 1; }
+    nix run "github:nix-community/home-manager/${HM_REV}" -- switch --flake ".#${USER}@{{host}}"
 
 # ── Colmena deploy verbs ──────────────────────────────────────────
 # The remote-deploy lane: `just deploy <host>` pushes the SAME closures

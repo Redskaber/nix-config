@@ -17,7 +17,7 @@ core value of CI:
    nixos-rebuild does)
 2. **Deep evaluation** — face-sharded enforcement (T15.1): the api envelope +
    per-host toplevel drvPath + misc checks + completeness reconciliation
-   (all 108 checks must be owned by a plane or the misc inventory; the
+   (all 109 checks must be owned by a plane or the misc inventory; the
    single-process `nix flake check` has been retired because of its
    memory-accumulation floor)
 3. **Secret integrity + supply chain** — verify that the encrypted files are
@@ -25,7 +25,7 @@ core value of CI:
    GitHub Actions reference is pinned to a 40-hex commit SHA (the T16.1
    machine contract: an unpinned reference fails-fast red in the Security
    Audit leg, and a tampered upstream tag cannot affect this pipeline)
-4. **Test coverage** — 102 tests covering the smoke/nixos/home/lib/integration/nmt
+4. **Test coverage** — 103 tests covering the smoke/nixos/home/lib/integration/nmt
    planes
 5. **Automated updates** — every Sunday, automatically update the flake
    inputs and open a PR

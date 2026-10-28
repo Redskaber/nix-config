@@ -1,6 +1,6 @@
 # @path: ~/projects/configs/nix-config/lib/shared/lang/schema.nix
 # @author: redskaber
-# @datetime: 2026-04-23
+# @datetime: 2026-10-28
 # @description: lib::shared::lang::schema
 # @directory: https://nix.dev/manual/nix/2.33/command-ref/new-cli/nix3-flake.html
 # - nix core information configuration
@@ -117,6 +117,54 @@ let
       i18n = applyI18n return_shared.i18n;
     };
 
+  # The FLEET-layer validator — the three-layer chain (fleet → role
+  # → host) split the policy keys across layers, and each layer owns
+  # its own contract:
+  #
+  #   · class keys (platform) belong to the HOST layer;
+  #   · form strategies (window-manager / display-manager / the four
+  #     set keys / service-profile) belong to the ROLE layer;
+  #   · identity, majority defaults and the `roles` registry belong
+  #     HERE, to the fleet.
+  #
+  # The loader (`lib/shared/default.nix`) re-validates the MERGED
+  # result through `schema.shared` — the full 18-key contract still
+  # holds downstream; this validator is what the fleet file checks
+  # ITSELF against (the pre-layering era called `schema.shared` on
+  # the base policy directly, which now fails fast by design: the
+  # fleet layer is deliberately class-less).
+  fleet =
+    {
+      arch,
+      drive,
+      sound,
+      pointer-cursor,
+      version,
+      editor,
+      devDir,
+      hostName,
+      # The management plane — one row per host. Law E (the roles
+      # test) pins the registry to the hosts/ directory, both
+      # directions; a fleet without a registry is a loader throw,
+      # this validator makes it a declared requirement too.
+      roles,
+      user,
+      git,
+      rbw,
+      time,
+      i18n,
+      secrets,
+      nixpkgs,
+      ...
+    }@return_fleet:
+    # Same nested composition as schema.shared — the i18n defaults
+    # materialise at the fleet boundary too (the `@` capture alone
+    # would not splice them back; see applyI18n above).
+    return_fleet
+    // {
+      i18n = applyI18n return_fleet.i18n;
+    };
+
 in
 {
   inherit
@@ -128,5 +176,6 @@ in
     secrets
     nixpkgs
     shared
+    fleet
     ;
 }

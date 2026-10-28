@@ -100,13 +100,23 @@ break at runtime with an eval-healthy configuration — the fcitx5 incident
 
 ## 6. Host scoping
 
-- `hosts/<host>/shared.nix` (optional) overrides the base policy for that
-  host; keys replace wholesale (enum instances are attrsets — a recursive
-  merge would corrupt their strategy payloads).
+- The policy chain is three layers — fleet (`shared.nix`, identity +
+  majority defaults + the `roles` registry) ⊕ role (the enum.nix
+  `role` table's strategy bundle, selected by the registry row) ⊕
+  host (`hosts/<host>/shared.nix`, class + hardware +
+  specialisation). Later layers win; keys replace wholesale (enum
+  instances are attrsets — a recursive merge would corrupt their
+  strategy payloads). Role rows carry strategy keys only (Law F:
+  the `role-policy-keys` whitelist — identity keys belong to fleet,
+  class keys to host; violations throw at the merge point).
 - `hostName` inside the merged policy is force-aligned to the host whose
   directory was loaded: the platform customs route host facts via
   `../../hosts/${shared.hostName}` (one level deeper since T5.7 moved the
   system trees under `platform/`).
-- Adding a machine = `mkdir hosts/<name>` (+ optional `shared.nix` for policy
-  overrides, + machine-fact files as data: `facter.json` / `disk.nix` /
-  `persist.nix`, T5.12–T5.14); the flake enumerates `hosts/` itself.
+- Adding a machine = one registry row in `shared.nix`
+  (`roles.<name> = shared.enum.role.<shape>`) + `mkdir hosts/<name>`
+  (+ `shared.nix` for class/hardware/specialisation keys, + machine-fact
+  files as data: `facter.json` / `disk.nix` / `persist.nix`, T5.12–T5.14);
+  the flake enumerates `hosts/` itself, and the registry↔directory
+  zero-drift law (tests/lib/shared/roles.nix, Law E) keeps the two
+  faces honest in both directions.

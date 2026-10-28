@@ -19,8 +19,8 @@
      `inherit (inputs.nix-types.lib) enum;`——platform / version /
      arch / portal / window-manager / display-manager / sound / shell /
      drive-group / editor / editor-set / terminal-set / browser-set /
-     app-set / service-profile / pointer-cursor，共 16 张在役策略表
-     （drive 表以注释留位），全部以 enum ADT 构造（载荷行携带
+     app-set / service-profile / pointer-cursor / role，共 17 张在役策略表
+     （drive 表以注释留位；role 表即三层策略链的角色层），全部以 enum ADT 构造（载荷行携带
      caps 向量、策略函数、集合路由）。
   2. **Result 铁路**：`lib/shared/lang/validate.nix` 与
      `lib/shared/runtime/default.nix`

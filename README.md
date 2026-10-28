@@ -92,10 +92,14 @@
 ┌──────────▼──────────────────────────────▼──────────────────┐
 │  SHARED LAYER  ·  lib/shared/                              │
 │  两阶段初始化：lang(前端) → runtime(IR 合成)               │
+│  三层受控合并：fleet(schema.fleet 自检) ⊕ role(Law F       │
+│  白名单) ⊕ host(开放) → schema.shared 18 键再验证 +        │
+│  why 逐键溯源                                              │
 │  目标工厂 targets.nix：hosts/ 清单 → caps 分类 →           │
-│  nixos / darwin / standalone-HM 三类 closure 发射器        │
-│  + 两个 toplevel 投影面（R31 迁入）；链接层 faces.nix：    │
-│  checks 五门聚合 / module-docs / pdsh / tests 单次构造     │
+│  nixos / darwin / standalone-HM / colmena Hive 四          │
+│  closure 发射器 + 两个 toplevel 投影面（R31 迁入）；       │
+│  链接层 faces.nix：checks 五门聚合 / module-docs / pdsh /  │
+│  tests 单次构造                                            │
 │  （生产端：faces.nix 只写 inherit (targets) …；            │
 │   策略 IR 每主机单实例化）                                 │
 │  const.nix = 身份 SSOT（fleet cache：三面按值分发 +        │
@@ -110,7 +114,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 102 tests + 6 仓库卫生门 = 108 checks            │
+│  6 平面 · 103 tests + 6 仓库卫生门 = 109 checks            │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -118,8 +122,11 @@
 **数据流向（管道）：**
 
 ```
-shared.nix (策略)
-    ↓ just shared-generate
+shared.nix (fleet 层策略：身份 · 多数派默认 · roles 注册表——schema.fleet 16 键自检)
+    ↓ just shared-generate（模板 → 生成物，覆盖写入）
+hosts/<h>/shared.nix (host 层：类键 + 特化，可选文件、开放逃生舱)
+    ↓ lib/shared/default.nix 三层受控合并：fleet ⊕ role(enum.nix 表，Law F 白名单) ⊕ host
+      · schema.shared 全 18 键契约再验证 · hostName 强制对齐 · why 逐键溯源
 lib/shared (两阶段初始化：lang → runtime)
     ↓ specialArgs / extraSpecialArgs
 lib/shared/targets.nix (目标工厂：hosts/ 清单 → caps 分类 → 发射器)
@@ -162,7 +169,7 @@ lib/shared/lang/const.nix —— 身份 SSOT（shared.const.cache.fleet）
 | 原则         | 体现                                                                                                          |
 | ------------ | ------------------------------------------------------------------------------------------------------------- |
 | **依赖倒置** | `lib/shared` 定义抽象 schema/enum，上层模块依赖抽象接口而非具体实现；`shared` 作为 specialArgs 注入           |
-| **管道流**   | `shared.nix → lib/shared → targets → flake → platform/home → modules` 单向数据流，无反向依赖；三段式镜像编译器管道：lang（frontend）→ runtime（IR 合成）→ targets.nix（codegen） |
+| **管道流**   | `shared.nix → lib/shared → targets → flake → platform/home → modules` 单向数据流，无反向依赖；三段式镜像编译器管道：lang（frontend）→ runtime（IR 合成）→ targets.nix（codegen）；三层策略链各持其校验器——fleet 自检 `schema.fleet`（16 键，无类键）、role 行闭集于 Law F、host 层开放（唯一无白名单层），加载器对合并结果以 `schema.shared`（18 键）再验证并逐键记录 `why` 溯源；深度版见 [mechanisms §0](docs/architecture/mechanisms.md) |
 | **层级化**   | entry / host-dispatch / system / user / shared / secret / test 七层，职责不交叉，层间通过 `shared` 通信       |
 | **增量模式** | 每个子目录均为独立模块，可单独启用/禁用；`imports` 列表即模块注册表                                           |
 | **策略管理** | `shared.nix` 集中声明 platform · drive · wm · dm · shell · editor 等所有策略选项，单一真相源                  |
@@ -263,7 +270,7 @@ flake（nix-types · pdshell · configuration-orchestrator · commit-config 及�
 | --- | --- | --- |
 | 1 | 共享层 · 两阶段初始化 | `lang`（前端：类型/枚举/schema，无 pkgs）→ `runtime`（IR 合成：caps/pkgs/i18nScope）；scfpath 可覆盖，多机器各自策略 |
 | 2 | 策略层 · shared.nix 生成 | 模板 + 覆盖写入（不可 sed 原地 patch）；单一策略真相源 |
-| 3 | 分发层 · targets.nix | hosts/ 清单 → caps 分类 → nixos/darwin/standalone-HM 三类 closure 发射器 + 两个 toplevel 投影面（R31）；链接层 faces.nix 只 `inherit` 成品，flake.nix 一行委托 |
+| 3 | 分发层 · targets.nix | hosts/ 清单 → caps 分类 → nixos/darwin/standalone-HM/colmena Hive 四 closure 发射器 + 两个 toplevel 投影面（R31）；链接层 faces.nix 只 `inherit` 成品，flake.nix 一行委托 |
 | 4 | 开发环境管道 · pdshell | 每语言一目录的 devShell 工厂；四阶段钩子；combinFrom 组合 |
 | 5 | 安全层 · SOPS + Age | TMPL → KEY → RULE → PLAIN → CIPHER → /run/secrets 六相分层 |
 | 6 | 配置编排器 · orc | wallust 主题色跨应用注入（activation hook，含 waybar 主题重载） |
@@ -342,14 +349,14 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **108 checks = 102 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**（计数与 TOC 导航由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移、TOC 死链/孤儿节即 CI 红灯；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **109 checks = 103 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**（计数与 TOC 导航由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移、TOC 死链/孤儿节即 CI 红灯；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
 | Smoke       | `test_`        | 1      | QEMU           | 基本系统完整性                 | ~1 min   |
 | NixOS       | `nixos_`       | 30     | QEMU           | platform/nixos/* 模块 + 系统服务 | 2–10 min |
 | HM          | `home_`        | 42     | QEMU           | home/* 包安装 + 运行时行为     | 2–8 min  |
-| Lib         | `lib_`         | 12     | QEMU 256MB min | lib/shared 纯 Nix 表达式（含 orc 消费契约 + include-intent 守卫契约 + pdshell 加载器契约，T28/T30/T31） | <1 min   |
+| Lib         | `lib_`         | 13     | QEMU 256MB min | lib/shared 纯 Nix 表达式（含 orc 消费契约 + include-intent 守卫契约 + pdshell 加载器契约 + roles 三层链契约，T28/T30/T31/R4） | <1 min   |
 | Integration | `integration_` | 1      | QEMU full      | NixOS + HM 联合激活            | 5–15 min |
 | **nmt**     | `nmt_`         | **16** | **✗ 零 VM**    | HM dotfile 内容断言（纯 eval） | <10 s    |
 
@@ -413,9 +420,9 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 108 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 109 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-4. **测试覆盖** — 102 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 103 tests 覆盖 nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（10 阶段，最大并行）
@@ -439,7 +446,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]      深层求值（硬门禁，面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （108 checks 必须被平面或杂项清单拥有——新测试
+    │           （109 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试）
@@ -661,6 +668,9 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 - [x] devShells 腿成员枚举数据驱动
 - [x] hosts/nixos facter 迁移的仓库侧全量落地
 - [x] colmena 部署面落地
+- [x] 管线参考卡与同类对比入册（pipeline.md · comparison.md 中英,R9）
+- [x] 对象结构视图与四发射器对齐（六文件中英 ×14 修正,R10）
+- [x] 横切维度入册与 overview 同步核对（pipeline.md §4 依赖/密钥/用户交互/外置配置 × 中英,R11）
 
 ---
 
@@ -673,6 +683,8 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 | 受众 | 文档 | 内容 |
 | --- | --- | --- |
 | 架构理解 | [architecture/mechanisms.md](docs/architecture/mechanisms.md) | 核心机制十一层内幕 |
+| 管线参考 | [architecture/pipeline.md](docs/architecture/pipeline.md) | 编译器管线 pass 参考卡 · 分层×阶段桥接 · 横切维度（依赖/密钥/用户交互/外置配置）· 不变量 |
+| 同类对比 | [architecture/comparison.md](docs/architecture/comparison.md) | 同类项目 16 维评分快照 · 交叉学习清单 |
 | | [architecture/tree.md](docs/architecture/tree.md) | 完整注释树 |
 | | [architecture/dependency-graph.md](docs/architecture/dependency-graph.md) | 47 inputs 依赖图 |
 | | [architecture/external-repos.md](docs/architecture/external-repos.md) | 外置仓库分层分类（四类 × 四仓） |

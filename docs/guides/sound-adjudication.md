@@ -109,13 +109,19 @@ socket + env 两探针已足以裁决。）
 ## 4. 预裁决与一行翻转（已预置）
 
 两台主机的预裁决均为 **`none`**（依据：§2/§3 架构事实 + 各自机器
-故事）。翻转行已以注释形式**预置**在主机文件中，裁决被真机证据确认
-后即为一行数据变更：
+故事）。三层策略链（fleet → role → host，R4）后，翻转落点是 **role 表
+的 console 族行**——vm（server）与 nixos-wsl（console）的形态都由
+console-form 策略束供应，真机证据确认裁决后即为一行数据变更：
 
 ```nix
-# hosts/vm/shared.nix · hosts/nixos-wsl/shared.nix
-sound = shared.enum.sound.none;
+# lib/shared/lang/enum.nix · console-form 策略束
+sound = sound.none;   # fleet 默认 pipewire 被角色翻转——两台主机一处生效
 ```
+
+（fleet 基线 `shared.nix` 保留 `sound = pipewire` 作为舰队默认；
+wsl 同属 console 束，若其 WSLg 探针同样命中矩阵行则随束翻转，
+不随则把 wsl 的注册表行改指携带 `sound = pipewire` 的自定义
+role 行——主机特化永远只差一键。）
 
 翻转是数据，不是文件重写——控制台主机声明不同的行，整栈（pipewire +
 wireplumber + rtkit + ALSA 持久化 + pamixer/pavucontrol 工具带）整体

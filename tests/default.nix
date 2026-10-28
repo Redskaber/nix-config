@@ -249,6 +249,13 @@ let
     # production handle shared.pdshells × faces.nix's argument
     # record, verbatim.
     lib_shared_pdshell = nixosTest ./lib/shared/pdshell.nix;
+
+    # The three-layer policy chain contract (fleet → role → host):
+    # Law E (registry ↔ hosts/ zero drift, both directions), Law F
+    # (role rows carry strategy keys only), per-host equivalence
+    # locks for the migration, the P1.5 console bias fix, and the
+    # `why` provenance stamps.
+    lib_shared_roles = nixosTest ./lib/shared/roles.nix;
   };
 
   # ══════════════════════════════════════════════════════════════════

@@ -131,14 +131,22 @@ attribution wording in the comment, not the conclusion.
 ## 4. Pre-adjudication and the one-line flip (pre-staged)
 
 Both hosts' pre-adjudication is **`none`** (basis: the §2/§3 architectural
-facts + each machine's story). The flip lines are **pre-staged** as comments
-in the host files; once the adjudication is confirmed by real-machine
-evidence, it becomes a one-line data change:
+facts + each machine's story). With the three-layer policy chain
+(fleet → role → host, R4) the flip's landing zone is **the console-family
+row of the role table** — both vm (server) and nixos-wsl (console) take
+their form from the console-form strategy bundle, so once the adjudication
+is confirmed by real-machine evidence it is a one-line data change:
 
 ```nix
-# hosts/vm/shared.nix · hosts/nixos-wsl/shared.nix
-sound = shared.enum.sound.none;
+# lib/shared/lang/enum.nix · the console-form strategy bundle
+sound = sound.none;   # the fleet default (pipewire) flipped by the role — one edit, both hosts
 ```
+
+(The fleet base `shared.nix` keeps `sound = pipewire` as the fleet
+default; wsl shares the console bundle — if its WSLg probe also hits a
+matrix row it flips with the bundle, otherwise point wsl's registry row
+at a custom role row carrying `sound = pipewire` — specialisation stays
+one key away.)
 
 The flip is data, not a file rewrite — a console host declares a different
 row and the whole stack (pipewire + wireplumber + rtkit + ALSA persistence +

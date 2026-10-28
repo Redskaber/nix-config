@@ -29,10 +29,28 @@ flake-update-not-sops:
 flake-update-configs:
     @cd {{ROOT}} && nix flake update $(nix eval .#api.inputs --json --no-warn-dirty | jq -r 'keys[] | select(endswith("-config"))')
 
-# Dry-run update: show what would change without modifying flake.lock.
+# Nix has NO --dry-run flag for `nix flake update` — the old one-liner
+# died with 'unrecognised flag' on every Nix that ever shipped it
+# (verified on the pinned 2.35). The real dry-run is a throwaway copy:
+# run the actual update in a temp dir, diff the resulting lock against
+# the working tree, discard. (The update reads flake.nix's input
+# declarations and flake.lock's current state only — it never
+# evaluates outputs, so the two-file copy is a complete stand-in.)
+# Dry-run update: preview what `just flake-update-all` would change, without touching flake.lock.
 [group('flake')]
 flake-update-dry:
-    @cd {{ROOT}} && nix flake update --dry-run
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{ROOT}}"
+    TMP="$(mktemp -d)"
+    trap 'rm -rf "${TMP}"' EXIT
+    cp flake.nix flake.lock "${TMP}/"
+    ( cd "${TMP}" && nix flake update )
+    if diff -u flake.lock "${TMP}/flake.lock"; then
+        echo "dry-run: flake.lock would not change."
+    else
+        echo "dry-run: the diff above is what 'just flake-update-all' would commit."
+    fi
 
 # Show locked versions of all inputs in flake.lock (read-only).
 [group('flake')]

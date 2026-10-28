@@ -688,6 +688,103 @@ let
     "Bibata-Original-Ice-Right"
   ];
 
+  # ── Role table (the 17th) — fleet-shape strategy bundles ──────
+  #
+  # The middle layer of the policy chain:
+  #
+  #   fleet (shared.nix)  ⊕  role (this table, via the fleet registry)
+  #                       ⊕  host (hosts/<h>/shared.nix)
+  #
+  # A role row answers "what KIND of machine is this" with a
+  # strategy BUNDLE: the form keys every machine of that shape
+  # shares. Composition over override (the Kustomize doctrine):
+  # adding a console host means ONE registry row — the form arrives
+  # as data, not as eight override keys copied into the host file.
+  # Specialisation stays one key away: the host layer wins the
+  # merge over any role key (pets, not cattle).
+  #
+  # Boundary (Law F, role-policy-keys below): role rows carry
+  # STRATEGY keys only. Identity keys (user/git/rbw/…) belong to
+  # the fleet layer; class keys (platform/arch) belong to the host
+  # layer; hostName belongs to the loader. The merge point
+  # (lib/shared/default.nix) throws on any key outside the
+  # whitelist, with the offending keys named.
+  #
+  # The debt #9 flip lands here when the real-machine adjudication
+  # arrives (docs/guides/sound-adjudication.md): add
+  # `sound = sound.none;` to the console family rows and every
+  # console host subtracts the whole audio stack in ONE edit.
+  console-form = {
+    window-manager = window-manager.none;
+    display-manager = display-manager.none;
+    # No discrete GPU on console forms — QEMU virtual adapters and
+    # the WSL kernel interface both take the amd row as their
+    # Null-Object shape.
+    drive = drive-group.amd;
+    editor-set = editor-set.minimal;
+    terminal-set = terminal-set.kitty-only;
+    browser-set = browser-set.cli-only;
+    app-set = app-set.none;
+    # The P1.5 behaviour fix: console machines previously ran
+    # dev-on-demand as an inheritance artefact of the pre-role
+    # baseline (a WSL distro silently installed four databases it
+    # never asked for). The role now says what the shape always
+    # meant — minimal.
+    service-profile = service-profile.minimal;
+  };
+
+  role = enum "role" {
+    # The desktop workstation: full form stacks, dev services on
+    # demand.
+    workstation = {
+      window-manager = window-manager.hyprland;
+      display-manager = display-manager.ly;
+      editor-set = editor-set.dev;
+      terminal-set = terminal-set.both;
+      browser-set = browser-set.all;
+      app-set = app-set.full;
+      service-profile = service-profile.dev-on-demand;
+    };
+    # Console form: no compositor, no login greeter, lean sets, no
+    # grab-bag app trees, minimal services.
+    console = console-form;
+    # Server form: the console shape with a database heart —
+    # postgresql installed AND autostarted, everything else off.
+    server = console-form // {
+      service-profile = service-profile.server-pg-only;
+    };
+    # Laptop (the darwin machine): terminal-shaped, keeps the
+    # cross-platform document/reading/re trees; Aqua owns the
+    # compositor AND the session start, so BOTH the wm and the dm
+    # rows are the Null-Object (a greeter is a Linux concept —
+    # darwin never consumes it, but the merged policy must still
+    # answer the schema's mandatory axis).
+    laptop = {
+      window-manager = window-manager.none;
+      display-manager = display-manager.none;
+      editor-set = editor-set.minimal;
+      terminal-set = terminal-set.kitty-only;
+      browser-set = browser-set.cli-only;
+      app-set = app-set.lean;
+      service-profile = service-profile.minimal;
+    };
+  };
+
+  # Law F — the CLOSED whitelist of keys a role row may carry.
+  # Anything else in a role payload is a layering violation and
+  # the loader throws on it at the single merge point.
+  role-policy-keys = [
+    "window-manager"
+    "display-manager"
+    "sound"
+    "drive"
+    "editor-set"
+    "terminal-set"
+    "browser-set"
+    "app-set"
+    "service-profile"
+  ];
+
 in
 {
   inherit
@@ -706,5 +803,7 @@ in
     app-set
     service-profile
     pointer-cursor
+    role
+    role-policy-keys
     ;
 }

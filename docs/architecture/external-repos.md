@@ -17,7 +17,7 @@
 | 自有非 flake 源 | 23 | commit-config（提交工具链）+ 22 × `*-config`（dotfiles 外置：fcitx5 / nvim / emacs / kitty / hypr / waybar / …，全量清单见 README §目录结构 第 8 行） | orc 编排进 home 闭包 |
 
 **47 vs 46 的计数口径**：README 锚点句与 docs-ssot 门求值的是
-`builtins.attrNames inputs`（47）；文本 grep `.url = ` 只数到 46——
+`builtins.attrNames inputs`（47）；文本 grep `.url =` 只数到 46——
 `hyprland-plugins` 是纯 follows input（无 `.url`，只携带
 `inputs.hyprland.follows`，与 hyprland 插件生态共享同一棵 nixpkgs
 实例）。两个数字都对，口径不同；仓库内引用一律以 **47**（求值面/
@@ -54,9 +54,9 @@ tests（Plane 5，零 VM）             nmt（模块系统测试框架）
   策略表的 enum 化与 Result 铁路都必须在求值早期可用——nix-types 的
   零依赖性使其成为唯一能进 Phase 1 的外部库。
 - **消费面**（一手锚点）：`lib/shared/lang/tools.nix:24`（短别名
-  `nt` 注册）→ `lang/enum.nix:9`（16 张策略表）、`lang/validate.nix:49`
-  + `runtime/default.nix:22`（Result 铁路）、`platform/nixos/system/wm/hyprland/plugins/default.nix:18`
-  + `platform/nixos/home/wm/hyprland/default.nix:88`（match 穷尽分派）。
+  `nt` 注册）→ `lang/enum.nix:9`（17 张策略表，含 role 角色表）、`lang/validate.nix:49`
+  - `runtime/default.nix:22`（Result 铁路）、`platform/nixos/system/wm/hyprland/plugins/default.nix:18`
+  - `platform/nixos/home/wm/hyprland/default.nix:88`（match 穷尽分派）。
 - **测试安全网**：`tests/lib/shared/lang/`（enum/validate 的行为
   契约）+ `tests/lib/shared/lang/version.nix`（版本身份契约）。
 

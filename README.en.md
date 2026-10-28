@@ -92,9 +92,12 @@ The system follows a strictly layered pipeline architecture: every layer has a s
 ┌──────────▼──────────────────────────────▼──────────────────┐
 │  SHARED LAYER  ·  lib/shared/                              │
 │  two-stage init: lang (frontend) → runtime (IR synthesis)  │
+│  controlled 3-layer merge: fleet (schema.fleet             │
+│  self-check) ⊕ role (Law F whitelist) ⊕ host (open)        │
+│  → schema.shared 18-key re-validation + per-key why        │
 │  target factory targets.nix: hosts/ inventory → caps       │
-│  classification → three closure emitters: nixos / darwin / │
-│  standalone-HM + two toplevel projections;                 │
+│  classification → four closure emitters: nixos / darwin /  │
+│  standalone-HM / colmena Hive + two toplevel projections;  │
 │  the link layer faces.nix: five-gate checks / module-docs /│
 │  pdsh / tests built once (production: faces.nix writes only│
 │  inherit (targets) ...; policy IR once per host)           │
@@ -110,7 +113,7 @@ The system follows a strictly layered pipeline architecture: every layer has a s
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 planes · 102 tests + 6 repo hygiene gates = 108 checks  │
+│  6 planes · 103 tests + 6 repo hygiene gates = 109 checks  │
 │         · nmt (zero VM) + QEMU · CI whole-plane handoff    │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -118,8 +121,12 @@ The system follows a strictly layered pipeline architecture: every layer has a s
 **Data flow (the pipeline):**
 
 ```
-shared.nix (policy)
-    ↓ just shared-generate
+shared.nix (fleet-layer policy: identity · majority defaults · the roles
+            registry — schema.fleet 16-key self-check)
+    ↓ just shared-generate (template → artifact, overwrite in place)
+hosts/<h>/shared.nix (host layer: class keys + specialisation; optional file, the open escape hatch)
+    ↓ lib/shared/default.nix controlled three-layer merge: fleet ⊕ role (enum.nix table, Law F whitelist) ⊕ host
+      · schema.shared full 18-key re-validation · hostName force-alignment · per-key why provenance
 lib/shared (two-stage init: lang → runtime)
     ↓ specialArgs / extraSpecialArgs
 lib/shared/targets.nix (target factory: hosts/ inventory → caps classification → emitters)
@@ -163,7 +170,7 @@ lib/shared/lang/const.nix — identity SSOT (shared.const.cache.fleet)
 | Principle | How it shows up |
 | ------------ | ------------------------------------------------------------------------------------------------------------- |
 | **Dependency inversion** | `lib/shared` defines the abstract schema/enum; upper-layer modules depend on the abstract interface, not on concrete implementations; `shared` is injected as specialArgs |
-| **Pipeline flow** | `shared.nix → lib/shared → targets → flake → platform/home → modules` — a one-way data flow with no reverse dependencies; a three-stage mirror-compiler pipeline: lang (frontend) → runtime (IR synthesis) → targets.nix (codegen) |
+| **Pipeline flow** | `shared.nix → lib/shared → targets → flake → platform/home → modules` — a one-way data flow with no reverse dependencies; a three-stage mirror-compiler pipeline: lang (frontend) → runtime (IR synthesis) → targets.nix (codegen); each layer of the three-layer policy chain holds its own validator — the fleet self-checks against `schema.fleet` (16 keys, class-less), role rows are closed by Law F, and the host layer is open (the only layer without a whitelist), while the loader re-validates the merged result against `schema.shared` (18 keys) and records per-key `why` provenance; deep dive in [mechanisms §0](docs/en/architecture/mechanisms.md) |
 | **Layering** | entry / host-dispatch / system / user / shared / secret / test — seven layers with non-overlapping responsibilities; layers communicate through `shared` |
 | **Incremental model** | Every subdirectory is an independent module that can be enabled/disabled on its own; the `imports` list is the module registry |
 | **Policy management** | `shared.nix` centrally declares every policy option — platform · drive · wm · dm · shell · editor — as a single source of truth |
@@ -264,7 +271,7 @@ Eleven mechanisms, one deep-dive paragraph each ([docs/en/architecture/mechanism
 | --- | --- | --- |
 | 1 | Shared layer · two-stage initialization | `lang` (frontend: types/enums/schema, no pkgs) → `runtime` (IR synthesis: caps/pkgs/i18nScope); scfpath is overridable, so each machine carries its own policy |
 | 2 | Policy layer · shared.nix generation | Template + overwrite-write (no in-place sed patching); the single source of truth for policy |
-| 3 | Distribution layer · targets.nix | hosts/ inventory → caps classification → three kinds of closure emitters, nixos/darwin/standalone-HM, + two toplevel projection faces; the link layer faces.nix only `inherit`s finished products, and flake.nix delegates in one line |
+| 3 | Distribution layer · targets.nix | hosts/ inventory → caps classification → four kinds of closure emitters, nixos/darwin/standalone-HM/colmena Hive, + two toplevel projection faces; the link layer faces.nix only `inherit`s finished products, and flake.nix delegates in one line |
 | 4 | Dev-environment pipeline · pdshell | A devShell factory with one directory per language; four-stage hooks; combinFrom composition |
 | 5 | Security layer · SOPS + Age | TMPL → KEY → RULE → PLAIN → CIPHER → /run/secrets — a six-phase layering |
 | 6 | Configuration orchestrator · orc | wallust theme colors injected across applications (activation hook, including waybar theme reload) |
@@ -344,14 +351,14 @@ just flake-update-not-sops && just nixos-switch <host>    # routine update (sops
 
 ## Test system
 
-The test suite covers 6 planes, **108 checks = 102 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check** in total (counts and TOC navigation are machine-enforced by `tests/docs-ssot.nix` — a count-anchor drift between the README and test-matrix, or a TOC dead link / orphan section, is an immediate CI red light; for a local quick check you can still run `scripts/sh/test-count.sh`, whose output is reconciled against the CI summary):
+The test suite covers 6 planes, **109 checks = 103 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check** in total (counts and TOC navigation are machine-enforced by `tests/docs-ssot.nix` — a count-anchor drift between the README and test-matrix, or a TOC dead link / orphan section, is an immediate CI red light; for a local quick check you can still run `scripts/sh/test-count.sh`, whose output is reconciled against the CI summary):
 
 | Plane | Prefix | Count | KVM | Focus | Typical duration |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
 | Smoke | `test_` | 1 | QEMU | basic system integrity | ~1 min |
 | NixOS | `nixos_` | 30 | QEMU | platform/nixos/* modules + system services | 2–10 min |
 | HM | `home_` | 42 | QEMU | home/* package installation + runtime behavior | 2–8 min |
-| Lib | `lib_` | 12 | QEMU 256MB min | lib/shared pure Nix expressions (including the orc consumption contract + the include-intent guard contract + the pdshell loader contract) | <1 min |
+| Lib | `lib_` | 13 | QEMU 256MB min | lib/shared pure Nix expressions (including the orc consumption contract + the include-intent guard contract + the pdshell loader contract + the roles three-layer-chain contract) | <1 min |
 | Integration | `integration_` | 1 | QEMU full | NixOS + HM joint activation | 5–15 min |
 | **nmt** | `nmt_` | **16** | **✗ zero VM** | HM dotfile content assertions (pure eval) | <10 s |
 
@@ -415,9 +422,9 @@ See also [`docs/en/tests/test-matrix.md`](docs/en/tests/test-matrix.md) · [`doc
 Every change to nix-config is equivalent to declaring a new system state. The core value of CI:
 
 1. **Evaluation check** — catches Nix syntax/type errors (earlier than a failing nixos-rebuild)
-2. **Deep evaluation** — face-sharded enforcement: the api envelope + per-host toplevel drvPath + misc checks + completeness reconciliation (all 108 checks must be owned by a plane or by the misc list; the single-process `nix flake check` has been retired because of its memory-accumulation floor)
+2. **Deep evaluation** — face-sharded enforcement: the api envelope + per-host toplevel drvPath + misc checks + completeness reconciliation (all 109 checks must be owned by a plane or by the misc list; the single-process `nix flake check` has been retired because of its memory-accumulation floor)
 3. **Secret integrity** — verifies the encrypted-file structure is correct and `secrets/plan/` has not been committed
-4. **Test coverage** — 102 tests covering the nixos/home/lib/integration/nmt planes
+4. **Test coverage** — 103 tests covering the nixos/home/lib/integration/nmt planes
 5. **Automatic updates** — every Sunday, flake inputs are auto-updated and a PR opened
 
 ### The actual pipeline (10 stages, maximum parallelism)
@@ -441,7 +448,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]       deep evaluation (hard gate, face-sharded)
     │       └── face-sharded enforcement: api envelope + per-host toplevel drvPath
     │           + misc checks (docs-ssot/pre-commit) + completeness reconciliation
-    │           (all 108 checks must be owned by a plane or the misc list — a new
+    │           (all 109 checks must be owned by a plane or the misc list — a new
     │           test file that never registers a plane goes red; short-lived
     │           processes replace the single-process flake check: memory safety
     │           + wall clock 120m → est. 15-25m; pure-eval: no magic-nix-cache, infra-signed retry)
@@ -663,6 +670,9 @@ items that need real hardware, an owner decision, or external collaboration, tra
 - [x] devShells-leg member enumeration data-driven
 - [x] hosts/nixos facter migration, repo side fully landed
 - [x] colmena deployment face landed
+- [x] pipeline reference cards & peer comparison on record (pipeline.md · comparison.md zh+en, R9)
+- [x] object-structure view & four-emitter alignment (six files zh+en, 14 fixes, R10)
+- [x] cross-cutting dimensions on record & overview sync check (pipeline.md §4 deps/secrets/UX/external-configs × zh+en, R11)
 
 ---
 
@@ -673,6 +683,8 @@ Deep-dive content is layered by audience into `docs/` — the README keeps only 
 | Audience | Document | Content |
 | --- | --- | --- |
 | Architecture understanding | [architecture/mechanisms.md](docs/en/architecture/mechanisms.md) | The internals of the eleven core mechanisms |
+| Pipeline reference | [architecture/pipeline.md](docs/en/architecture/pipeline.md) | Compiler-pipeline pass cards · layer×stage bridge · cross-cutting dimensions (deps/secrets/UX/external configs) · invariants |
+| Peer comparison | [architecture/comparison.md](docs/en/architecture/comparison.md) | 16-dimension peer scoring snapshot · cross-learning checklist |
 | | [architecture/tree.md](docs/en/architecture/tree.md) | The fully annotated tree |
 | | [architecture/dependency-graph.md](docs/en/architecture/dependency-graph.md) | The 47-input dependency graph |
 | | [architecture/external-repos.md](docs/en/architecture/external-repos.md) | External repos, layered and classified (four roles × four repos) |

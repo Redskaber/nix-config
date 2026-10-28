@@ -5,6 +5,52 @@
 > orc 编排 / 用户环境 / 外部配置仓 / 提交规范 / 多主机 / 按需服务。
 > 概览表见 [README](../../README.md#核心机制)。
 
+### 0. 管线总览 — 编译器形状
+
+仓库自比一台编译器：策略文件是源码，flake outputs 是目标码，`specialArgs` 是
+ABI。全管线单向流动（§1–§3 是各段深度版；与 [README 架构总览](../../README.md#架构总览)互为索引；
+pass 逐段参考卡 · 对象结构视图 · 层×阶段桥接 · 横切维度（依赖/密钥/
+用户交互/外置配置）· 设计不变量 · 变更剧本的规范参考见
+[pipeline.md](pipeline.md)）：
+
+```
+源码     shared.nix             fleet 层：身份 · 多数派默认 · roles 注册表
+         enum.nix `role` 表     role 层：形态策略束（每角一束，Law F 闭集）
+         hosts/<h>/shared.nix   host 层：类键 + 硬件 + 特化（可选文件，开放）
+             ↓
+前端     lib/shared/lang/       const · enum · schema · fn · tools · validate
+                                （策略语言 + 它的类型系统；纯 Nix，零 pkgs）
+             ↓
+中间端   lib/shared/default.nix 三层受控合并 fleet ⊕ role ⊕ host（后层胜）：
+                                · Law F 白名单拦截 role 行越界键
+                                · schema.shared 全 18 键契约再验证合并结果
+                                · hostName 加载器强制对齐目录 · why 逐键溯源
+             ↓
+IR 合成  lib/shared/runtime/    注入 caps · pkgs/upkgs · i18nScope · homeDir ·
+                                orc · pdshell · sops 路径三函数；集合展平
+                                （editors/terminals/browsers/appCategories/services）
+             ↓
+后端     lib/shared/targets.nix readDir hosts/ 发现 → caps 查表分类（永不重
+                                词法分析目标）→ 四发射器（nixos / darwin /
+                                standalone-HM / colmena Hive）+ 两个
+                                toplevel 投影面
+             ↓
+链接     lib/shared/faces.nix   flake outputs 只写 inherit（flake.nix 只剩
+                                输入注册 + 一行委托）
+             ↓
+装载     specialArgs / extraSpecialArgs → platform/ · home/ 模块树 { shared, ... }
+```
+
+**编译器隐喻对照：**
+
+| 编译器概念 | 本仓对应物 |
+| ---------- | ---------- |
+| 前端（词法/语法/语义检查） | `lib/shared/lang/`：enum 构造即穷尽、schema 解构校验器、validate Result 铁路 |
+| 中间端（IR + 优化 pass） | 三层受控合并 + `runtime/` 句柄合成；优化如 CSE（`sharedByHost` 每主机单实例化，T5.10） |
+| 后端（目标码生成） | `targets.nix` 四发射器：按目标描述生成 nixos / darwin / standalone-HM / colmena Hive closure |
+| 目标描述（target triple） | `enum.platform` 行的 caps 能力向量——后续 pass 查表，绝不重词法分析（T4.0） |
+| 链接器（符号装配） | `faces.nix`：checks 五门聚合 / module-docs / pdsh / tests 单次构造（R31） |
+
 ### 1. 共享层 — 两阶段初始化
 
 `lib/shared` 解决了 Nix 中"配置依赖 pkgs，pkgs 依赖配置"的循环问题：
@@ -13,8 +59,8 @@
 阶段一 (lang/):  const(常量) + schema(结构定义) + enum(合法状态与能力表) + fn(纯函数)
                  + tools(外部工具库注册) + validate(Option/Result 铁路)
                  ↓ 纯 Nix 表达式，不依赖 pkgs，可在求值阶段完整验证
-阶段二 (runtime/): base_shared ⊕ hosts/<h>/shared.nix (浅 // 合并 + schema 再验证
-                 + hostName 对齐) → 合成完整 IR
+阶段二 (runtime/): 舰队基线 ⊕ role 束 ⊕ 主机覆盖 (受控合并 + schema 再验证
+                 + hostName 对齐 + why 溯源) → 合成完整 IR
                  ↓ 注入: caps · pkgs/upkgs · i18nScope · homeDir · orc · pdshell
                  · sopsFile/sopsPath/sopsUserPath · editors/terminals/browsers
                  · appCategories · services · shellIntegrations · provenance
@@ -141,7 +187,7 @@ nix eval .#api.inputs --json | jq -r 'keys - ["sops-nix"] | join(" ")'
 
 # CI 构建阶段按平面整面交接（成员 = 同一求值的 thunk，零额外成本）：
 nix eval .#api.checks.planes --apply 'p: builtins.mapAttrs (_: builtins.length) p'
-# → { "home": 42, "integration": 1, "lib": 5, "nixos": 29, "nmt": 15, "smoke": 1 }
+# → { "home": 42, "integration": 1, "lib": 13, "nixos": 30, "nmt": 16, "smoke": 1 }
 ```
 
 ### 2. 策略层 — shared.nix 生成机制
@@ -154,13 +200,72 @@ nix eval .#api.checks.planes --apply 'p: builtins.mapAttrs (_: builtins.length) 
 docs/tmpl/shared.nix.tmpl   手动维护，含 __USERNAME__ 占位符（提交 Git）
     ↓  just shared-generate <username>   (sed 替换 → 覆盖写入)
 shared.nix                  生成产物，覆盖写入，不可 sed patch（提交 Git）
-    ↓  lib/shared/default.nix: 两阶段初始化 + hosts/<h>/shared.nix 浅 // 合并
-fullShared                  运行时合成（lang + user_shared + runtime）
+    ↓  lib/shared/default.nix: 两阶段初始化 + 三层受控合并
+       （fleet 基线 ⊕ role 策略束 ⊕ host 覆盖，见下）
+fullShared                  运行时合成（lang + user_shared + runtime + why 溯源）
     ↓  specialArgs / extraSpecialArgs
 platform/ · home/           通过 { shared, ... } 消费
 ```
 
-**主机策略覆盖（wholesale 语义）：** `hosts/<h>/shared.nix` 是对基记录的**浅整体替换**——顶层键整个换掉，永不深合并（enum 实例是 attrset，深合并会腐蚀策略载荷）；合并后过 schema 再验证，`hostName` 由加载器强制对齐到目录名（在 hosts/foo 里加载却路由到 bar 是不可能的）。基主机（nixos）无覆盖文件——基记录本身就是它的策略。
+**三层策略链（fleet → role → host，受控合并）：** 合并链是 `fleet ⊕ role ⊕ host`——后层胜前层，同层内永不深合并（enum 实例是 attrset，深合并会腐蚀策略载荷）。每层的边界由机器强制：
+
+- **fleet（shared.nix）**——身份与公共常量、多数派默认值，以及 `roles` 注册表（管理面：每主机一行的 role 指派）。
+- **role（enum.nix 第 17 张表）**——形态策略束（wm/dm/drive/编辑器·终端·浏览器·应用集/服务档案），由注册表行选中；**Law F**：role 行只许携带策略键白名单（身份键属 fleet、类键属 host），越界即合并点 throw。
+- **host（hosts/<h>/shared.nix）**——类（platform/arch）+ 硬件 + 特化；胜过任何 role 键（pets 非 cattle，特化永远只差一键）。
+
+合并后过 schema 再验证；`hostName` 由加载器强制对齐到目录名（在 hosts/foo 里加载却路由到 bar 是不可能的）。每键的胜出层被记录在 `shared.why.<key>`（"fleet" | "role" | "host" | "loader"）——git-config `--show-origin` 的求值期等价物。注册表与 hosts/ 目录双向零漂移由 `tests/lib/shared/roles.nix`（Law E）锁定；迁移等价锁与 P1.5 控制台偏置修复同在该测试。
+
+**分层校验器（schema.fleet / schema.shared —— 哪个 schema 在哪里开火）：**
+三层链不共享一个校验器——每层持自己的契约，加载器持合并结果的契约：
+
+| 校验器 | 应用点 | 契约 |
+| ------ | ------ | ---- |
+| `schema.fleet` | fleet 文件**自检**（根 shared.nix 的调用形状，即 `shared.schema.fleet { … }`） | 16 必选键：身份 + 多数派默认 + `roles` 注册表；**刻意无类键**——platform 属 host 层、wm/dm/editor-set/terminal-set/browser-set/app-set/service-profile 7 个形态键属 role 层（sound/drive 虽也是策略轴，但是 fleet 级多数派默认，故在契约内） |
+| `schema.shared` | 加载器对**合并结果**再验证（`lib/shared/default.nix`） | 全 18 必选键：fleet 的 15 个共有键 + platform/window-manager/display-manager 三个类键（`roles` 经省略号透传）——三层合并后仍必须是一份完整策略 |
+| 嵌套子校验器 | `schema.user/git/rbw/time/i18n/secrets/nixpkgs` | lambda 模式匹配的**在场契约**（必选键缺席即 eval 失败）；唯 i18n 携带真默认值 `nixpkgs-source ? "stable"`（经 applyI18n 拼接实质生效） |
+
+前置分层时代对基策略直接调用 `schema.shared`——现在会在缺类键处 fail-fast
+（设计如此：fleet 层刻意 class-less）。两份键契约由 `tests/lib/shared/lang/schema.nix`
+（`lib_shared_lang_schema`）以 `builtins.functionArgs` 静态锁死：必选键无默认、
+8 个类/形态键缺席于 fleet 模式、i18n 默认值实质到达组合结果。
+
+**host 层开放契约（三层中唯一的白名单豁免层）：** role 行闭集于 Law F、
+fleet 键集由 `schema.fleet` 声明，而 **host 层刻意开放**——机器特化不该被中央
+白名单预先想象，`hosts/<h>/shared.nix` 是逃生舱：
+
+- 文件**可选**（加载器 `pathExists` 探测，缺席即 `{ }`）；与 fleet 文件同一
+  wire protocol——加载器以 `{ shared, inputs }` 调用，参数模式的 `...` 容忍
+  未来额外实参。
+- **任意新键直接透传**：`schema.shared` 的省略号放行，键落入句柄供下游模块
+  消费，`why` 标记 "host"。
+- **任意既有键整体覆盖**：host 胜 `//` 合并（后层胜前层；永不深合并——enum
+  实例是 attrset，深合并会腐蚀策略载荷）。
+- 开放 ≠ 失序，三条不变量仍由机器强制：
+  1. `hostName` 由加载器**强制对齐**目录名——host 层永远赢不了它（硬件路由安全）；
+  2. 18 必选键契约**结构性成立**——`//` 合并只累积不删除，fleet 已供全部必选键，
+     host 层无法「删掉」一个契约键；
+  3. 嵌套结构的校验是**在场级**（lambda 解构）而非深度类型检查——深度校验存在于
+     特定域：secret 路径的 validate Result 铁路（`lib/shared/lang/validate.nix`）、
+     enum 构造即穷尽。
+
+**开放度的跨领域坐标（R7）：**「开放 + 机器强制不变量」而非「默认拒绝」，是
+四个成熟生态里反复出现的同一权衡：
+
+| 系统 | 未知键策略 | 权衡点 |
+| ---- | ---------- | ------ |
+| serde（Rust） | 默认放行；`deny_unknown_fields` 是显式选择 | 前向兼容：新生产者的新字段不破坏旧消费者 |
+| Kubernetes | 服务端字段校验三档 `strict` / `warn` / `ignore` | strict 拒未知键（拼写保护），escape hatch 保留 |
+| TypeScript | 对象字面量 freshness（多余属性报错）；变量赋值不查 | 新鲜字面量在声明点可查；扩散后放弃检查 |
+| 本仓 host 层 | `...` 透传 + 三条不变量 | 可扩展的 shared：自定义键直通句柄，结构安全由不变量保底 |
+
+Postel 定律的批判（Allman《The Robustness Principle Reconsidered》）适用于此：
+「宽于接受」累积的债务必须由**边界上的严格校验**偿还。本仓把严格性放在三层
+各自的契约点——fleet 文件自检（`schema.fleet` 16 键）、role 行闭集白名单
+（Law F）、合并结果 18 键再验证（`schema.shared`）——而非 host 文件本身：host
+文件是「新鲜字面量」，但它的消费者（platform/home 模块树）按需解构，关闭未
+知键会杀死「用户自定义任意 key」的扩展性（与 serde 默认放行同因）。发现问题
+靠可观测性（`why` 逐键溯源）而非封闭；可选的 future 硬化是 Levenshtein 拼写
+建议（git 与 nix 自身的 did-you-mean 先例）。
 
 **可配置枚举（lib/shared/lang/enum.nix）：**
 
@@ -181,6 +286,7 @@ platform/ · home/           通过 { shared, ... } 消费
 | `service-profile` | `full-autostart` · `dev-on-demand` · `server-pg-only` · `minimal`（策略携带，控制 db/virt 的 install vs autostart）                                                                                                                                                                                                                             |
 | `pointer-cursor`  | `Bibata-Modern-Amber` 等 12 个 Bibata 变体                                                                                                                                                                                                                                                                                                    |
 | `version`         | `v25_11`（携带 `{stateVersion, wine, swww, adb}` 策略） · `v26_05`（同构）                                                                                                                                                                                                                                                                          |
+| `role`            | `workstation` · `console` · `server` · `laptop`（第 17 张表，R4 三层链中间层——每行携带形态策略束：wm/dm/drive/编辑器·终端·浏览器·应用集/服务档案；`server` = console 束 + server-pg-only；由 fleet 注册表指派，Law F 白名单越界即 throw）                                                                                                  |
 
 `window-manager` 枚举值内嵌 `portal` 策略，`platform/nixos/system/core/base/portal.nix` 和 `home/core/base/portal.nix` 直接消费：
 
@@ -229,15 +335,16 @@ home.packages = [ … ] ++ (shared.platform.value.trace-tools shared.upkgs);  # 
 
 ```
 前端     hostNames = readDir ../../hosts（仅目录）
-             ↓ 加机器 = mkdir hosts/<name>，零 flake.nix 改动
+             ↓ 加机器 = shared.nix 注册表一行 + mkdir hosts/<name>，零 flake.nix 改动
 中间端   caps 分类（查能力表，永不重词法分析目标）：
              nixosHosts      = caps.nixos-system
              darwinHosts     = caps.darwin
              standaloneHosts = !caps.darwin（darwin standalone 会携带 linux pkgs——结构性排除）
-后端     三类发射器（统一目录引用，语法 v3）：
+后端     四发射器（统一目录引用，目录语法 v4）：
              mkNixosSystem  → modules = [ ../../platform/${tag}/system ] （grammar v4：域地址显式）
              mkDarwinSystem → modules = [ ../../platform/${tag}/system ] （system = arch.tag 参数吸收）
              mkHomeSystem   → modules = [ ../../platform/${tag}/home ]    （门即 payload，arch 退役）
+             mkColmenaNode  → imports = [ ../../platform/${tag}/system ]  （部署视图；nodeSpecialArgs 递 per-host thunk）
 ```
 
 **策略 IR 单实例化（T5.10，分发层 CSE）：** `sharedByHost = genAttrs hostNames mkShared` 单表，分类器/发射器/命名/别名全部读表；默认主机表项 = 基实例（句柄共享，默认主机永不为同一份 IR 付两次钱）；链接层（faces.nix，R31）的基 `shared` 消费 `targets.base`（后端导出已建好的基 IR 句柄）而非二度 import。遗留别名 `<user>-<platform>` 是 attr 级 thunk 别名（共享同一闭包，非重发射）。
@@ -252,6 +359,73 @@ inherit (targets) colmenaHive;           # 部署面（colmena 0.5+）
 inherit (targets) hostToplevels;         # api.host-toplevels 的 Linux toplevel 投影（R31）
 inherit (targets) darwinToplevels;       # api.darwin-toplevels 的 darwin toplevel 投影（R31）
 ```
+
+**命名模型与标识符空间（Law G，R7）：** 目录名是唯一的命名身份来源——
+`hosts/<name>/` 目录名由加载器强制对齐为 `hostName`（`default.nix`），再原样
+成为输出面的键；arch 轴**永不入名**——它是 pkgs 合成的管线值（runtime 以
+`system = arch.tag` 实例化 nixpkgs），不是磁盘上的地址：同平台不同 arch 的
+两台主机 = 两个以各自目录命名的闭包，各携自己的 pkgs 实例（每主机 arch 纪律，
+`mkHomeSystem` 读主机句柄的 pkgs 而非基实例的）。管线只在 `nixosConfigurations`
+上铸造**一个**合成名：遗留别名 `<user>-<platform>`（attr 级 thunk 别名，指向
+基主机闭包）。
+
+| 输出面 | 键 | 唯一性来源 |
+| ------ | -- | ---------- |
+| `nixosConfigurations` | `<目录名>` + 遗留别名 `<user>-<platform>` | 目录名 per-kind 唯一；别名由 Law G 守卫 |
+| `homeConfigurations` | `<user>@<目录名>` | 目录名 × 用户名（host 层可覆写 user，面跟随覆写） |
+| `darwinConfigurations` | `<目录名>` | 目录名 |
+| `colmenaHive.nodes` | `<目录名>`（= nixosHosts） | 目录名（Law D 锁定发射覆盖） |
+
+这是 Kubernetes 的 per-kind 唯一性语义（一个 Deployment 和一个 Service 同名
+不冲突——命名空间按类别划分），也是编译器的符号表语义（同名不同 scope 合法）。
+`nixosConfigurations` 的 `//` 合并是静默 last-wins——若某主机目录恰好与遗留
+别名同名（如 `hosts/kilig-nixos/`），该主机的闭包会被基主机闭包**静默替换**：
+名字继续应答 `nix build .#kilig-nixos`，构建的却是另一台机器的配置——说谎的
+名字，最恶劣的失败模式（编译器对同作用域重声明是硬错误，跨作用域才允许遮蔽；
+`//` 没有这个区分）。Law G 守卫（targets.nix）把这一种重声明变成 eval throw，
+`lib_shared_targets` 命名普查把整张命名模型钉进测试：别名不影子真实主机、三
+面键与清单精确相等、无面名携带 arch tag、hostName 逐台对齐目录。多台不同名
+主机由构造正确处理：readDir 清单 → 每主机单实例化 IR（`sharedByHost`）→ 每
+主机注册表行（Law E 双向零漂移）→ 各自的闭包；`hosts/` 目录名天然唯一（文件
+系统保证），注册表 attrset 字面量重复键是 Nix 语法错误——重名在两个入口都
+无法成立。
+
+**消费动词与别名的多主机语义（R8）：** 名字最终由消费动词解析，三类动词各
+有精确语义：
+
+- `nixos-rebuild --flake .#<attr>` —— 解析为 `nixosConfigurations.<attr>`，
+  attr 必须命中面键（主机目录名或别名）；**无 fragment**（`--flake .`）时
+  nixos-rebuild 以**运行机自身的 hostname** 补全 attr——而加载器已把
+  `networking.hostName` 强制对齐为目录名，无 fragment 形式**按构造正确解析**
+  （在 nixos 机器上 `--flake .` ≡ `.#nixos`）：命名闭环由 force-alignment 完
+  成，不需要任何 hostname→attr 映射表。
+- `.#kilig-nixos` **不是平台选择器**——它是 attr 级 thunk 别名，恒指向**基主
+  机**闭包（fleet 默认 hostName 选中的那台）。"platform nixos 下存在两台
+  host" 是本机群现状而非假想：nixos 与 vm 同平台共存，各自以目录名直接寻址
+  （`.#nixos` / `.#vm`）；别名与 `.#nixos` 的 toplevel **drvPath 逐字节相同**
+  （实测同为 `nixos-system-nixos-26.05.20261007.2efa67f` 派生）——纯度保证
+  的恒等，非重发射。派生名本身携带 hostName（`nixos-system-<hostName>-
+  <version>`），主机身份在 store 层依然可见。前置条件：基主机必须是 nixos
+  类（否则别名求值即 loud fail）；别名是留给 pre-multihost 消费者的兼容面，
+  正典寻址是目录名。
+- `home-manager --flake .#kilig@nixos` —— home 面的键是**两段式坐标**
+  `<user>@<host>`：user 取自该主机自己的策略（host 层可覆写 user，面跟随覆
+  写），host 即目录名。NixOS 主机**双门齐开是政策而非残留**
+  （platform/nixos/home/default.nix 头注）：standalone HM 闭包秒级切换、独立
+  于系统 generation 回滚，系统门管硬件与服务——两个 option 宇宙不共享文件
+  也不共享门。darwin 主机被结构性排除出 standalone 面（`!caps.darwin`——
+  darwin standalone 闭包会携带 linux pkgs），其 HM 以 module mode 随系统闭包
+  装载；wsl 平台只有 home 门（无 system 目录，门即平台的全部活面）。
+
+跨领域坐标（R7 七域之外的补强三域）：**Rust target triple** 社区把三元组当
+**不透明标识符**（"按位切分只是人类启发式"，users.rust-lang 论坛共识）——
+本仓对 arch 的裁决同构：arch 是合成值不是地址，永不入名；**Maven GAV** 坐标
+（groupId:artifactId:version）让名字**从不裸奔**——home 面的 `user@host` 同
+理是坐标式命名（user 域 × host 域，两轴各自可覆写）；**Docker mutable
+tag** 是"说谎的名字"的业界实锤（tag 持续应答而内容漂移，故有 ECR tag
+immutability 与 digest 寻址的补救生态）——Law G 防的正是这个失败模式，而
+Nix 的 thunk 别名 + 内容寻址让别名**在构造上无法说谎**（指向同一派生，恒等
+由纯度保证，与 Docker tag 的可变指针形成对照）。
 
 ### 4. 开发环境管道 — pdshell
 
@@ -550,7 +724,7 @@ just commit-global-rules
 
 ### 10. 多主机支持 — hosts/
 
-`hosts/` 目录实现多主机分发，每台机器独立硬件事实 + 可选 `shared.nix` 覆盖（主机计数锚点在 [README 目录结构](../../README.md#目录结构)；实时清单 `nix eval .#api.hosts`）。
+`hosts/` 目录实现多主机分发，每台机器独立硬件事实 + 可选 `shared.nix` 覆盖（主机计数锚点在 [README 目录结构](../../README.md#目录结构)；实时清单 `nix eval .#api.targets`——`{ hostNames nixosHosts darwinHosts standaloneHosts }`）。
 
 **机器事实的三个文件（T5.12 + T5.13 + T5.14 — 数据 + 解释器路线）：**
 
@@ -636,9 +810,10 @@ HM 路径永不触碰主机系统事实。
 新增主机只需：
 
 ```
-  1. mkdir hosts/<new-hostname>
-  2. just hardware-facter    # 写入 hosts/<hostname>/facter.json（或 hardware-generate 走 legacy）
-  3. 写 hosts/<new-hostname>/shared.nix（策略覆盖；基主机无此文件）
+  1. shared.nix 注册表加一行（roles.<name> = shared.enum.role.<shape>）
+  2. mkdir hosts/<new-hostname>
+  3. just hardware-facter    # 写入 hosts/<hostname>/facter.json（或 hardware-generate 走 legacy）
+  4. 写 hosts/<new-hostname>/shared.nix（类键 + 硬件 + 特化；每主机必备）
 ```
 
 ### 11. 服务按需启动 — service-profile

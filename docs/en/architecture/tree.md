@@ -15,17 +15,22 @@ nix-config/
 │       ├── default.nix     # shared loader: two-stage initialization (scfpath overridable, multi-machine support)
 │       ├── targets.nix     # target factory (production side): hosts/ inventory → caps classification → emitters (nixos /
 │       │                   #   darwin / standalone-HM — the three closure classes + the colmena deployment face + the two
-│       │                   #   toplevel projection faces [hostToplevels / darwinToplevels, migrated from flake.nix in R31])
+│       │                   #   toplevel projection faces [hostToplevels / darwinToplevels, migrated from flake.nix in R31];
+│       │                   #   Law G naming guard: the legacy alias <user>-<platform> never shadows a real host directory)
 │       ├── faces.nix       # link layer (linker, R31): assembles each production side's output onto the flake
 │       │                   #   protocol's output names (checks five-gate aggregation / module-docs factory invocation /
 │       │                   #   pdsh built once / tests imported once / exports aggregation) — flake.nix is down to registration + the one-line delegation
 │       ├── docs.nix        # docs factory (production side): export/ modules → optionsDoc markdown (side-channel emitter)
 │       ├── lang/           # stage one · the language front end: types/enums/schema/validation (no pkgs)
 │       │   ├── default.nix # stage-one aggregation: const + schema + enum + fn + tools + validate
-│       │   ├── enum.nix    # enums and the platform capability table: arch / platform(caps) / wm / dm / shell /
-│       │   │               #   drive-group / editor-set / terminal-set / browser-set / app-set /
-│       │   │               #   service-profile / version / pointer-cursor
-│       │   ├── schema.nix  # structural validation: user / git / rbw / time / i18n / secrets / shared
+│       │   ├── enum.nix    # enums and the platform capability table: arch / platform(caps) / portal / wm / dm /
+│       │   │               #   sound / shell / drive-group / editor / editor-set /
+│       │   │               #   terminal-set / browser-set / app-set / service-profile /
+│       │   │               #   version / pointer-cursor / role (17 enum tables;
+│       │   │               #   role carries the Law F role-policy-keys whitelist)
+│       │   ├── schema.nix  # layered structural validation: user / git / rbw / time / i18n / secrets /
+│       │   │               #   nixpkgs / shared (the 18-key full contract, loader-side) /
+│       │   │               #   fleet (the 16-key fleet-layer contract, deliberately class-less)
 │       │   ├── fn.nix      # pure utility functions: homeDir · sopsBase/sopsFile/sopsRuntimePath ·
 │       │   │               #   pkgsFingerprint · sameSource (the eval-time dual-source guard)
 │       │   ├── const.nix   # constants: secrets paths · permission modes(0400/0440/0600) · XDG directory names
@@ -129,12 +134,12 @@ nix-config/
 ├── overlays/               # nixpkgs overlay: additions(pkgs/) · patches
 ├── pkgs/                   # custom derivations (wslview — the minimal shim after wslu was archived)
 │
-├── tests/                  # the test layer (6 planes, 101 tests + 6 repo-hygiene checks = 107 checks)
+├── tests/                  # the test layer (6 planes, 103 tests + 6 repo-hygiene checks = 109 checks)
 │   ├── default.nix         # the unified registry: all Plane 0–5 checks (nixosTest runner)
 │   ├── test_calc.nix       # Plane 0: the smoke baseline
 │   ├── nixos/              # Plane 1: NixOS-Plane (QEMU VM, 30 tests)
-│   ├── home/               # Plane 2: HM-Plane (QEMU VM + packages, 41 tests)
-│   ├── lib/                # Plane 3: Lib-Plane (pure Nix eval, QEMU 256 MB minimal, 12 tests)
+│   ├── home/               # Plane 2: HM-Plane (QEMU VM + packages, 42 tests)
+│   ├── lib/                # Plane 3: Lib-Plane (pure Nix eval, QEMU 256 MB minimal, 13 tests)
 │   ├── integration/        # Plane 4: Integration-Plane (NixOS + HM combined, 1 test)
 │   ├── fixtures/           # eval-time secret-existence fixtures (pathExists probes)
 │   └── nmt/                # Plane 5: nmt-Plane (zero VM, pure eval, 16 tests)
@@ -160,6 +165,9 @@ nix-config/
 │
 ├── docs/
 │   ├── architecture/       # deep architecture: mechanisms.md (the eleven-layer mechanisms) · tree.md (this file)
+│   │                       #   · pipeline.md (compiler pipeline & layering full reference:
+│   │                       #     pass cards · layer×stage bridge · cross-cutting dimensions · invariants · playbooks)
+│   │                       #   · comparison.md (peer comparison & 16-dimension scoring, a dated snapshot)
 │   │                       #   · dependency-graph.md (moved out during the T13.1 layered refactor)
 │   ├── ci/                 # pipeline.md (the CI/CD deep manual: pre-flight / deployment / generations / automation)
 │   ├── guides/             # quickstart.md (the full six-Phase run) · extending.md (the extension guide)

@@ -331,6 +331,33 @@ let
     builtins.map (h: lib.nameValuePair h (mkDarwinSystem h)) darwinHosts
   );
 
+  # ── Law G (no shadowed names) — the one synthetic name the ──────
+  # pipeline mints, guarded ────────────────────────────────────────
+  # The output namespaces key closures by the hosts/ directory name
+  # (per-kind unique, a symbol table); the legacy alias
+  # `<user>-<platform>` is the ONLY minted name on top of the
+  # inventory — and `//` is silent last-wins. Without a guard, a host
+  # directory named exactly like the alias would be silently REPLACED
+  # by the base host's closure: the name would keep answering
+  # `nixos build .#<alias>` while building a DIFFERENT machine's
+  # config — a lying name, the worst failure mode. Compilers make
+  # same-scope redeclaration a hard error; this is that error. The
+  # alias naming its OWN base host (alias == the default hostName) is
+  # identity, not shadowing, and stays legal.
+  legacyAlias = "${shared.user.username}-${shared.platform.tag}";
+  aliasShadow =
+    if builtins.elem legacyAlias hostNames && legacyAlias != shared.hostName then
+      throw ''
+        lib::shared::targets — the legacy output alias '${legacyAlias}'
+        would shadow a real host: hosts/${legacyAlias}/ exists and is
+        not the base host ('${shared.hostName}'). The alias is reserved
+        (an attr-level thunk of the base host's closure for pre-
+        multihost consumers). Rename the host directory, or change the
+        fleet identity so the alias does not collide. Pinned by the
+        naming census (tests/lib/shared/targets.nix, Law G).''
+    else
+      { };
+
   # The hive: meta carries the evaluation plumbing, one node attr per
   # nixosHost (inventory-driven — a new NixOS host joins the deploy
   # face by construction, same as every other emitter).
@@ -386,8 +413,12 @@ in
     # alias, NOT a re-emission: aliasing shares the one thunk; the
     # values are identical by purity. Precondition: the base host
     # is nixos-class, or this fails at eval (loud and immediate).
-    nixosClosures // {
-      "${shared.user.username}-${shared.platform.tag}" = nixosClosures.${shared.hostName};
+    # Law G rides FIRST in the merge: forcing this attrset's names
+    # forces the shadow check before the alias can silently win.
+    aliasShadow
+    // nixosClosures
+    // {
+      ${legacyAlias} = nixosClosures.${shared.hostName};
     };
 
   # 'nix build .#homeConfigurations.<user>@<host>.activationPackage'

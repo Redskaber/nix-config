@@ -15,6 +15,10 @@
 #   - composition: schema.shared APPLIES the nested i18n
 #     validator — its defaults fire for real (identity for i18n does
 #     NOT hold; the default is materialised into the result).
+#   - layering: schema.fleet (the fleet-layer contract — identity +
+#     majority defaults + the roles registry, NO class/form keys)
+#     accepts the fleet shape and materialises the same i18n
+#     default; the class/form keys stay a schema.shared matter.
 #
 # The negative direction is asserted statically because Nix ≥2.35 lets
 # missing-argument errors ESCAPE builtins.tryEval — a dynamic
@@ -24,6 +28,8 @@
 # Covered (real code paths):
 #   - schema.user / git / rbw / time / i18n identity on valid inputs
 #   - schema.shared requires all 18 mandatory keys (functionArgs)
+#   - schema.fleet requires its 16 fleet keys (functionArgs) —
+#     including `roles`, excluding the 8 class/form keys
 #   - sub-schemas declare their mandatory keys (functionArgs)
 #   - optional keys with defaults (nixpkgs.overlays / config,
 #     i18n.nixpkgs-source — the dual-source declaration)
@@ -94,6 +100,7 @@ let
   # stronger and Nix-2.35-safe: the removal-rejection behaviour of a
   # destructuring validator follows from exactly this declaration.
   sharedArgs = builtins.functionArgs realSchema.shared;
+  fleetArgs = builtins.functionArgs realSchema.fleet;
 
   mandatoryKeys = [
     "arch"
@@ -115,6 +122,40 @@ let
     "secrets"
     "nixpkgs"
   ];
+
+  # The fleet layer's own contract: identity + majority defaults +
+  # the registry. The 8 class/form keys (platform + the role-bundle
+  # strategies) are deliberately NOT here — the loader validates
+  # them on the MERGED result through schema.shared.
+  fleetMandatoryKeys = [
+    "arch"
+    "drive"
+    "sound"
+    "pointer-cursor"
+    "version"
+    "editor"
+    "devDir"
+    "hostName"
+    "roles"
+    "user"
+    "git"
+    "rbw"
+    "time"
+    "i18n"
+    "secrets"
+    "nixpkgs"
+  ];
+
+  # A well-formed FLEET shape (the real shared.nix minus its `shared`/
+  # `inputs` plumbing — values are placeholders; the pattern only
+  # cares about KEYS).
+  validFleet = {
+    inherit (validShared)
+      arch drive sound pointer-cursor version editor devDir hostName
+      user git rbw time i18n secrets nixpkgs
+      ;
+    roles = { nixos = { tag = "workstation"; }; };
+  };
 
   # ── Eval-time assertions ───────────────────────────────────────────
   evalAssertions =
@@ -140,6 +181,18 @@ let
       == builtins.removeAttrs validShared [ "i18n" ];
     # every documented mandatory key is declared required in the REAL pattern
     assert builtins.all (key: builtins.hasAttr key sharedArgs && !sharedArgs.${key}) mandatoryKeys;
+    # the fleet contract: every fleet key declared required, AND the
+    # class/form keys absent from the fleet pattern (layering is the
+    # contract — the fleet is deliberately class-less).
+    assert builtins.all (key: builtins.hasAttr key fleetArgs && !fleetArgs.${key}) fleetMandatoryKeys;
+    assert !builtins.hasAttr "platform" fleetArgs;
+    assert !builtins.hasAttr "window-manager" fleetArgs;
+    assert !builtins.hasAttr "service-profile" fleetArgs;
+    # the fleet validator materialises the same i18n default
+    assert (realSchema.fleet validFleet).i18n.nixpkgs-source == "stable";
+    assert
+      builtins.removeAttrs (realSchema.fleet validFleet) [ "i18n" ]
+      == builtins.removeAttrs validFleet [ "i18n" ];
     # sub-schemas declare their own mandatory keys
     assert (builtins.functionArgs realSchema.user).username == false;
     assert (builtins.functionArgs realSchema.git).email == false;
