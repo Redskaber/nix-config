@@ -186,12 +186,19 @@ let
     home_core_srv_security_gnupg = nixosTest ./home/core/srv/security/gnupg.nix;
 
     # ── home/env/dev ──────────────────────────────────────────────────
+    # One test per dev language directory (the 1:1 source:test
+    # convention for env/dev closed in full — 16 languages, 16 tests).
+    home_env_dev_asm = nixosTest ./home/env/dev/asm/default.nix;
     home_env_dev_c = nixosTest ./home/env/dev/c/default.nix;
     home_env_dev_cpp = nixosTest ./home/env/dev/cpp/default.nix;
     home_env_dev_go = nixosTest ./home/env/dev/go/default.nix;
+    home_env_dev_haskell = nixosTest ./home/env/dev/haskell/default.nix;
     home_env_dev_java = nixosTest ./home/env/dev/java/default.nix;
+    home_env_dev_javascript = nixosTest ./home/env/dev/javascript/default.nix;
+    home_env_dev_lisp = nixosTest ./home/env/dev/lisp/default.nix;
     home_env_dev_lua = nixosTest ./home/env/dev/lua/default.nix;
     home_env_dev_nix = nixosTest ./home/env/dev/nix/default.nix;
+    home_env_dev_ocaml = nixosTest ./home/env/dev/ocaml/default.nix;
     home_env_dev_python = nixosTest ./home/env/dev/python/default.nix;
     home_env_dev_re = nixosTest ./home/env/dev/re/default.nix;
     home_env_dev_rust = nixosTest ./home/env/dev/rust/default.nix;

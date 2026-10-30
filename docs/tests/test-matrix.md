@@ -150,7 +150,7 @@ home/core/exp/sys/base/git.nix
 
 > 合计：base(11 = 6 + i18n_source + samesource + wsl + portal + sound_gate) + impermanence(1) + drive(3) + sec(4) + db(4) + monitor(1) + hardware(2) + log(1) + security(2) + export(1) = **30**
 
-### 3.2 HM-Plane (42 tests)
+### 3.2 HM-Plane (47 tests)
 
 | check                                                                                           | 验证点                           |
 | ----------------------------------------------------------------------------------------------- | -------------------------------- |
@@ -166,10 +166,10 @@ home/core/exp/sys/base/git.nix
 | `home_core_sec`                                                                                 | module parses                    |
 | `home_core_srv_notify_mako`                                                                     | mako + makoctl                   |
 | `home_core_srv_security_gnupg`                                                                  | gpg + gpg-agent                  |
-| `home_env_dev_{c,cpp,rust,go,python,typescript,java,lua,zig,nix,re}`                            | toolchain binary + hello-world   |
+| `home_env_dev_{asm,c,cpp,go,haskell,java,javascript,lisp,lua,nix,ocaml,python,re,rust,typescript,zig}`                 | toolchain binary + hello-world   |
 | `home_export_modules`                                                                          | T5.3 export/ 模块语义求值        |
 
-> 合计：base(3) + i18n_source(1) + editor(1) + sys/base(13 + 3 source) + shell(2 + 1 source) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(11) + export(1) = **42**
+> 合计：base(3) + i18n_source(1) + editor(1) + sys/base(13 + 3 source) + shell(2 + 1 source) + sys/monitor+media+fs(3) + sec(1) + notify(1) + security(1) + env/dev(16) + export(1) = **47**
 
 ### 3.3 Lib-Plane (13 tests)
 
@@ -519,14 +519,14 @@ nix eval .#homeConfigurations  --apply builtins.attrNames --json
 nix eval .#checks.x86_64-linux --apply builtins.attrNames --json
 ```
 
-### 测试计数 (2026-10-10，机器强制：`tests/docs-ssot.nix` — T8.1；本地速查：`scripts/sh/test-count.sh`)
+### 测试计数 (2026-10-30，机器强制：`tests/docs-ssot.nix` — T8.1；本地速查：`scripts/sh/test-count.sh`)
 
 | 平面        | 数量   | KVM   | 备注                                                                    |
 | ----------- | ------ | ----- | ----------------------------------------------------------------------- |
 | Smoke       | 1      | ✓     |                                                                         |
 | NixOS       | 30     | ✓     | base(11=6+i18n_source+samesource+wsl+portal+sound_gate)+drive(3)+sec(4)+db(4)+hardware(2)+log(1)+security(2)+export(1)+monitor(1)+impermanence(1，T5.14：三组独立 nixosSystem 求值锁定回滚配方/单元排序/设备门/neededForBoot/bind mounts/惰性律) |
-| HM          | 42     | ✓     | base(3)+i18n_source(1)+editor(1)+sys/base(13+3 source)+shell(2+1 source)+sys(3)+sec(1)+srv(2)+dev(11)+export(1) |
+| HM          | 47     | ✓     | base(3)+i18n_source(1)+editor(1)+sys/base(13+3 source)+shell(2+1 source)+sys(3)+sec(1)+srv(2)+dev(16)+export(1) |
 | Lib         | 13     | ✓     | enum + fn + schema + caps（T4.0 能力表契约）+ validate（T4.1 Result 铁路）+ targets（T19.1 事实源普查）+ deploy（T21.1 部署面普查）+ overlays（T24.2 overlay 局部性普查）+ version（T25.2 nix-types version 契约——rev 答 where、version 答 what，bump 两文件刻意决定）+ orc（T28 orc wallust copy-emitter 消费契约——七站全契约，首跑抓 swaync 空 activation）+ orc-guard（T30 include-intent 守卫消费契约——三代工具库回路收口：T28 抓缺陷 → T29 守卫回馈上游 05c658f → 本轮消费回来）+ pdshell（T31 加载器消费契约——四库家族收口：census/face/combinFrom/lifecycle/NamedFile 五组，变异双红）+ roles（R4 三层链契约——Law E 注册表↔目录双向零漂移 + Law F role 键白名单 + 迁移等价锁 + P1.5 控制台偏置修复 + why 溯源） |
 | Integration | 1      | ✓     |                                                                         |
 | **nmt**     | **16** | **✗** | exp/sys/base(11)+shell(2)+app/editor(1)+srv(2)；T27.2 +1：ripgrep——fork `--` 守卫的消费级回归证明（leading-dash needle） |
-| **Total**   | **103** |       | VM 86 + nmt 16（另有 6 个仓库卫生 checks：pre-commit-check + docs-ssot-check + testscript-syntax-check + module-reachability-check + platform-grammar-check + cache-ssot-check）→ 109 checks（cache-ssot +1 门：cache-ssot-check——舰队缓存身份漂移门〔身份（名/URL/公钥）单源声明于 lib/shared/lang/const.nix（shared.const.cache.fleet），分发按各面能力：platform/nixos/…/nix.nix + platform/darwin/…/nix + home/core/base/nix.nix（第 30 轮：standalone 用户平面，caps.system-nix 门控）按值消费不可漂移；无法求值的面持钉死字面镜像——CI workflows、cachix.just（YAML/shell 无法 import nix）、cache.md 散文；flake.nix 的 nixConfig 第 27 轮移除——入口层零缓存身份（真实消费面已闭合、能求值面不再持字面量、nixConfig 信任语义对消费者是负债），门把 flake.nix 的沉默钉为断言（标识符/URL/公钥三禁——任何 nixConfig 回归即红）；改名/换钥后字面量不跟随即此门红〕；T46 +1 门：platform-grammar-check——平台目录文法形状门〔纯 readDir 树形遍历：platform/ 顶层只允许标签目录；<tag>/ 下只允许 system/+home/ 保留子域（至少其一）；每域必持 default.nix 正则门；域级负载只允许模块目录——裸 .nix 文件 = v3 arch 行尸体类、无门目录 = 对所有门不可见；run #369 的 82 具 v3 尸体全部此缺陷类，可达性门图游走后抓到、形状门地址空间层直接拒绝；无豁免账本——文法演进与门同提交〕；T41 +1 门：module-reachability-check——模块树可达性门〔home/ + platform/ 每个 default.nix 目录必须从 flake 求值面可达：9 图根（3 system + 5 home 双门 + devShells 域根）+ 静态/动态双形态边提取 + 注释剥离 + 豁免账本自愈双绊线；首扫即抓 exp/sys/re 悬空——第 19 轮 srv/cache 同类，死代码对 14 道门不可见的类别根治；变异重放：摘 ./cache 接线门必红；第 26 轮扩展（run 38632140441 类）：无门目录引用不变量——import 形态静态引用指向审计树内存在但无 default.nix 门的目录（v3 顶层门残留被尸体在场掩盖、扫除后悬空的类别），判别律双方向精确（尾斜杠 = 动态路由前缀跳过、树外目标 = 数据绑定跳过），全源扫描 420 文件、修复树上零违规〕；T32 +1 门：testscript-syntax-check——全部组合后 testScript 的 python 语法门〔求值层直调模块取真文、构建层 compile()〕+ lib_shared_orc testScript 修复〔多行 contractHeld 拼进单行 `#` 注释——CI lib plane 红根因〕；T31 +1：lib_shared_pdshell——pdshell 加载器消费契约〔四库家族收口：nix-types 97 / nmt 98 / orc 99+100 / pdshell 101〕；T30 +1：lib_shared_orc_guard——orc include-intent 守卫消费契约〔lock 答 WHERE、测试答 WHAT〕+ swaync 合成条目退役〔swaync-config c8818d9 placeholder 采纳——干净表示〕；T28 +1：lib_shared_orc——七站 wallust copy-emitter 消费契约，首跑抓 swaync 空 activation〔include 零匹配的死寂失效模式〕；T27.2 前序：nmt_home_core_exp_sys_base_ripgrep；T25.2 前序：lib_shared_lang_version；T24.2 前序：lib_shared_overlays） |
+| **Total**   | **108** |       | VM 92 + nmt 16（另有 6 个仓库卫生 checks：pre-commit-check + docs-ssot-check + testscript-syntax-check + module-reachability-check + platform-grammar-check + cache-ssot-check）→ 114 checks（cache-ssot +1 门：cache-ssot-check——舰队缓存身份漂移门〔身份（名/URL/公钥）单源声明于 lib/shared/lang/const.nix（shared.const.cache.fleet），分发按各面能力：platform/nixos/…/nix.nix + platform/darwin/…/nix + home/core/base/nix.nix（第 30 轮：standalone 用户平面，caps.system-nix 门控）按值消费不可漂移；无法求值的面持钉死字面镜像——CI workflows、cachix.just（YAML/shell 无法 import nix）、cache.md 散文；flake.nix 的 nixConfig 第 27 轮移除——入口层零缓存身份（真实消费面已闭合、能求值面不再持字面量、nixConfig 信任语义对消费者是负债），门把 flake.nix 的沉默钉为断言（标识符/URL/公钥三禁——任何 nixConfig 回归即红）；改名/换钥后字面量不跟随即此门红〕；T46 +1 门：platform-grammar-check——平台目录文法形状门〔纯 readDir 树形遍历：platform/ 顶层只允许标签目录；<tag>/ 下只允许 system/+home/ 保留子域（至少其一）；每域必持 default.nix 正则门；域级负载只允许模块目录——裸 .nix 文件 = v3 arch 行尸体类、无门目录 = 对所有门不可见；run #369 的 82 具 v3 尸体全部此缺陷类，可达性门图游走后抓到、形状门地址空间层直接拒绝；无豁免账本——文法演进与门同提交〕；T41 +1 门：module-reachability-check——模块树可达性门〔home/ + platform/ 每个 default.nix 目录必须从 flake 求值面可达：9 图根（3 system + 5 home 双门 + devShells 域根）+ 静态/动态双形态边提取 + 注释剥离 + 豁免账本自愈双绊线；首扫即抓 exp/sys/re 悬空——第 19 轮 srv/cache 同类，死代码对 14 道门不可见的类别根治；变异重放：摘 ./cache 接线门必红；第 26 轮扩展（run 38632140441 类）：无门目录引用不变量——import 形态静态引用指向审计树内存在但无 default.nix 门的目录（v3 顶层门残留被尸体在场掩盖、扫除后悬空的类别），判别律双方向精确（尾斜杠 = 动态路由前缀跳过、树外目标 = 数据绑定跳过），全源扫描 420 文件、修复树上零违规〕；T32 +1 门：testscript-syntax-check——全部组合后 testScript 的 python 语法门〔求值层直调模块取真文、构建层 compile()〕+ lib_shared_orc testScript 修复〔多行 contractHeld 拼进单行 `#` 注释——CI lib plane 红根因〕；T31 +1：lib_shared_pdshell——pdshell 加载器消费契约〔四库家族收口：nix-types 97 / nmt 98 / orc 99+100 / pdshell 101〕；T30 +1：lib_shared_orc_guard——orc include-intent 守卫消费契约〔lock 答 WHERE、测试答 WHAT〕+ swaync 合成条目退役〔swaync-config c8818d9 placeholder 采纳——干净表示〕；T28 +1：lib_shared_orc——七站 wallust copy-emitter 消费契约，首跑抓 swaync 空 activation〔include 零匹配的死寂失效模式〕；T27.2 前序：nmt_home_core_exp_sys_base_ripgrep；T25.2 前序：lib_shared_lang_version；T24.2 前序：lib_shared_overlays） |

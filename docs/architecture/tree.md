@@ -103,8 +103,8 @@ nix-config/
 │       ├── base/           # 全局基础包：clang · cmake · rustc · cargo · python314 · nodejs_26
 │       │                   # 调试工具：valgrind · strace · ltrace · pciutils · vulkan-tools
 │       └── dev/            # pdshell devShell 定义（每语言一目录，非 HM 模块树）
-│           ├── asm · c · cpp · go · java · javascript · typescript
-│           ├── lisp · lua · nix · python · re · rust · zig
+│           ├── asm · c · cpp · go · haskell · java · javascript · lisp
+│           ├── lua · nix · ocaml · python · re · rust · typescript · zig
 │           └── default.nix # 复合环境：default(全语言) · cpython · godot · makeOs · rs_compiler_dev
 │
 ├── hosts/                 # 多主机支持（per-machine facts + policy overrides）
@@ -132,11 +132,11 @@ nix-config/
 ├── overlays/               # nixpkgs overlay：additions(pkgs/) · patches
 ├── pkgs/                   # 自定义 derivation（wslview —— wslu 归档后的最小 shim）
 │
-├── tests/                  # 测试层（6 平面，103 tests + 6 仓库卫生 checks = 109 checks）
+├── tests/                  # 测试层（6 平面，108 tests + 6 仓库卫生 checks = 114 checks）
 │   ├── default.nix         # 统一注册表：Plane 0–5 全部 checks（nixosTest runner）
 │   ├── test_calc.nix       # Plane 0: Smoke 基线
 │   ├── nixos/              # Plane 1: NixOS-Plane（QEMU VM，30 tests）
-│   ├── home/               # Plane 2: HM-Plane（QEMU VM + packages，42 tests）
+│   ├── home/               # Plane 2: HM-Plane（QEMU VM + packages，47 tests）
 │   ├── lib/                # Plane 3: Lib-Plane（纯 Nix eval，QEMU 256 MB minimal，13 tests）
 │   ├── integration/        # Plane 4: Integration-Plane（NixOS + HM 联合，1 test）
 │   ├── fixtures/           # eval 期 secret 存在性 fixture（pathExists 探针）
@@ -165,7 +165,7 @@ nix-config/
 │   ├── architecture/       # 深度架构：mechanisms.md（十一层机制）· tree.md（本文件）
 │   │                       #   · pipeline.md（编译器管线与分层全景参考：pass 参考卡
 │   │                       #     · 层×阶段桥接 · 横切维度 · 不变量 · 变更剧本）
-│   │                       #   · comparison.md（同类项目对比与 16 维评分，时点快照）
+│   │                       #   · comparison.md（同类项目对比与 18 维评分，时点快照）
 │   │                       #   · dependency-graph.md（T13.1 分层重构迁出）
 │   ├── ci/                 # pipeline.md（CI/CD 深度手册：预检/部署/世代/自动化）
 │   ├── guides/             # quickstart.md（六 Phase 全程）· extending.md（扩展指南）

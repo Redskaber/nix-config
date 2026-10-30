@@ -105,8 +105,8 @@ nix-config/
 │       ├── base/           # global base packages: clang · cmake · rustc · cargo · python314 · nodejs_26
 │       │                   # debugging tools: valgrind · strace · ltrace · pciutils · vulkan-tools
 │       └── dev/            # pdshell devShell definitions (one directory per language, not an HM module tree)
-│           ├── asm · c · cpp · go · java · javascript · typescript
-│           ├── lisp · lua · nix · python · re · rust · zig
+│           ├── asm · c · cpp · go · haskell · java · javascript · lisp
+│           ├── lua · nix · ocaml · python · re · rust · typescript · zig
 │           └── default.nix # composite environments: default(all languages) · cpython · godot · makeOs · rs_compiler_dev
 │
 ├── hosts/                 # multi-host support (per-machine facts + policy overrides)
@@ -134,11 +134,11 @@ nix-config/
 ├── overlays/               # nixpkgs overlay: additions(pkgs/) · patches
 ├── pkgs/                   # custom derivations (wslview — the minimal shim after wslu was archived)
 │
-├── tests/                  # the test layer (6 planes, 103 tests + 6 repo-hygiene checks = 109 checks)
+├── tests/                  # the test layer (6 planes, 108 tests + 6 repo-hygiene checks = 114 checks)
 │   ├── default.nix         # the unified registry: all Plane 0–5 checks (nixosTest runner)
 │   ├── test_calc.nix       # Plane 0: the smoke baseline
 │   ├── nixos/              # Plane 1: NixOS-Plane (QEMU VM, 30 tests)
-│   ├── home/               # Plane 2: HM-Plane (QEMU VM + packages, 42 tests)
+│   ├── home/               # Plane 2: HM-Plane (QEMU VM + packages, 47 tests)
 │   ├── lib/                # Plane 3: Lib-Plane (pure Nix eval, QEMU 256 MB minimal, 13 tests)
 │   ├── integration/        # Plane 4: Integration-Plane (NixOS + HM combined, 1 test)
 │   ├── fixtures/           # eval-time secret-existence fixtures (pathExists probes)
@@ -167,7 +167,7 @@ nix-config/
 │   ├── architecture/       # deep architecture: mechanisms.md (the eleven-layer mechanisms) · tree.md (this file)
 │   │                       #   · pipeline.md (compiler pipeline & layering full reference:
 │   │                       #     pass cards · layer×stage bridge · cross-cutting dimensions · invariants · playbooks)
-│   │                       #   · comparison.md (peer comparison & 16-dimension scoring, a dated snapshot)
+│   │                       #   · comparison.md (peer comparison & 18-dimension scoring, a dated snapshot)
 │   │                       #   · dependency-graph.md (moved out during the T13.1 layered refactor)
 │   ├── ci/                 # pipeline.md (the CI/CD deep manual: pre-flight / deployment / generations / automation)
 │   ├── guides/             # quickstart.md (the full six-Phase run) · extending.md (the extension guide)

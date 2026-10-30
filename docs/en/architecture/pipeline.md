@@ -154,7 +154,7 @@ the secret layer cuts across pass 6's runtime.
 | system | `platform/<tag>/system/` | system-domain module tree (core/dm/wm/...; only nixos · darwin · nixos-wsl have one) | system/default.nix = the system door: entry + hosts facts mounting |
 | user | `home/` + `platform/<tag>/home/` | user-domain module tree (core/exp/sec/srv + env + wm) | home/default.nix = the home door, the door IS the payload, arch axis retired |
 | secret | `secrets/` + `.sops.yaml` | cuts across pass 6's runtime (initrd decryption → /run/secrets) | plaintext never committed (CI secret-integrity stage); lenient at eval, hard-fail at deploy |
-| test | `tests/` | cuts across all passes (6 planes, 103 tests + 6 repo-hygiene gates = 109 checks) | count anchors machine-enforced by docs-ssot; new tests travel with their anchors in the same commit |
+| test | `tests/` | cuts across all passes (6 planes, 108 tests + 6 repo-hygiene gates = 114 checks) | count anchors machine-enforced by docs-ssot; new tests travel with their anchors in the same commit |
 
 The seven structural layers answer "who lives where on disk"; four more
 dimensions are **not disk layers but orthogonal axes cutting across them** —
@@ -316,7 +316,9 @@ strategy keys only inside the bundle.
 
 **Add a test:** register in the matching plane under `tests/` (the
 nixosTest runner). Count anchors (README/test-matrix) travel with the test
-in the same commit — a red docs-ssot gate is the drift alarm.
+in the same commit — a red docs-ssot gate is the drift alarm. env/dev
+language directories map 1:1 to tests (one directory, one test — the gap
+closed in full in R14).
 
 **Change the fleet cache identity:** edit the `lang/const.nix` SSOT in one
 place (pass 1); the literal mirrors (CI workflows · cachix.just · cache.md

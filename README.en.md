@@ -113,7 +113,7 @@ The system follows a strictly layered pipeline architecture: every layer has a s
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 planes · 103 tests + 6 repo hygiene gates = 109 checks  │
+│  6 planes · 108 tests + 6 repo hygiene gates = 114 checks  │
 │         · nmt (zero VM) + QEMU · CI whole-plane handoff    │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -351,13 +351,13 @@ just flake-update-not-sops && just nixos-switch <host>    # routine update (sops
 
 ## Test system
 
-The test suite covers 6 planes, **109 checks = 103 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check** in total (counts and TOC navigation are machine-enforced by `tests/docs-ssot.nix` — a count-anchor drift between the README and test-matrix, or a TOC dead link / orphan section, is an immediate CI red light; for a local quick check you can still run `scripts/sh/test-count.sh`, whose output is reconciled against the CI summary):
+The test suite covers 6 planes, **114 checks = 108 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check** in total (counts and TOC navigation are machine-enforced by `tests/docs-ssot.nix` — a count-anchor drift between the README and test-matrix, or a TOC dead link / orphan section, is an immediate CI red light; for a local quick check you can still run `scripts/sh/test-count.sh`, whose output is reconciled against the CI summary):
 
 | Plane | Prefix | Count | KVM | Focus | Typical duration |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
 | Smoke | `test_` | 1 | QEMU | basic system integrity | ~1 min |
 | NixOS | `nixos_` | 30 | QEMU | platform/nixos/* modules + system services | 2–10 min |
-| HM | `home_` | 42 | QEMU | home/* package installation + runtime behavior | 2–8 min |
+| HM | `home_` | 47 | QEMU | home/* package installation + runtime behavior | 2–8 min |
 | Lib | `lib_` | 13 | QEMU 256MB min | lib/shared pure Nix expressions (including the orc consumption contract + the include-intent guard contract + the pdshell loader contract + the roles three-layer-chain contract) | <1 min |
 | Integration | `integration_` | 1 | QEMU full | NixOS + HM joint activation | 5–15 min |
 | **nmt** | `nmt_` | **16** | **✗ zero VM** | HM dotfile content assertions (pure eval) | <10 s |
@@ -422,9 +422,9 @@ See also [`docs/en/tests/test-matrix.md`](docs/en/tests/test-matrix.md) · [`doc
 Every change to nix-config is equivalent to declaring a new system state. The core value of CI:
 
 1. **Evaluation check** — catches Nix syntax/type errors (earlier than a failing nixos-rebuild)
-2. **Deep evaluation** — face-sharded enforcement: the api envelope + per-host toplevel drvPath + misc checks + completeness reconciliation (all 109 checks must be owned by a plane or by the misc list; the single-process `nix flake check` has been retired because of its memory-accumulation floor)
+2. **Deep evaluation** — face-sharded enforcement: the api envelope + per-host toplevel drvPath + misc checks + completeness reconciliation (all 114 checks must be owned by a plane or by the misc list; the single-process `nix flake check` has been retired because of its memory-accumulation floor)
 3. **Secret integrity** — verifies the encrypted-file structure is correct and `secrets/plan/` has not been committed
-4. **Test coverage** — 103 tests covering the nixos/home/lib/integration/nmt planes
+4. **Test coverage** — 108 tests covering the smoke/nixos/home/lib/integration/nmt planes
 5. **Automatic updates** — every Sunday, flake inputs are auto-updated and a PR opened
 
 ### The actual pipeline (10 stages, maximum parallelism)
@@ -448,7 +448,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]       deep evaluation (hard gate, face-sharded)
     │       └── face-sharded enforcement: api envelope + per-host toplevel drvPath
     │           + misc checks (docs-ssot/pre-commit) + completeness reconciliation
-    │           (all 109 checks must be owned by a plane or the misc list — a new
+    │           (all 114 checks must be owned by a plane or the misc list — a new
     │           test file that never registers a plane goes red; short-lived
     │           processes replace the single-process flake check: memory safety
     │           + wall clock 120m → est. 15-25m; pure-eval: no magic-nix-cache, infra-signed retry)
@@ -480,8 +480,8 @@ push / PR
     │       │   parallel eval + pipelined builds; --skip-cached meets magic-nix-cache):
     │       ├── smoke        — baseline (1)
     │       ├── nixos        — system modules (30)
-    │       ├── home         — HM modules (42)
-    │       ├── lib          — lib pure expressions (12)
+    │       ├── home         — HM modules (47)
+    │       ├── lib          — lib pure expressions (13)
     │       └── integration  — NixOS + HM joint activation (1)
     │
     ├─► [STAGE 6.5: Host Toplevels]   system-closure builds (no KVM)
@@ -686,7 +686,7 @@ Deep-dive content is layered by audience into `docs/` — the README keeps only 
 | --- | --- | --- |
 | Architecture understanding | [architecture/mechanisms.md](docs/en/architecture/mechanisms.md) | The internals of the eleven core mechanisms |
 | Pipeline reference | [architecture/pipeline.md](docs/en/architecture/pipeline.md) | Compiler-pipeline pass cards · layer×stage bridge · cross-cutting dimensions (deps/secrets/UX/external configs) · invariants |
-| Peer comparison | [architecture/comparison.md](docs/en/architecture/comparison.md) | 16-dimension peer scoring snapshot · cross-learning checklist |
+| Peer comparison | [architecture/comparison.md](docs/en/architecture/comparison.md) | 18-dimension peer scoring snapshot · cross-learning checklist |
 | | [architecture/tree.md](docs/en/architecture/tree.md) | The fully annotated tree |
 | | [architecture/dependency-graph.md](docs/en/architecture/dependency-graph.md) | The 47-input dependency graph |
 | | [architecture/external-repos.md](docs/en/architecture/external-repos.md) | External repos, layered and classified (four roles × four repos) |

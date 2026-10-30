@@ -187,7 +187,7 @@ nix eval .#api.inputs --json | jq -r 'keys - ["sops-nix"] | join(" ")'
 
 # CI 构建阶段按平面整面交接（成员 = 同一求值的 thunk，零额外成本）：
 nix eval .#api.checks.planes --apply 'p: builtins.mapAttrs (_: builtins.length) p'
-# → { "home": 42, "integration": 1, "lib": 13, "nixos": 30, "nmt": 16, "smoke": 1 }
+# → { "home": 47, "integration": 1, "lib": 13, "nixos": 30, "nmt": 16, "smoke": 1 }
 ```
 
 ### 2. 策略层 — shared.nix 生成机制

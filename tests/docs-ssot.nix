@@ -8,7 +8,7 @@
 # in repo hygiene. Composed in lib/shared/faces.nix (the linker
 # pass) as
 #
-#   checks.<sys> = (import ./tests { … })            # 92 tests
+#   checks.<sys> = (import ./tests { … })            # 108 tests
 #               // (import ./tests/pre-commit.nix { … })  # + pre-commit-check
 #               // (import ./tests/docs-ssot.nix { … });  # + this check
 #

@@ -1,0 +1,66 @@
+# @path: ~/projects/configs/nix-config/tests/home/env/dev/lisp/default.nix
+# @author: redskaber
+# @datetime: 2026-10-30
+# @description: tests::home::env::dev::lisp::default
+# @source: home/env/dev/lisp/default.nix
+#
+# Mirrors production buildInputs for the Common Lisp devenv:
+#   sbcl, rlwrap, clinfo, pkg-config, gcc, gnumake
+
+{ pkgs, lib, ... }:
+{
+  name = "home_env_dev_lisp_default";
+  meta = {
+    maintainers = [ "redskaber" ];
+    timeout = 300;
+  };
+
+  nodes.machine = {
+    virtualisation.memorySize = 768;
+    environment.systemPackages = with pkgs; [
+      sbcl
+      rlwrap
+      gcc
+      gnumake
+      pkg-config
+    ];
+  };
+
+  testScript = ''
+    start_all()
+    machine.wait_for_unit("multi-user.target")
+
+    with subtest("lisp_dev: sbcl binary present"):
+        ver = machine.succeed("sbcl --version 2>&1").strip()
+        print(f"sbcl: {ver}")
+        assert "SBCL" in ver, f"sbcl not found: {ver}"
+
+    with subtest("lisp_dev: rlwrap binary present"):
+        ver = machine.succeed("rlwrap --version 2>&1 | head -1").strip()
+        print(f"rlwrap: {ver}")
+        assert "rlwrap" in ver.lower(), f"rlwrap not found: {ver}"
+
+    with subtest("lisp_dev: gcc fallback toolchain present"):
+        ver = machine.succeed("gcc --version 2>&1 | head -1").strip()
+        print(f"gcc: {ver}")
+        assert "gcc" in ver.lower(), f"gcc not found: {ver}"
+
+    with subtest("lisp_dev: execute sbcl script"):
+        machine.succeed(r"""
+          set -e
+          cat > /tmp/hello.lisp << 'LEOF'
+          (write-line "lisp_hello_ok")
+          LEOF
+          out=$(sbcl --script /tmp/hello.lisp)
+          [ "$out" = "lisp_hello_ok" ] || { echo "Got: $out"; exit 1; }
+        """)
+
+    with subtest("lisp_dev: sbcl arithmetic"):
+        out = machine.succeed(r"""
+          sbcl --script /dev/stdin <<'LEOF'
+          (format t "~a" (+ 1 1))
+          LEOF
+        """).strip()
+        assert out == "2", f"sbcl arithmetic failed: {out}"
+  '';
+}

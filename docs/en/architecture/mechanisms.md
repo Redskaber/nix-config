@@ -200,7 +200,7 @@ nix eval .#api.inputs --json | jq -r 'keys - ["sops-nix"] | join(" ")'
 
 # The CI build stage hands over whole planes (members = thunks of the same evaluation, zero extra cost):
 nix eval .#api.checks.planes --apply 'p: builtins.mapAttrs (_: builtins.length) p'
-# → { "home": 42, "integration": 1, "lib": 13, "nixos": 30, "nmt": 16, "smoke": 1 }
+# → { "home": 47, "integration": 1, "lib": 13, "nixos": 30, "nmt": 16, "smoke": 1 }
 ```
 
 ### 2. Policy Layer — The shared.nix Generation Mechanism

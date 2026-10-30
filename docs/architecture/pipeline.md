@@ -129,7 +129,7 @@ test 层纵切全部 pass，secret 层横切 pass 6 的运行时。
 | system | `platform/<tag>/system/` | 系统域模块树（core/dm/wm/…，仅 nixos · darwin · nixos-wsl 有） | system/default.nix = 系统门：入口 + 挂载 hosts facts |
 | user | `home/` + `platform/<tag>/home/` | 用户域模块树（core/exp/sec/srv + env + wm） | home/default.nix = home 门，门即 payload，arch 轴退役 |
 | secret | `secrets/` + `.sops.yaml` | 横切 Pass 6 运行时（initrd 解密 → /run/secrets） | 明文禁提交（CI secret 完整性阶段）；eval 宽容/部署硬失败 |
-| test | `tests/` | 纵切全部 pass（6 平面 103 tests + 6 仓库卫生门 = 109 checks） | 计数锚点 docs-ssot 机器强制；新测试与锚点同 commit 旅行 |
+| test | `tests/` | 纵切全部 pass（6 平面 108 tests + 6 仓库卫生门 = 114 checks） | 计数锚点 docs-ssot 机器强制；新测试与锚点同 commit 旅行 |
 
 七个结构层回答「磁盘上谁在哪」；还有四个维度**不是磁盘层，而是贯穿多层的
 正交轴**——依赖、密钥、用户交互、外置配置——它们如何流经同一组 pass，
@@ -266,6 +266,7 @@ Law F 白名单保证束内只有策略键。
 
 **加一个测试**：`tests/` 对应平面注册（nixosTest runner）。计数锚点
 （README/test-matrix）与测试同 commit 旅行——docs-ssot 门红即漂移报警。
+env/dev 语言目录与测试 1:1（每语言一目录一测试，R14 补齐闭合）。
 
 **换 fleet 缓存身份**：改 `lang/const.nix` SSOT 一处（Pass 1）；
 字面镜像（CI workflows · cachix.just · cache.md 散文）同 commit 手改，

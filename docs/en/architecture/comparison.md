@@ -1,4 +1,4 @@
-# Peer-Project Comparison & Multi-Dimension Scoring — Snapshot Assessment (2026-10-28)
+# Peer-Project Comparison & Multi-Dimension Scoring — Snapshot Assessment (2026-10-30)
 
 > **Positioning & shelf life**: this is a **point-in-time assessment**
 > (snapshot), not an SSOT — peer repos keep evolving and scores decay;
@@ -9,6 +9,15 @@
 > **Scoring rubric** (0–10): 0 absent · 3 basic (hand-rolled but works) ·
 > 5 solid (customary best practice) · 7 excellent (beyond common) ·
 > 9–10 exceptional (rare among peers / methodological contribution).
+>
+> **2026-10-30 R14 re-assessment note**: test planes 103→108 (the env/dev
+> source:test 1:1 gap closed for five languages), devShells 25→27
+> (haskell/ocaml added) — full table re-scored; two new dimensions (D17
+> hardware/disk/state declarativity, D18 config externalization) bring the
+> total base from /160 to /180. Recomputing column sums caught arithmetic
+> drift in the previous totals row (m77 89→actual 95 · ryan 71→76 ·
+> gvolpe 54→60 · mic92 82→80), corrected this round — the totals row now
+> always equals the column sums.
 
 ## 1. Comparison Set
 
@@ -47,7 +56,7 @@ ecosystem — these similarities form the comparison baseline:
 6. **devShells** — all provide dev environments via flake devShells
    (varying depth).
 
-## 3. Scoring Matrix (16 dimensions)
+## 3. Scoring Matrix (18 dimensions)
 
 | # | Dimension | this repo | starter | m77 | ryan | gvolpe | mic92 |
 | - | --------- | --------- | ------- | --- | ---- | ------ | ----- |
@@ -67,7 +76,9 @@ ecosystem — these similarities form the comparison baseline:
 | 14 | Cache & build-efficiency strategy | 8 | 4 | 5 | 4 | 3 | 4 |
 | 15 | Code hygiene | 10 | 6 | 6 | 5 | 5 | 6 |
 | 16 | Community scale & ecosystem influence | 3 | 8 | 6 | 8 | 6 | 8 |
-| | **Total (/160)** | **132** | **75** | **89** | **71** | **54** | **82** |
+| 17 | Hardware/disk/state declarativity | 9 | 3 | 6 | 6 | 3 | 6 |
+| 18 | Config externalization & payload separation | 9 | 2 | 4 | 5 | 4 | 4 |
+| | **Total (/180)** | **150** | **80** | **105** | **87** | **67** | **90** |
 
 (The total is for ranking intuition only; dimensions are not
 interchangeable — this repo's low-scoring rows are exactly what its
@@ -95,10 +106,11 @@ validators + the i18n dual-source guard. Others 1–3: rely on Nix's lazy
 eval failures (the ecosystem norm — exactly the differential bet this
 repo makes).
 
-**D4 Test depth** — this repo 9: 6 planes, 103 tests + 6 hygiene gates =
-109 checks (QEMU VM-level + zero-VM nmt assertions + eval-depth censuses),
-with count anchors machine-enforced. m77 4: basic CI checks; mic92 3: a
-few tests; ryan/gvolpe/starter 1–2: nearly none (the dotfile-config
+**D4 Test depth** — this repo 9: 6 planes, 108 tests + 6 hygiene gates =
+114 checks (QEMU VM-level + zero-VM nmt assertions + eval-depth censuses),
+with count anchors machine-enforced and a 1:1 source:test mapping for
+env/dev (sixteen languages, sixteen tests). m77 4: basic CI checks; mic92
+3: a few tests; ryan/gvolpe/starter 1–2: nearly none (the dotfile-config
 ecosystem norm).
 
 **D5 CI/CD completeness** — this repo 9: ten stages (lint → face-sharded
@@ -174,6 +186,29 @@ is widely referenced / sops-nix is ecosystem infrastructure) · ryan 8
 m77/gvolpe 6. **This repo 3**: a single-maintainer personal repo with no
 spillover yet — the biggest gap, see §5.
 
+**D17 Hardware/disk/state declarativity** — this repo 9: the machine-fact
+trio fully declarative AND machine-patrolled — facter.json (nixos-facter
+hardware fingerprint) + disk.nix (disko layout) + persist.nix (impermanence
+state policy), the Law A/B/C fact census (exactly one fact source per
+bare-metal host, corpse files and dual sources both red) + the
+hardware-migrate runbook + the ephemeral-root VM test pinning the rollback
+recipe; not a 10: the bare-metal migration leg remains open (on the honest
+shortcoming list). mic92 6: a disko co-maintainer personally — tool
+authority, plain usage in his own config; m77/ryan 6: disko/impermanence
+in use, not uniform across hosts; starter/gvolpe 3: the standard
+hardware-configuration channel.
+
+**D18 Config externalization & payload separation** — this repo 9: 22
+external `*-config` repos (flake=false) as pure data sources, with the
+**lock pins WHERE / tests pin WHAT** dual safety net (a lock-only bump
+with broken behavior goes red via tests; a moved source with unchanged
+behavior stays green), orchestrated onto ~/.config/ by orc —
+externalization as an explicit architectural decision, not a habit; not
+a 10: the external repos' own hygiene is outside this repo's gates.
+Others 2–5: configs mostly managed in-repo (starter's teaching-focused
+inclusion is the right call); ryan 5: app configs in-repo but well
+documented.
+
 ## 5. Overall Positioning
 
 **This repo's self-positioning**: treat a personal NixOS configuration as
@@ -234,7 +269,8 @@ spillover, single-maintainer risk.
 *Methodology memo: scores are derived from publicly observable repo
 structure (directory shape · CI workflows · test directories · docs
 scale), one rubric across repos; the "this repo" column reflects the
-actual state at this document's HEAD (109 checks green, bilingual doc
-plane, six-gate family in place). If a peer description has drifted,
-that peer's official README wins — this doc does not lock in their
-future.*
+actual state at this document's HEAD (108 tests + 6 gates = 114 checks
+with static anchor accounting consistent, bilingual doc plane, six-gate
+family in place; derivation-level build green awaits CI after the push).
+If a peer description has drifted, that peer's official README wins —
+this doc does not lock in their future.*

@@ -114,7 +114,7 @@
                                │
 ┌──────────────────────────────▼─────────────────────────────┐
 │  TEST LAYER  ·  tests/                                     │
-│  6 平面 · 103 tests + 6 仓库卫生门 = 109 checks            │
+│  6 平面 · 108 tests + 6 仓库卫生门 = 114 checks            │
 │         · nmt(零VM) + QEMU · CI 平面整面交接               │
 └────────────────────────────────────────────────────────────┘
 ```
@@ -349,13 +349,13 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 ## 测试体系
 
-测试套件覆盖 6 个平面，总计 **109 checks = 103 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**（计数与 TOC 导航由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移、TOC 死链/孤儿节即 CI 红灯；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
+测试套件覆盖 6 个平面，总计 **114 checks = 108 tests + 1 pre-commit-check + 1 docs-ssot-check + 1 testscript-syntax-check + 1 module-reachability-check + 1 platform-grammar-check + 1 cache-ssot-check**（计数与 TOC 导航由 `tests/docs-ssot.nix` 机器强制——README 与 test-matrix 的计数锚点漂移、TOC 死链/孤儿节即 CI 红灯；本地速查仍可用 `scripts/sh/test-count.sh`，其输出与 CI summary 对账）：
 
 | 平面        | 前缀           | 数量   | KVM            | 关注点                         | 典型时长 |
 | ----------- | -------------- | ------ | -------------- | ------------------------------ | -------- |
 | Smoke       | `test_`        | 1      | QEMU           | 基本系统完整性                 | ~1 min   |
 | NixOS       | `nixos_`       | 30     | QEMU           | platform/nixos/* 模块 + 系统服务 | 2–10 min |
-| HM          | `home_`        | 42     | QEMU           | home/* 包安装 + 运行时行为     | 2–8 min  |
+| HM          | `home_`        | 47     | QEMU           | home/* 包安装 + 运行时行为     | 2–8 min  |
 | Lib         | `lib_`         | 13     | QEMU 256MB min | lib/shared 纯 Nix 表达式（含 orc 消费契约 + include-intent 守卫契约 + pdshell 加载器契约 + roles 三层链契约，T28/T30/T31/R4） | <1 min   |
 | Integration | `integration_` | 1      | QEMU full      | NixOS + HM 联合激活            | 5–15 min |
 | **nmt**     | `nmt_`         | **16** | **✗ 零 VM**    | HM dotfile 内容断言（纯 eval） | <10 s    |
@@ -420,9 +420,9 @@ nix build .#module-docs    # → result/options/{home-,nixos-}<module>.md + inde
 每次变更 nix-config 都等价于声明一个新的系统状态。CI 的核心价值：
 
 1. **求值检查** — 捕获 Nix 语法/类型错误（早于 nixos-rebuild 失败）
-2. **深层求值** — 面分片强制：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 109 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
+2. **深层求值** — 面分片强制：api 信封 + 逐主机 toplevel drvPath + 杂项 checks + 完备性对账（全部 114 checks 必须被平面或杂项清单拥有；单进程 `nix flake check` 因内存累积地板已退役）
 3. **Secret 完整性** — 验证加密文件结构正确，`secrets/plan/` 未被提交
-4. **测试覆盖** — 103 tests 覆盖 nixos/home/lib/integration/nmt 平面
+4. **测试覆盖** — 108 tests 覆盖 smoke/nixos/home/lib/integration/nmt 平面
 5. **自动更新** — 每周日自动更新 flake inputs 并开 PR
 
 ### 实际 Pipeline（10 阶段，最大并行）
@@ -446,7 +446,7 @@ push / PR
     ├─► [STAGE 2: Deep Evaluation]      深层求值（硬门禁，面分片形态）
     │       └── 面分片强制：api 信封 + 逐主机 toplevel drvPath
     │           + 杂项 checks（docs-ssot/pre-commit）+ 完备性对账
-    │           （109 checks 必须被平面或杂项清单拥有——新测试
+    │           （114 checks 必须被平面或杂项清单拥有——新测试
     │           文件未注册平面即红；短命进程替换单进程 flake
     │           check：内存安全 + 墙钟 120m→预计 15-25m；
     │           纯求值腿：无 magic-nix-cache + infra 签名单次重试）
@@ -478,8 +478,8 @@ push / PR
     │       │   + 流水线构建，--skip-cached 对接 magic-nix-cache）：
     │       ├── smoke        — 基线（1）
     │       ├── nixos        — 系统模块（30）
-    │       ├── home         — HM 模块（42）
-    │       ├── lib          — lib 纯表达式（12）
+    │       ├── home         — HM 模块（47）
+    │       ├── lib          — lib 纯表达式（13）
     │       └── integration  — NixOS + HM 联合激活（1）
     │
     ├─► [STAGE 6.5: Host Toplevels]   系统闭包构建（无 KVM）
@@ -686,7 +686,7 @@ sudo /nix/var/nix/profiles/system/bin/switch-to-configuration switch
 | --- | --- | --- |
 | 架构理解 | [architecture/mechanisms.md](docs/architecture/mechanisms.md) | 核心机制十一层内幕 |
 | 管线参考 | [architecture/pipeline.md](docs/architecture/pipeline.md) | 编译器管线 pass 参考卡 · 分层×阶段桥接 · 横切维度（依赖/密钥/用户交互/外置配置）· 不变量 |
-| 同类对比 | [architecture/comparison.md](docs/architecture/comparison.md) | 同类项目 16 维评分快照 · 交叉学习清单 |
+| 同类对比 | [architecture/comparison.md](docs/architecture/comparison.md) | 同类项目 18 维评分快照 · 交叉学习清单 |
 | | [architecture/tree.md](docs/architecture/tree.md) | 完整注释树 |
 | | [architecture/dependency-graph.md](docs/architecture/dependency-graph.md) | 47 inputs 依赖图 |
 | | [architecture/external-repos.md](docs/architecture/external-repos.md) | 外置仓库分层分类（四类 × 四仓） |
