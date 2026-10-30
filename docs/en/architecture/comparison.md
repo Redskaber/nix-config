@@ -18,6 +18,19 @@
 > drift in the previous totals row (m77 89→actual 95 · ryan 71→76 ·
 > gvolpe 54→60 · mic92 82→80), corrected this round — the totals row now
 > always equals the column sums.
+>
+> **2026-10-31 R15 erratum**: item 5 of the §5 shortcoming list
+> ("desktop hand-polish depth") is **retracted**. The original judgment
+> inferred desktop-experience depth from "hand-polish visible inside this
+> repo", a category error: per the D18 payload-separation decision, theme
+> and dotfiles detail live in 22 external `*-config` data-source repos
+> (waybar / rofi / kitty / hypr / … — e.g. `home/wm/hyprland/theme/waybar.nix`
+> sets `source = inputs.waybar-config`; this repo only wires strategy
+> bundles and orchestration). The polish happens outside the repo —
+> "not visible in-repo" ≠ "not polished". The difference vs gvolpe/ryan
+> is a **division-of-labor choice** (in-repo polish vs skeleton/payload
+> separation with out-of-repo polish), not a depth gap; the gvolpe
+> comparison bullet in §5 has been rewritten accordingly.
 
 ## 1. Comparison Set
 
@@ -232,9 +245,11 @@ spillover, single-maintainer risk.
 + To **ryan**: the mirror opposite on the documentation axis — ryan
   flattens the curve for beginners, this repo raises the ceiling for
   engineers; ryan's community operation is worth learning.
-+ To **gvolpe**: a contrast in desktop-experience depth (gvolpe's
-  hand-polished Hyprland/niri vs this repo's strategy-bundle-driven wm
-  trees — trading hand-tuned detail for one-key form switching).
++ To **gvolpe**: a contrast in desktop-experience **division of labor**
+  (gvolpe hand-polishes Hyprland/niri inside the repo; this repo per D18
+  externalizes the polish into `*-config` data-source repos and keeps only
+  strategy-bundle wiring, the wallust color pipeline, and orc orchestration
+  in-tree — two division-of-labor routes, not a polish-depth gap).
 + To **mic92**: a contrast in secrets management and minimalism — mic92
   proves a personal config can be "small and correct"; this repo chooses
   "large and self-verifying" (every structural claim gets a gate). Two
@@ -251,8 +266,11 @@ spillover, single-maintainer risk.
 4. **Build-level tests need KVM/CI**: sandboxed / KVM-less environments
    can only run eval depth (partially mitigated by interpolating the
    assertions into testScript — evaluating executes the assertions).
-5. **Desktop hand-polish depth**: the wm theme stack is mostly
-   parameterized by strategy bundles, less hand-tuned than gvolpe/ryan.
+
+(The former item 5, "desktop hand-polish depth", was retracted by the
+ R15 erratum — see the header note: theme polish is externalized to
+ standalone repos per D18; in-tree strategy-bundle parameterization is
+ not a lack of polish.)
 
 ## 6. Cross-Learning Checklist (what to borrow from peers)
 
