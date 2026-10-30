@@ -113,7 +113,7 @@ nixos + darwin + 通用 Linux。其余 2–4：单平台或双平台。
 export/ 可上游模块（nixosModules/homeModules 双输出 + 接口规范文档）+
 overlays/pkgs 纪律 + 可达性门防死代码；m77 7：opts 库化实践。其余 4–5。
 
-**D12 开发体验** —— 本仓 9：25 个 pdshell 组合式 devShells（combinFrom
+**D12 开发体验** —— 本仓 9：27 个 pdshell 组合式 devShells（combinFrom
 复合 + 生命周期四钩子）+ 98 recipe × 14 组 just 参考表 + 服务按需启停动词。
 m77/ryan 5–6：标准 devShell + 常规脚本；mic92 4：make/shell 脚本。
 

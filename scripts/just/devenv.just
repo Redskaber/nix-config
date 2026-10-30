@@ -202,10 +202,23 @@ devenv-use-from lang class:
 # Diagnostics
 # --------------------------------------------------------------------------
 
-# List all registered devShells in the flake.
+# List all registered devShells in the flake
 [group('devenv')]
 devenv-show:
-    @cd {{ROOT}} && nix flake show | grep devShells -A25
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd "{{ROOT}}"
+    mapfile -t SHELLS < <(
+        nix eval --json .#devShells --no-warn-dirty \
+            --apply 'd: builtins.concatLists (builtins.map builtins.attrNames (builtins.attrValues d))' \
+            | jq -r '.[]' | sort
+    )
+    if [[ "${#SHELLS[@]}" -eq 0 ]]; then
+        echo "Error: no devShells discovered under .#devShells — refusing an empty listing." >&2
+        exit 1
+    fi
+    echo "devShells (${#SHELLS[@]}):"
+    printf '  %s\n' "${SHELLS[@]}"
 
 # Tree-list all created profiles.
 [group('devenv')]

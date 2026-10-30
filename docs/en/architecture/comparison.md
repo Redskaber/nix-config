@@ -142,7 +142,7 @@ reusable artifact; this repo 8: export/ upstreamable modules
 overlays/pkgs discipline + a reachability gate against dead code; m77 7:
 library-leaning opts practice. Others 4–5.
 
-**D12 Developer experience** — this repo 9: 25 pdshell composable
+**D12 Developer experience** — this repo 9: 27 pdshell composable
 devShells (combinFrom composition + four lifecycle hooks) + 98 recipes in
 14 groups of just reference + on-demand service verbs. m77/ryan 5–6:
 standard devShells + routine scripts; mic92 4: make/shell scripts.

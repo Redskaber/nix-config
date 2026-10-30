@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# path: scripts/grep_paths.sh
+# path: scripts/sh/grep_paths.sh
 # 在指定项目目录下搜索文件，输出路径列表供 concat_files.sh 消耗。
 #
 # 用法:
-#   ./scripts/grep_paths.sh [选项] <pattern> [project_dir]
-#   ./scripts/grep_paths.sh -l   [选项]              [project_dir]
+#   ./scripts/sh/grep_paths.sh [选项] <pattern> [project_dir]
+#   ./scripts/sh/grep_paths.sh -l   [选项]              [project_dir]
 #
 # 参数:
 #   <pattern>       内容匹配的正则表达式（默认模式）
@@ -23,17 +23,17 @@
 #
 # 示例:
 #   # 内容含 "CapabilitySet" 的 lua 文件
-#   ./scripts/grep_paths.sh "CapabilitySet" lua/
+#   ./scripts/sh/grep_paths.sh "CapabilitySet" lua/
 #
 #   # 文件名含 "spec" 的文件，输出到 paths.txt
-#   ./scripts/grep_paths.sh -n "spec" -o paths.txt spec/
+#   ./scripts/sh/grep_paths.sh -n "spec" -o paths.txt spec/
 #
 #   # 所有 lua 文件（排除 spec/），直接管道给 concat_files.sh
-#   ./scripts/grep_paths.sh -l -x "spec/*" -o /tmp/p.txt . \
-#     && ./scripts/concat_files.sh /tmp/p.txt output.txt
+#   ./scripts/sh/grep_paths.sh -l -x "spec/*" -o /tmp/p.txt . \
+#     && ./scripts/sh/concat_files.sh /tmp/p.txt output.txt
 #
 #   # 多种文件类型
-#   ./scripts/grep_paths.sh -e "*.lua" -e "*.sh" "require" .
+#   ./scripts/sh/grep_paths.sh -e "*.lua" -e "*.sh" "require" .
 
 set -euo pipefail
 

@@ -342,7 +342,7 @@ just flake-update-not-sops && just nixos-switch <host>    # routine update (sops
 
 | Platform | System layer | User layer | Dev environments |
 | ------------ | ------ | ------ | ---------------------- |
-| NixOS x86_64 | Full | Full | All (25 devShells) |
+| NixOS x86_64 | Full | Full | All (27 devShells) |
 | Linux x86_64 | — | Full (+ nixGL) | All |
 | macOS ARM64 | nix-darwin closure (build-level acceptance: the CI darwin leg builds on native hardware; activation awaits a real machine) | Full (module mode; lean app-set) | CLI-first |
 | WSL2 | NixOS-WSL closure (eval-level acceptance; activation awaits the Windows host) | Full (+ wslview shim, caps.wsl gated in the shared tree) | All (requires systemd enabled) |
@@ -457,7 +457,7 @@ push / PR
     │       └── nix-fast-build --flake .#api.checks.planes.nmt (parallel eval + build)
     │
     ├─► [STAGE 4: devShells dry-run]   per-member dry-run (face attrNames)
-    │       └── enumeration = the devShells face's own attrNames (25 members named;
+    │       └── enumeration = the devShells face's own attrNames (27 members named;
     │           new shells join by construction, zero CI upkeep; failures named for attribution)
     │
     ├─► [STAGE 4.5: Output Faces]     drvPath enforcement for faces with no dedicated leg (parallel)
@@ -525,7 +525,7 @@ just deploy-local              # colmena local deployment (apply-local --sudo)
 
 ### Development environments — devShells and profiles
 
-**Available devShells quick reference (25 of them, `nix eval .#devShells.x86_64-linux --apply builtins.attrNames`):**
+**Available devShells quick reference (27 of them, `nix eval .#devShells.x86_64-linux --apply builtins.attrNames`):**
 
 | Shell name                     | Compositional contents                              | Traits                          |
 | ------------------------------ | ------------------------------------- | ----------------------------- |
@@ -549,6 +549,8 @@ just deploy-local              # colmena local deployment (apply-local --sudo)
 | `lua`                          | lua54 + luajit + lua-language-server  | stylua · luarocks             |
 | `lisp`                         | sbcl + rlwrap                         | pkg-config · gcc              |
 | `zig`                          | zig + zls                             |                               |
+| `haskell`                      | ghc910 + cabal-install + HLS          | fourmolu · hlint · hoogle      |
+| `ocaml`                        | ocaml 5 + dune_3 + ocaml-lsp          | ocamlformat · utop · merlin    |
 | `default`                      | combinFrom merge of all languages                | the general-purpose dev environment                  |
 | `cpython`                      | C + C++ + Python combo                 |                               |
 | `godot`                        | C + C++ + Python + godot              | game development                      |

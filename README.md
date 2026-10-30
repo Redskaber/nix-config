@@ -340,7 +340,7 @@ just flake-update-not-sops && just nixos-switch <host>    # 例行更新（sops-
 
 | 平台         | 系统层 | 用户层 | 开发环境               |
 | ------------ | ------ | ------ | ---------------------- |
-| NixOS x86_64 | 完整   | 完整   | 全部（25 devShells）  |
+| NixOS x86_64 | 完整   | 完整   | 全部（27 devShells）  |
 | Linux x86_64 | —      | 完整（+ nixGL） | 全部          |
 | macOS ARM64  | nix-darwin 闭包（构建级验收：CI darwin 腿原机构建；activation 待真机） | 完整（module mode；lean app-set） | CLI 为主 |
 | WSL2         | NixOS-WSL 闭包（eval 级验收，T7.1；activation 待 Windows 宿主） | 完整（+ wslview shim，caps.wsl 门控于共享树） | 全部（需启用 systemd） |
@@ -455,7 +455,7 @@ push / PR
     │       └── nix-fast-build --flake .#api.checks.planes.nmt   （并行求值+构建）
     │
     ├─► [STAGE 4: devShells dry-run]   逐成员 dry-run（面 attrNames）
-    │       └── 枚举 = devShells 面自身 attrNames（25 员点名；新 shell 按构造入列，
+    │       └── 枚举 = devShells 面自身 attrNames（27 员点名；新 shell 按构造入列，
     │           零 CI 侧维护；失败成员点名——归因哲学）
     │
     ├─► [STAGE 4.5: Output Faces]     无独立腿的输出面 drvPath 强制（并行）
@@ -523,7 +523,7 @@ just deploy-local              # colmena 本机部署（apply-local --sudo）
 
 ### 开发环境 — devShells 与 profile
 
-**可用 devShells 速查（25 个，`nix eval .#devShells.x86_64-linux --apply builtins.attrNames`）：**
+**可用 devShells 速查（27 个，`nix eval .#devShells.x86_64-linux --apply builtins.attrNames`）：**
 
 | Shell 名称                     | 组合内容                              | 特性                          |
 | ------------------------------ | ------------------------------------- | ----------------------------- |
@@ -547,6 +547,8 @@ just deploy-local              # colmena 本机部署（apply-local --sudo）
 | `lua`                          | lua54 + luajit + lua-language-server  | stylua · luarocks             |
 | `lisp`                         | sbcl + rlwrap                         | pkg-config · gcc              |
 | `zig`                          | zig + zls                             |                               |
+| `haskell`                      | ghc910 + cabal-install + HLS          | fourmolu · hlint · hoogle      |
+| `ocaml`                        | ocaml 5 + dune_3 + ocaml-lsp          | ocamlformat · utop · merlin    |
 | `default`                      | 全语言 combinFrom 合并                | 综合开发环境                  |
 | `cpython`                      | C + C++ + Python 组合                 |                               |
 | `godot`                        | C + C++ + Python + godot              | 游戏开发                      |

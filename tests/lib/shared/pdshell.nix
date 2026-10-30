@@ -14,8 +14,8 @@
 # what the README says. What this battery pins, against the REAL
 # tree:
 #
-#   1. census     — the exact 25-member set. docs-ssot anchors the
-#                   COUNT (25) against the quick-ref header, but a
+#   1. census     — the exact 27-member set. docs-ssot anchors the
+#                   COUNT (27) against the quick-ref header, but a
 #                   rename keeps the count and passes — membership
 #                   needs this census. Also the only tripwire for the
 #                   `_`-prefix exclusion (a file named `_x.nix`
@@ -28,7 +28,7 @@
 #                   injection contract).
 #   3. combinFrom — the root default declares its own buildInputs
 #                   as [] — so every input in the merged list must
-#                   have arrived through the fourteen language
+#                   have arrived through the sixteen language
 #                   defaults' contributions (the resolve → extract →
 #                   merge pipeline over the real tree).
 #   4. lifecycle  — the composed shellHook carries the section
@@ -140,11 +140,13 @@ let
     "c"
     "cpp"
     "go"
+    "haskell"
     "java"
     "javascript"
     "lisp"
     "lua"
     "nix"
+    "ocaml"
     "python"
     "re"
     "rust"
@@ -228,7 +230,7 @@ let
   # ── 3. combinFrom — contribution through the language defaults ──
   # The root default's OWN buildInputs is [] (home/env/dev/default.nix
   # declares `buildInputs = with shared.upkgs; [ ];`), so every input
-  # in the merged list arrived through the fourteen language
+  # in the merged list arrived through the sixteen language
   # defaults' contributions — the resolve → extract → merge pipeline
   # over the real tree. Four probes, one per language family.
   defaultInputs = pdsh.default.buildInputs;
@@ -262,7 +264,7 @@ let
       throw ''
         pdshell loader contract violation (T31), combinFrom:
           the root default's own buildInputs is [] — the merged list
-          must carry every input through the fourteen language
+          must carry every input through the sixteen language
           defaults, but the probe "${probe.anchor}" (${probe.why})
           is absent from the ${toString (builtins.length defaultInputs)}
           merged inputs.
