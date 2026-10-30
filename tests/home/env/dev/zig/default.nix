@@ -34,14 +34,17 @@
         print(f"zls: {w}")
 
     with subtest("zig_dev: zig run hello-world"):
+        # printf, not heredoc: the nix indented-string dedent keeps
+        # heredoc terminators indented, so the heredoc swallows the
+        # rest of the block (vacuous pass — see the lisp test header).
         machine.succeed(r"""
           set -e
-          cat > /tmp/hello.zig << 'ZIGEOF'
-          const std = @import("std");
-          pub fn main() void {
-              std.debug.print("zig_hello_ok\n", .{});
-          }
-          ZIGEOF
+          printf '%s\n' \
+            'const std = @import("std");' \
+            'pub fn main() void {' \
+            '    std.debug.print("zig_hello_ok\n", .{});' \
+            '}' \
+            > /tmp/hello.zig
           zig run /tmp/hello.zig 2>&1 | grep -q 'zig_hello_ok'
         """)
 
@@ -49,10 +52,10 @@
         machine.succeed(r"""
           set -e
           mkdir -p /tmp/zig_build
-          cat > /tmp/zig_build/main.zig << 'ZIGEOF'
-          const std = @import("std");
-          pub fn main() void { std.debug.print("zig_build_ok\n", .{}); }
-          ZIGEOF
+          printf '%s\n' \
+            'const std = @import("std");' \
+            'pub fn main() void { std.debug.print("zig_build_ok\n", .{}); }' \
+            > /tmp/zig_build/main.zig
           cd /tmp/zig_build
           zig build-exe main.zig 2>&1
         """)

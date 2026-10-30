@@ -46,12 +46,15 @@
         assert ver != "", "ninja not found"
 
     with subtest("cpp_dev: compile and run hello-world"):
+        # printf, not heredoc: the nix indented-string dedent keeps
+        # heredoc terminators indented, so the heredoc swallows the
+        # rest of the block (vacuous pass — see the lisp test header).
         machine.succeed(r"""
           set -e
-          cat > /tmp/hello.cpp << 'CPPEOF'
-          #include <iostream>
-          int main() { std::cout << "cpp_hello_ok" << std::endl; return 0; }
-          CPPEOF
+          printf '%s\n' \
+            '#include <iostream>' \
+            'int main() { std::cout << "cpp_hello_ok" << std::endl; return 0; }' \
+            > /tmp/hello.cpp
           g++ -o /tmp/hello_cpp /tmp/hello.cpp
           out=$(/tmp/hello_cpp)
           [ "$out" = "cpp_hello_ok" ] || { echo "Got: $out"; exit 1; }

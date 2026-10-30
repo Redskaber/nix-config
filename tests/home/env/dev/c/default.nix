@@ -55,12 +55,15 @@
         assert "make" in ver.lower() or "GNU" in ver, f"make not found: {ver}"
 
     with subtest("c_dev: compile and run hello-world"):
+        # printf, not heredoc: the nix indented-string dedent keeps
+        # heredoc terminators indented, so the heredoc swallows the
+        # rest of the block (vacuous pass — see the lisp test header).
         machine.succeed(r"""
           set -e
-          cat > /tmp/hello.c << 'CEOF'
-          #include <stdio.h>
-          int main(void) { puts("c_hello_ok"); return 0; }
-          CEOF
+          printf '%s\n' \
+            '#include <stdio.h>' \
+            'int main(void) { puts("c_hello_ok"); return 0; }' \
+            > /tmp/hello.c
           gcc -o /tmp/hello_c /tmp/hello.c
           out=$(/tmp/hello_c)
           [ "$out" = "c_hello_ok" ] || { echo "Got: $out"; exit 1; }

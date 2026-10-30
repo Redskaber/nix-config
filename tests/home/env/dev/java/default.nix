@@ -41,16 +41,19 @@
         assert "Apache Maven" in ver or "mvn" in ver.lower(), f"maven not found: {ver}"
 
     with subtest("java_dev: compile and run hello-world"):
+        # printf, not heredoc: the nix indented-string dedent keeps
+        # heredoc terminators indented, so the heredoc swallows the
+        # rest of the block (vacuous pass — see the lisp test header).
         machine.succeed(r"""
           set -e
           mkdir -p /tmp/java_hello
-          cat > /tmp/java_hello/Hello.java << 'JEOF'
-          public class Hello {
-              public static void main(String[] args) {
-                  System.out.println("java_hello_ok");
-              }
-          }
-          JEOF
+          printf '%s\n' \
+            'public class Hello {' \
+            '    public static void main(String[] args) {' \
+            '        System.out.println("java_hello_ok");' \
+            '    }' \
+            '}' \
+            > /tmp/java_hello/Hello.java
           cd /tmp/java_hello
           javac Hello.java
           out=$(java Hello)

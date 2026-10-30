@@ -56,24 +56,27 @@
         print(f"nasmfmt: {w}")
 
     with subtest("asm_dev: assemble, link and run hello-world"):
+        # printf, not heredoc: the nix indented-string dedent keeps
+        # heredoc terminators indented, so the heredoc swallows the
+        # rest of the block (vacuous pass — see the lisp test header).
         machine.succeed(r"""
           set -e
-          cat > /tmp/hello.asm << 'AEOF'
-          global _start
-          section .text
-          _start:
-              mov rax, 1
-              mov rdi, 1
-              mov rsi, msg
-              mov rdx, len
-              syscall
-              mov rax, 60
-              xor rdi, rdi
-              syscall
-          section .data
-          msg: db "asm_hello_ok", 10
-          len: equ $ - msg
-          AEOF
+          printf '%s\n' \
+            'global _start' \
+            'section .text' \
+            '_start:' \
+            '    mov rax, 1' \
+            '    mov rdi, 1' \
+            '    mov rsi, msg' \
+            '    mov rdx, len' \
+            '    syscall' \
+            '    mov rax, 60' \
+            '    xor rdi, rdi' \
+            '    syscall' \
+            'section .data' \
+            'msg: db "asm_hello_ok", 10' \
+            'len: equ $ - msg' \
+            > /tmp/hello.asm
           nasm -f elf64 -o /tmp/hello.o /tmp/hello.asm
           ld -o /tmp/hello_asm /tmp/hello.o
           /tmp/hello_asm | grep -q 'asm_hello_ok'
