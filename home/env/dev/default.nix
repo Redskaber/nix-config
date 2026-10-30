@@ -27,12 +27,14 @@
       dev.asm
       dev.c
       dev.cpp
+      dev.haskell
       dev.go
       dev.java
       dev.javascript
       dev.lisp
       dev.lua
       dev.nix
+      dev.ocaml
       dev.python
       dev.re
       dev.rust
